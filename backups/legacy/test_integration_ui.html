@@ -1,0 +1,292 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>TradeSignal Integration Test - Refined Models</title>
+    <style>
+        body { 
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #1a1a2e;
+            color: #eee;
+            padding: 20px;
+            margin: 0;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: #16213e;
+            border-radius: 8px;
+            padding: 20px;
+            border: 1px solid #0f3460;
+        }
+        h1 { color: #00d4ff; margin-top: 0; }
+        h2 { color: #00d4ff; margin-top: 20px; border-bottom: 2px solid #0f3460; padding-bottom: 10px; }
+        .status { 
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 4px;
+            font-family: monospace;
+        }
+        .loading { background: #2d4059; color: #ffd700; }
+        .success { background: #144552; color: #0ecb81; }
+        .error { background: #4a1414; color: #ff6b6b; }
+        .data-block {
+            background: #0f3460;
+            padding: 12px;
+            margin: 10px 0;
+            border-left: 3px solid #00d4ff;
+            border-radius: 4px;
+            font-size: 13px;
+        }
+        .score-card {
+            display: inline-block;
+            background: #0f3460;
+            padding: 15px;
+            margin: 10px 5px;
+            border-radius: 4px;
+            border-top: 3px solid #00d4ff;
+            min-width: 300px;
+        }
+        .factor {
+            padding: 6px 0;
+            display: flex;
+            justify-content: space-between;
+            border-bottom: 1px solid #16213e;
+        }
+        .factor:last-child { border-bottom: none; }
+        .factor-name { font-weight: 500; color: #00d4ff; }
+        .factor-score { text-align: right; color: #0ecb81; font-weight: 600; }
+        button {
+            background: #00d4ff;
+            color: #1a1a2e;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: 600;
+            margin: 10px 5px 10px 0;
+        }
+        button:hover { background: #00b8cc; }
+        button:disabled { background: #666; cursor: not-allowed; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h1>🚀 TradeSignal Integration Test — Refined Models</h1>
+    <p>Testing 5-Factor Equity + 6-Factor Options + 24-Rule Gap Analysis</p>
+    
+    <div id="console" style="background: #0f3460; padding: 15px; border-radius: 4px; min-height: 100px; margin: 15px 0; overflow-y: auto; max-height: 300px; font-family: monospace; font-size: 12px; border: 1px solid #00d4ff;"></div>
+    
+    <div>
+        <button onclick="runTest()" id="runBtn">▶️ Run Integration Test</button>
+        <button onclick="clearConsole()">🗑️  Clear Console</button>
+    </div>
+    
+    <div id="results"></div>
+</div>
+
+<script>
+// Load frontend modules
+const scripts = [
+    'app/js/technical-indicators.js',
+    'app/js/gap-analysis-engine.js',
+    'app/js/scoring-engine.js'
+];
+
+let modulesLoaded = false;
+
+// Load all modules
+Promise.all(scripts.map(src => 
+    fetch(src).then(r => r.text()).then(code => eval(code))
+)).then(() => {
+    modulesLoaded = true;
+    log('✅ All modules loaded successfully', 'success');
+    log('📦 Available engines:', 'info');
+    log(`  - globalThis.scoringEngine: ${typeof globalThis.scoringEngine}`, 'info');
+    log(`  - globalThis.gapAnalysisEngine: ${typeof globalThis.gapAnalysisEngine}`, 'info');
+}).catch(err => {
+    log(`❌ Module loading failed: ${err.message}`, 'error');
+});
+
+function log(msg, type = 'info') {
+    const console = document.getElementById('console');
+    const line = document.createElement('div');
+    line.textContent = msg;
+    if (type === 'success') line.style.color = '#0ecb81';
+    if (type === 'error') line.style.color = '#ff6b6b';
+    if (type === 'warning') line.style.color = '#ffd700';
+    console.appendChild(line);
+    console.scrollTop = console.scrollHeight;
+}
+
+function clearConsole() {
+    document.getElementById('console').innerHTML = '';
+    document.getElementById('results').innerHTML = '';
+}
+
+async function fetchWithAuth(url) {
+    const auth = btoa('rajtrader09:Iamtrader@19009');
+    return fetch(url, {
+        headers: { 'Authorization': `Basic ${auth}` }
+    });
+}
+
+async function runTest() {
+    document.getElementById('runBtn').disabled = true;
+    clearConsole();
+    
+    try {
+        if (!modulesLoaded) {
+            log('⏳ Waiting for modules to load...', 'warning');
+            await new Promise(r => setTimeout(r, 2000));
+            if (!modulesLoaded) throw new Error('Modules failed to load');
+        }
+
+        log('🚀 Starting Integration Test', 'info');
+        log('─'.repeat(60), 'info');
+        
+        // Fetch snapshot
+        log('\n📊 Step 1: Fetching PERSISTENT snapshot...', 'info');
+        const snapRes = await fetchWithAuth('http://localhost:5000/api/stock-snapshot?symbol=PERSISTENT');
+        if (!snapRes.ok) throw new Error(`Snapshot failed: ${snapRes.status}`);
+        const snapshot = await snapRes.json();
+        log(`✓ Snapshot fetched: LTP ₹${snapshot.ltp.toFixed(2)}, Change ${snapshot.change_pct.toFixed(2)}%`, 'success');
+        
+        // Fetch historical OHLCV (5-minute)
+        log('\n📈 Step 2: Fetching 5-minute OHLCV history...', 'info');
+        const ohlcvRes = await fetchWithAuth('http://localhost:5000/api/historical?symbol=PERSISTENT&range_days=5&interval=5minute&mode=live');
+        if (!ohlcvRes.ok) throw new Error(`OHLCV failed: ${ohlcvRes.status}`);
+        const ohlcvData = await ohlcvRes.json();
+        const candles = ohlcvData.ohlcv || [];
+        
+        if (candles.length < 20) {
+            log(`⚠️  Insufficient OHLCV (${candles.length} candles, need 20+). Using available data.`, 'warning');
+        }
+        log(`✓ OHLCV fetched: ${candles.length} 5-minute candles`, 'success');
+        
+        // Prepare scoring data
+        log('\n🔧 Step 3: Preparing scoring data...', 'info');
+        const closes = candles.map(c => c.close);
+        const highs = candles.map(c => c.high);
+        const lows = candles.map(c => c.low);
+        const volumes = candles.map(c => c.volume);
+        
+        const data = {
+            symbol: 'PERSISTENT',
+            closes,
+            highs,
+            lows,
+            volumes,
+            snapshot,
+            sector: 'IT',
+            sectorData: { relativeStrength: 65, rotating: true }
+        };
+        log(`✓ Data prepared: ${closes.length} closes, ${highs.length} highs, ${lows.length} lows`, 'success');
+        
+        // Initialize gap fill history
+        log('\n🔄 Step 4: Initializing gap analysis engine...', 'info');
+        if (globalThis.gapAnalysisEngine && candles.length > 0) {
+            globalThis.gapAnalysisEngine.initializeGapFillHistory('PERSISTENT', candles);
+            log(`✓ Gap fill history initialized`, 'success');
+        }
+        
+        // Run Equity Scoring
+        log('\n💰 Step 5: Running Equity Scoring (5-Factor Refined Model)...', 'info');
+        const equityScore = globalThis.scoringEngine.scoreEquity(data);
+        log(`✓ Equity score: ${equityScore.direction} (${(equityScore.total || 0).toFixed(0)}/100)`, 'success');
+        displayEquityScore(equityScore);
+        
+        // Run Options Scoring
+        log('\n📞 Step 6: Running Options Scoring (6-Factor Model)...', 'info');
+        const optionsScore = globalThis.scoringEngine.scoreOptions(data);
+        log(`✓ Options score: ${optionsScore.direction} (${(optionsScore.total || 0).toFixed(0)}/100)`, 'success');
+        displayOptionsScore(optionsScore);
+        
+        // Summary
+        log('\n' + '─'.repeat(60), 'info');
+        log('✅ INTEGRATION TEST COMPLETE', 'success');
+        
+        const equity = equityScore.direction || 'NEUTRAL';
+        const options = optionsScore.direction || 'NEUTRAL';
+        const match = equity === options ? '✓ MATCHED' : '≠ DIVERGED';
+        
+        log(`\n📋 FINAL SIGNALS:`, 'info');
+        log(`  Equity:  ${equity} (${(equityScore.total || 0).toFixed(0)} points)`, equity.includes('BULL') || equity.includes('CALL') ? 'success' : 'warning');
+        log(`  Options: ${options} (${(optionsScore.total || 0).toFixed(0)} points)`, options.includes('BULL') || options.includes('CALL') ? 'success' : 'warning');
+        log(`  Status:  ${match}`, equity === options ? 'success' : 'warning');
+        
+    } catch (error) {
+        log(`\n❌ TEST FAILED: ${error.message}`, 'error');
+        log(`Stack: ${error.stack}`, 'error');
+    } finally {
+        document.getElementById('runBtn').disabled = false;
+    }
+}
+
+function displayEquityScore(score) {
+    if (!score || !score.factors) return;
+    
+    const html = `
+    <h2>💰 Equity Scoring Breakdown</h2>
+    <div class="score-card">
+        <h3 style="margin-top: 0; color: #00d4ff;">Direction: ${score.direction}</h3>
+        <div style="font-size: 24px; font-weight: bold; color: #0ecb81; margin: 10px 0;">${(score.total || 0).toFixed(0)} / 100</div>
+        <hr style="border: 1px solid #0f3460; margin: 10px 0;">
+        ${Object.entries(score.factors).map(([key, f]) => `
+            <div class="factor">
+                <span class="factor-name">${f.label}</span>
+                <span class="factor-score">${f.score}/${f.max}</span>
+            </div>
+        `).join('')}
+        ${score.risk ? `
+            <hr style="border: 1px solid #0f3460; margin: 10px 0;">
+            <div class="factor">
+                <span class="factor-name">Stop Loss</span>
+                <span class="factor-score">₹${score.risk.stopLoss?.toFixed(2)}</span>
+            </div>
+            <div class="factor">
+                <span class="factor-name">Target</span>
+                <span class="factor-score">₹${score.risk.target1?.toFixed(2)}</span>
+            </div>
+            <div class="factor">
+                <span class="factor-name">R:R Ratio</span>
+                <span class="factor-score">${score.risk.riskReward?.toFixed(2)}:1</span>
+            </div>
+        ` : ''}
+    </div>
+    `;
+    
+    document.getElementById('results').innerHTML += html;
+}
+
+function displayOptionsScore(score) {
+    if (!score) return;
+    
+    const html = `
+    <h2>📞 Options Scoring Breakdown</h2>
+    <div class="score-card">
+        <h3 style="margin-top: 0; color: #00d4ff;">Direction: ${score.direction}</h3>
+        <div style="font-size: 24px; font-weight: bold; color: #0ecb81; margin: 10px 0;">${(score.total || 0).toFixed(0)} / 100</div>
+        ${score.factors ? `
+            <hr style="border: 1px solid #0f3460; margin: 10px 0;">
+            ${Object.entries(score.factors).map(([key, f]) => `
+                <div class="factor">
+                    <span class="factor-name">${f.label}</span>
+                    <span class="factor-score">${f.score}/${f.max}</span>
+                </div>
+            `).join('')}
+        ` : ''}
+        ${score.riskFilter ? `
+            <hr style="border: 1px solid #0f3460; margin: 10px 0;">
+            <div style="color: #ff6b6b; font-weight: 600;">⚠️  ${score.riskFilter.label}</div>
+        ` : ''}
+    </div>
+    `;
+    
+    document.getElementById('results').innerHTML += html;
+}
+</script>
+
+</body>
+</html>

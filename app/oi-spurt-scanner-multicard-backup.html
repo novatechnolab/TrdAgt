@@ -1,0 +1,610 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>OI Spurt Scanner — TradeSignal</title>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=Syne:wght@400;600;800&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg:#08090f; --surface:#0f1320; --surface2:#141928; --surface3:#1a2035;
+  --border:#1e2a42; --border2:#243050;
+  --accent:#00e5ff; --accent2:#00b8d9;
+  --green:#00e676; --red:#ff3d71; --orange:#ff9100; --yellow:#ffd740; --purple:#c084fc;
+  --text:#e2e8f0; --muted:#4a5a7a; --muted2:#6b7a99;
+  --header-h:50px; --left-w:290px;
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+html,body{height:100%;overflow:hidden;}
+body{font-family:'JetBrains Mono',monospace;background:var(--bg);color:var(--text);display:flex;flex-direction:column;}
+
+/* ── Header ── */
+header{height:var(--header-h);background:var(--surface);border-bottom:1px solid var(--border);display:flex;align-items:center;padding:0 14px;gap:10px;flex-shrink:0;z-index:100;}
+.logo{font-family:'Syne',sans-serif;font-weight:800;font-size:16px;color:var(--accent);letter-spacing:1px;white-space:nowrap;flex-shrink:0;}
+.logo span{color:var(--text);}
+.search-wrap{flex:1;max-width:380px;position:relative;}
+.search-wrap input{width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:6px 30px 6px 10px;color:var(--text);font-family:inherit;font-size:11px;outline:none;transition:border-color .2s;}
+.search-wrap input:focus{border-color:var(--accent);}
+.search-wrap input::placeholder{color:var(--muted);}
+.s-icon{position:absolute;right:8px;top:50%;transform:translateY(-50%);color:var(--muted);font-size:12px;}
+.suggestions{position:absolute;top:calc(100% + 3px);left:0;right:0;background:var(--surface);border:1px solid var(--border2);border-radius:8px;max-height:220px;overflow-y:auto;z-index:9999;display:none;box-shadow:0 10px 40px rgba(0,0,0,.7);}
+.suggestions.open{display:block;}
+.si{display:flex;align-items:center;gap:6px;padding:6px 10px;cursor:pointer;font-size:11px;border-bottom:1px solid var(--border);transition:background .1s;}
+.si:last-child{border-bottom:none;}
+.si:hover,.si.act{background:var(--surface2);}
+.si-sym{font-family:'Syne',sans-serif;font-weight:700;color:var(--accent);min-width:90px;font-size:11px;}
+.si-name{color:var(--muted2);flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.si-tag{font-size:8px;padding:1px 4px;border-radius:3px;background:var(--surface3);color:var(--muted2);border:1px solid var(--border);}
+.go-btn{background:var(--accent);color:#000;border:none;border-radius:6px;padding:5px 12px;font-family:'Syne',sans-serif;font-weight:700;font-size:11px;cursor:pointer;}
+.go-btn:hover{background:var(--accent2);}
+.status-bar{margin-left:auto;display:flex;align-items:center;gap:8px;font-size:10px;color:var(--muted2);white-space:nowrap;flex-shrink:0;}
+.pulse{width:6px;height:6px;border-radius:50%;background:var(--green);animation:pulse 2s infinite;}
+@keyframes pulse{0%,100%{opacity:1;box-shadow:0 0 0 0 rgba(0,230,118,.4);}50%{opacity:.7;box-shadow:0 0 0 4px rgba(0,230,118,0);}}
+.ref-btn{background:transparent;border:1px solid var(--border);color:var(--muted2);border-radius:4px;padding:2px 8px;font-family:inherit;font-size:10px;cursor:pointer;transition:all .2s;}
+.ref-btn:hover{border-color:var(--accent);color:var(--accent);}
+
+/* ── Layout ── */
+.layout{display:flex;flex:1;overflow:hidden;}
+
+/* ── LEFT PANEL ── */
+.left-panel{width:var(--left-w);flex-shrink:0;background:var(--surface);border-right:1px solid var(--border);display:flex;flex-direction:column;overflow:hidden;}
+.lp-header{padding:8px 10px 6px;border-bottom:1px solid var(--border);flex-shrink:0;}
+.lp-title{font-family:'Syne',sans-serif;font-size:9px;font-weight:700;letter-spacing:2px;color:var(--muted2);text-transform:uppercase;display:flex;align-items:center;gap:6px;}
+.lp-badge{background:var(--accent);color:#000;border-radius:4px;padding:1px 5px;font-size:9px;font-weight:700;}
+.lp-filter{margin-top:6px;display:flex;align-items:center;gap:5px;font-size:9px;color:var(--muted2);}
+.lp-filter input[type=range]{flex:1;accent-color:var(--accent);height:3px;cursor:pointer;}
+.lp-filter span{color:var(--accent);font-weight:700;min-width:28px;}
+.lp-timer{font-size:9px;color:var(--muted);margin-top:4px;}
+.stock-list{flex:1;overflow-y:auto;}
+.stock-list::-webkit-scrollbar{width:3px;}
+.stock-list::-webkit-scrollbar-thumb{background:var(--border2);border-radius:2px;}
+.sl-item{display:flex;align-items:center;padding:8px 10px;border-bottom:1px solid var(--border);cursor:pointer;transition:background .12s;position:relative;gap:6px;}
+.sl-item:hover{background:var(--surface2);}
+.sl-item.active{background:rgba(0,229,255,.07);border-left:2px solid var(--accent);padding-left:8px;}
+.sl-left{flex:1;min-width:0;}
+.sl-sym{font-family:'Syne',sans-serif;font-weight:700;font-size:12px;color:var(--text);}
+.sl-series{font-size:8px;padding:1px 3px;border-radius:3px;background:var(--surface3);color:var(--muted2);margin-left:3px;vertical-align:middle;}
+.sl-ltp{font-size:9px;color:var(--muted2);margin-top:1px;}
+.sl-right{text-align:right;flex-shrink:0;}
+.sl-oichg{font-family:'Syne',sans-serif;font-weight:800;font-size:13px;color:var(--green);}
+.sl-oilabel{font-size:8px;color:var(--muted);margin-top:1px;}
+.sl-bar{position:absolute;bottom:0;left:0;height:2px;background:linear-gradient(90deg,var(--green),transparent);}
+.lp-empty{padding:24px 10px;text-align:center;color:var(--muted);font-size:10px;line-height:1.7;}
+.lp-loader{display:flex;align-items:center;justify-content:center;padding:30px;gap:8px;color:var(--muted);font-size:11px;}
+
+/* ── RIGHT PANEL — two-slot grid ── */
+.right-panel{flex:1;overflow-y:auto;background:var(--bg);}
+.right-panel::-webkit-scrollbar{width:4px;}
+.right-panel::-webkit-scrollbar-thumb{background:var(--border2);border-radius:2px;}
+.slots-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(440px,1fr));gap:0;align-items:start;align-content:start;}
+.stock-slot{border-right:1px solid var(--border);border-bottom:1px solid var(--border);padding:10px;}
+.stock-slot::-webkit-scrollbar{width:3px;}
+.stock-slot::-webkit-scrollbar-thumb{background:var(--border2);}
+.slot-empty{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;color:var(--muted);gap:8px;padding:20px;}
+.slot-empty-icon{font-size:32px;opacity:.25;}
+.slot-empty p{font-size:10px;opacity:.4;text-align:center;}
+
+/* ── Stock Detail (compact) ── */
+.det-header{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:8px;padding-bottom:8px;border-bottom:1px solid var(--border);}
+.det-sym{font-family:'Syne',sans-serif;font-size:18px;font-weight:800;color:var(--accent);}
+.det-ltp{font-size:16px;font-weight:700;}
+.det-chg{font-size:11px;font-weight:600;}
+.det-close{margin-left:auto;background:transparent;border:1px solid var(--border);color:var(--muted2);border-radius:4px;padding:2px 8px;font-family:inherit;font-size:9px;cursor:pointer;transition:all .2s;flex-shrink:0;}
+.det-close:hover{border-color:var(--red);color:var(--red);}
+.det-live{display:flex;align-items:center;gap:4px;font-size:8px;color:var(--green);}
+.det-live .dot{width:5px;height:5px;border-radius:50%;background:var(--green);animation:pulse 1.5s infinite;}
+
+/* Tags */
+.tags{display:flex;gap:4px;flex-wrap:wrap;margin-bottom:8px;}
+.tag{display:inline-flex;align-items:center;padding:2px 6px;border-radius:10px;font-size:9px;font-weight:600;white-space:nowrap;}
+.tag-green{background:rgba(0,230,118,.12);color:var(--green);border:1px solid rgba(0,230,118,.2);}
+.tag-red{background:rgba(255,61,113,.12);color:var(--red);border:1px solid rgba(255,61,113,.2);}
+.tag-yellow{background:rgba(255,215,64,.12);color:var(--yellow);border:1px solid rgba(255,215,64,.2);}
+.tag-blue{background:rgba(0,229,255,.1);color:var(--accent);border:1px solid rgba(0,229,255,.2);}
+.tag-orange{background:rgba(255,145,0,.12);color:var(--orange);border:1px solid rgba(255,145,0,.2);}
+
+/* Stat strip - compact 4 items */
+.stat-strip{display:grid;grid-template-columns:repeat(4,1fr);gap:4px;margin-bottom:8px;}
+.stat-box{background:var(--surface);border:1px solid var(--border);border-radius:6px;padding:6px 8px;position:relative;}
+.stat-label{font-size:8px;letter-spacing:1px;text-transform:uppercase;color:var(--muted2);margin-bottom:2px;}
+.stat-val{font-family:'Syne',sans-serif;font-size:13px;font-weight:700;}
+.stat-sub{font-size:8px;color:var(--muted2);margin-top:1px;}
+
+/* Alert badge */
+.alert-badge{position:absolute;top:-5px;right:-5px;background:var(--orange);color:#000;border-radius:50%;width:14px;height:14px;font-size:7px;font-weight:700;display:flex;align-items:center;justify-content:center;animation:alertPop .3s ease;z-index:10;}
+@keyframes alertPop{0%{transform:scale(0);}70%{transform:scale(1.3);}100%{transform:scale(1);}}
+.changed{animation:flashChange .6s ease;}
+@keyframes flashChange{0%,100%{background:var(--surface);}50%{background:rgba(255,145,0,.18);}}
+
+/* Cards grid */
+.cards-row{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:6px;}
+.card{background:var(--surface);border:1px solid var(--border);border-radius:7px;padding:8px 10px;position:relative;}
+.card.full{grid-column:1/-1;}
+.card-title{font-size:8px;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted2);margin-bottom:7px;display:flex;align-items:center;gap:4px;}
+
+/* KV rows */
+.kv{display:flex;justify-content:space-between;align-items:center;padding:3px 0;font-size:10px;border-bottom:1px solid rgba(30,42,66,.5);}
+.kv:last-child{border-bottom:none;}
+.kv-k{color:var(--muted2);}
+.kv-v{font-weight:500;}
+.kv-pivot{color:var(--yellow);}
+.kv-res{color:var(--red);}
+.kv-sup{color:var(--green);}
+
+/* Mini table */
+.mt{width:100%;font-size:9px;border-collapse:collapse;}
+.mt th{font-size:8px;letter-spacing:.8px;text-transform:uppercase;color:var(--muted2);padding:2px 4px;text-align:left;border-bottom:1px solid var(--border);}
+.mt td{padding:4px 4px;border-bottom:1px solid rgba(30,42,66,.4);}
+.mt tr:last-child td{border-bottom:none;}
+.mt tr:hover td{background:var(--surface2);}
+.oi-mini-bar{width:40px;height:3px;border-radius:2px;display:inline-block;vertical-align:middle;margin-left:3px;}
+.trap{font-size:7px;padding:1px 3px;border-radius:2px;background:rgba(255,145,0,.15);color:var(--orange);margin-left:2px;}
+.bu-lb{color:var(--green);} .bu-sb{color:var(--red);} .bu-sc{color:var(--accent);} .bu-lu{color:var(--muted2);}
+.sec-head{font-family:'Syne',sans-serif;font-size:8px;font-weight:700;letter-spacing:2px;color:var(--muted2);text-transform:uppercase;margin:8px 0 5px;display:flex;align-items:center;gap:6px;}
+.sec-head::after{content:'';flex:1;height:1px;background:var(--border);}
+
+.pos{color:var(--green);} .neg{color:var(--red);} .neu{color:var(--muted2);}
+.spinner{width:14px;height:14px;border:2px solid var(--border);border-top-color:var(--accent);border-radius:50%;animation:spin .7s linear infinite;display:inline-block;}
+@keyframes spin{to{transform:rotate(360deg);}}
+.loader{display:flex;align-items:center;gap:8px;padding:20px;color:var(--muted);font-size:11px;}
+.err-msg{padding:8px 12px;background:rgba(255,61,113,.08);border:1px solid rgba(255,61,113,.2);border-radius:6px;color:var(--red);font-size:10px;margin-bottom:8px;}
+#countdown{font-variant-numeric:tabular-nums;}
+</style>
+</head>
+<body>
+<header>
+  <div class="logo">OI<span>Spurt</span></div>
+  <div class="search-wrap">
+    <input id="search-input" type="text" placeholder="Search F&O stock or index…" autocomplete="off" spellcheck="false">
+    <span class="s-icon">⌕</span>
+    <div class="suggestions" id="suggestions"></div>
+  </div>
+  <button class="go-btn" id="search-btn">GO</button>
+  <div class="status-bar">
+    <span id="last-update">–</span>
+    <span>Left: <span id="countdown">60</span>s</span>
+    <div class="pulse"></div>
+    <button class="ref-btn" id="manual-refresh">↺</button>
+  </div>
+</header>
+
+<div class="layout">
+  <aside class="left-panel">
+    <div class="lp-header">
+      <div class="lp-title">🔥 OI Spurt <span class="lp-badge" id="spurt-count">–</span></div>
+      <div class="lp-filter">
+        Min OI%&nbsp;
+        <input type="range" id="min-pct-slider" min="1" max="20" value="5" step="1">
+        <span id="min-pct-val">5%</span>
+      </div>
+      <div class="lp-timer">Auto-refresh every 60s &nbsp;|&nbsp; ↺ <span id="lp-ts">–</span></div>
+    </div>
+    <div class="stock-list" id="stock-list">
+      <div class="lp-loader"><div class="spinner"></div> Loading…</div>
+    </div>
+  </aside>
+
+  <main class="right-panel">
+    <div class="slots-grid" id="slots-grid">
+      <div id="rp-empty-state" style="grid-column:1/-1;display:flex;flex-direction:column;align-items:center;justify-content:center;height:60vh;color:var(--muted);gap:12px;">
+        <div style="font-size:40px;opacity:.2">📊</div>
+        <div style="font-family:'Syne',sans-serif;font-size:14px;opacity:.3">Click any stock from the left panel</div>
+        <div style="font-size:10px;opacity:.2">Multiple stocks can be open side-by-side</div>
+      </div>
+    </div>
+  </main>
+</div>
+
+<script>
+// ─── State ───────────────────────────────────────────
+let spurtData = [], symbolList = [], suggActive = -1, minPct = 5;
+let leftTimer = null, leftCountdown = 60;
+const activeCards = {};   // symbol → { timer, prevData }
+const REFRESH_MS  = 15000; // right panel: refresh every 15s
+
+const INDICES = [
+  {sym:'NIFTY',name:'Nifty 50',tag:'INDEX'},
+  {sym:'BANKNIFTY',name:'Nifty Bank',tag:'INDEX'},
+  {sym:'FINNIFTY',name:'Nifty Fin Service',tag:'INDEX'},
+  {sym:'MIDCPNIFTY',name:'Nifty Mid Select',tag:'INDEX'},
+  {sym:'SENSEX',name:'BSE Sensex',tag:'BSE INDEX'},
+  {sym:'BANKEX',name:'BSE Bankex',tag:'BSE INDEX'},
+  {sym:'NIFTYIT',name:'Nifty IT',tag:'INDEX'},
+];
+
+// ─── Formatters ──────────────────────────────────────
+const fmt = (n,d=2) => n===null||n===undefined ? '–' :
+  Number(n).toLocaleString('en-IN',{minimumFractionDigits:d,maximumFractionDigits:d});
+const fmtOI = n => !n ? '–' : n>=1e7 ? (n/1e7).toFixed(2)+' Cr' : n>=1e5 ? (n/1e5).toFixed(2)+' L' : n>=1e3 ? (n/1e3).toFixed(1)+'K' : String(n);
+const pclr  = v => v>0?'pos':v<0?'neg':'neu';
+const sign  = v => v>=0?'+':'';
+
+// ─── Beep ────────────────────────────────────────────
+function beep(freq=880, dur=120, vol=0.15) {
+  try {
+    const ctx = new (window.AudioContext||window.webkitAudioContext)();
+    const o = ctx.createOscillator(), g = ctx.createGain();
+    o.connect(g); g.connect(ctx.destination);
+    o.frequency.value = freq; g.gain.value = vol;
+    o.start(); o.stop(ctx.currentTime + dur/1000);
+    setTimeout(()=>ctx.close(), dur+50);
+  } catch(e){}
+}
+
+// ─── Symbol List ─────────────────────────────────────
+async function loadSymbolList() {
+  try {
+    const j = await fetch('/api/equity-list').then(r=>r.json());
+    const fno = (j.stocks||[]).map(s=>({sym:s.tradingsymbol,name:s.name,tag:'F&O'}));
+    symbolList = [...INDICES, ...fno];
+  } catch { symbolList = [...INDICES]; }
+}
+
+// ─── Autocomplete ────────────────────────────────────
+function showSugg(q) {
+  const box = document.getElementById('suggestions');
+  if (!q) { box.classList.remove('open'); return; }
+  const m = symbolList.filter(s=>s.sym.startsWith(q)||s.name.toUpperCase().includes(q)).slice(0,12);
+  if (!m.length) { box.classList.remove('open'); return; }
+  suggActive = -1;
+  box.innerHTML = m.map(s=>`<div class="si" onmousedown="pickSugg('${s.sym}')">
+    <span class="si-sym">${s.sym}</span><span class="si-name">${s.name}</span>
+    <span class="si-tag">${s.tag}</span></div>`).join('');
+  box.classList.add('open');
+}
+function pickSugg(sym) {
+  document.getElementById('search-input').value = sym;
+  document.getElementById('suggestions').classList.remove('open');
+  openCard(sym);
+}
+function moveSugg(dir) {
+  const items = document.querySelectorAll('.si');
+  if (!items.length) return;
+  items[suggActive]?.classList.remove('act');
+  suggActive = (suggActive+dir+items.length)%items.length;
+  items[suggActive].classList.add('act');
+  document.getElementById('search-input').value = items[suggActive].querySelector('.si-sym').textContent;
+}
+
+// ─── Left Panel ──────────────────────────────────────
+async function loadSpurt() {
+  try {
+    const j = await fetch(`/api/oi/spurt?min_pct=${minPct}`).then(r=>r.json());
+    spurtData = (j.data||[]).sort((a,b)=>b.oi_change_pct-a.oi_change_pct);
+    renderList(spurtData);
+    document.getElementById('spurt-count').textContent = spurtData.length;
+    document.getElementById('last-update').textContent = 'L:'+new Date().toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit'});
+    document.getElementById('lp-ts').textContent = new Date().toLocaleTimeString('en-IN');
+  } catch(e) {
+    document.getElementById('stock-list').innerHTML =
+      `<div class="lp-empty" style="color:var(--red)">⚠ ${e.message}</div>`;
+  }
+}
+
+function renderList(data) {
+  const el = document.getElementById('stock-list');
+  if (!data.length) {
+    el.innerHTML = `<div class="lp-empty">No stocks with OI% > ${minPct} right now<br>
+      <span style="font-size:8px;opacity:.5">Updates during market hours 9:15–15:30 IST</span></div>`;
+    return;
+  }
+  const maxOI = Math.max(...data.map(d=>d.oi_change_pct), 1);
+  el.innerHTML = data.map(d=>`
+    <div class="sl-item ${activeCards[d.symbol]?'active':''}" id="li-${d.symbol}" onclick="openCard('${d.symbol}')">
+      <div class="sl-left">
+        <div class="sl-sym">${d.symbol}<span class="sl-series">${d.series}</span></div>
+        <div class="sl-ltp">LTP: <span class="${pclr(d.price_change)}">${fmt(d.ltp)}</span></div>
+      </div>
+      <div class="sl-right">
+        <div class="sl-oichg">+${fmt(d.oi_change_pct)}%</div>
+        <div class="sl-oilabel">OI Chg</div>
+      </div>
+      <div class="sl-bar" style="width:${Math.round((d.oi_change_pct/maxOI)*100)}%"></div>
+    </div>`).join('');
+}
+
+// ─── Left countdown ───────────────────────────────────
+function startLeftCountdown() {
+  leftCountdown = 60;
+  clearInterval(leftTimer);
+  leftTimer = setInterval(()=>{
+    leftCountdown--;
+    document.getElementById('countdown').textContent = leftCountdown;
+    if (leftCountdown <= 0) { loadSpurt(); leftCountdown = 60; }
+  }, 1000);
+}
+
+// ─── Card Management ─────────────────────────────────
+function openCard(sym) {
+  sym = sym.toUpperCase().trim();
+  if (!sym) return;
+  // If already open, scroll to it and flash
+  if (activeCards[sym]) {
+    document.getElementById('card-'+sym)?.scrollIntoView({behavior:'smooth',block:'nearest'});
+    flashCard(sym);
+    return;
+  }
+  // Create new card
+  const grid = document.getElementById('slots-grid');
+  // Remove empty-state on first card
+  document.getElementById('rp-empty-state')?.remove();
+  const card = document.createElement('div');
+  card.className = 'stock-slot';
+  card.id = 'card-'+sym;
+  card.innerHTML = `<div class="loader"><div class="spinner"></div> Loading ${sym}…</div>`;
+  grid.appendChild(card);
+  card.scrollIntoView({behavior:'smooth',block:'nearest'});
+
+  activeCards[sym] = { timer: null, prev: {} };
+  highlightLeft(sym, true);
+
+  fetchAndRenderCard(sym);
+  // Live refresh every 15s
+  activeCards[sym].timer = setInterval(()=>fetchAndRenderCard(sym), REFRESH_MS);
+}
+
+function closeCard(sym) {
+  clearInterval(activeCards[sym]?.timer);
+  delete activeCards[sym];
+  document.getElementById('card-'+sym)?.remove();
+  highlightLeft(sym, false);
+  // Restore empty slots if grid is empty
+  if (document.querySelectorAll('.stock-slot').length === 0) {
+    document.getElementById('slots-grid').innerHTML =
+      `<div class="stock-slot"><div class="slot-empty"><div class="slot-empty-icon">①</div>
+       <p>Click any stock<br>from the left panel</p></div></div>`;
+  }
+}
+
+function flashCard(sym) {
+  const el = document.getElementById('card-'+sym);
+  if (!el) return;
+  el.style.outline = '1px solid var(--accent)';
+  setTimeout(()=>el.style.outline='',800);
+}
+
+function highlightLeft(sym, on) {
+  const li = document.getElementById('li-'+sym);
+  if (li) li.classList.toggle('active', on);
+}
+
+// ─── Fetch & render one card ──────────────────────────
+async function fetchAndRenderCard(sym) {
+  const slot = document.getElementById('card-'+sym);
+  if (!slot) return;
+  try {
+    const d = await fetch(`/api/oi/symbol/${encodeURIComponent(sym)}`).then(r=>r.json());
+    if (d.error && !d.ltp) throw new Error(d.error);
+    const spurtRow = spurtData.find(s=>s.symbol===sym)||{};
+    const prev = activeCards[sym]?.prev || {};
+    const changes = detectChanges(prev, d, spurtRow);
+    if (Object.keys(changes).length && Object.keys(prev).length) {
+      beep();
+    }
+    if (activeCards[sym]) activeCards[sym].prev = { ...d, ltp: spurtRow.ltp||d.ltp, oi_change_pct: spurtRow.oi_change_pct };
+    slot.innerHTML = buildCard(sym, d, spurtRow, changes);
+    // Attach close handler
+    slot.querySelector('.det-close')?.addEventListener('click',()=>closeCard(sym));
+  } catch(e) {
+    const existing = slot.querySelector('.det-sym');
+    if (!existing) {
+      slot.innerHTML = `<div class="err-msg">⚠ ${sym}: ${e.message}</div>`;
+    } else {
+      // Keep existing content, just show error overlay briefly
+      const err = document.createElement('div');
+      err.className='err-msg'; err.textContent='⚠ Refresh failed: '+e.message;
+      slot.prepend(err); setTimeout(()=>err.remove(),4000);
+    }
+  }
+}
+
+// ─── Change Detection ────────────────────────────────
+function detectChanges(prev, curr, spurtRow) {
+  const changes = {};
+  const ltp = spurtRow.ltp||curr.ltp;
+  if (prev.ltp && Math.abs(ltp-prev.ltp)>0.05) changes.ltp = {old:prev.ltp,new:ltp};
+  if (prev.pcr && curr.pcr && Math.abs(curr.pcr-prev.pcr)>0.01) changes.pcr = {old:prev.pcr,new:curr.pcr};
+  if (prev.max_pain && curr.max_pain && curr.max_pain!==prev.max_pain) changes.max_pain = {old:prev.max_pain,new:curr.max_pain};
+  if (prev.oi_change_pct && spurtRow.oi_change_pct && Math.abs(spurtRow.oi_change_pct-prev.oi_change_pct)>0.1)
+    changes.oi_change_pct = {old:prev.oi_change_pct,new:spurtRow.oi_change_pct};
+  return changes;
+}
+
+function alertBadge(ch) {
+  return ch ? `<span class="alert-badge" title="Changed">!</span>` : '';
+}
+
+// ─── Build Card HTML ─────────────────────────────────
+function buildCard(sym, d, spurtRow, changes={}) {
+  // ── Data extraction ──────────────────────────────────
+  const ltp      = spurtRow.ltp || d.ltp || 0;
+  const priceChg = spurtRow.price_change || 0;
+  const oiChgPct = spurtRow.oi_change_pct;
+  const currOI   = spurtRow.curr_oi || 0;
+  const prevOI   = spurtRow.prev_oi || 0;
+  const vol      = spurtRow.volume || 0;
+  const pcr      = d.pcr;
+  const pv       = d.pivots || {};
+  const strikes  = d.strikes || {};
+  const top_ce   = strikes.top_ce || [];
+  const top_pe   = strikes.top_pe || [];
+  const now      = new Date().toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit',second:'2-digit'});
+
+  // ── PCR signal ───────────────────────────────────────
+  let pcrTag='–', pcrCls='tag-yellow', pcrColor='var(--yellow)';
+  if (pcr!=null) {
+    if (pcr>=1.5){pcrTag='Extreme Bullish';pcrCls='tag-green';pcrColor='var(--green)';}
+    else if(pcr>=1.2){pcrTag='Bullish';pcrCls='tag-green';pcrColor='var(--green)';}
+    else if(pcr>=0.8){pcrTag='Neutral';pcrCls='tag-yellow';pcrColor='var(--yellow)';}
+    else if(pcr>=0.5){pcrTag='Bearish';pcrCls='tag-red';pcrColor='var(--red)';}
+    else{pcrTag='Extreme Bearish';pcrCls='tag-red';pcrColor='var(--red)';}
+  }
+
+  // ── Strike-level PCR lookup ──────────────────────────
+  // Build a map: strike → {ce_oi, pe_oi} from top_ce + top_pe
+  const strikePCR = {};
+  top_ce.forEach(r => { if(!strikePCR[r.strike]) strikePCR[r.strike]={ce:0,pe:0}; strikePCR[r.strike].ce=r.oi; });
+  top_pe.forEach(r => { if(!strikePCR[r.strike]) strikePCR[r.strike]={ce:0,pe:0}; strikePCR[r.strike].pe=r.oi; });
+
+  // ── Helpers ──────────────────────────────────────────
+  const dirCls = priceChg>0?'tag-green':priceChg<0?'tag-red':'tag-yellow';
+  function buCls(b){return b==='Long Buildup'?'bu-lb':b==='Short Buildup'?'bu-sb':b==='Short Covering'?'bu-sc':'bu-lu';}
+
+  // ── (d) Pivot rows ───────────────────────────────────
+  const pivotRows = pv.P ? `
+    <div class="kv"><span class="kv-k">R3</span><span class="kv-v kv-res">${fmt(pv.R3)}</span></div>
+    <div class="kv"><span class="kv-k">R2</span><span class="kv-v kv-res">${fmt(pv.R2)}</span></div>
+    <div class="kv"><span class="kv-k">R1</span><span class="kv-v kv-res">${fmt(pv.R1)}</span></div>
+    <div class="kv"><span class="kv-k">Pivot</span><span class="kv-v kv-pivot">${fmt(pv.P)}</span></div>
+    <div class="kv"><span class="kv-k">S1</span><span class="kv-v kv-sup">${fmt(pv.S1)}</span></div>
+    <div class="kv"><span class="kv-k">S2</span><span class="kv-v kv-sup">${fmt(pv.S2)}</span></div>
+    <div class="kv"><span class="kv-k">S3</span><span class="kv-v kv-sup">${fmt(pv.S3)}</span></div>` :
+    '<div class="kv"><span class="kv-k">–</span><span class="kv-v neu">Connect Kite for data</span></div>';
+
+  // ── (e) Strike writing table with PCR at strike ──────
+  function strikeTable(rows, side) {
+    if (!rows?.length) return '<div style="color:var(--muted);font-size:9px;padding:6px">No data — Kite not connected</div>';
+    const maxOI = Math.max(...rows.map(r=>r.oi), 1);
+    const hdrs = side==='ce'
+      ? `<tr><th>Strike</th><th>OI</th><th>OI Chg</th><th>Strike PCR</th><th>Buildup</th><th>Alert</th></tr>`
+      : `<tr><th>Strike</th><th>OI</th><th>OI Chg</th><th>Strike PCR</th><th>Buildup</th><th>Alert</th></tr>`;
+    const body = rows.map(r => {
+      const sp   = strikePCR[r.strike] || {};
+      const sPCR = sp.ce && sp.pe ? fmt(sp.pe/sp.ce, 2) : '–';
+      const trap = r.trap ? `<span class="trap">⚠ ${r.trap}</span>` : '';
+      const bar  = `<span class="oi-mini-bar" style="background:${side==='ce'?'var(--red)':'var(--green)'};width:${Math.round((r.oi/maxOI)*32)}px"></span>`;
+      return `<tr>
+        <td><b>${fmt(r.strike,0)}</b></td>
+        <td>${fmtOI(r.oi)} ${bar}</td>
+        <td class="${r.oi_chg>=0?'pos':'neg'}">${r.oi_chg>=0?'+':''}${fmtOI(r.oi_chg)}</td>
+        <td style="color:${sPCR!=='–'?(sPCR>1?'var(--green)':'var(--red)'):'var(--muted)'}">${sPCR}</td>
+        <td><span class="${buCls(r.buildup)}">${r.buildup}</span></td>
+        <td>${trap}</td></tr>`;
+    }).join('');
+    return `<table class="mt"><thead>${hdrs}</thead><tbody>${body}</tbody></table>`;
+  }
+
+  const errHtml = (d.errors||[]).filter(e=>!e.includes('Kite not')).length ?
+    `<div class="err-msg" style="font-size:9px;padding:5px 8px">⚠ ${d.errors.join(' | ')}</div>` : '';
+
+  // ══════════════════════════════════════════════════════
+  // CARD LAYOUT — optimal order:
+  //  Header → (a) Symbol + OI% + LTP
+  //  Tags   → PCR signal + direction + expiry
+  //  Strip  → (b) LTP | (a) OI% | (c) Max Pain | (f) Overall PCR
+  //  Row1   → (c) OI Summary | (d) Pivot Levels
+  //  Row2   → (e) CE Writing (with strike PCR) | PE Writing
+  // ══════════════════════════════════════════════════════
+  return `
+    <!-- (a) Symbol + LTP header -->
+    <div class="det-header">
+      <span class="det-sym">${sym}</span>
+      <span class="det-ltp ${pclr(priceChg)} ${changes.ltp?'changed':''}">${fmt(ltp)}</span>
+      <span class="det-chg ${pclr(priceChg)}">${sign(priceChg)}${fmt(priceChg)}%</span>
+      <div class="det-live"><div class="dot"></div> LIVE · ${now}</div>
+      <button class="det-close">✕</button>
+    </div>
+
+    <!-- Tags: OI%, direction, PCR signal, expiry -->
+    <div class="tags">
+      ${oiChgPct!=null?`<span class="tag tag-green">🔥 OI +${fmt(oiChgPct)}%</span>`:''}
+      <span class="tag ${dirCls}">${priceChg>0?'▲ Bullish':priceChg<0?'▼ Bearish':'↔ Neutral'}</span>
+      ${pcr!=null?`<span class="tag ${pcrCls}">PCR: ${fmt(pcr,2)} · ${pcrTag}</span>`:''}
+      ${d.expiry?`<span class="tag tag-blue">Exp: ${d.expiry}</span>`:''}
+    </div>
+    ${errHtml}
+
+    <!-- (b) LTP | (a) OI Change | (c) Max Pain | (f) Overall PCR — compact strip -->
+    <div class="stat-strip">
+      <div class="stat-box ${changes.ltp?'changed':''}">
+        ${alertBadge(changes.ltp)}
+        <div class="stat-label">LTP</div>
+        <div class="stat-val ${pclr(priceChg)}">${fmt(ltp)}</div>
+        <div class="stat-sub">${sign(priceChg)}${fmt(priceChg)}% today</div>
+      </div>
+      <div class="stat-box ${changes.oi_change_pct?'changed':''}">
+        ${alertBadge(changes.oi_change_pct)}
+        <div class="stat-label">OI Change %</div>
+        <div class="stat-val pos">${oiChgPct!=null?'+'+fmt(oiChgPct)+'%':'–'}</div>
+        <div class="stat-sub">${fmtOI(prevOI)} → ${fmtOI(currOI)}</div>
+      </div>
+      <div class="stat-box ${changes.max_pain?'changed':''}">
+        ${alertBadge(changes.max_pain)}
+        <div class="stat-label">Max Pain</div>
+        <div class="stat-val kv-pivot">${d.max_pain?fmt(d.max_pain,0):'–'}</div>
+        <div class="stat-sub">${d.max_pain&&ltp?(d.max_pain>ltp?'▲ Above LTP':'▼ Below LTP'):'–'}</div>
+      </div>
+      <div class="stat-box ${changes.pcr?'changed':''}">
+        ${alertBadge(changes.pcr)}
+        <div class="stat-label">Overall PCR</div>
+        <div class="stat-val" style="color:${pcrColor}">${pcr!=null?fmt(pcr,3):'–'}</div>
+        <div class="stat-sub">${pcrTag}</div>
+      </div>
+    </div>
+
+    <!-- (c) OI Summary + (d) Pivot Levels -->
+    <div class="sec-head">(c) OI &amp; Max Pain &nbsp;|&nbsp; (d) Pivot Levels</div>
+    <div class="cards-row">
+      <div class="card ${changes.max_pain?'changed':''}">
+        ${alertBadge(changes.max_pain)}
+        <div class="card-title">📊 OI &amp; Max Pain</div>
+        <div class="kv"><span class="kv-k">Max Pain Strike</span><span class="kv-v kv-pivot">${d.max_pain?fmt(d.max_pain,0):'–'}</span></div>
+        <div class="kv"><span class="kv-k">vs LTP</span><span class="kv-v ${d.max_pain&&ltp?(d.max_pain>ltp?'pos':'neg'):'neu'}">${d.max_pain&&ltp?(d.max_pain>ltp?'▲ Above LTP':'▼ Below LTP'):'–'}</span></div>
+        <div class="kv"><span class="kv-k">CE Wall (Res)</span><span class="kv-v kv-res">${top_ce[0]?fmt(top_ce[0].strike,0):'–'}</span></div>
+        <div class="kv"><span class="kv-k">PE Wall (Sup)</span><span class="kv-v kv-sup">${top_pe[0]?fmt(top_pe[0].strike,0):'–'}</span></div>
+        <div class="kv"><span class="kv-k">Overall PCR</span><span class="kv-v" style="color:${pcrColor}">${pcr!=null?fmt(pcr,3):'–'} <span style="font-size:8px">(${pcrTag})</span></span></div>
+        <div class="kv"><span class="kv-k">Curr OI / Prev OI</span><span class="kv-v">${fmtOI(currOI)} / ${fmtOI(prevOI)}</span></div>
+        <div class="kv"><span class="kv-k">Expiry</span><span class="kv-v">${d.expiry||'–'}</span></div>
+      </div>
+      <div class="card">
+        <div class="card-title">📐 Pivot, Support &amp; Resistance</div>
+        ${pivotRows}
+      </div>
+    </div>
+
+    <!-- (e) CE + PE Writing with Strike PCR, Buildup, Trap -->
+    <div class="sec-head">(e) Max Call &amp; Put Writing — PCR, Buildup, Trap</div>
+    <div class="cards-row">
+      <div class="card">
+        <div class="card-title" style="color:var(--red)">📞 CE Writing (Resistance Zones)</div>
+        ${strikeTable(top_ce,'ce')}
+      </div>
+      <div class="card">
+        <div class="card-title" style="color:var(--green)">📉 PE Writing (Support Zones)</div>
+        ${strikeTable(top_pe,'pe')}
+      </div>
+    </div>`;
+}
+
+// ─── Events ──────────────────────────────────────────
+const searchInput = document.getElementById('search-input');
+const suggBox     = document.getElementById('suggestions');
+
+searchInput.addEventListener('input', ()=>showSugg(searchInput.value.trim().toUpperCase()));
+searchInput.addEventListener('keydown', e=>{
+  if (e.key==='ArrowDown')     { e.preventDefault(); moveSugg(1); }
+  else if (e.key==='ArrowUp')  { e.preventDefault(); moveSugg(-1); }
+  else if (e.key==='Enter')    { suggBox.classList.remove('open'); const sym=searchInput.value.trim().toUpperCase(); if(sym) openCard(sym); }
+  else if (e.key==='Escape')   { suggBox.classList.remove('open'); }
+});
+document.addEventListener('mousedown', e=>{ if(!e.target.closest('.search-wrap')) suggBox.classList.remove('open'); });
+document.getElementById('search-btn').addEventListener('click',()=>{
+  suggBox.classList.remove('open');
+  const sym = searchInput.value.trim().toUpperCase();
+  if (sym) openCard(sym);
+});
+
+const slider = document.getElementById('min-pct-slider');
+const slVal  = document.getElementById('min-pct-val');
+slider.addEventListener('input', ()=>{ minPct=Number(slider.value); slVal.textContent=minPct+'%'; });
+slider.addEventListener('change', ()=>loadSpurt());
+
+document.getElementById('manual-refresh').addEventListener('click', ()=>{ loadSpurt(); startLeftCountdown(); });
+
+// ─── Boot ────────────────────────────────────────────
+loadSymbolList();
+loadSpurt();
+startLeftCountdown();
+</script>
+</body>
+</html>

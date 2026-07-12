@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>TradeSignal — Multi-Chart Tracking</title>
+  <link rel="stylesheet" href="styles/main.css">
+  <style>
+    body {
+      margin: 0; padding: 0;
+      background: var(--bg-primary, #0d1117);
+      color: var(--text-primary, #E0E0E0);
+      font-family: 'Inter', -apple-system, sans-serif;
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+    .mc-standalone-header {
+      padding: 10px 16px;
+      background: var(--bg-secondary, #161b22);
+      border-bottom: 1px solid var(--border, #30363d);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+    .mc-standalone-header h1 {
+      font-size: 1rem;
+      margin: 0;
+      color: var(--primary, #4FC3F7);
+      white-space: nowrap;
+    }
+    .mc-standalone-controls {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+    #mc-grid {
+      flex: 1;
+      min-height: 0;
+    }
+    .mc-chart-box {
+      height: 100% !important;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="mc-standalone-header">
+    <h1>📊 Multi-Chart Tracking</h1>
+    <div class="mc-standalone-controls">
+      <input list="mc-stock-list" id="mc-stock-select" class="form-input" placeholder="Search F&O Stock / Index..." style="min-width:180px;">
+      <datalist id="mc-stock-list">
+        <!-- Populated dynamically -->
+      </datalist>
+      <input type="date" id="mc-date-select" class="form-input">
+      <button class="btn btn-secondary" id="mc-display-chart-btn">Display Chart</button>
+      <button class="btn btn-primary" id="mc-add-chart-btn">➕ Add Chart</button>
+      <a href="/" class="btn btn-secondary" style="font-size:0.75rem;text-decoration:none;">← Back to App</a>
+    </div>
+  </div>
+
+  <div id="mc-grid" class="multi-chart-grid layout-1x1">
+    <!-- Dynamically inserted chart boxes -->
+  </div>
+
+  <!-- Dependencies -->
+  <script src="js/lightweight-charts.standalone.production.js"></script>
+  <script src="js/technical-indicators.js"></script>
+  <script src="js/equity-screener.js"></script>
+  <script>
+    // Minimal app shim — multi-chart.js needs app.apiFetch
+    const app = {
+      async apiFetch(endpoint, options = {}) {
+        const url = endpoint.startsWith('http') ? endpoint : `${window.location.origin}${endpoint}`;
+        return fetch(url, { ...options, credentials: 'include' });
+      }
+    };
+
+    // Populate F&O stock list from static universe
+    function populateStockList() {
+      const dl = document.getElementById('mc-stock-list');
+      // Add indices
+      ['NIFTY','BANKNIFTY','FINNIFTY'].forEach(s => {
+        const o = document.createElement('option'); o.value = s; dl.appendChild(o);
+      });
+      // Add all F&O stocks
+      const stocks = equityScreener.getStaticFNOUniverse();
+      stocks.sort((a,b) => a.symbol.localeCompare(b.symbol)).forEach(s => {
+        const o = document.createElement('option'); o.value = s.symbol; dl.appendChild(o);
+      });
+    }
+    populateStockList();
+  </script>
+  <script src="js/multi-chart.js?v=24"></script>
+  <script>
+    // Auto-init and set today's date
+    multiChartManager.init();
+  </script>
+</body>
+</html>

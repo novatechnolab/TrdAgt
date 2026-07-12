@@ -1,0 +1,2078 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="description"
+    content="TradeSignal — NSE F&O Equity & Options Intelligence Platform. Real-time scoring, options chain analysis, and pre-market recommendations powered by Kite Connect API.">
+  <title>TradeSignal — NSE F&O Intelligence</title>
+  <link rel="stylesheet" href="styles/main.css?v=5">
+  <meta name="theme-color" content="#0d1117">
+
+</head>
+
+<body>
+  <div class="app-shell">
+    <!-- ═══ Sidebar ═══ -->
+    <aside class="sidebar">
+      <div class="sidebar-brand">
+        <div class="brand-icon">📈</div>
+        <div>
+          <h1>TradeSignal</h1>
+          <small>NSE F&O Intelligence</small>
+        </div>
+      </div>
+
+      <nav class="sidebar-nav">
+        <div class="nav-section">Main</div>
+        <div class="nav-item active" data-page="dashboard" id="nav-dashboard">
+          <span class="nav-icon">🏠</span>
+          <span>Dashboard</span>
+        </div>
+        <div class="nav-item" data-page="multi-chart" id="nav-multi-chart">
+          <span class="nav-icon">🔲</span>
+          <span>Multi-Chart Tracking</span>
+        </div>
+        <div class="nav-item" data-page="screener" id="nav-screener">
+          <span class="nav-icon">🔍</span>
+          <span>Equity Screener</span>
+        </div>
+        <div class="nav-item" data-page="options" id="nav-options">
+          <span class="nav-icon">⛓️</span>
+          <span>Options Chain</span>
+        </div>
+        <div class="nav-item" data-page="scoring" id="nav-scoring">
+          <span class="nav-icon">🧠</span>
+          <span>Score Engine</span>
+        </div>
+        <div class="nav-item" data-page="analysis" id="nav-analysis">
+          <span class="nav-icon">🔬</span>
+          <span>Stock Analysis</span>
+        </div>
+        <div class="nav-item" data-page="smc-dashboard" id="nav-smc-dashboard">
+          <span class="nav-icon">🎯</span>
+          <span>SMC Dashboard</span>
+        </div>
+        <div class="nav-item" data-page="apex-dashboard" id="nav-apex-dashboard">
+          <span class="nav-icon">⚡</span>
+          <span>APEX Intraday</span>
+        </div>
+        <a href="/oi-spurt.html" target="_blank" rel="noopener"
+           style="display:flex;align-items:center;gap:10px;padding:10px 16px;color:var(--text-secondary);text-decoration:none;border-radius:8px;transition:all .2s;font-size:0.85rem;"
+           onmouseover="this.style.background='var(--bg-hover,rgba(255,255,255,.04))';this.style.color='var(--text-primary)'"
+           onmouseout="this.style.background='';this.style.color='var(--text-secondary)'"
+           id="nav-oi-spurt">
+          <span class="nav-icon">📈</span>
+          <span>OI Spurt Scanner</span>
+          <span style="font-size:0.6rem;margin-left:auto;opacity:.5">↗</span>
+        </a>
+        <a href="/market-profiler.html" target="_blank" rel="noopener"
+           style="display:flex;align-items:center;gap:10px;padding:10px 16px;color:var(--text-secondary);text-decoration:none;border-radius:8px;transition:all .2s;font-size:0.85rem;"
+           onmouseover="this.style.background='var(--bg-hover,rgba(255,255,255,.04))';this.style.color='var(--text-primary)'"
+           onmouseout="this.style.background='';this.style.color='var(--text-secondary)'"
+           id="nav-market-profiler">
+          <span class="nav-icon">📊</span>
+          <span>Market Profiler</span>
+          <span style="font-size:0.6rem;margin-left:auto;opacity:.5">↗</span>
+        </a>
+        <a href="/oi-scanner.html" target="_blank" rel="noopener"
+           style="display:flex;align-items:center;gap:10px;padding:10px 16px;color:var(--text-secondary);text-decoration:none;border-radius:8px;transition:all .2s;font-size:0.85rem;"
+           onmouseover="this.style.background='var(--bg-hover,rgba(255,255,255,.04))';this.style.color='var(--text-primary)'"
+           onmouseout="this.style.background='';this.style.color='var(--text-secondary)'"
+           id="nav-oi-scanner">
+          <span class="nav-icon">⚡</span>
+          <span>OI Scanner</span>
+          <span style="font-size:0.6rem;margin-left:auto;opacity:.5">↗</span>
+        </a>
+        <div class="nav-item" data-page="watchlist" id="nav-watchlist">
+          <span class="nav-icon">⭐</span>
+          <span>Watchlist</span>
+          <span class="nav-badge" id="watchlist-count" style="display:none;">0</span>
+        </div>
+
+        <div class="nav-item" data-page="portfolio" id="nav-portfolio">
+          <span class="nav-icon">💼</span>
+          <span>Portfolio</span>
+        </div>
+        <div class="nav-item" data-page="live-movers" id="nav-live-movers">
+          <span class="nav-icon">🔥</span>
+          <span>Live Movers</span>
+        </div>
+        <div class="nav-item" data-page="index-movers" id="nav-index-movers">
+          <span class="nav-icon">📊</span>
+          <span>Index Movers</span>
+        </div>
+        <div class="nav-item" data-page="news" id="nav-news">
+          <span class="nav-icon">📰</span>
+          <span>News</span>
+        </div>
+
+        <div class="nav-section">Pro Tools</div>
+        <div class="nav-item" data-page="strategy" id="nav-strategy">
+          <span class="nav-icon">🏗</span>
+          <span>Strategy Builder</span>
+        </div>
+        <div class="nav-item" data-page="backtest" id="nav-backtest">
+          <span class="nav-icon">🧪</span>
+          <span>Backtester</span>
+        </div>
+        <div class="nav-item" data-page="journal" id="nav-journal">
+          <span class="nav-icon">📓</span>
+          <span>Journal</span>
+        </div>
+        <div class="nav-item" data-page="paper" id="nav-paper">
+          <span class="nav-icon">📝</span>
+          <span>Paper Trade</span>
+        </div>
+
+        <div class="nav-section">Analysis</div>
+        <div class="nav-item" data-page="recommendations" id="nav-recommendations">
+          <span class="nav-icon">🎯</span>
+          <span>Recommendations</span>
+          <span class="nav-badge" id="reco-count">0</span>
+        </div>
+        <div class="nav-item" data-page="reco-tracker" id="nav-reco-tracker">
+          <span class="nav-icon">📊</span>
+          <span>Reco Tracker</span>
+          <span class="nav-badge" id="reco-tracker-badge" style="display:none;">0</span>
+        </div>
+        <div class="nav-item" data-page="historical" id="nav-historical">
+          <span class="nav-icon">📉</span>
+          <span>Historical</span>
+        </div>
+        <div class="nav-item" data-page="alerts" id="nav-alerts">
+          <span class="nav-icon">🔔</span>
+          <span>Alerts</span>
+          <span class="nav-badge" id="alert-count">0</span>
+        </div>
+
+        <div class="nav-section">Trading</div>
+        <div class="nav-item" data-page="trade-cockpit" id="nav-trade-cockpit">
+          <span class="nav-icon">🎯</span>
+          <span>Trade Cockpit</span>
+        </div>
+        <div class="nav-item" data-page="fno-session" id="nav-fno-session">
+          <span class="nav-icon">⏰</span>
+          <span>FNO Sessions</span>
+        </div>
+        <div class="nav-item" data-page="fno-trade-alerts" id="nav-fno-trade-alerts">
+          <span class="nav-icon">🚨</span>
+          <span>FNO Trade Alerts</span>
+        </div>
+
+        <div class="nav-section">System</div>
+        <div class="nav-item" data-page="settings" id="nav-settings">
+          <span class="nav-icon">⚙️</span>
+          <span>Settings</span>
+        </div>
+      </nav>
+
+      <div class="sidebar-footer">
+        <div class="connection-status" id="conn-status">
+          <span class="status-dot" id="status-dot"></span>
+          <span id="status-text">Disconnected</span>
+        </div>
+      </div>
+    </aside>
+
+    <!-- ═══ Main Content ═══ -->
+    <div class="main-content">
+      <!-- Top Bar -->
+      <header class="top-bar">
+        <div class="top-bar-left">
+          <h2 id="page-title">Dashboard</h2>
+          <div class="market-ticker" id="market-ticker">
+            <div class="ticker-item">
+              <span class="label">NIFTY</span>
+              <span class="value" id="nifty-ltp">—</span>
+              <span class="change" id="nifty-chg">—</span>
+            </div>
+            <div class="ticker-item">
+              <span class="label">BANKNIFTY</span>
+              <span class="value" id="bnf-ltp">—</span>
+              <span class="change" id="bnf-chg">—</span>
+            </div>
+            <div class="ticker-item" id="vix-ticker" title="India VIX — Market Volatility Index">
+              <span class="label">INDIA VIX</span>
+              <span class="value" id="vix-ltp">—</span>
+              <span class="change" id="vix-gauge"
+                style="font-size:0.6rem;padding:1px 5px;border-radius:8px;font-weight:700;"></span>
+            </div>
+          </div>
+        </div>
+        <div class="top-bar-right">
+          <div class="search-box">
+            <span>🔍</span>
+            <input type="text" id="global-search" placeholder="Search F&O stocks..." autocomplete="off">
+          </div>
+          <button class="icon-btn" id="btn-refresh" title="Refresh Data">🔄</button>
+          <button class="icon-btn" id="btn-alerts-bell" title="Alerts">
+            🔔
+            <span class="badge-count" id="alerts-badge" style="display:none;">0</span>
+          </button>
+        </div>
+      </header>
+
+      <!-- Page Container -->
+      <div class="page-container">
+
+        <!-- ═══ PAGE: Dashboard ═══ -->
+        <div class="page active" id="page-dashboard">
+          <!-- Market Stats -->
+          <div class="grid-4 mb-16" id="dashboard-stats">
+            <div class="stat-card">
+              <span class="stat-label">F&O Stocks Tracked</span>
+              <span class="stat-value" id="stat-tracked">0</span>
+              <span class="stat-change up">NSE F&O Segment</span>
+            </div>
+            <div class="stat-card">
+              <span class="stat-label">Bullish Signals</span>
+              <span class="stat-value" id="stat-bullish">0</span>
+              <span class="stat-change up" id="stat-bullish-pct">+0%</span>
+            </div>
+            <div class="stat-card">
+              <span class="stat-label">Bearish Signals</span>
+              <span class="stat-value" id="stat-bearish">0</span>
+              <span class="stat-change down" id="stat-bearish-pct">-0%</span>
+            </div>
+            <div class="stat-card">
+              <span class="stat-label">Top Score</span>
+              <span class="stat-value" id="stat-top-score">—</span>
+              <span class="stat-change up" id="stat-top-stock">—</span>
+            </div>
+          </div>
+
+          <!-- Top Picks -->
+          <div class="card mb-16">
+            <div class="card-header">
+              <h3>🎯 Top Picks — Pre-Market Recommendations</h3>
+              <div class="card-actions">
+                <button class="btn btn-sm btn-secondary" id="btn-run-scoring">▶ Run Scoring Engine</button>
+              </div>
+            </div>
+            <div class="top-picks-grid" id="top-picks-grid">
+              <div class="empty-state">
+                <div class="empty-icon">📡</div>
+                <h4>Connect to Kite API</h4>
+                <p>Go to Settings → Enter API credentials → Click Connect</p>
+              </div>
+            </div>
+          </div>
+
+          <!-- Market Breadth -->
+          <div class="card mb-16" id="market-breadth-card">
+            <div class="card-header">
+              <h3>📊 Market Breadth</h3>
+              <div class="card-actions">
+                <button class="btn btn-sm btn-secondary" id="btn-refresh-breadth">🔄 Refresh</button>
+              </div>
+            </div>
+            <div id="breadth-content" style="padding:12px 16px;">
+              <div style="text-align:center;padding:20px;color:var(--text-muted);font-size:0.82rem;">Click Refresh or
+                run Scoring Engine to load breadth data</div>
+            </div>
+          </div>
+
+          <!-- Sector Performance -->
+          <div class="card mb-16">
+            <div class="card-header">
+              <h3>🏢 Sector Performance</h3>
+            </div>
+            <div style="overflow-x:auto;">
+              <table class="data-table" id="sector-table">
+                <thead>
+                  <tr>
+                    <th class="sortable" data-sort="name" style="cursor:pointer;" title="Sort by Sector">Sector ↕</th>
+                    <th class="sortable" data-sort="count" style="cursor:pointer;" title="Sort by Stocks Tracked">Stocks
+                      Tracked ↕</th>
+                    <th class="sortable" data-sort="weight" style="cursor:pointer;" title="Sort by Index Weightage">
+                      Index Weightage ↕</th>
+                    <th class="sortable" data-sort="avgScore" style="cursor:pointer;" title="Sort by Avg Score">Avg
+                      Score ↕</th>
+                    <th class="sortable" data-sort="bullish" style="cursor:pointer;" title="Sort by Bullish Signals">
+                      Bullish / Bearish ↕</th>
+                    <th class="sortable" data-sort="avgChange" style="cursor:pointer;" title="Sort by % Movement">%
+                      Movement ↕</th>
+                    <th>Momentum Rank</th>
+                  </tr>
+                </thead>
+                <tbody id="sector-body">
+                  <tr>
+                    <td colspan="7" class="text-muted" style="text-align:center;padding:30px;">No data — Run scoring
+                      engine or connect to Kite</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <!-- Leaderboard Table -->
+          <div class="card">
+            <div class="card-header">
+              <h3>📊 F&O Score Leaderboard</h3>
+              <div class="tabs" id="leaderboard-tabs">
+                <button class="tab-btn active" data-filter="all">All</button>
+                <button class="tab-btn" data-filter="bullish">Bullish</button>
+                <button class="tab-btn" data-filter="bearish">Bearish</button>
+              </div>
+            </div>
+            <div style="overflow-x:auto;">
+              <table class="data-table" id="leaderboard-table">
+                <thead>
+                  <tr>
+                    <th>#</th>
+                    <th>Stock</th>
+                    <th>LTP</th>
+                    <th>Chg%</th>
+                    <th>Score</th>
+                    <th>Signal</th>
+                    <th>Technical</th>
+                    <th>Price Action</th>
+                    <th>OI / Options</th>
+                    <th>Volatility</th>
+                    <th>Catalyst</th>
+                    <th>Watch</th>
+                  </tr>
+                </thead>
+                <tbody id="leaderboard-body">
+                  <tr>
+                    <td colspan="12" class="text-muted" style="text-align:center;padding:30px;">No data — Run scoring
+                      engine or connect to Kite</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <!-- Upcoming Earnings -->
+          <div class="card" id="earnings-card">
+            <div class="card-header">
+              <h3>📅 Upcoming Earnings</h3>
+              <div class="card-actions">
+                <span class="text-muted" style="font-size:0.72rem;" id="earnings-source"></span>
+              </div>
+            </div>
+            <div id="earnings-list" style="max-height:300px;overflow-y:auto;padding:4px 0;">
+              <div style="text-align:center;padding:20px;color:var(--text-muted);font-size:0.82rem;">Loading earnings
+                calendar...</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- ═══ PAGE: Equity Screener ═══ -->
+        <div class="page" id="page-screener">
+          <div class="card mb-16">
+            <div class="card-header">
+              <h3>🔍 F&O Equity Screener</h3>
+              <div class="card-actions">
+                <button class="btn btn-sm btn-primary" id="btn-screen-run">🔄 Scan Now</button>
+              </div>
+            </div>
+            <div class="screener-filters" id="screener-filters">
+              <select class="form-select" id="screen-sector">
+                <option value="">All Sectors</option>
+                <option value="IT">IT</option>
+                <option value="Banking">Banking</option>
+                <option value="Pharma">Pharma</option>
+                <option value="Auto">Auto</option>
+                <option value="FMCG">FMCG</option>
+                <option value="Metal">Metal</option>
+                <option value="Energy">Energy</option>
+                <option value="Realty">Realty</option>
+                <option value="Infra">Infra</option>
+                <option value="Finance">Finance</option>
+                <option value="Chemicals">Chemicals</option>
+                <option value="Defence">Defence</option>
+                <option value="Retail">Retail</option>
+                <option value="Telecom">Telecom</option>
+                <option value="Insurance">Insurance</option>
+                <option value="Media">Media</option>
+                <option value="Other">Other</option>
+              </select>
+              <div class="filter-chip active" data-cap="all">All</div>
+              <div class="filter-chip" data-cap="large">Large Cap</div>
+              <div class="filter-chip" data-cap="mid">Mid Cap</div>
+              <select class="form-select" id="screen-signal">
+                <option value="">All Signals</option>
+                <option value="bullish">Bullish</option>
+                <option value="bearish">Bearish</option>
+                <option value="neutral">Neutral</option>
+              </select>
+              <select class="form-select" id="screen-sort">
+                <option value="score">Sort: Score ↓</option>
+                <option value="change">Sort: Change% ↓</option>
+                <option value="volume">Sort: Volume ↓</option>
+                <option value="name">Sort: Name A-Z</option>
+              </select>
+            </div>
+            <div style="overflow-x:auto;">
+              <table class="data-table" id="screener-table">
+                <thead>
+                  <tr>
+                    <th>Stock</th>
+                    <th>Sector</th>
+                    <th>LTP</th>
+                    <th>Chg%</th>
+                    <th>Volume</th>
+                    <th>Vol Ratio</th>
+                    <th>RSI</th>
+                    <th>MACD</th>
+                    <th>Signal</th>
+                    <th>Score</th>
+                    <th>Action</th>
+                  </tr>
+                </thead>
+                <tbody id="screener-body">
+                  <tr>
+                    <td colspan="11" class="text-muted" style="text-align:center;padding:30px;">Click "Scan Now" to
+                      screen F&O stocks</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        <!-- ═══ PAGE: Options Chain ═══ -->
+        <div class="page" id="page-options">
+          <div class="card mb-16">
+            <div class="card-header">
+              <h3>⛓️ Options Chain</h3>
+              <div class="card-actions flex gap-8">
+                <select class="form-select" id="oc-symbol">
+                  <option value="">Select Symbol</option>
+                  <option value="NIFTY">NIFTY</option>
+                  <option value="BANKNIFTY">BANKNIFTY</option>
+                </select>
+                <select class="form-select" id="oc-expiry">
+                  <option value="">Select Expiry</option>
+                </select>
+                <button class="btn btn-sm btn-primary" id="btn-load-chain">Load Chain</button>
+              </div>
+            </div>
+
+            <!-- OC Stats -->
+            <div class="grid-4 mb-16" id="oc-stats">
+              <div class="stat-card">
+                <span class="stat-label">Max Pain</span>
+                <span class="stat-value" id="oc-maxpain">—</span>
+              </div>
+              <div class="stat-card">
+                <span class="stat-label">PCR (OI)</span>
+                <span class="stat-value" id="oc-pcr">—</span>
+              </div>
+              <div class="stat-card">
+                <span class="stat-label">Total Call OI</span>
+                <span class="stat-value" id="oc-call-oi">—</span>
+              </div>
+              <div class="stat-card">
+                <span class="stat-label">Total Put OI</span>
+                <span class="stat-value" id="oc-put-oi">—</span>
+              </div>
+            </div>
+
+            <!-- Chain Table -->
+            <div style="overflow-x:auto; max-height: 500px; overflow-y:auto;">
+              <table class="data-table chain-table" id="chain-table">
+                <thead>
+                  <tr>
+                    <th colspan="5" style="text-align:center;background:rgba(38,166,154,0.08);color:var(--green);">CALLS
+                      (CE)</th>
+                    <th class="strike-col" style="text-align:center;">STRIKE</th>
+                    <th colspan="5" style="text-align:center;background:rgba(239,83,80,0.08);color:var(--red);">PUTS
+                      (PE)</th>
+                  </tr>
+                  <tr>
+                    <th>OI</th>
+                    <th>Chg OI</th>
+                    <th>Vol</th>
+                    <th>IV</th>
+                    <th>LTP</th>
+                    <th class="strike-col">Strike</th>
+                    <th>LTP</th>
+                    <th>IV</th>
+                    <th>Vol</th>
+                    <th>Chg OI</th>
+                    <th>OI</th>
+                  </tr>
+                </thead>
+                <tbody id="chain-body">
+                  <tr>
+                    <td colspan="11" class="text-muted" style="text-align:center;padding:40px;">Select symbol & expiry →
+                      Load Chain</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        <!-- ═══ PAGE: Score Engine ═══ -->
+        <div class="page" id="page-scoring">
+          <div class="card mb-16">
+            <div class="card-header">
+              <h3>🧠 Multi-Factor Scoring Engine</h3>
+              <div class="card-actions flex gap-8">
+                <select class="form-select" id="score-symbol">
+                  <option value="">Select F&O Stock...</option>
+                </select>
+                <div class="tabs" style="margin-bottom:0;">
+                  <button class="tab-btn active" data-mode="equity" id="score-mode-equity">Equity</button>
+                  <button class="tab-btn" data-mode="options" id="score-mode-options">Options</button>
+                </div>
+                <button class="btn btn-sm btn-primary" id="btn-calc-score">Calculate Score</button>
+              </div>
+            </div>
+
+            <div id="score-result" style="display:none;">
+              <div class="flex gap-16 items-center mb-16">
+                <div class="score-badge score-high" id="score-total-badge"
+                  style="width:80px;height:80px;font-size:1.5rem;">—</div>
+                <div>
+                  <h3 style="font-family:var(--font-display);font-size:1.3rem;" id="score-stock-name">—</h3>
+                  <div class="flex gap-8 items-center">
+                    <span class="tag" id="score-signal-tag">—</span>
+                    <span class="text-muted" id="score-direction">—</span>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Score Breakdown -->
+              <div class="score-breakdown" id="score-breakdown">
+                <!-- Generated dynamically -->
+              </div>
+            </div>
+
+            <div id="score-empty" class="empty-state">
+              <div class="empty-icon">🧠</div>
+              <h4>Select a Stock & Mode</h4>
+              <p>Choose an F&O stock and scoring mode (Equity / Options) to calculate its composite score</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- ═══ PAGE: Watchlist ═══ -->
+        <div class="page" id="page-watchlist">
+          <div class="card mb-16">
+            <div class="card-header">
+              <h3>⭐ Watchlist</h3>
+              <div class="card-actions flex gap-8">
+                <div style="position:relative;display:flex;align-items:center;">
+                  <input type="text" class="form-input" id="watchlist-add-input" list="watchlist-stock-list"
+                    placeholder="Add stock e.g. RELIANCE" style="width:220px;">
+                  <datalist id="watchlist-stock-list"></datalist>
+                </div>
+                <button class="btn btn-primary" id="btn-watchlist-add">+ Add</button>
+              </div>
+            </div>
+            <div id="watchlist-grid"></div>
+          </div>
+        </div>
+
+        <!-- ═══ PAGE: Portfolio ═══ -->
+        <div class="page" id="page-portfolio">
+          <div class="card mb-16">
+            <div class="card-header">
+              <h3>💼 Portfolio Tracker</h3>
+              <div class="card-actions">
+                <button class="btn btn-primary" onclick="portfolio.load()">🔄 Refresh</button>
+              </div>
+            </div>
+            <div id="portfolio-content">
+              <div style="text-align:center;padding:60px 20px;color:var(--text-muted);">
+                <div style="font-size:3rem;margin-bottom:12px;">💼</div>
+                <h3 style="font-family:var(--font-display);margin-bottom:8px;">Portfolio Tracker</h3>
+                <p style="font-size:0.85rem;">Connect to Kite to view your holdings, positions, and P&L.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- ═══ PAGE: Live Movers ═══ -->
+        <div class="page" id="page-live-movers">
+          <div class="card mb-16">
+            <div class="card-header">
+              <h3>🔥 Live Movers</h3>
+              <div class="card-actions">
+                <button class="btn btn-primary" onclick="liveMovers.load()">🔄 Refresh</button>
+              </div>
+            </div>
+            <div id="movers-content">
+              <div style="text-align:center;padding:60px 20px;color:var(--text-muted);">
+                <div style="font-size:3rem;margin-bottom:12px;">🔥</div>
+                <h3 style="font-family:var(--font-display);margin-bottom:8px;">Intraday Movers</h3>
+                <p style="font-size:0.85rem;">View top gainers, losers, volume buzzers, and OI leaders during market
+                  hours.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- ═══ PAGE: Index Movers Dashboard ═══ -->
+        <div class="page" id="page-index-movers">
+
+          <!-- Controls Row -->
+          <div class="card mb-16">
+            <div class="card-header" style="flex-wrap:wrap;gap:10px;">
+              <h3>📊 Index Movers Dashboard</h3>
+              <div class="card-actions" style="flex-wrap:wrap;gap:8px;align-items:center;">
+
+                <div style="display:flex;align-items:center;gap:6px;">
+                  <label style="font-size:0.75rem;color:var(--text-muted);white-space:nowrap;">Index</label>
+                  <select id="im-index" class="form-control" style="width:150px;padding:6px 10px;font-size:0.8rem;">
+                    <optgroup label="── NSE ──">
+                      <option value="nifty50">Nifty 50</option>
+                      <option value="banknifty">Bank Nifty</option>
+                      <option value="niftyit">Nifty IT</option>
+                      <option value="nifty100">Nifty 100</option>
+                    </optgroup>
+                    <optgroup label="── BSE ──">
+                      <option value="sensex">BSE Sensex</option>
+                      <option value="bsebankex">BSE Bankex</option>
+                      <option value="bseit">BSE IT</option>
+                      <option value="bse100">BSE 100</option>
+                    </optgroup>
+                  </select>
+                </div>
+
+                <div style="display:flex;align-items:center;gap:6px;">
+                  <label style="font-size:0.75rem;color:var(--text-muted);white-space:nowrap;">Day</label>
+                  <div style="display:flex;border:1px solid var(--border);border-radius:6px;overflow:hidden;">
+                    <button id="im-day-today" onclick="indexMovers.setDay(0)" style="padding:5px 10px;font-size:0.75rem;font-weight:600;border:none;cursor:pointer;
+                             background:var(--primary);color:#fff;">Today</button>
+                    <button id="im-day-prev" onclick="indexMovers.setDay(1)" style="padding:5px 10px;font-size:0.75rem;font-weight:600;border:none;cursor:pointer;
+                             background:var(--bg-card);color:var(--text-secondary);">Yesterday</button>
+                  </div>
+                </div>
+
+                <div style="display:flex;align-items:center;gap:6px;">
+                  <label style="font-size:0.75rem;color:var(--text-muted);white-space:nowrap;">Top N movers</label>
+                  <select id="im-topn" class="form-control" style="width:90px;padding:6px 10px;font-size:0.8rem;">
+                    <option value="5">Top 5</option>
+                    <option value="10" selected>Top 10</option>
+                    <option value="15">Top 15</option>
+                    <option value="20">Top 20</option>
+                  </select>
+                </div>
+
+                <div style="display:flex;align-items:center;gap:6px;">
+                  <label style="font-size:0.75rem;color:var(--text-muted);white-space:nowrap;">Alert threshold
+                    (%)</label>
+                  <input id="im-threshold" type="number" class="form-control" value="2" min="0.1" max="20" step="0.1"
+                    style="width:70px;padding:6px 10px;font-size:0.8rem;" />
+                </div>
+
+                <button id="im-fetch-btn" class="btn btn-primary" onclick="indexMovers.fetch()">Fetch Movers</button>
+                <button id="im-auto-refresh" class="btn btn-secondary" onclick="indexMovers.toggleAutoRefresh()">▶ Auto
+                  Refresh</button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Summary Stats -->
+          <div class="grid-4 mb-16">
+            <div class="stat-card">
+              <span class="stat-label">Total Stocks</span>
+              <span class="stat-value" id="im-stat-total">—</span>
+              <span class="stat-change" style="color:var(--text-muted);">
+                <span id="im-exchange-badge"
+                  style="font-size:0.68rem;padding:1px 6px;border-radius:4px;font-weight:700;">NSE</span>
+              </span>
+            </div>
+            <div class="stat-card">
+              <span class="stat-label">Gainers</span>
+              <span class="stat-value" id="im-stat-gainers" style="color:var(--green);">—</span>
+              <span class="stat-change up">advancing</span>
+            </div>
+            <div class="stat-card">
+              <span class="stat-label">Losers</span>
+              <span class="stat-value" id="im-stat-losers" style="color:var(--red);">—</span>
+              <span class="stat-change down">declining</span>
+            </div>
+            <div class="stat-card">
+              <span class="stat-label">Last Updated</span>
+              <span class="stat-value" id="im-stat-updated" style="font-size:1rem;">—</span>
+              <span class="stat-change" id="im-stat-alerts" style="color:var(--text-muted);">—</span>
+            </div>
+          </div>
+
+          <!-- Sector Breakdown -->
+          <div class="card mb-16">
+            <div class="card-header">
+              <h3>📊 Sector Breakdown</h3>
+              <span style="font-size:0.75rem;color:var(--text-muted);">Click any sector to expand stocks · sorted by avg
+                change</span>
+            </div>
+            <div id="im-sector-view" style="padding:4px 0;">
+              <div style="text-align:center;padding:40px;color:var(--text-muted);">Fetch to load</div>
+            </div>
+          </div>
+
+          <!-- Alerts Triggered -->
+          <div class="card">
+            <div class="card-header">
+              <h3>🔔 Alerts Triggered</h3>
+              <span style="font-size:0.75rem;color:var(--text-muted);">Stocks that crossed the alert threshold %</span>
+            </div>
+            <div style="overflow-x:auto;">
+              <table class="data-table" style="font-size:0.82rem;">
+                <thead>
+                  <tr>
+                    <th>Symbol</th>
+                    <th>LTP</th>
+                    <th>Change %</th>
+                  </tr>
+                </thead>
+                <tbody id="im-alerts-body">
+                  <tr>
+                    <td colspan="3" style="text-align:center;padding:16px;color:var(--text-muted);">No alerts yet. Fetch
+                      data to check.</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+        </div>
+
+        <!-- ═══ PAGE: News ═══ -->
+        <div class="page" id="page-news">
+          <div class="card mb-16">
+            <div class="card-header">
+              <h3>📰 News & Sentiment</h3>
+              <div class="card-actions flex gap-8">
+                <div style="position:relative;display:flex;align-items:center;">
+                  <input type="text" class="form-input" id="news-symbol-filter"
+                    placeholder="Filter by stock e.g. RELIANCE" style="width:220px;">
+                </div>
+                <button class="btn btn-primary" id="btn-news-filter">Search</button>
+                <button class="btn btn-secondary"
+                  onclick="document.getElementById('news-symbol-filter').value=''; newsFeed.load()">All News</button>
+              </div>
+            </div>
+            <div id="news-content">
+              <div style="text-align:center;padding:60px 20px;color:var(--text-muted);">
+                <div style="font-size:3rem;margin-bottom:12px;">📰</div>
+                <h3 style="font-family:var(--font-display);margin-bottom:8px;">News & Sentiment Feed</h3>
+                <p style="font-size:0.85rem;">Aggregated market news with AI sentiment scoring from Livemint, ET, and
+                  MoneyControl.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- ═══ PAGE: Stock Analysis ═══ -->
+        <div class="page" id="page-analysis">
+          <div class="card mb-16">
+            <div class="card-header">
+              <h3>🔬 On-Demand Stock Analysis</h3>
+              <div class="card-actions flex gap-8" style="flex-wrap:wrap;">
+                <div style="position:relative;display:flex;align-items:center;">
+                  <span
+                    style="position:absolute;left:10px;color:var(--text-muted);font-size:0.9rem;pointer-events:none;">🔍</span>
+                  <input type="text" id="analysis-symbol-input" placeholder="Search F&amp;O stock e.g. RELIANCE"
+                    autocomplete="off" list="analysis-symbol-list"
+                    style="padding:8px 12px 8px 30px;min-width:240px;border-radius:8px;border:1px solid var(--border);background:var(--bg-card);color:var(--text-primary);font-size:0.85rem;outline:none;">
+                  <datalist id="analysis-symbol-list"></datalist>
+                </div>
+                <div class="tabs" style="margin-bottom:0;">
+                  <button class="tab-btn active" id="btn-mode-premarket" data-mode="premarket">📊 Pre-Market</button>
+                  <button class="tab-btn" id="btn-mode-live" data-mode="live">⚡ Live</button>
+                </div>
+                <div class="tabs" style="margin-bottom:0;">
+                  <button class="tab-btn" id="btn-ema-preset1" data-preset="preset1" title="EMA 5, 9, 21">📊 EMA
+                    5,9,21</button>
+                  <button class="tab-btn active" id="btn-ema-preset2" data-preset="preset2" title="EMA 9, 21, 50">📊 EMA
+                    9,21,50</button>
+                </div>
+                <button class="btn btn-sm btn-primary" id="btn-run-analysis">▶ Analyse</button>
+                <button class="btn btn-sm btn-secondary" id="btn-stop-analysis" style="display:none;">⏹ Stop
+                  Live</button>
+                <button class="btn btn-sm btn-secondary" id="btn-signal-chart" style="display:none;"
+                  title="Open intraday signal chart">📈 Signal Chart</button>
+              </div>
+            </div>
+            <div id="analysis-status" style="padding:8px 0;min-height:28px;"></div>
+            <div id="analysis-result" style="display:none;padding-top:4px;"></div>
+            <div id="analysis-empty" class="empty-state">
+              <div class="empty-icon">🔬</div>
+              <h4>Select a Stock &amp; Mode</h4>
+              <p>Choose any F&amp;O stock, pick Pre-Market or Live mode, and click Analyse.<br>
+                <span style="font-size:0.78rem;color:var(--text-muted);">Live mode needs an active Kite session and
+                  refreshes every 15 seconds. Signal flips trigger real-time alerts.</span>
+              </p>
+            </div>
+          </div>
+
+          <!-- ── Inline Signal Chart (5m / 15m) ── -->
+          <div class="card mb-16" id="analysis-chart-card" style="display:none;">
+            <div class="card-header">
+              <h3>📈 Signal Chart</h3>
+              <div class="card-actions flex gap-8">
+                <div class="tabs" style="margin-bottom:0;" id="analysis-chart-interval-tabs">
+                  <button class="tab-btn active" data-interval="5minute">5m</button>
+                  <button class="tab-btn" data-interval="15minute">15m</button>
+                </div>
+                <span id="analysis-chart-session-label"
+                  style="font-size:0.72rem;color:var(--text-muted);align-self:center;"></span>
+                <span id="analysis-chart-live-badge"
+                  style="display:none;padding:2px 8px;border-radius:10px;font-size:0.68rem;font-weight:700;background:#EF535022;color:#EF5350;border:1px solid #EF535055;align-self:center;letter-spacing:0.05em;">&#9679;
+                  LIVE</span>
+                <button id="btn-stop-signal-chart" style="display:none;" class="btn btn-sm btn-secondary"
+                  title="Stop live updates">&#9632; Stop</button>
+              </div>
+            </div>
+            <div id="analysis-chart-container" style="height:420px;width:100%;"></div>
+          </div>
+
+          <!-- Signal Summary Row (analysis page) -->
+          <div class="grid-4 mb-16" id="analysis-signal-summary"
+            style="display:none;grid-template-columns:repeat(6,1fr);">
+            <div class="stat-card" style="padding:10px;text-align:center;">
+              <span class="stat-label" style="font-size:0.6rem;">Total Signals</span>
+              <span class="stat-value" style="font-size:1rem;" id="as-total">0</span>
+            </div>
+            <div class="stat-card" style="padding:10px;text-align:center;">
+              <span class="stat-label" style="font-size:0.6rem;">▲ CALL Entry</span>
+              <span class="stat-value" style="font-size:1rem;color:#26A69A;" id="as-buys">0</span>
+            </div>
+            <div class="stat-card" style="padding:10px;text-align:center;">
+              <span class="stat-label" style="font-size:0.6rem;">▼ PUT Entry</span>
+              <span class="stat-value" style="font-size:1rem;color:#EF5350;" id="as-sells">0</span>
+            </div>
+            <div class="stat-card" style="padding:10px;text-align:center;">
+              <span class="stat-label" style="font-size:0.6rem;">Win Rate</span>
+              <span class="stat-value" style="font-size:1rem;" id="as-winrate">—</span>
+            </div>
+            <div class="stat-card" style="padding:10px;text-align:center;">
+              <span class="stat-label" style="font-size:0.6rem;">Strong Signals</span>
+              <span class="stat-value" style="font-size:1rem;color:#1E88E5;" id="as-strong">0</span>
+            </div>
+            <div class="stat-card" style="padding:10px;text-align:center;">
+              <span class="stat-label" style="font-size:0.6rem;">Hyp. P&amp;L</span>
+              <span class="stat-value" style="font-size:1rem;" id="as-pnl">—</span>
+            </div>
+          </div>
+
+          <!-- Signal Log (analysis page) -->
+          <div class="card mb-16" id="analysis-signal-log-card" style="display:none;">
+            <div class="card-header">
+              <h3>🎯 Signal Log</h3>
+              <div class="card-actions">
+                <span style="font-size:0.72rem;color:var(--text-muted);" id="analysis-signal-log-count"></span>
+              </div>
+            </div>
+            <div id="analysis-signal-log-body" style="max-height:340px;overflow-y:auto;padding:8px 12px;"></div>
+          </div>
+        </div>
+
+        <!-- ═══ PAGE: SMC Options Signal Dashboard ═══ -->
+        <div class="page" id="page-smc-dashboard">
+          <!-- Header card -->
+          <div class="card mb-16">
+            <div class="card-header" style="flex-wrap:wrap;gap:10px;">
+              <div style="display:flex;align-items:center;gap:8px;">
+                <span id="smc-live-dot"
+                  style="width:10px;height:10px;border-radius:50%;background:#26A69A;display:inline-block;"></span>
+                <h3 style="margin:0;">SMC Options Signal Dashboard</h3>
+                <span class="tag"
+                  style="background:rgba(30,136,229,0.1);color:#1E88E5;border:1px solid rgba(30,136,229,0.3);font-size:0.68rem;">NSE
+                  · Zerodha Kite</span>
+              </div>
+              <div class="card-actions flex gap-8" style="flex-wrap:wrap;">
+                <select class="form-select" id="smc-symbol-select" style="min-width:160px;">
+                  <option value="NIFTY 50">NIFTY</option>
+                  <option value="NIFTY BANK">BANKNIFTY</option>
+                  <option value="BSE SENSEX">SENSEX</option>
+                </select>
+                <select class="form-select" id="smc-date-select"></select>
+                <span id="smc-updated" style="font-size:0.72rem;color:var(--text-muted);align-self:center;"></span>
+              </div>
+            </div>
+            <!-- Key metrics -->
+            <div class="grid-4" style="margin-top:12px;grid-template-columns:repeat(4,1fr);">
+              <div class="stat-card">
+                <span class="stat-label">LTP (Spot)</span>
+                <span class="stat-value" id="smc-ltp" style="font-size:1.6rem;">—</span>
+                <span id="smc-ltp-change" style="font-size:0.75rem;"></span>
+              </div>
+              <div class="stat-card">
+                <span class="stat-label">Signal Bias</span>
+                <span class="stat-value" id="smc-bias" style="font-size:1.6rem;">—</span>
+                <span id="smc-confidence" style="font-size:0.75rem;color:var(--text-muted);"></span>
+              </div>
+              <div class="stat-card">
+                <span class="stat-label">PCR (OI)</span>
+                <span class="stat-value" id="smc-pcr" style="font-size:1.6rem;">—</span>
+                <span id="smc-pcr-label" style="font-size:0.75rem;color:var(--text-muted);"></span>
+              </div>
+              <div class="stat-card">
+                <span class="stat-label">IV Rank</span>
+                <span class="stat-value" id="smc-iv-rank" style="font-size:1.6rem;">—</span>
+                <span id="smc-iv-label" style="font-size:0.75rem;color:var(--text-muted);"></span>
+              </div>
+            </div>
+            <!-- Timeframe + simulate -->
+            <div style="display:flex;align-items:center;gap:12px;margin-top:12px;flex-wrap:wrap;">
+              <div class="tabs" style="margin:0;" id="smc-interval-tabs">
+                <button class="tab-btn active" data-interval="5minute">5m</button>
+                <button class="tab-btn" data-interval="15minute">15m</button>
+                <button class="tab-btn" data-interval="60minute">1h</button>
+                <button class="tab-btn" data-interval="day">1D</button>
+              </div>
+              <span style="font-size:0.75rem;color:var(--text-muted);">Simulate:</span>
+              <button class="btn btn-sm" id="btn-smc-bull"
+                style="background:#26A69A22;color:#26A69A;border:1px solid #26A69A55;">Bull setup</button>
+              <button class="btn btn-sm" id="btn-smc-bear"
+                style="background:#EF535022;color:#EF5350;border:1px solid #EF535055;">Bear setup</button>
+              <button class="btn btn-sm btn-secondary" id="btn-smc-exit">Exit signal</button>
+            </div>
+          </div>
+
+          <!-- SMC Structure + Momentum -->
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px;">
+            <div class="card">
+              <div class="card-header">
+                <h3 style="font-size:0.75rem;letter-spacing:0.08em;color:var(--text-muted);">SMC STRUCTURE</h3>
+              </div>
+              <table style="width:100%;border-collapse:collapse;font-size:0.82rem;">
+                <tr>
+                  <td style="padding:8px 0;color:var(--text-secondary);">Market Structure</td>
+                  <td style="text-align:right;font-weight:600;" id="smc-market-structure">—</td>
+                </tr>
+                <tr>
+                  <td style="padding:8px 0;color:var(--text-secondary);">BOS / ChoCH</td>
+                  <td style="text-align:right;font-weight:600;" id="smc-bos">—</td>
+                </tr>
+                <tr>
+                  <td style="padding:8px 0;color:var(--text-secondary);">Premium/Discount</td>
+                  <td style="text-align:right;font-weight:600;" id="smc-premium-discount">—</td>
+                </tr>
+                <tr>
+                  <td style="padding:8px 0;color:var(--text-secondary);">FVG (Imbalance)</td>
+                  <td style="text-align:right;font-weight:600;" id="smc-fvg">—</td>
+                </tr>
+                <tr>
+                  <td style="padding:8px 0;color:var(--text-secondary);">Sweep / Liquidity</td>
+                  <td style="text-align:right;font-weight:600;" id="smc-sweep">—</td>
+                </tr>
+              </table>
+              <div style="margin-top:8px;">
+                <div style="font-size:0.72rem;color:var(--text-muted);margin-bottom:6px;font-weight:600;">Order Blocks
+                </div>
+                <div id="smc-ob-list" style="display:flex;gap:6px;flex-wrap:wrap;"></div>
+              </div>
+            </div>
+            <div class="card">
+              <div class="card-header">
+                <h3 style="font-size:0.75rem;letter-spacing:0.08em;color:var(--text-muted);">MOMENTUM + VOLUME</h3>
+              </div>
+              <table style="width:100%;border-collapse:collapse;font-size:0.82rem;">
+                <tr>
+                  <td style="padding:8px 0;color:var(--text-secondary);">RSI (14)</td>
+                  <td style="text-align:right;font-weight:600;" id="smc-rsi">—</td>
+                </tr>
+                <tr>
+                  <td style="padding:8px 0;color:var(--text-secondary);">MACD</td>
+                  <td style="text-align:right;font-weight:600;" id="smc-macd">—</td>
+                </tr>
+                <tr>
+                  <td style="padding:8px 0;color:var(--text-secondary);">EMA Stack</td>
+                  <td style="text-align:right;font-weight:600;" id="smc-ema-stack">—</td>
+                </tr>
+                <tr>
+                  <td style="padding:8px 0;color:var(--text-secondary);">Volume Delta</td>
+                  <td style="text-align:right;font-weight:600;" id="smc-vol-delta">—</td>
+                </tr>
+                <tr>
+                  <td style="padding:8px 0;color:var(--text-secondary);">OI Change</td>
+                  <td style="text-align:right;font-weight:600;" id="smc-oi-change">—</td>
+                </tr>
+              </table>
+              <div style="margin-top:10px;">
+                <div style="display:flex;justify-content:space-between;font-size:0.72rem;margin-bottom:4px;">
+                  <span style="color:var(--text-muted);">Overall signal strength</span>
+                  <span id="smc-strength-label" style="font-weight:600;color:var(--text-muted);">—</span>
+                </div>
+                <div style="height:6px;background:var(--border);border-radius:3px;overflow:hidden;">
+                  <div id="smc-strength-bar"
+                    style="height:100%;border-radius:3px;background:#26A69A;width:0%;transition:width 0.5s;"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Chart Patterns + Recommended Trade -->
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px;">
+            <div class="card">
+              <div class="card-header">
+                <h3 style="font-size:0.75rem;letter-spacing:0.08em;color:var(--text-muted);">CHART PATTERNS</h3>
+              </div>
+              <table style="width:100%;border-collapse:collapse;font-size:0.82rem;">
+                <tr>
+                  <td style="padding:8px 0;color:var(--text-secondary);">Pattern</td>
+                  <td style="text-align:right;font-weight:600;" id="smc-pattern-name">—</td>
+                </tr>
+                <tr>
+                  <td style="padding:8px 0;color:var(--text-secondary);">Support</td>
+                  <td style="text-align:right;font-weight:600;" id="smc-support">—</td>
+                </tr>
+                <tr>
+                  <td style="padding:8px 0;color:var(--text-secondary);">Resistance</td>
+                  <td style="text-align:right;font-weight:600;" id="smc-resistance">—</td>
+                </tr>
+                <tr>
+                  <td style="padding:8px 0;color:var(--text-secondary);">Candle (last bar)</td>
+                  <td style="text-align:right;font-weight:600;" id="smc-candle-pattern">—</td>
+                </tr>
+              </table>
+            </div>
+            <div class="card" id="smc-reco-card">
+              <div class="card-header">
+                <h3 style="font-size:0.75rem;letter-spacing:0.08em;color:var(--text-muted);">RECOMMENDED TRADE</h3>
+              </div>
+              <div id="smc-reco-body">
+                <div style="color:var(--text-muted);font-size:0.8rem;padding:16px 0;">Run analysis to see recommendation
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Live Signal Tags -->
+          <div class="card">
+            <div class="card-header">
+              <h3>LIVE SIGNAL TAGS</h3>
+              <div class="card-actions">
+                <button class="btn btn-sm btn-secondary" id="btn-smc-clear-tags">Clear all</button>
+              </div>
+            </div>
+            <div id="smc-tag-feed" style="max-height:400px;overflow-y:auto;">
+              <div class="empty-state" style="padding:24px;">
+                <div style="font-size:0.82rem;color:var(--text-muted);">No signal tags yet. Signals fire automatically
+                  when bias or structure changes.</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- ═══ PAGE: Strategy Builder ═══ -->
+        <div class="page" id="page-strategy">
+          <div class="card mb-16">
+            <div class="card-header">
+              <h3>🏗 Options Strategy Builder</h3>
+              <div class="card-actions">
+                <span style="font-size:0.75rem;color:var(--text-muted);">Build multi-leg strategies with live payoff
+                  diagrams</span>
+              </div>
+            </div>
+            <div id="strategy-content">
+              <div class="empty-state">
+                <div class="empty-icon">🏗</div>
+                <h4>Strategy Builder</h4>
+                <p>Loading...</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- ═══ PAGE: Backtester ═══ -->
+        <div class="page" id="page-backtest">
+          <div class="card mb-16">
+            <div class="card-header">
+              <h3>🧪 Backtesting Engine</h3>
+              <div class="card-actions">
+                <span style="font-size:0.75rem;color:var(--text-muted);">Simulate signals on real historical data</span>
+              </div>
+            </div>
+            <div id="backtest-content">
+              <div class="empty-state">
+                <div class="empty-icon">🧪</div>
+                <h4>Backtesting Engine</h4>
+                <p>Loading...</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- ═══ PAGE: Trade Journal ═══ -->
+        <div class="page" id="page-journal">
+          <!-- Entry Form -->
+          <div class="card mb-16">
+            <div class="card-header">
+              <h3>📓 Log Trade</h3>
+            </div>
+            <form id="journal-form" style="padding:12px 16px;display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+              <div style="display:flex;flex-direction:column;gap:4px;">
+                <label style="font-size:0.7rem;color:var(--text-muted);text-transform:uppercase;">Symbol</label>
+                <input type="text" id="j-symbol" placeholder="RELIANCE" required
+                  style="padding:8px;border-radius:6px;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);color:var(--text-primary);font-size:0.82rem;" />
+              </div>
+              <div style="display:flex;flex-direction:column;gap:4px;">
+                <label style="font-size:0.7rem;color:var(--text-muted);text-transform:uppercase;">Direction</label>
+                <select id="j-direction"
+                  style="padding:8px;border-radius:6px;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);color:var(--text-primary);font-size:0.82rem;">
+                  <option value="LONG">▲ Long</option>
+                  <option value="SHORT">▼ Short</option>
+                </select>
+              </div>
+              <div style="display:flex;flex-direction:column;gap:4px;">
+                <label style="font-size:0.7rem;color:var(--text-muted);text-transform:uppercase;">Entry Price</label>
+                <input type="number" id="j-entry-price" step="0.05" required
+                  style="padding:8px;border-radius:6px;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);color:var(--text-primary);font-size:0.82rem;" />
+              </div>
+              <div style="display:flex;flex-direction:column;gap:4px;">
+                <label style="font-size:0.7rem;color:var(--text-muted);text-transform:uppercase;">Exit Price
+                  (optional)</label>
+                <input type="number" id="j-exit-price" step="0.05"
+                  style="padding:8px;border-radius:6px;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);color:var(--text-primary);font-size:0.82rem;" />
+              </div>
+              <div style="display:flex;flex-direction:column;gap:4px;">
+                <label style="font-size:0.7rem;color:var(--text-muted);text-transform:uppercase;">Quantity</label>
+                <input type="number" id="j-qty" value="1" min="1"
+                  style="padding:8px;border-radius:6px;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);color:var(--text-primary);font-size:0.82rem;" />
+              </div>
+              <div style="display:flex;flex-direction:column;gap:4px;">
+                <label style="font-size:0.7rem;color:var(--text-muted);text-transform:uppercase;">Entry Date</label>
+                <input type="date" id="j-entry-date" required
+                  style="padding:8px;border-radius:6px;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);color:var(--text-primary);font-size:0.82rem;" />
+              </div>
+              <div style="display:flex;flex-direction:column;gap:4px;">
+                <label style="font-size:0.7rem;color:var(--text-muted);text-transform:uppercase;">Exit Date</label>
+                <input type="date" id="j-exit-date"
+                  style="padding:8px;border-radius:6px;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);color:var(--text-primary);font-size:0.82rem;" />
+              </div>
+              <div style="display:flex;flex-direction:column;gap:4px;">
+                <label style="font-size:0.7rem;color:var(--text-muted);text-transform:uppercase;">Tags (comma
+                  sep)</label>
+                <input type="text" id="j-tags" placeholder="swing,momentum"
+                  style="padding:8px;border-radius:6px;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);color:var(--text-primary);font-size:0.82rem;" />
+              </div>
+              <div style="grid-column:1/-1;display:flex;flex-direction:column;gap:4px;">
+                <label style="font-size:0.7rem;color:var(--text-muted);text-transform:uppercase;">Rationale</label>
+                <input type="text" id="j-rationale" placeholder="Why did you take this trade?"
+                  style="padding:8px;border-radius:6px;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);color:var(--text-primary);font-size:0.82rem;" />
+              </div>
+              <div style="grid-column:1/-1;">
+                <button type="submit" class="btn btn-primary" style="width:100%;padding:10px;">📝 Log Trade</button>
+              </div>
+            </form>
+          </div>
+
+          <!-- Stats -->
+          <div class="card mb-16">
+            <div class="card-header">
+              <h3>📊 Analytics</h3>
+            </div>
+            <div id="journal-stats" style="padding:12px 16px;">
+              <div style="text-align:center;padding:16px;color:var(--text-muted);font-size:0.8rem;">Complete and close
+                trades to see analytics</div>
+            </div>
+          </div>
+
+          <!-- Trade List -->
+          <div class="card">
+            <div class="card-header">
+              <h3>📋 Trade Log</h3>
+              <div class="card-actions" id="journal-filters">
+                <button class="tab-btn active" data-filter="ALL">All</button>
+                <button class="tab-btn" data-filter="OPEN">Open</button>
+                <button class="tab-btn" data-filter="CLOSED">Closed</button>
+              </div>
+            </div>
+            <div id="journal-list" style="max-height:400px;overflow-y:auto;"></div>
+          </div>
+        </div>
+
+        <!-- ═══ PAGE: Paper Trading ═══ -->
+        <div class="page" id="page-paper">
+          <!-- Order Form -->
+          <div class="card mb-16">
+            <div class="card-header">
+              <h3>📝 Place Order</h3>
+              <div class="card-actions">
+                <button class="btn btn-sm btn-secondary" id="paper-reset-btn">🔄 Reset Portfolio</button>
+              </div>
+            </div>
+            <div style="padding:12px 16px;display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end;">
+              <div style="display:flex;flex-direction:column;gap:4px;flex:2;">
+                <label style="font-size:0.7rem;color:var(--text-muted);text-transform:uppercase;">Symbol</label>
+                <input type="text" id="paper-symbol" placeholder="RELIANCE"
+                  style="padding:8px;border-radius:6px;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);color:var(--text-primary);font-size:0.82rem;" />
+              </div>
+              <div style="display:flex;flex-direction:column;gap:4px;flex:1;">
+                <label style="font-size:0.7rem;color:var(--text-muted);text-transform:uppercase;">Qty</label>
+                <input type="number" id="paper-qty" value="1" min="1"
+                  style="padding:8px;border-radius:6px;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);color:var(--text-primary);font-size:0.82rem;" />
+              </div>
+              <div style="display:flex;flex-direction:column;gap:4px;flex:1.5;">
+                <label style="font-size:0.7rem;color:var(--text-muted);text-transform:uppercase;">Price (₹)</label>
+                <input type="number" id="paper-price" step="0.05"
+                  style="padding:8px;border-radius:6px;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);color:var(--text-primary);font-size:0.82rem;" />
+              </div>
+              <button class="btn btn-primary" id="paper-buy-btn" style="padding:8px 16px;">▲ Buy</button>
+              <button class="btn" id="paper-sell-btn" style="padding:8px 16px;background:#EF5350;color:#fff;">▼
+                Sell</button>
+            </div>
+          </div>
+
+          <!-- Portfolio Summary -->
+          <div class="card mb-16">
+            <div class="card-header">
+              <h3>💰 Portfolio Summary</h3>
+            </div>
+            <div id="paper-summary" style="padding:12px 16px;">
+              <div style="text-align:center;padding:16px;color:var(--text-muted);font-size:0.8rem;">Loading portfolio...
+              </div>
+            </div>
+          </div>
+
+          <!-- Positions -->
+          <div class="card">
+            <div class="card-header">
+              <h3>📋 Positions</h3>
+              <div class="card-actions" id="paper-filters">
+                <button class="tab-btn active" data-filter="OPEN">Open</button>
+                <button class="tab-btn" data-filter="CLOSED">Closed</button>
+                <button class="tab-btn" data-filter="ALL">All</button>
+              </div>
+            </div>
+            <div id="paper-positions" style="max-height:400px;overflow-y:auto;"></div>
+          </div>
+        </div>
+
+        <!-- ═══ PAGE: Recommendations ═══ -->
+        <div class="page" id="page-recommendations">
+          <div class="card mb-16">
+            <div class="card-header">
+              <h3>🎯 Live Recommendations</h3>
+              <div class="card-actions">
+                <span class="text-muted" id="reco-timestamp" style="font-size:0.75rem;">—</span>
+                <button class="btn btn-sm btn-secondary" id="btn-reco-auto"
+                  title="Auto-refresh every 60s during market hours">🔄 Auto</button>
+                <button class="btn btn-sm btn-primary" id="btn-gen-reco">Generate</button>
+              </div>
+            </div>
+
+            <div class="grid-2 mb-16" style="gap:16px;">
+              <div class="card" style="padding:16px;">
+                <div class="card-header" style="padding:0 0 12px 0;">
+                  <h4>Equity Picks</h4>
+                </div>
+                <div id="reco-list-equity" class="top-picks-grid">
+                  <div class="empty-state">
+                    <div class="empty-icon">🎯</div>
+                    <h4>No strong equity picks</h4>
+                    <p>Click "Generate" to get fresh equity signals.</p>
+                  </div>
+                </div>
+              </div>
+              <div class="card" style="padding:16px;">
+                <div class="card-header" style="padding:0 0 12px 0;">
+                  <h4>Options Picks</h4>
+                </div>
+                <div id="reco-list-options" class="top-picks-grid">
+                  <div class="empty-state">
+                    <div class="empty-icon">🎯</div>
+                    <h4>No strong options picks</h4>
+                    <p>Click "Generate" to get fresh options signals.</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- ═══ PAGE: Reco Tracker ═══ -->
+        <div class="page" id="page-reco-tracker">
+          <!-- Summary Cards -->
+          <div class="grid-4 mb-16" style="grid-template-columns:repeat(5,1fr);" id="reco-tracker-summary">
+            <div class="stat-card" style="padding:12px;text-align:center;">
+              <span class="stat-label" style="font-size:0.65rem;">Total Signals</span>
+              <span class="stat-value" style="font-size:1.2rem;">0</span>
+            </div>
+            <div class="stat-card" style="padding:12px;text-align:center;">
+              <span class="stat-label" style="font-size:0.65rem;">Open</span>
+              <span class="stat-value" style="font-size:1.2rem;">0</span>
+            </div>
+            <div class="stat-card" style="padding:12px;text-align:center;">
+              <span class="stat-label" style="font-size:0.65rem;">Closed</span>
+              <span class="stat-value" style="font-size:1.2rem;">0</span>
+            </div>
+            <div class="stat-card" style="padding:12px;text-align:center;">
+              <span class="stat-label" style="font-size:0.65rem;">Win Rate</span>
+              <span class="stat-value" style="font-size:1.2rem;">—</span>
+            </div>
+            <div class="stat-card" style="padding:12px;text-align:center;">
+              <span class="stat-label" style="font-size:0.65rem;">Net P&amp;L</span>
+              <span class="stat-value" style="font-size:1.2rem;">—</span>
+            </div>
+          </div>
+
+          <!-- Controls -->
+          <div class="card mb-16">
+            <div class="card-header">
+              <h3>📊 Recommendation P&amp;L Tracker</h3>
+              <div class="card-actions flex gap-8" style="flex-wrap:wrap;">
+                <input type="date" class="form-input" id="reco-tracker-date"
+                  style="width:160px;padding:6px 10px;font-size:0.82rem;">
+                <select class="form-select" id="reco-fno-capture-mode" title="FNO Session Capture Mode"
+                  style="width:140px;padding:6px;font-size:0.78rem;">
+                  <option value="all">FNO: All Phases</option>
+                  <option value="premarket">FNO: Premarket</option>
+                  <option value="opening">FNO: Opening</option>
+                  <option value="live">FNO: Live Only</option>
+                </select>
+                <button class="btn btn-sm btn-primary" id="btn-reco-auto-close">📡 Auto-fetch Close Prices</button>
+                <button class="btn btn-sm btn-secondary" id="btn-reco-export-csv">📥 Export CSV</button>
+              </div>
+            </div>
+
+            <!-- Source Tabs -->
+            <div style="padding:8px 16px 0;display:flex;gap:8px;flex-wrap:wrap;">
+              <div class="tabs" id="reco-tracker-source-tabs" style="margin-bottom:0;">
+                <button class="tab-btn active" data-source="">All Sources</button>
+                <button class="tab-btn" data-source="equity_picks">📈 Equity</button>
+                <button class="tab-btn" data-source="options_picks">⛓️ Options</button>
+                <button class="tab-btn" data-source="fno_session">⏰ FNO</button>
+              </div>
+              <div class="tabs" id="reco-tracker-status-tabs" style="margin-bottom:0;">
+                <button class="tab-btn active" data-status="">All Status</button>
+                <button class="tab-btn" data-status="OPEN">Open</button>
+                <button class="tab-btn" data-status="CLOSED">Closed</button>
+              </div>
+            </div>
+
+            <!-- Table -->
+            <div style="overflow-x:auto;padding:0 0 8px;">
+              <table class="data-table" id="reco-tracker-table">
+                <thead>
+                  <tr>
+                    <th>Symbol</th>
+                    <th>Source</th>
+                    <th>Signal</th>
+                    <th>Score</th>
+                    <th>Entry</th>
+                    <th>Target</th>
+                    <th>SL</th>
+                    <th>Exit</th>
+                    <th>P&amp;L</th>
+                    <th>Status</th>
+                    <th>Time</th>
+                    <th>Actions</th>
+                  </tr>
+                </thead>
+                <tbody id="reco-tracker-table-body">
+                  <tr>
+                    <td colspan="12" style="text-align:center;padding:40px;color:var(--text-muted);">📊 Run
+                      recommendations or FNO analysis to start tracking</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <!-- Accuracy Analytics -->
+          <div class="card">
+            <div class="card-header">
+              <h3>🎯 Accuracy Analytics</h3>
+            </div>
+            <div id="reco-tracker-stats" style="padding:12px 16px;">
+              <div style="text-align:center;padding:20px;color:var(--text-muted);font-size:0.8rem;">Close
+                recommendations to see accuracy analytics</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- ═══ PAGE: Historical ═══ -->
+        <div class="page" id="page-historical">
+          <div class="card mb-16">
+            <div class="card-header">
+              <h3>📊 Historical Price Chart</h3>
+              <div class="card-actions flex gap-8" style="flex-wrap:wrap;">
+                <select class="form-select" id="hist-symbol">
+                  <option value="">Select Stock...</option>
+                  <optgroup label="📊 Indices" id="hist-indices">
+                    <option value="NIFTY 50">NIFTY 50</option>
+                    <option value="NIFTY BANK">NIFTY BANK</option>
+                    <option value="NIFTY FIN SERVICE">NIFTY FIN SERVICE</option>
+                    <option value="NIFTY NEXT 50">NIFTY NEXT 50</option>
+                    <option value="INDIA VIX">INDIA VIX</option>
+                    <option value="SENSEX">SENSEX</option>
+                  </optgroup>
+                  <optgroup label="📈 F&amp;O Stocks" id="hist-fno-stocks"></optgroup>
+                </select>
+                <div class="tabs" style="margin-bottom:0;" id="hist-interval-tabs">
+                  <button class="tab-btn" data-interval="5minute">5m</button>
+                  <button class="tab-btn" data-interval="15minute">15m</button>
+                  <button class="tab-btn active" data-interval="day">1D</button>
+                  <button class="tab-btn" data-interval="week">1W</button>
+                </div>
+                <select class="form-select" id="hist-range">
+                  <option value="5">5 Days</option>
+                  <option value="10">10 Days</option>
+                  <option value="30">30 Days</option>
+                  <option value="90" selected>3 Months</option>
+                  <option value="180">6 Months</option>
+                  <option value="365">1 Year</option>
+                </select>
+                <button class="btn btn-sm btn-primary" id="btn-load-chart">Load Chart</button>
+              </div>
+            </div>
+            <div class="chart-container" id="main-chart"></div>
+          </div>
+
+          <!-- Technical Indicators Summary -->
+          <div class="card">
+            <div class="card-header">
+              <h3>Technical Indicators</h3>
+            </div>
+            <div class="grid-4" id="tech-indicators">
+              <div class="stat-card">
+                <span class="stat-label">RSI (14)</span>
+                <span class="stat-value" id="ind-rsi">—</span>
+              </div>
+              <div class="stat-card">
+                <span class="stat-label">MACD Signal</span>
+                <span class="stat-value" id="ind-macd">—</span>
+              </div>
+              <div class="stat-card">
+                <span class="stat-label">ADX</span>
+                <span class="stat-value" id="ind-adx">—</span>
+              </div>
+              <div class="stat-card">
+                <span class="stat-label">ATR</span>
+                <span class="stat-value" id="ind-atr">—</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- ═══ PAGE: Alerts ═══ -->
+        <div class="page" id="page-alerts">
+          <div class="card mb-16">
+            <div class="card-header">
+              <h3>🔔 Alert Center</h3>
+              <div class="card-actions flex gap-8">
+                <button class="btn btn-sm btn-secondary" id="btn-clear-alerts">Clear All</button>
+                <button class="btn btn-sm btn-primary" id="btn-add-alert">+ Add Rule</button>
+              </div>
+            </div>
+
+            <!-- Active Alert Rules -->
+            <div class="mb-16">
+              <h4 class="mb-8" style="font-size:0.85rem;color:var(--text-secondary);">Active Rules</h4>
+              <div id="alert-rules">
+                <div class="empty-state" style="padding:20px;">
+                  <p class="text-muted">No alert rules configured. Click "+ Add Rule" to create one.</p>
+                </div>
+              </div>
+            </div>
+
+            <!-- Alert Log -->
+            <h4 class="mb-8" style="font-size:0.85rem;color:var(--text-secondary);">Alert Log</h4>
+            <div id="alert-log">
+              <div class="empty-state" style="padding:30px;">
+                <div class="empty-icon">🔕</div>
+                <h4>No Alerts</h4>
+                <p>Alerts will appear here when triggered</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- ═══ PAGE: Trade Cockpit ═══ -->
+        <div class="page" id="page-trade-cockpit">
+
+          <!-- Entry Form + Controls -->
+          <div class="card mb-16">
+            <div class="card-header" style="flex-wrap:wrap;gap:10px;">
+              <div style="display:flex;align-items:center;gap:8px;">
+                <h3 style="margin:0;">🎯 Trade Cockpit</h3>
+                <span class="tag"
+                  style="background:rgba(30,136,229,0.1);color:#1E88E5;border:1px solid rgba(30,136,229,0.3);font-size:0.68rem;">Entry
+                  Validator + Live Tracker</span>
+              </div>
+              <div class="card-actions" style="flex-wrap:wrap;gap:8px;align-items:center;">
+                <label
+                  style="display:flex;align-items:center;gap:4px;font-size:0.72rem;color:var(--text-muted);cursor:pointer;">
+                  <input type="checkbox" id="tc-audio-toggle" checked style="accent-color:var(--primary);">
+                  🔊 Alerts
+                </label>
+              </div>
+            </div>
+
+            <!-- Entry Form -->
+            <div
+              style="padding:12px 16px;display:flex;flex-wrap:wrap;gap:10px;align-items:flex-end;border-bottom:1px solid var(--border);">
+              <div style="display:flex;flex-direction:column;gap:4px;min-width:180px;flex:1;">
+                <label
+                  style="font-size:0.68rem;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.06em;">Symbol</label>
+                <select id="tc-symbol" class="form-select" style="padding:8px 10px;font-size:0.85rem;">
+                  <optgroup label="── Indices ──">
+                    <option value="NIFTY 50">NIFTY 50</option>
+                    <option value="NIFTY BANK">BANK NIFTY</option>
+                    <option value="BSE SENSEX">SENSEX</option>
+                  </optgroup>
+                  <optgroup label="── F&amp;O Stocks ──" id="tc-fno-stocks">
+                  </optgroup>
+                </select>
+              </div>
+              <div style="display:flex;flex-direction:column;gap:4px;min-width:120px;">
+                <label
+                  style="font-size:0.68rem;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.06em;">Entry
+                  Price</label>
+                <input type="number" id="tc-price" placeholder="Auto (LTP)" step="0.05"
+                  style="padding:8px 10px;border-radius:6px;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);color:var(--text-primary);font-size:0.85rem;width:130px;">
+              </div>
+              <div style="display:flex;flex-direction:column;gap:4px;">
+                <label
+                  style="font-size:0.68rem;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.06em;">Direction</label>
+                <div style="display:flex;border:1px solid var(--border);border-radius:6px;overflow:hidden;">
+                  <button id="tc-dir-call" class="tc-dir-btn tc-dir-active" data-dir="CALL"
+                    style="padding:7px 16px;font-size:0.82rem;font-weight:700;border:none;cursor:pointer;background:#26A69A;color:#fff;transition:all 0.15s;">▲
+                    CALL</button>
+                  <button id="tc-dir-put" class="tc-dir-btn" data-dir="PUT"
+                    style="padding:7px 16px;font-size:0.82rem;font-weight:700;border:none;cursor:pointer;background:var(--bg-card);color:var(--text-secondary);transition:all 0.15s;">▼
+                    PUT</button>
+                </div>
+              </div>
+              <div style="display:flex;flex-direction:column;gap:4px;min-width:140px;">
+                <label
+                  style="font-size:0.68rem;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.06em;">Date</label>
+                <input type="date" id="tc-date"
+                  style="padding:8px 10px;border-radius:6px;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);color:var(--text-primary);font-size:0.85rem;">
+              </div>
+              <div style="display:flex;flex-direction:column;gap:4px;min-width:120px;">
+                <label
+                  style="font-size:0.68rem;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.06em;">Time
+                  (HH:MM)</label>
+                <input type="time" id="tc-time" value="09:15"
+                  style="padding:8px 10px;border-radius:6px;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);color:var(--text-primary);font-size:0.85rem;">
+              </div>
+              <button id="tc-validate-btn" class="btn btn-primary" style="padding:8px 20px;font-weight:700;">
+                ✓ Validate Entry
+              </button>
+            </div>
+          </div>
+
+          <!-- Active Trade Status Bar -->
+          <div id="tc-active-trade-bar" style="display:none;margin-bottom:16px;">
+          </div>
+
+          <!-- Validation Result + Signal Log -->
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px;">
+            <div class="card">
+              <div class="card-header">
+                <h3 style="font-size:0.75rem;letter-spacing:0.08em;color:var(--text-muted);">ENTRY VALIDATION</h3>
+                <div class="card-actions">
+                  <button id="tc-enter-trade-btn" class="btn btn-sm"
+                    style="display:none;background:#26A69A;color:#fff;font-weight:700;">▶ Enter Trade</button>
+                </div>
+              </div>
+              <div id="tc-validation-result" style="padding:12px;">
+                <div style="text-align:center;padding:30px;color:var(--text-muted);font-size:0.82rem;">
+                  Select a symbol and click <strong>Validate Entry</strong> to check your trade idea.
+                </div>
+              </div>
+            </div>
+            <div class="card">
+              <div class="card-header">
+                <h3 style="font-size:0.75rem;letter-spacing:0.08em;color:var(--text-muted);">SIGNAL LOG</h3>
+                <div class="card-actions">
+                  <span id="tc-signal-count" style="font-size:0.72rem;color:var(--text-muted);"></span>
+                </div>
+              </div>
+              <div id="tc-signal-log" style="max-height:400px;overflow-y:auto;padding:8px 12px;">
+                <div style="text-align:center;padding:30px;color:var(--text-muted);font-size:0.82rem;">
+                  Signal log will appear here when tracking a trade.
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Dual Chart Split View -->
+          <div class="card mb-16">
+            <div class="card-header">
+              <h3>📈 Dual Chart View</h3>
+              <div class="card-actions flex gap-8" style="flex-wrap:wrap;">
+                <div class="tabs" style="margin:0;" id="tc-chart-interval-tabs">
+                  <button class="tab-btn active" data-interval="5minute">5m</button>
+                  <button class="tab-btn" data-interval="15minute">15m</button>
+                </div>
+                <span id="tc-chart-status" style="font-size:0.72rem;color:var(--text-muted);align-self:center;"></span>
+              </div>
+            </div>
+            <div
+              style="display:grid;grid-template-columns:1fr 1fr;gap:2px;background:var(--border);border-radius:0 0 12px 12px;overflow:hidden;">
+              <div style="background:var(--bg-card);">
+                <div
+                  style="padding:6px 12px;font-size:0.68rem;color:var(--text-muted);font-weight:600;letter-spacing:0.06em;border-bottom:1px solid var(--border);">
+                  CHART 1 — EMA 5, 9, 21 + VWAP + RSI</div>
+                <div id="tc-chart-1" style="height:380px;width:100%;"></div>
+              </div>
+              <div style="background:var(--bg-card);">
+                <div
+                  style="padding:6px 12px;font-size:0.68rem;color:var(--text-muted);font-weight:600;letter-spacing:0.06em;border-bottom:1px solid var(--border);">
+                  CHART 2 — EMA 9, 21, 50 + VWAP + MACD</div>
+                <div id="tc-chart-2" style="height:380px;width:100%;"></div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Index Movers Snapshot (embedded) -->
+          <div class="card mb-16" id="tc-snapshot-card">
+            <div class="card-header">
+              <h3 style="font-size:0.75rem;letter-spacing:0.08em;color:var(--text-muted);">📊 09:15 OPENING SNAPSHOT —
+                Top 10 Index Movers</h3>
+              <div class="card-actions">
+                <button id="tc-snapshot-refresh" class="btn btn-sm btn-secondary">🔄 Refresh</button>
+              </div>
+            </div>
+            <div id="tc-snapshot-body" style="padding:8px 12px;">
+              <div style="text-align:center;padding:20px;color:var(--text-muted);font-size:0.82rem;">Click Refresh to
+                capture index movers snapshot</div>
+            </div>
+          </div>
+
+        </div>
+
+        <!-- ═══ PAGE: FNO Sessions ═══ -->
+        <div class="page" id="page-fno-session">
+          <div class="card mb-16">
+            <div class="card-header">
+              <div>
+                <h3>⏰ FNO Session Analysis</h3>
+                <small style="color:var(--text-secondary);">Premarket (3:30 PM–9:00 AM) → Opening Bell (9:00–9:15 IST) →
+                  Live Trading (9:15 AM–3:30 PM)</small>
+              </div>
+              <div class="card-actions flex gap-8">
+                <button class="btn btn-sm btn-primary" id="btn-session-analyze">🔄 Analyze Now</button>
+              </div>
+            </div>
+
+            <!-- Session Selector -->
+            <div style="margin-bottom:16px;display:flex;gap:10px;flex-wrap:wrap;">
+              <div class="form-select" style="min-width:200px;">
+                <select id="fno-session-symbol" style="width:100%;padding:8px;">
+                  <option value="">Select F&O Stock</option>
+                </select>
+              </div>
+              <button class="btn btn-primary" id="btn-fno-quick-analyze">Quick Analysis</button>
+            </div>
+
+            <!-- Current Session Status -->
+            <div id="session-status-container"
+              style="margin-bottom:16px;padding:16px;background:var(--bg-secondary);border-radius:var(--radius-md);border-left:4px solid var(--primary);">
+              <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+                <strong id="current-session-label" style="font-size:1rem;">Premarket</strong>
+                <span id="current-session-time"
+                  style="font-family:var(--font-mono);font-size:0.85rem;color:var(--text-secondary);">--:--:--</span>
+              </div>
+              <p id="session-description" style="font-size:0.82rem;color:var(--text-secondary);margin:0;">Loading
+                session info...</p>
+            </div>
+
+            <!-- Analysis Results -->
+            <div id="fno-analysis-results" style="margin-top:20px;">
+              <div class="empty-state">
+                <div class="empty-icon">⏳</div>
+                <h4>No Analysis Yet</h4>
+                <p>Select a stock and click "Quick Analysis" to get started</p>
+              </div>
+            </div>
+          </div>
+
+          <!-- Session-Specific Strategies -->
+          <div class="grid-2">
+            <div class="card">
+              <div class="card-header">
+                <h3 style="font-size:0.95rem;">🌅 Premarket (3:30 PM–9:00 AM)</h3>
+              </div>
+              <div style="font-size:0.78rem;line-height:1.6;color:var(--text-secondary);">
+                <strong style="color:var(--text-primary);display:block;margin-bottom:8px;">Focus Areas:</strong>
+                <ul style="list-style:none;padding:0;margin:0;">
+                  <li>✓ Gap analysis from previous close</li>
+                  <li>✓ Pre-open OI accumulation/liquidation</li>
+                  <li>✓ Overnight news & events</li>
+                  <li>✓ FII/DII sentiment</li>
+                  <li>✓ Circuit breaker probability</li>
+                </ul>
+                <hr style="border:none;border-top:1px solid var(--border);margin:10px 0;">
+                <strong style="color:var(--text-primary);display:block;margin-bottom:6px;">Trade Setup:</strong>
+                <p style="margin:0;">Place orders at market open based on gap confirmation. Focus on breakouts with
+                  volume.</p>
+              </div>
+            </div>
+
+            <div class="card">
+              <div class="card-header">
+                <h3 style="font-size:0.95rem;">📊 Opening Bell (9:00–9:15 AM)</h3>
+              </div>
+              <div style="font-size:0.78rem;line-height:1.6;color:var(--text-secondary);">
+                <strong style="color:var(--text-primary);display:block;margin-bottom:8px;">Focus Areas:</strong>
+                <ul style="list-style:none;padding:0;margin:0;">
+                  <li>✓ First 15-min momentum & range</li>
+                  <li>✓ Volume buildup in first candles</li>
+                  <li>✓ PCR ratio movement</li>
+                  <li>✓ IV expansion/contraction</li>
+                  <li>✓ Reversal or continuation signals</li>
+                </ul>
+                <hr style="border:none;border-top:1px solid var(--border);margin:10px 0;">
+                <strong style="color:var(--text-primary);display:block;margin-bottom:6px;">Trade Setup:</strong>
+                <p style="margin:0;">Enter options spreads (Bull Call/Put) when direction is confirmed. Use stop-loss at
+                  opening range.</p>
+              </div>
+            </div>
+
+            <div class="card">
+              <div class="card-header">
+                <h3 style="font-size:0.95rem;">⚡ Live Session (9:15 AM–3:30 PM)</h3>
+              </div>
+              <div style="font-size:0.78rem;line-height:1.6;color:var(--text-secondary);">
+                <strong style="color:var(--text-primary);display:block;margin-bottom:8px;">Focus Areas:</strong>
+                <ul style="list-style:none;padding:0;margin:0;">
+                  <li>✓ Real-time price action & trends</li>
+                  <li>✓ PCR oscillations & max pain</li>
+                  <li>✓ IV crush/expansion dynamics</li>
+                  <li>✓ Intraday volume surges</li>
+                  <li>✓ Momentum confirmations (RSI, MACD)</li>
+                </ul>
+                <hr style="border:none;border-top:1px solid var(--border);margin:10px 0;">
+                <strong style="color:var(--text-primary);display:block;margin-bottom:6px;">Trade Setup:</strong>
+                <p style="margin:0;">Execute direct options buys or spreads based on live momentum. Manage exits near
+                  max pain levels.</p>
+              </div>
+            </div>
+
+            <div class="card">
+              <div class="card-header">
+                <h3 style="font-size:0.95rem;">📈 Quick Tips</h3>
+              </div>
+              <div style="font-size:0.78rem;line-height:1.6;color:var(--text-secondary);">
+                <ul style="list-style:none;padding:0;margin:0;">
+                  <li>🎯 <strong>Max Pain:</strong> Unlikely direction (avoid going against it)</li>
+                  <li>💰 <strong>PCR Swing:</strong> &gt;10% change = major direction shift</li>
+                  <li>⚡ <strong>IV Crush:</strong> Post-event, theta works in your favor</li>
+                  <li>📊 <strong>Volume Spike:</strong> &gt;1.5x avg = strong conviction</li>
+                  <li>🔄 <strong>Reversal:</strong> Near max pain + opposite PCR = high prob</li>
+                </ul>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- ═══ PAGE: FNO Trade Alerts ═══ -->
+        <div class="page" id="page-fno-trade-alerts">
+          <!-- Controls -->
+          <div class="card mb-16">
+            <div class="card-header" style="flex-wrap:wrap;gap:10px;">
+              <div style="display:flex;align-items:center;gap:8px;">
+                <h3 style="margin:0;">🚨 FNO Trade Alerts</h3>
+                <span class="tag"
+                  style="background:rgba(239,83,80,0.1);color:#EF5350;border:1px solid rgba(239,83,80,0.3);font-size:0.68rem;">Breakout
+                  | BOS | CHoCH</span>
+              </div>
+              <div class="card-actions" style="flex-wrap:wrap;gap:8px;align-items:center;">
+                <select id="fta-universe" class="form-select"
+                  style="padding:6px 10px;font-size:0.78rem;min-width:140px;">
+                  <option value="ALL_FNO">All F&amp;O (180+)</option>
+                  <option value="NIFTY50" selected>Nifty 50</option>
+                  <option value="BANKNIFTY">Bank Nifty</option>
+                  <option value="FINNIFTY">Fin Nifty</option>
+                  <option value="NIFTYIT">Nifty IT</option>
+                  <option value="NIFTYPHARMA">Pharma</option>
+                  <option value="NIFTYMETAL">Metal</option>
+                  <option value="NIFTYAUTO">Auto</option>
+                  <option value="NIFTYFMCG">FMCG</option>
+                  <option value="NIFTYREALTY">Realty</option>
+                  <option value="NIFTYPSE">PSE</option>
+                </select>
+                <select id="fta-min-score" class="form-select"
+                  style="padding:6px 10px;font-size:0.78rem;min-width:110px;">
+                  <option value="4">Score ≥ 4</option>
+                  <option value="6" selected>Score ≥ 6</option>
+                  <option value="8">Score ≥ 8</option>
+                  <option value="10">Score ≥ 10</option>
+                </select>
+                <button class="btn btn-primary" id="fta-run-btn" style="padding:7px 18px;font-weight:700;">▶ Run
+                  Scan</button>
+                <button class="btn btn-secondary" id="fta-summary-btn" style="padding:7px 16px;font-weight:700;"
+                  title="Download 10-day P&amp;L summary as CSV">📈 Summary</button>
+                <select id="fta-auto-refresh" class="form-select"
+                  style="padding:6px 10px;font-size:0.78rem;min-width:130px;">
+                  <option value="0">Auto: Off</option>
+                  <option value="5">Auto: 5 min</option>
+                  <option value="10">Auto: 10 min</option>
+                </select>
+                <span id="fta-countdown"
+                  style="font-family:var(--font-mono);font-size:0.75rem;color:var(--text-muted);min-width:48px;"></span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Snapshot Summary -->
+          <div class="card mb-16" id="fta-snapshot-card">
+            <div class="card-header" style="cursor:pointer;" id="fta-snapshot-toggle">
+              <h3 style="font-size:0.9rem;">📊 Current Market Snapshot <span id="fta-snapshot-time"
+                  style="font-weight:400;color:var(--text-muted);">—</span></h3>
+            </div>
+            <div id="fta-snapshot-body" style="padding:12px 16px;">
+              <div style="text-align:center;padding:30px;color:var(--text-muted);font-size:0.82rem;">
+                Click <strong>▶ Run Scan</strong> to scan F&amp;O universe for trade alerts.
+              </div>
+            </div>
+          </div>
+
+          <!-- ══ AI Validation Panel ══ -->
+          <div class="card mb-16" id="fta-ai-panel">
+            <div class="card-header" style="flex-wrap:wrap;gap:10px;">
+              <div style="display:flex;align-items:center;gap:8px;">
+                <h3 style="margin:0;">🤖 AI Alert Validator</h3>
+                <span class="tag"
+                  style="background:rgba(156,39,176,0.12);color:#CE93D8;border:1px solid rgba(156,39,176,0.35);font-size:0.68rem;">Ranked
+                  by Profit Probability</span>
+              </div>
+              <div class="card-actions" style="flex-wrap:wrap;gap:8px;align-items:center;">
+
+                <!-- Provider + Model selector -->
+                <select id="fta-ai-provider" class="form-select"
+                  style="padding:6px 10px;font-size:0.78rem;min-width:130px;" title="Choose AI provider">
+                  <option value="gemini">Gemini</option>
+                  <option value="openai">OpenAI (GPT)</option>
+                  <option value="anthropic">Claude</option>
+                </select>
+
+                <select id="fta-ai-model" class="form-select"
+                  style="padding:6px 10px;font-size:0.78rem;min-width:200px;" title="Choose model">
+                  <!-- Populated by JS when provider changes -->
+                </select>
+
+                <!-- API key (password field, per-session) -->
+                <input type="password" id="fta-ai-key" class="form-input" placeholder="Paste API key…"
+                  style="padding:6px 10px;font-size:0.78rem;min-width:200px;max-width:280px;"
+                  title="API key is never stored — session only" />
+
+                <button class="btn btn-primary" id="fta-ai-run-btn"
+                  style="padding:7px 18px;font-weight:700;background:linear-gradient(135deg,#7B1FA2,#512DA8);border-color:transparent;"
+                  title="Run AI validation on the latest scan results">
+                  ✨ Run AI Validation
+                </button>
+              </div>
+            </div>
+
+            <!-- Status / progress bar -->
+            <div id="fta-ai-status" style="
+              display:none;
+              padding:8px 16px;
+              font-size:0.78rem;
+              color:#CE93D8;
+              background:rgba(156,39,176,0.07);
+              border-bottom:1px solid rgba(156,39,176,0.2);
+              align-items:center;gap:8px;
+            ">
+              <span style="display:inline-block;width:10px;height:10px;border-radius:50%;
+                           background:#9C27B0;animation:fta-ai-pulse 1s ease-in-out infinite;"></span>
+              <span id="fta-ai-status-text">Calling AI model…</span>
+            </div>
+
+            <!-- Ranked results body -->
+            <div id="fta-ai-body" style="padding:14px 16px;">
+              <div class="empty-state" style="padding:30px;">
+                <div class="empty-icon">🤖</div>
+                <h4>No AI Validation Yet</h4>
+                <p>Run a scan first, then click <strong>✨ Run AI Validation</strong> to rank alerts by profit
+                  probability.</p>
+              </div>
+            </div>
+
+            <!-- Info footer -->
+            <div
+              style="padding:6px 16px 10px;font-size:0.7rem;color:var(--text-muted);border-top:1px solid var(--border);">
+              ℹ️ AI uses scan data only — no live pricing. Key is never persisted. Results are advisory, not financial
+              advice.
+            </div>
+          </div>
+
+          <!-- Tables + Risk are now rendered inside snapshot blocks -->
+          <div id="fta-breakout-card" style="display:none;"></div>
+          <div id="fta-bos-card" style="display:none;"></div>
+          <div id="fta-choch-card" style="display:none;"></div>
+          <div id="fta-risk-card" style="display:none;"></div>
+        </div>
+
+        <!-- ═══ PAGE: Settings ═══ -->
+        <div class="page" id="page-settings">
+          <div class="settings-grid">
+            <div class="card settings-group">
+              <div class="card-header">
+                <h3>🔑 Kite Connect API</h3>
+              </div>
+              <label>API Key</label>
+              <input type="password" class="form-input" id="set-api-key" placeholder="Your Kite API Key">
+              <label>API Secret</label>
+              <input type="password" class="form-input" id="set-api-secret" placeholder="Your Kite API Secret">
+              <label>Access Token</label>
+              <input type="password" class="form-input" id="set-access-token" placeholder="Generated after login">
+              <label>Request Token (from redirect)</label>
+              <input type="password" class="form-input" id="set-request-token"
+                placeholder="Paste request_token from callback URL">
+              <div class="flex gap-8 mt-16">
+                <button class="btn btn-primary" id="btn-kite-login">🔗 Start Kite Login</button>
+                <button class="btn btn-primary" id="btn-connect">⚡ Connect</button>
+              </div>
+              <div id="kite-status" class="mt-16" style="font-size:0.82rem;">
+                <span class="text-muted">Click Start Login to automate session generation</span>
+              </div>
+            </div>
+
+            <div class="card settings-group">
+              <div class="card-header">
+                <h3>⚙️ Scoring Parameters</h3>
+              </div>
+              <label>Minimum Score Threshold</label>
+              <input type="number" class="form-input" id="set-score-threshold" value="70" min="0" max="100">
+              <label>Max IV Percentile (Buy)</label>
+              <input type="number" class="form-input" id="set-max-ivp" value="50" min="0" max="100">
+              <label>Min Risk-Reward Ratio</label>
+              <input type="number" class="form-input" id="set-min-rr" value="2" min="1" step="0.5">
+              <label>Min OI Filter (Contracts)</label>
+              <input type="number" class="form-input" id="set-min-oi" value="5000" min="0" step="500">
+              <label>Position Size % of Capital</label>
+              <input type="number" class="form-input" id="set-pos-size" value="20" min="1" max="100">
+              <button class="btn btn-secondary mt-16" id="btn-save-settings">💾 Save Settings</button>
+            </div>
+
+            <div class="card settings-group">
+              <div class="card-header">
+                <h3>🖥️ Backend Server</h3>
+              </div>
+              <label>Backend URL</label>
+              <input type="text" class="form-input" id="set-backend-url" value="" placeholder="(auto-detect)">
+              <label>Status</label>
+              <div id="backend-status" class="mt-16" style="font-size:0.82rem;">
+                <span class="tag tag-bearish">Not Connected</span>
+              </div>
+              <button class="btn btn-secondary mt-16" id="btn-test-backend">🔍 Test Connection</button>
+            </div>
+
+            <div class="card settings-group">
+              <div class="card-header">
+                <h3>💾 Data Cache</h3>
+              </div>
+              <p style="font-size:0.78rem;color:var(--text-secondary);margin-bottom:12px;">
+                Historical OHLCV data is cached locally in SQLite for faster access. Only new/recent candles are fetched
+                from Kite API on subsequent scans.
+              </p>
+              <div class="grid-4 mb-16" style="gap:8px;">
+                <div class="stat-card" style="padding:10px;">
+                  <span class="stat-label" style="font-size:0.65rem;">Candles Cached</span>
+                  <span class="stat-value" id="cache-candles" style="font-size:1rem;">—</span>
+                </div>
+                <div class="stat-card" style="padding:10px;">
+                  <span class="stat-label" style="font-size:0.65rem;">Instruments</span>
+                  <span class="stat-value" id="cache-instruments" style="font-size:1rem;">—</span>
+                </div>
+                <div class="stat-card" style="padding:10px;">
+                  <span class="stat-label" style="font-size:0.65rem;">Unique Stocks</span>
+                  <span class="stat-value" id="cache-tokens" style="font-size:1rem;">—</span>
+                </div>
+                <div class="stat-card" style="padding:10px;">
+                  <span class="stat-label" style="font-size:0.65rem;">DB Size</span>
+                  <span class="stat-value" id="cache-size" style="font-size:1rem;">—</span>
+                </div>
+              </div>
+              <div class="flex gap-8">
+                <button class="btn btn-secondary" id="btn-refresh-cache">🔄 Refresh Stats</button>
+                <button class="btn btn-secondary" id="btn-clear-cache" style="color:var(--red);">🗑️ Clear
+                  Cache</button>
+              </div>
+              <div id="cache-status" class="mt-16" style="font-size:0.82rem;"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div id="page-multi-chart" class="page">
+        <div class="flex gap-8" style="align-items:center; margin-bottom:8px; flex-wrap:wrap;">
+          <input list="mc-stock-list" id="mc-stock-select" class="form-input" placeholder="Search F&O Stock / Index..."
+            style="min-width:200px;">
+          <datalist id="mc-stock-list">
+            <!-- Populated dynamically -->
+          </datalist>
+          <input type="date" id="mc-date-select" class="form-input">
+          <button class="btn btn-secondary" id="mc-display-chart-btn">Display Chart</button>
+          <button class="btn btn-primary" id="mc-add-chart-btn">➕ Add Chart</button>
+          <a href="/multi-chart.html" target="_blank" rel="noopener" class="btn btn-secondary"
+            style="font-size:0.72rem;text-decoration:none;margin-left:auto;"
+            title="Open Multi-Chart in a new browser tab">↗ New Tab</a>
+        </div>
+
+        <div id="mc-grid" class="multi-chart-grid layout-1x1">
+          <!-- Dynamically inserted chart boxes -->
+        </div>
+      </div>
+
+    </div>
+  </div>
+  </div>
+  <!-- Add Alert Modal -->
+  <div class="modal-overlay" id="modal-overlay">
+    <div class="modal">
+      <h3>➕ Add Alert Rule</h3>
+      <label
+        style="display:block;font-size:0.8rem;font-weight:600;color:var(--text-secondary);margin-bottom:4px;">Stock</label>
+      <select class="form-select w-full mb-8" id="alert-stock"></select>
+      <label style="display:block;font-size:0.8rem;font-weight:600;color:var(--text-secondary);margin-bottom:4px;">Alert
+        Type</label>
+      <select class="form-select w-full mb-8" id="alert-type">
+        <option value="price_above">Price Above</option>
+        <option value="price_below">Price Below</option>
+        <option value="oi_spike">OI Spike (>10%)</option>
+        <option value="score_change">Score Change (>10pts)</option>
+      </select>
+      <label
+        style="display:block;font-size:0.8rem;font-weight:600;color:var(--text-secondary);margin-bottom:4px;">Value</label>
+      <input type="number" class="form-input w-full mb-8" id="alert-value" placeholder="Target price / threshold">
+      <div class="flex gap-8 justify-between mt-16">
+        <button class="btn btn-secondary" id="btn-modal-cancel">Cancel</button>
+        <button class="btn btn-primary" id="btn-modal-save">Save Alert</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Scripts (defer = non-blocking, loads after HTML parse) -->
+  <script src="js/lightweight-charts.standalone.production.js" defer></script>
+  <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
+  <script src="js/kite-api.js" defer></script>
+  <script src="js/technical-indicators.js" defer></script>
+  <script src="js/gap-analysis-engine.js" defer></script>
+  <script src="js/scoring-engine.js" defer></script>
+  <script src="js/options-chain.js" defer></script>
+  <script src="js/charts.js" defer></script>
+  <script src="js/alerts.js" defer></script>
+  <script src="js/trade-journal.js" defer></script>
+  <script src="js/paper-trading.js" defer></script>
+  <script src="js/research-ai.js" defer></script>
+  <script src="js/fno-session-analyzer.js" defer></script>
+  <script src="js/equity-screener.js" defer></script>
+  <script src="js/analysis.js" defer></script>
+  <script src="js/watchlist.js" defer></script>
+  <script src="js/strategy-builder.js" defer></script>
+  <script src="js/backtester.js" defer></script>
+  <script src="js/portfolio.js" defer></script>
+  <script src="js/news-feed.js" defer></script>
+  <script src="js/live-movers.js" defer></script>
+  <script src="js/index-movers.js" defer></script>
+  <script src="js/chart-signals.js" defer></script>
+  <script src="js/reco-tracker.js" defer></script>
+  <script src="js/smc-dashboard.js" defer></script>
+  <script src="js/entry-validator.js" defer></script>
+  <script src="js/trade-tracker.js" defer></script>
+  <script src="js/trade-cockpit.js" defer></script>
+  <script src="js/fno-trade-alerts.js?v=7" defer></script>
+  <script src="js/multi-chart.js?v=6" defer></script>
+  <script src="js/app.js" defer></script>
+</body>
+
+</html>

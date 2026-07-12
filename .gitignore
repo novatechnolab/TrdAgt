@@ -1,0 +1,24 @@
+.venv/
+__pycache__/
+*.pyc
+node_modules/
+# .env is committed intentionally so Termux/Android can pull credentials from git.
+# Never commit .kite_session.json — it holds the live access token (rotates daily).
+.kite_session.json
+*.db
+*.log
+*.bak
+*.bak_*
+scratch/
+test_*.py
+scratch.py
+.DS_Store
+.idea/
+.vscode/
+*eod_snapshot.json
+app/backend/prev_close_cache.json
+app/backend/gainers_eod_snapshot_*.json
+app/backend/premium_alerts_eod_snapshot_*.json
+app/backend/ema_eod_snapshot_*.json
+
+

@@ -1,0 +1,2708 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>OI Spurt Scanner — TradeSignal</title>
+  <link
+    href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=Syne:wght@400;600;800&display=swap"
+    rel="stylesheet">
+  <style>
+    :root {
+      --bg: #08090f;
+      --surface: #0f1320;
+      --surface2: #141928;
+      --surface3: #1a2035;
+      --border: #1e2a42;
+      --border2: #243050;
+      --accent: #00e5ff;
+      --green: #00e676;
+      --red: #ff3d71;
+      --orange: #ff9100;
+      --yellow: #ffd740;
+      --purple: #c084fc;
+      --text: #e2e8f0;
+      --muted: #4a5a7a;
+      --muted2: #6b7a99;
+      --header-h: 50px;
+      --left-w: 290px;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    html,
+    body {
+      height: 100%;
+      overflow: hidden;
+      min-width: 1280px;
+    }
+
+    body {
+      font-family: 'JetBrains Mono', monospace;
+      background: var(--bg);
+      color: var(--text);
+      display: flex;
+      flex-direction: column;
+      min-width: 1280px;
+    }
+
+    header,
+    .layout {
+      min-width: 1280px;
+    }
+
+    /* Header */
+    header {
+      height: var(--header-h);
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      padding: 0 14px;
+      gap: 10px;
+      flex-shrink: 0;
+      z-index: 100;
+    }
+
+    .logo {
+      font-family: 'Syne', sans-serif;
+      font-weight: 800;
+      font-size: 16px;
+      color: var(--accent);
+      letter-spacing: 1px;
+      white-space: nowrap;
+      flex-shrink: 0;
+    }
+
+    .logo span {
+      color: var(--text);
+    }
+
+    .search-wrap {
+      flex: 1;
+      max-width: 380px;
+      position: relative;
+    }
+
+    .search-wrap input {
+      width: 100%;
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 6px 30px 6px 10px;
+      color: var(--text);
+      font-family: inherit;
+      font-size: 11px;
+      outline: none;
+      transition: border-color .2s;
+    }
+
+    .search-wrap input:focus {
+      border-color: var(--accent);
+    }
+
+    .search-wrap input::placeholder {
+      color: var(--muted);
+    }
+
+    .s-icon {
+      position: absolute;
+      right: 8px;
+      top: 50%;
+      transform: translateY(-50%);
+      color: var(--muted);
+      font-size: 12px;
+    }
+
+    .suggestions {
+      position: absolute;
+      top: calc(100% + 3px);
+      left: 0;
+      right: 0;
+      background: var(--surface);
+      border: 1px solid var(--border2);
+      border-radius: 8px;
+      max-height: 220px;
+      overflow-y: auto;
+      z-index: 9999;
+      display: none;
+      box-shadow: 0 10px 40px rgba(0, 0, 0, .7);
+    }
+
+    .suggestions.open {
+      display: block;
+    }
+
+    .si {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding: 6px 10px;
+      cursor: pointer;
+      font-size: 11px;
+      border-bottom: 1px solid var(--border);
+      transition: background .1s;
+    }
+
+    .si:last-child {
+      border-bottom: none;
+    }
+
+    .si:hover,
+    .si.act {
+      background: var(--surface2);
+    }
+
+    .si-sym {
+      font-family: 'Syne', sans-serif;
+      font-weight: 700;
+      color: var(--accent);
+      min-width: 90px;
+      font-size: 11px;
+    }
+
+    .si-name {
+      color: var(--muted2);
+      flex: 1;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .si-tag {
+      font-size: 8px;
+      padding: 1px 4px;
+      border-radius: 3px;
+      background: var(--surface3);
+      color: var(--muted2);
+      border: 1px solid var(--border);
+    }
+
+    .go-btn {
+      background: var(--accent);
+      color: #000;
+      border: none;
+      border-radius: 6px;
+      padding: 5px 12px;
+      font-family: 'Syne', sans-serif;
+      font-weight: 700;
+      font-size: 11px;
+      cursor: pointer;
+    }
+
+    .go-btn:hover {
+      opacity: .85;
+    }
+
+    .status-bar {
+      margin-left: auto;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 10px;
+      color: var(--muted2);
+      white-space: nowrap;
+      flex-shrink: 0;
+    }
+
+    .pulse {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: var(--green);
+      animation: pulse 2s infinite;
+    }
+
+    @keyframes pulse {
+
+      0%,
+      100% {
+        opacity: 1;
+        box-shadow: 0 0 0 0 rgba(0, 230, 118, .4);
+      }
+
+      50% {
+        opacity: .7;
+        box-shadow: 0 0 0 4px rgba(0, 230, 118, 0);
+      }
+    }
+
+    .pulse.red {
+      background: var(--red) !important;
+      animation: pulse-red 2s infinite !important;
+    }
+
+    @keyframes pulse-red {
+      0%,
+      100% {
+        opacity: 1;
+        box-shadow: 0 0 0 0 rgba(255, 61, 113, .4);
+      }
+      50% {
+        opacity: .7;
+        box-shadow: 0 0 0 4px rgba(255, 61, 113, 0);
+      }
+    }
+
+    .ref-btn {
+      background: transparent;
+      border: 1px solid var(--border);
+      color: var(--muted2);
+      border-radius: 4px;
+      padding: 2px 8px;
+      font-family: inherit;
+      font-size: 10px;
+      cursor: pointer;
+      transition: all .2s;
+    }
+
+    .ref-btn:hover {
+      border-color: var(--accent);
+      color: var(--accent);
+    }
+
+
+    /* Layout */
+    .layout {
+      display: flex;
+      flex: 1;
+      overflow: hidden;
+    }
+
+    /* Left Panel */
+    .left-panel {
+      width: var(--left-w);
+      flex-shrink: 0;
+      background: var(--surface);
+      border-right: 1px solid var(--border);
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    .lp-header {
+      padding: 8px 10px 6px;
+      border-bottom: 1px solid var(--border);
+      flex-shrink: 0;
+    }
+
+    .lp-title {
+      font-family: 'Syne', sans-serif;
+      font-size: 9px;
+      font-weight: 700;
+      letter-spacing: 2px;
+      color: var(--muted2);
+      text-transform: uppercase;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .lp-badge {
+      background: var(--accent);
+      color: #000;
+      border-radius: 4px;
+      padding: 1px 5px;
+      font-size: 9px;
+      font-weight: 700;
+    }
+
+    .lp-filter {
+      margin-top: 6px;
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      font-size: 9px;
+      color: var(--muted2);
+    }
+
+    .lp-filter input[type=range] {
+      flex: 1;
+      accent-color: var(--accent);
+      height: 3px;
+      cursor: pointer;
+    }
+
+    .lp-filter span {
+      color: var(--accent);
+      font-weight: 700;
+      min-width: 28px;
+    }
+
+    .lp-timer {
+      font-size: 9px;
+      color: var(--muted);
+      margin-top: 4px;
+    }
+
+    .stock-list {
+      flex: 1;
+      overflow-y: auto;
+    }
+
+    .stock-list::-webkit-scrollbar {
+      width: 3px;
+    }
+
+    .stock-list::-webkit-scrollbar-thumb {
+      background: var(--border2);
+      border-radius: 2px;
+    }
+
+    .sl-item {
+      display: flex;
+      align-items: center;
+      padding: 8px 10px;
+      border-bottom: 1px solid var(--border);
+      cursor: pointer;
+      transition: background .12s;
+      position: relative;
+      gap: 6px;
+    }
+
+    .sl-item:hover {
+      background: var(--surface2);
+    }
+
+    .sl-item.active {
+      background: rgba(0, 229, 255, .07);
+      border-left: 2px solid var(--accent);
+      padding-left: 8px;
+    }
+
+    .sl-left {
+      flex: 1;
+      min-width: 0;
+    }
+
+    .sl-sym {
+      font-family: 'Syne', sans-serif;
+      font-weight: 700;
+      font-size: 12px;
+      color: var(--text);
+    }
+
+    .sl-series {
+      font-size: 8px;
+      padding: 1px 3px;
+      border-radius: 3px;
+      background: var(--surface3);
+      color: var(--muted2);
+      margin-left: 3px;
+      vertical-align: middle;
+    }
+
+    .sl-ltp {
+      font-size: 9px;
+      color: var(--muted2);
+      margin-top: 1px;
+    }
+
+    .sl-right {
+      text-align: right;
+      flex-shrink: 0;
+    }
+
+    .sl-oichg {
+      font-family: 'Syne', sans-serif;
+      font-weight: 800;
+      font-size: 13px;
+      color: var(--green);
+    }
+
+    .sl-oilabel {
+      font-size: 8px;
+      color: var(--muted);
+      margin-top: 1px;
+    }
+
+    .sl-bar {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      height: 2px;
+      background: linear-gradient(90deg, var(--green), transparent);
+    }
+
+    .lp-empty {
+      padding: 24px 10px;
+      text-align: center;
+      color: var(--muted);
+      font-size: 10px;
+      line-height: 1.7;
+    }
+
+    .lp-loader {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 30px;
+      gap: 8px;
+      color: var(--muted);
+      font-size: 11px;
+    }
+
+    /* Right Panel — permanently light blue theme */
+    .right-panel {
+      --bg: #f0f4f8;
+      --surface: #ffffff;
+      --surface2: #f8fafc;
+      --surface3: #e2e8f0;
+      --border: #cbd5e1;
+      --border2: #94a3b8;
+      --text: #0f172a;
+      --muted: #475569;
+      --muted2: #64748b;
+      --accent: #0284c7;
+      --green: #16a34a;
+      --red: #dc2626;
+      --yellow: #d97706;
+      --orange: #ea580c;
+      flex: 1;
+      overflow: hidden;
+      background: var(--bg);
+      color: var(--text);
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* Tab Bar */
+    .tab-bar {
+      flex-shrink: 0;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      padding: 8px 14px 0;
+      background: var(--surface);
+      border-bottom: 2px solid var(--border);
+      flex-wrap: wrap;
+      min-height: 38px;
+    }
+
+    .tab {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      padding: 4px 10px;
+      border-radius: 6px 6px 0 0;
+      font-family: 'Syne', sans-serif;
+      font-size: 10px;
+      font-weight: 700;
+      cursor: pointer;
+      border: 1px solid var(--border);
+      border-bottom: none;
+      background: var(--surface2);
+      color: var(--muted2);
+      transition: all .15s;
+      white-space: nowrap;
+      user-select: none;
+      position: relative;
+      bottom: -2px;
+    }
+
+    .tab:hover {
+      border-color: var(--accent);
+      color: var(--accent);
+      background: var(--surface);
+    }
+
+    .tab.tab-active {
+      background: var(--bg);
+      color: var(--accent);
+      border-color: var(--accent);
+      border-bottom-color: var(--bg);
+    }
+
+    .tab-x {
+      font-size: 14px;
+      line-height: 1;
+      color: var(--muted2);
+      cursor: pointer;
+      padding: 0 1px;
+      margin-left: 2px;
+      border-radius: 3px;
+      transition: color .1s;
+    }
+
+    .tab-x:hover {
+      color: var(--red);
+    }
+
+    .tab-hint {
+      font-size: 9px;
+      color: var(--muted);
+      margin-left: auto;
+      padding-bottom: 4px;
+      white-space: nowrap;
+    }
+
+    /* Scrollable content area */
+    .rp-content {
+      flex: 1;
+      overflow-y: auto;
+      padding: 14px;
+    }
+
+    .rp-content::-webkit-scrollbar {
+      width: 4px;
+    }
+
+    .rp-content::-webkit-scrollbar-thumb {
+      background: var(--border2);
+      border-radius: 2px;
+    }
+
+    .right-panel .tag-green {
+      background: rgba(22, 163, 74, 0.1);
+      border-color: rgba(22, 163, 74, 0.2);
+    }
+
+    .right-panel .tag-red {
+      background: rgba(220, 38, 38, 0.1);
+      border-color: rgba(220, 38, 38, 0.2);
+    }
+
+    .right-panel .tag-yellow {
+      background: rgba(217, 119, 6, 0.1);
+      border-color: rgba(217, 119, 6, 0.2);
+    }
+
+    .right-panel .tag-blue {
+      background: rgba(2, 132, 199, 0.1);
+      border-color: rgba(2, 132, 199, 0.2);
+    }
+
+    .right-panel .err-msg {
+      background: rgba(220, 38, 38, 0.08);
+      border-color: rgba(220, 38, 38, 0.2);
+    }
+
+    .right-panel .trap {
+      background: rgba(234, 88, 12, 0.15);
+    }
+
+    .right-panel .mt td {
+      border-color: rgba(0, 0, 0, 0.06);
+    }
+
+    .right-panel .kv {
+      border-color: rgba(0, 0, 0, 0.07);
+    }
+
+    /* Empty state */
+    .rp-empty {
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      color: var(--muted);
+      gap: 12px;
+    }
+
+    .rp-empty-icon {
+      font-size: 48px;
+      opacity: .2;
+    }
+
+    .rp-empty h3 {
+      font-family: 'Syne', sans-serif;
+      font-size: 16px;
+      opacity: .35;
+    }
+
+    .rp-empty p {
+      font-size: 10px;
+      opacity: .25;
+    }
+
+    /* Detail sections */
+    .det-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      margin-bottom: 12px;
+      padding-bottom: 12px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .det-sym-group {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+      min-width: 100px;
+    }
+
+    .det-sym {
+      font-family: 'Syne', sans-serif;
+      font-size: 20px;
+      font-weight: 800;
+      color: var(--accent);
+      line-height: 1.1;
+    }
+
+    .det-live {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      font-size: 9px;
+      color: var(--green);
+    }
+
+    .det-live .dot {
+      width: 5px;
+      height: 5px;
+      border-radius: 50%;
+      background: var(--green);
+      animation: pulse 1.5s infinite;
+    }
+
+    .det-close {
+      margin-left: auto;
+      background: transparent;
+      border: 1px solid var(--border);
+      color: var(--muted2);
+      border-radius: 4px;
+      padding: 3px 10px;
+      font-family: inherit;
+      font-size: 10px;
+      cursor: pointer;
+      transition: all .2s;
+    }
+
+    .det-close:hover {
+      border-color: var(--red);
+      color: var(--red);
+    }
+
+    .tags {
+      display: flex;
+      gap: 5px;
+      flex-wrap: wrap;
+      margin-bottom: 10px;
+    }
+
+    .tag {
+      display: inline-flex;
+      align-items: center;
+      padding: 3px 8px;
+      border-radius: 10px;
+      font-size: 9px;
+      font-weight: 600;
+      white-space: nowrap;
+    }
+
+    .tag-green {
+      background: rgba(0, 230, 118, .12);
+      color: var(--green);
+      border: 1px solid rgba(0, 230, 118, .2);
+    }
+
+    .tag-red {
+      background: rgba(255, 61, 113, .12);
+      color: var(--red);
+      border: 1px solid rgba(255, 61, 113, .2);
+    }
+
+    .tag-yellow {
+      background: rgba(255, 215, 64, .12);
+      color: var(--yellow);
+      border: 1px solid rgba(255, 215, 64, .2);
+    }
+
+    .tag-blue {
+      background: rgba(0, 229, 255, .1);
+      color: var(--accent);
+      border: 1px solid rgba(0, 229, 255, .2);
+    }
+
+    /* Buildup Badges */
+    .badge-buildup {
+      display: inline-block;
+      font-size: 10px;
+      font-weight: 700;
+      padding: 3px 8px;
+      border-radius: 4px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .badge-lb {
+      background: rgba(0, 230, 118, 0.15);
+      color: var(--green);
+      border: 1px solid rgba(0, 230, 118, 0.3);
+    }
+
+    .badge-sb {
+      background: rgba(255, 61, 113, 0.15);
+      color: var(--red);
+      border: 1px solid rgba(255, 61, 113, 0.3);
+    }
+
+    .badge-sc {
+      background: rgba(0, 229, 255, 0.15);
+      color: var(--accent);
+      border: 1px solid rgba(0, 229, 255, 0.3);
+    }
+
+    .badge-lu {
+      background: rgba(255, 145, 0, 0.15);
+      color: var(--orange);
+      border: 1px solid rgba(255, 145, 0, 0.3);
+    }
+
+    .badge-flat {
+      background: rgba(255, 255, 255, 0.08);
+      color: var(--muted);
+      border: 1px solid rgba(255, 255, 255, 0.15);
+    }
+
+    /* Layer Section Cards */
+    .layer-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 7px;
+      padding: 8px 12px;
+      margin-bottom: 7px;
+      position: relative;
+      color: var(--text);
+    }
+
+    .layer-card::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      height: 100%;
+      width: 3px;
+      border-top-left-radius: 7px;
+      border-bottom-left-radius: 7px;
+    }
+
+    .layer-card.l1::before {
+      background: var(--accent);
+    }
+
+    .layer-card.l2::before {
+      background: var(--yellow);
+    }
+
+    .layer-card.l3::before {
+      background: var(--red);
+    }
+
+    .layer-title {
+      font-size: 10px;
+      text-transform: uppercase;
+      color: var(--muted2);
+      font-weight: 700;
+      letter-spacing: 0.8px;
+      margin-bottom: 10px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .layer-title span {
+      font-size: 8px;
+      padding: 1px 5px;
+      border-radius: 3px;
+      background: rgba(255, 255, 255, 0.06);
+    }
+
+    /* Stat strip — compact inline header style */
+    .stat-strip {
+      display: flex;
+      gap: 6px;
+      flex: 1;
+      justify-content: flex-start;
+      margin-left: 16px;
+    }
+
+    .stat-box {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 5px 8px;
+      position: relative;
+      flex: 1;
+      max-width: 170px;
+      min-width: 105px;
+    }
+
+    .stat-label {
+      font-size: 8px;
+      letter-spacing: 1.5px;
+      text-transform: uppercase;
+      color: var(--muted2);
+      margin-bottom: 2px;
+    }
+
+    .stat-val {
+      font-family: 'Syne', sans-serif;
+      font-size: 14px;
+      font-weight: 700;
+    }
+
+    .stat-sub {
+      font-size: 8px;
+      color: var(--muted2);
+      margin-top: 1px;
+    }
+
+    /* Alert badge */
+    .alert-badge {
+      position: absolute;
+      top: -6px;
+      right: -6px;
+      background: var(--orange);
+      color: #000;
+      border-radius: 50%;
+      width: 15px;
+      height: 15px;
+      font-size: 7px;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      animation: alertPop .3s ease;
+      z-index: 10;
+    }
+
+    @keyframes alertPop {
+      0% {
+        transform: scale(0);
+      }
+
+      70% {
+        transform: scale(1.3);
+      }
+
+      100% {
+        transform: scale(1);
+      }
+    }
+
+    .changed {
+      animation: flashChange .6s ease;
+    }
+
+    @keyframes flashChange {
+
+      0%,
+      100% {
+        background: var(--surface);
+      }
+
+      50% {
+        background: rgba(255, 145, 0, .15);
+      }
+    }
+
+    /* Cards — compact */
+    .sec-head {
+      font-family: 'Syne', sans-serif;
+      font-size: 8px;
+      font-weight: 700;
+      letter-spacing: 2px;
+      color: var(--muted2);
+      text-transform: uppercase;
+      margin: 8px 0 5px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .sec-head::after {
+      content: '';
+      flex: 1;
+      height: 1px;
+      background: var(--border);
+    }
+
+    .cards-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 7px;
+      margin-bottom: 7px;
+    }
+
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 7px;
+      padding: 8px 12px;
+      position: relative;
+    }
+
+    .card-title {
+      font-size: 8px;
+      letter-spacing: 1.5px;
+      text-transform: uppercase;
+      color: var(--muted2);
+      margin-bottom: 6px;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+
+    .kv {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 3px 0;
+      font-size: 10px;
+      border-bottom: 1px solid rgba(30, 42, 66, .5);
+    }
+
+    .kv:last-child {
+      border-bottom: none;
+    }
+
+    .kv-k {
+      color: var(--muted2);
+    }
+
+    .kv-v {
+      font-weight: 500;
+    }
+
+    .kv-pivot {
+      color: var(--yellow);
+    }
+
+    .kv-res {
+      color: var(--red);
+    }
+
+    .kv-sup {
+      color: var(--green);
+    }
+
+    /* ── AI Heatmap Analysis Panel ────────────────────────── */
+    .ai-analysis-panel {
+      background: var(--surface);
+      border: 1px solid rgba(139, 92, 246, 0.35);
+      border-radius: 8px;
+      overflow: hidden;
+      margin-bottom: 8px;
+    }
+
+    .ai-analyze-btn {
+      width: 100%;
+      padding: 9px 14px;
+      background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);
+      border: none;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      font-family: 'Syne', sans-serif;
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 0.8px;
+      color: #fff;
+      text-transform: uppercase;
+      transition: background 0.2s, opacity 0.2s;
+    }
+
+    .ai-analyze-btn:hover {
+      background: linear-gradient(135deg, #4338ca 0%, #6d28d9 100%);
+    }
+
+    .ai-analyze-btn:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+    }
+
+    .ai-analyze-btn .ai-btn-left {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .ai-analyze-btn .ai-chevron {
+      font-size: 10px;
+      transition: transform 0.25s;
+    }
+
+    .ai-analyze-btn.open .ai-chevron {
+      transform: rotate(180deg);
+    }
+
+    @keyframes ai-pulse {
+      0%, 100% { opacity: 1; }
+      50%       { opacity: 0.5; }
+    }
+
+    .ai-analyze-btn.loading .ai-btn-label::after {
+      content: '…';
+      animation: ai-pulse 1s infinite;
+    }
+
+    .ai-analysis-body {
+      display: none;
+      padding: 12px 14px;
+      font-size: 10.5px;
+      line-height: 1.65;
+      color: var(--text);
+      border-top: 1px solid rgba(139, 92, 246, 0.2);
+    }
+
+    .ai-analysis-body.open {
+      display: block;
+    }
+
+    .ai-analysis-body h2 {
+      font-family: 'Syne', sans-serif;
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 0.5px;
+      color: var(--accent);
+      margin: 10px 0 4px;
+      text-transform: uppercase;
+    }
+
+    .ai-analysis-body h2:first-child { margin-top: 0; }
+
+    .ai-analysis-body p  { margin: 3px 0 6px; color: var(--muted2); }
+    .ai-analysis-body ul { margin: 3px 0 6px; padding-left: 16px; color: var(--muted2); }
+    .ai-analysis-body li { margin-bottom: 2px; }
+    .ai-analysis-body strong { color: var(--text); font-weight: 600; }
+
+    .ai-analysis-body .ai-error {
+      color: var(--red);
+      font-size: 10px;
+    }
+
+    .ai-analysis-body .ai-spinner {
+      color: var(--muted);
+      font-size: 10px;
+      text-align: center;
+      padding: 8px 0;
+      animation: ai-pulse 1s infinite;
+    }
+
+    /* OI Chain Heatmap */
+    .heatmap-wrap {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      overflow: hidden;
+      overflow-x: auto;
+      margin-bottom: 8px;
+    }
+
+    .heatmap-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 8px 12px;
+      border-bottom: 1px solid var(--border);
+      flex-wrap: wrap;
+      gap: 6px;
+    }
+
+    .hm-title {
+      font-family: 'Syne', sans-serif;
+      font-size: 10px;
+      font-weight: 700;
+      color: var(--accent);
+      letter-spacing: 1px;
+    }
+
+    .hm-meta {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      font-size: 10px;
+    }
+
+    .hm-meta span {
+      color: var(--muted2);
+    }
+
+    .hm-meta b {
+      color: var(--text);
+    }
+
+    .hm-legend {
+      display: flex;
+      gap: 10px;
+      font-size: 9px;
+      padding: 4px 12px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .leg-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      display: inline-block;
+      margin-right: 3px;
+      vertical-align: middle;
+    }
+
+    .hm-table {
+      width: 100%;
+      min-width: 900px;
+      border-collapse: collapse;
+      font-size: 9.5px;
+      table-layout: auto;
+    }
+
+    .hm-table th {
+      font-size: 7.5px;
+      letter-spacing: .5px;
+      text-transform: uppercase;
+      color: var(--muted2);
+      padding: 4px 4px;
+      background: var(--surface2);
+      border-bottom: 1px solid var(--border);
+      text-align: right;
+      white-space: nowrap;
+    }
+
+    .hm-table th.strike-th {
+      text-align: center;
+      color: var(--accent);
+    }
+
+    .hm-table td {
+      padding: 3px 5px;
+      border-bottom: 1px solid rgba(30, 42, 66, .35);
+      text-align: right;
+      font-variant-numeric: tabular-nums;
+      transition: background .15s;
+      white-space: nowrap;
+    }
+
+    .hm-table td.strike-td {
+      text-align: center;
+      font-family: 'Syne', sans-serif;
+      font-weight: 700;
+      font-size: 10px;
+      color: var(--text);
+      position: relative;
+      min-width: 70px;
+    }
+
+    .hm-table th.action-th,
+    .hm-table td.action-td {
+      text-align: left;
+    }
+
+    .hm-table tr:hover td {
+      background: rgba(0, 229, 255, .04);
+    }
+
+    .hm-table tr.atm-row td {
+      background: rgba(2, 132, 199, .06);
+    }
+
+    .hm-table tr.atm-row td.strike-td {
+      color: var(--accent);
+    }
+
+    .hm-table tr.mp-row td {
+      background: rgba(217, 119, 6, .06);
+    }
+
+    .hm-table tr.mp-row td.strike-td {
+      color: var(--yellow);
+    }
+
+    .mp-badge {
+      display: block;
+      font-size: 7px;
+      font-weight: 700;
+      color: var(--yellow);
+      letter-spacing: .5px;
+      line-height: 1;
+    }
+
+    .atm-badge {
+      display: block;
+      font-size: 7px;
+      font-weight: 700;
+      color: var(--accent);
+      letter-spacing: .5px;
+      line-height: 1;
+    }
+
+    .hm-table td.pe-cell {
+      text-align: right;
+    }
+
+    .hm-table td.ce-cell {
+      text-align: right;
+    }
+
+    /* Strike table */
+    .mt {
+      width: 100%;
+      font-size: 10px;
+      border-collapse: collapse;
+    }
+
+    .mt th {
+      font-size: 8px;
+      letter-spacing: .8px;
+      text-transform: uppercase;
+      color: var(--muted2);
+      padding: 3px 5px;
+      text-align: left;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .mt td {
+      padding: 5px 5px;
+      border-bottom: 1px solid rgba(30, 42, 66, .4);
+    }
+
+    .mt tr:last-child td {
+      border-bottom: none;
+    }
+
+    .mt tr:hover td {
+      background: var(--surface2);
+    }
+
+    .oi-bar {
+      width: 36px;
+      height: 3px;
+      border-radius: 2px;
+      display: inline-block;
+      vertical-align: middle;
+      margin-left: 4px;
+    }
+
+    .trap {
+      font-size: 7px;
+      padding: 1px 3px;
+      border-radius: 2px;
+      background: rgba(255, 145, 0, .15);
+      color: var(--orange);
+      margin-left: 3px;
+    }
+
+    .bu-lb {
+      color: var(--green);
+    }
+
+    .bu-sb {
+      color: var(--red);
+    }
+
+    .bu-sc {
+      color: var(--accent);
+    }
+
+    .bu-lu {
+      color: var(--muted2);
+    }
+
+    .bu-flat {
+      color: var(--muted);
+      opacity: 0.6;
+    }
+
+    .pos {
+      color: var(--green);
+    }
+
+    .neg {
+      color: var(--red);
+    }
+
+    .neu {
+      color: var(--muted2);
+    }
+
+    .spinner {
+      width: 14px;
+      height: 14px;
+      border: 2px solid var(--border);
+      border-top-color: var(--accent);
+      border-radius: 50%;
+      animation: spin .7s linear infinite;
+      display: inline-block;
+    }
+
+    @keyframes spin {
+      to {
+        transform: rotate(360deg);
+      }
+    }
+
+    .loader {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 30px;
+      color: var(--muted);
+      font-size: 12px;
+    }
+
+    .err-msg {
+      padding: 8px 12px;
+      background: rgba(255, 61, 113, .08);
+      border: 1px solid rgba(255, 61, 113, .2);
+      border-radius: 6px;
+      color: var(--red);
+      font-size: 10px;
+      margin-bottom: 10px;
+    }
+
+    /* ── Toast notifications ── */
+    #toast-container {
+      position: fixed;
+      top: 58px;
+      right: 12px;
+      z-index: 9999;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      pointer-events: none;
+      width: 310px;
+    }
+
+    .toast {
+      background: var(--surface);
+      border: 1px solid var(--border2);
+      border-radius: 8px;
+      padding: 8px 10px 14px;
+      font-size: 10px;
+      display: flex;
+      align-items: flex-start;
+      gap: 7px;
+      flex-wrap: wrap;
+      pointer-events: all;
+      box-shadow: 0 6px 24px rgba(0, 0, 0, .6);
+      position: relative;
+      overflow: hidden;
+      animation: toastIn .22s ease;
+      transition: opacity .45s;
+    }
+
+    .toast.toast-fade {
+      opacity: 0;
+    }
+
+    @keyframes toastIn {
+      from {
+        transform: translateX(30px);
+        opacity: 0;
+      }
+
+      to {
+        transform: translateX(0);
+        opacity: 1;
+      }
+    }
+
+    .toast-sym {
+      font-family: 'Syne', sans-serif;
+      font-weight: 800;
+      color: var(--accent);
+      font-size: 11px;
+      white-space: nowrap;
+    }
+
+    .toast-body {
+      color: var(--text);
+      flex: 1;
+      line-height: 1.6;
+    }
+
+    .toast-x {
+      cursor: pointer;
+      color: var(--muted2);
+      font-size: 15px;
+      line-height: 1;
+      margin-left: auto;
+      flex-shrink: 0;
+      transition: color .1s;
+    }
+
+    .toast-x:hover {
+      color: var(--red);
+    }
+
+    .toast-bar {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      height: 3px;
+      background: var(--accent);
+      width: 100%;
+      animation: toastBarShrink 5s linear forwards;
+    }
+
+    @keyframes toastBarShrink {
+      from {
+        width: 100%;
+      }
+
+      to {
+        width: 0;
+      }
+    }
+
+    /* ── Left panel rank-change highlights ── */
+    .sl-item.sl-new {
+      animation: slNew 1.6s ease;
+    }
+
+    .sl-item.sl-up {
+      animation: slUp 1.6s ease;
+    }
+
+    .sl-item.sl-down {
+      animation: slDown 1.6s ease;
+    }
+
+    @keyframes slNew {
+      0% {
+        background: rgba(0, 229, 255, .22);
+      }
+
+      100% {
+        background: transparent;
+      }
+    }
+
+    @keyframes slUp {
+      0% {
+        background: rgba(0, 230, 118, .2);
+      }
+
+      100% {
+        background: transparent;
+      }
+    }
+
+    @keyframes slDown {
+      0% {
+        background: rgba(255, 145, 0, .18);
+      }
+
+      100% {
+        background: transparent;
+      }
+    }
+
+    .sl-rank-badge {
+      font-size: 7px;
+      font-weight: 700;
+      padding: 1px 4px;
+      border-radius: 3px;
+      margin-left: 4px;
+      vertical-align: middle;
+    }
+
+    .sl-rank-up {
+      background: rgba(0, 230, 118, .2);
+      color: var(--green);
+    }
+
+    .sl-rank-down {
+      background: rgba(255, 145, 0, .2);
+      color: var(--orange);
+    }
+
+    .sl-rank-new {
+      background: rgba(0, 229, 255, .2);
+      color: var(--accent);
+    }
+  </style>
+</head>
+
+<body>
+  <header>
+    <div class="logo">OI<span>Spurt</span></div>
+    <div class="search-wrap">
+      <input id="search-input" type="text" placeholder="Search F&O stock or index…" autocomplete="off"
+        spellcheck="false">
+      <span class="s-icon">⌕</span>
+      <div class="suggestions" id="suggestions"></div>
+    </div>
+    <button class="go-btn" id="search-btn">GO</button>
+    <div class="status-bar">
+      <span id="source-indicator" style="font-size: 8px; font-weight: 500; display: inline-flex; align-items: center; gap: 4px; border: 1px solid var(--border); padding: 2px 6px; border-radius: 4px; background: var(--surface); margin-right: 4px;">
+        <span id="ind-nse" style="opacity: 0.4; transition: all 0.3s ease;">NSE Scraper</span>
+        <span style="opacity: 0.2;">|</span>
+        <span id="ind-kite" style="opacity: 0.4; transition: all 0.3s ease;">Kite API</span>
+      </span>
+      <span id="last-update">–</span>
+      <span>Left: <span id="countdown">60</span>s</span>
+      <div class="pulse"></div>
+      <button class="ref-btn" id="manual-refresh">↺ Refresh</button>
+    </div>
+  </header>
+  <div id="toast-container"></div>
+
+  <div class="layout">
+    <!-- LEFT PANEL -->
+    <aside class="left-panel">
+      <div class="lp-header">
+        <div class="lp-title">🔥 OI Spurt <span class="lp-badge" id="spurt-count">–</span></div>
+        <div class="lp-filter">
+          Min OI%&nbsp;
+          <input type="range" id="min-pct-slider" min="1" max="20" value="5" step="1">
+          <span id="min-pct-val">5%</span>
+        </div>
+        <div class="lp-timer">Auto-refresh 60s &nbsp;|&nbsp; <span id="lp-ts">–</span></div>
+      </div>
+      <div class="stock-list" id="stock-list">
+        <div class="lp-loader">
+          <div class="spinner"></div> Loading…
+        </div>
+      </div>
+    </aside>
+
+    <!-- RIGHT PANEL — multi-tab detail view -->
+    <main class="right-panel" id="right-panel">
+      <!-- Tab Bar (shown when ≥1 symbol open) -->
+      <div class="tab-bar" id="tab-bar" style="display:none">
+        <div id="tabs-container" style="display:contents"></div>
+        <span class="tab-hint">Click a symbol to open a tab →</span>
+      </div>
+      <!-- Scrollable content -->
+      <div class="rp-content" id="rp-content">
+        <div class="rp-empty" id="rp-empty">
+          <div class="rp-empty-icon">📊</div>
+          <h3>Select a stock</h3>
+          <p>Click any symbol in the left panel · multiple tabs supported</p>
+        </div>
+        <div id="det-wrap" style="display:none"></div>
+      </div>
+    </main>
+  </div>
+
+  <script>
+    // ─── Kite Auth Headers ───────────────────────────────
+    // Reads credentials from localStorage (same key as app.js / Settings panel)
+    // and passes them as request headers so get_kite() on the backend can
+    // authenticate even when the Flask session cookie is not present.
+    function getKiteHeaders() {
+      try {
+        const s = JSON.parse(localStorage.getItem('ts_settings') || '{}');
+        return {
+          'X-Kite-Api-Key': s.apiKey || '',
+          'X-Kite-Access-Token': s.accessToken || '',
+        };
+      } catch { return {}; }
+    }
+
+    // ─── State ─────────────────────────────────────────
+    let spurtData = [], symbolList = [], suggActive = -1, minPct = 5;
+    let leftTimer = null, leftCountdown = 60;
+    // Multi-tab state
+    let watchList = [];        // ordered array of open symbols
+    let activeTab = null;      // currently visible symbol
+    let tabTimers = {};        // {sym: intervalId} — independent 15s refresh per tab
+    let prevDetails = {};      // {sym: {...}} — change detection per tab
+    let prevRankMap = {};      // {sym: rank} — for left-panel reorder detection
+    let aiAnalysisCache = {};  // {sym: { html: '', open: false, loaded: '0' }} — preserves AI analysis on tab refresh
+
+    const INDICES = [
+      { sym: 'NIFTY', name: 'Nifty 50', tag: 'INDEX' },
+      { sym: 'BANKNIFTY', name: 'Nifty Bank', tag: 'INDEX' },
+      { sym: 'FINNIFTY', name: 'Nifty Fin Service', tag: 'INDEX' },
+      { sym: 'MIDCPNIFTY', name: 'Nifty Mid Select', tag: 'INDEX' },
+      { sym: 'SENSEX', name: 'BSE Sensex', tag: 'BSE INDEX' },
+      { sym: 'BANKEX', name: 'BSE Bankex', tag: 'BSE INDEX' },
+      { sym: 'NIFTYIT', name: 'Nifty IT', tag: 'INDEX' },
+    ];
+    const INDEX_SET = new Set(['NIFTY', 'NIFTY50', 'BANKNIFTY', 'FINNIFTY', 'MIDCPNIFTY', 'SENSEX', 'BANKEX', 'NIFTYIT']);
+
+    // Market hours check — Indian context: browser always runs in IST, use local time directly
+    function isMarketOpen() {
+      const now = new Date();
+      const day = now.getDay(); // 0=Sun, 6=Sat
+      if (day === 0 || day === 6) return false;
+      const mins = now.getHours() * 60 + now.getMinutes();
+      return mins >= 9 * 60 + 15 && mins <= 15 * 60 + 30;
+    }
+
+    // PCR label — FIX: different thresholds for indices vs stocks
+    function getPCRLabel(pcr, isIndex) {
+      if (pcr == null) return { tag: '–', cls: 'tag-yellow', color: 'var(--yellow)' };
+      if (isIndex) {
+        if (pcr >= 1.5) return { tag: 'Extreme Bullish', cls: 'tag-green', color: 'var(--green)' };
+        if (pcr >= 1.2) return { tag: 'Bullish', cls: 'tag-green', color: 'var(--green)' };
+        if (pcr >= 0.8) return { tag: 'Neutral', cls: 'tag-yellow', color: 'var(--yellow)' };
+        if (pcr >= 0.5) return { tag: 'Bearish', cls: 'tag-red', color: 'var(--red)' };
+        return { tag: 'Extreme Bearish', cls: 'tag-red', color: 'var(--red)' };
+      } else {
+        // Stock PCR ranges are tighter — normal range 0.3–0.8
+        if (pcr >= 0.8) return { tag: 'Bullish', cls: 'tag-green', color: 'var(--green)' };
+        if (pcr >= 0.5) return { tag: 'Neutral', cls: 'tag-yellow', color: 'var(--yellow)' };
+        if (pcr >= 0.3) return { tag: 'Bearish', cls: 'tag-red', color: 'var(--red)' };
+        return { tag: 'Extreme Bearish', cls: 'tag-red', color: 'var(--red)' };
+      }
+    }
+
+    // ─── Formatters ─────────────────────────────────────
+    const fmt = (n, d = 2) => n === null || n === undefined ? '–' : Number(n).toLocaleString('en-IN', { minimumFractionDigits: d, maximumFractionDigits: d });
+    const fmtOI = n => !n ? '–' : n >= 1e7 ? (n / 1e7).toFixed(2) + ' Cr' : n >= 1e5 ? (n / 1e5).toFixed(2) + ' L' : n >= 1e3 ? (n / 1e3).toFixed(1) + 'K' : String(n);
+    const pclr = v => v > 0 ? 'pos' : v < 0 ? 'neg' : 'neu';
+    const sign = v => v >= 0 ? '+' : '';
+    const buCls = b => b === 'Long Buildup' ? 'bu-lb' : b === 'Short Buildup' ? 'bu-sb' : b === 'Short Covering' ? 'bu-sc' : b === 'Long Unwinding' ? 'bu-lu' : 'bu-flat';
+    const buAbbr = b => b === 'Long Buildup' ? 'LB' : b === 'Short Buildup' ? 'SB' : b === 'Short Covering' ? 'SC' : b === 'Long Unwinding' ? 'LU' : b === 'Flat' ? 'Flat' : '–';
+
+    // ─── Toast Notifications ────────────────────────────
+    function showToast(sym, changes) {
+      const container = document.getElementById('toast-container');
+      if (!container) return;
+      const parts = [];
+      if (changes.ltp) {
+        const dir = changes.ltp.new > changes.ltp.old ? 'pos' : 'neg';
+        const arrow = changes.ltp.new > changes.ltp.old ? '▲' : '▼';
+        parts.push(`LTP ${fmt(changes.ltp.old)} <b class="${dir}">${arrow} ${fmt(changes.ltp.new)}</b>`);
+      }
+      if (changes.pcr) parts.push(`PCR <b>${fmt(changes.pcr.old, 2)}</b> → <b>${fmt(changes.pcr.new, 2)}</b>`);
+      if (changes.max_pain) parts.push(`MaxPain → <b class="kv-pivot">${fmt(changes.max_pain.new, 0)}</b>`);
+      if (changes.oi_change_pct) parts.push(`OI% shifted`);
+      if (!parts.length) return;
+      const toast = document.createElement('div');
+      toast.className = 'toast';
+      toast.innerHTML = `<span class="toast-sym">${sym}</span><span class="toast-body">${parts.join(' &nbsp;·&nbsp; ')}</span><span class="toast-x" onclick="this.parentElement.remove()">×</span><div class="toast-bar"></div>`;
+      container.prepend(toast);
+      setTimeout(() => toast.classList.add('toast-fade'), 4500);
+      setTimeout(() => toast.remove(), 5000);
+      // cap at 5 toasts
+      const all = container.querySelectorAll('.toast');
+      if (all.length > 5) all[all.length - 1].remove();
+    }
+
+    // ─── Symbol List ────────────────────────────────────
+    async function loadSymbolList() {
+      try { const j = await fetch('/api/equity-list', { headers: getKiteHeaders(), credentials: 'include' }).then(r => r.json()); symbolList = [...INDICES, ...(j.stocks || []).map(s => ({ sym: s.tradingsymbol, name: s.name, tag: 'F&O' }))]; }
+      catch { symbolList = [...INDICES]; }
+    }
+
+    // ─── Autocomplete ───────────────────────────────────
+    function showSugg(q) {
+      const box = document.getElementById('suggestions');
+      if (!q) { box.classList.remove('open'); return; }
+      const m = symbolList.filter(s => s.sym.startsWith(q) || s.name.toUpperCase().includes(q)).slice(0, 12);
+      if (!m.length) { box.classList.remove('open'); return; }
+      suggActive = -1;
+      box.innerHTML = m.map(s => `<div class="si" onmousedown="pickSugg('${s.sym}')">
+    <span class="si-sym">${s.sym}</span><span class="si-name">${s.name}</span>
+    <span class="si-tag">${s.tag}</span></div>`).join('');
+      box.classList.add('open');
+    }
+    function pickSugg(sym) { document.getElementById('search-input').value = sym; document.getElementById('suggestions').classList.remove('open'); selectSymbol(sym); }
+    function moveSugg(dir) {
+      const items = document.querySelectorAll('.si'); if (!items.length) return;
+      items[suggActive]?.classList.remove('act'); suggActive = (suggActive + dir + items.length) % items.length;
+      items[suggActive].classList.add('act'); document.getElementById('search-input').value = items[suggActive].querySelector('.si-sym').textContent;
+    }
+
+    // ─── Left Panel ─────────────────────────────────────
+    async function loadSpurt() {
+      try {
+        const j = await fetch(`/api/oi/spurt?min_pct=${minPct}`).then(r => r.json());
+        const newData = (j.data || []).sort((a, b) => b.oi_change_pct - a.oi_change_pct);
+        const newRankMap = {};
+        newData.forEach((d, i) => newRankMap[d.symbol] = i);
+        renderList(newData, prevRankMap, newRankMap, j.source || 'nse');
+        prevRankMap = newRankMap;
+        spurtData = newData;
+        document.getElementById('spurt-count').textContent = spurtData.length;
+        document.getElementById('last-update').textContent = 'L:' + new Date().toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' });
+        document.getElementById('lp-ts').textContent = new Date().toLocaleTimeString('en-IN');
+      } catch (e) { document.getElementById('stock-list').innerHTML = `<div class="lp-empty" style="color:var(--red)">⚠ ${e.message}</div>`; }
+    }
+    let oiTimestampMap = {};  // {symbol: {pct, time}} — tracks when OI last changed per stock
+
+    function renderList(data, oldRankMap = {}, newRankMap = {}, source = 'nse') {
+      const el = document.getElementById('stock-list');
+      if (!data.length) { el.innerHTML = `<div class="lp-empty">No stocks with OI% > ${minPct}<br><span style="font-size:8px;opacity:.5">Updates during market hours 9:15–15:30 IST</span></div>`; return; }
+      const maxOI = Math.max(...data.map(d => d.oi_change_pct), 1);
+      const hasPrev = Object.keys(oldRankMap).length > 0;
+      const now = new Date().toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+
+      // Update per-stock timestamp ONLY when OI% actually changes
+      data.forEach(d => {
+        const prev = oiTimestampMap[d.symbol];
+        if (!prev || Math.abs(d.oi_change_pct - prev.pct) > 0.01) {
+          oiTimestampMap[d.symbol] = { pct: d.oi_change_pct, time: now };
+        }
+      });
+
+      const isKite = (source === 'kite');
+      const indNse = document.getElementById('ind-nse');
+      const indKite = document.getElementById('ind-kite');
+      const pulseEl = document.querySelector('.pulse');
+      
+      if (indNse && indKite) {
+        if (isKite) {
+          indNse.style.color = 'var(--muted2)';
+          indNse.style.opacity = '0.4';
+          indNse.style.fontWeight = '400';
+          indNse.style.textShadow = 'none';
+          
+          indKite.style.color = 'var(--red)';
+          indKite.style.opacity = '1';
+          indKite.style.fontWeight = '700';
+          indKite.style.textShadow = '0 0 4px rgba(255, 61, 113, 0.4)';
+          
+          if (pulseEl) pulseEl.classList.add('red');
+        } else {
+          indNse.style.color = 'var(--green)';
+          indNse.style.opacity = '1';
+          indNse.style.fontWeight = '700';
+          indNse.style.textShadow = '0 0 4px rgba(0, 230, 118, 0.4)';
+          
+          indKite.style.color = 'var(--muted2)';
+          indKite.style.opacity = '0.4';
+          indKite.style.fontWeight = '400';
+          indKite.style.textShadow = 'none';
+          
+          if (pulseEl) pulseEl.classList.remove('red');
+        }
+      }
+
+      el.innerHTML = data.map((d, i) => {
+        const oiSign = d.oi_change_pct >= 0 ? '+' : '';
+        // Rank change detection (only after first load)
+        const wasRank = oldRankMap[d.symbol];
+        const isNew = hasPrev && wasRank === undefined;
+        const delta = wasRank !== undefined ? (wasRank - i) : 0; // positive = moved up
+        let rankCls = '', rankBadge = '';
+        if (isNew) { rankCls = 'sl-new'; rankBadge = `<span class="sl-rank-badge sl-rank-new">NEW</span>`; }
+        else if (delta > 0) { rankCls = 'sl-up'; rankBadge = `<span class="sl-rank-badge sl-rank-up">▲${delta}</span>`; }
+        else if (delta < 0) { rankCls = 'sl-down'; rankBadge = `<span class="sl-rank-badge sl-rank-down">▼${Math.abs(delta)}</span>`; }
+        const stockTs = oiTimestampMap[d.symbol]?.time || now;
+        
+        const oiColorStyle = isKite ? 'style="color: var(--red);"' : '';
+        const barStyle = isKite ? 'background: linear-gradient(90deg, var(--red), transparent);' : '';
+        
+        return `
+    <div class="sl-item ${activeTab === d.symbol ? 'active' : ''} ${rankCls}" id="li-${d.symbol}" onclick="selectSymbol('${d.symbol}')">
+      <div class="sl-left">
+        <div class="sl-sym">${d.symbol}${rankBadge}<span class="sl-series">${d.series}</span></div>
+        <div class="sl-ltp">LTP: <span class="${pclr(d.price_change)}">${fmt(d.ltp)}</span></div>
+        <div style="font-size:7px;color:#fff;opacity:0.85;margin-top:1px;">⏱ ${stockTs}</div>
+      </div>
+      <div class="sl-right">
+        <div class="sl-oichg" ${oiColorStyle}>${oiSign}${fmt(d.oi_change_pct)}%</div>
+        <div class="sl-oilabel">OI Change</div>
+      </div>
+      <div class="sl-bar" style="width:${Math.round((d.oi_change_pct / maxOI) * 100)}%; ${barStyle}"></div>
+    </div>`;
+      }).join('');
+    }
+
+    // ─── Left Countdown ─────────────────────────────────
+    function startLeftCountdown() {
+      leftCountdown = 60; clearInterval(leftTimer);
+      leftTimer = setInterval(() => { leftCountdown--; document.getElementById('countdown').textContent = leftCountdown; if (leftCountdown <= 0) { loadSpurt(); leftCountdown = 60; } }, 1000);
+    }
+
+    // ─── Tab Management ─────────────────────────────────
+    function renderTabs() {
+      const bar = document.getElementById('tab-bar');
+      const container = document.getElementById('tabs-container');
+      if (!watchList.length) { bar.style.display = 'none'; return; }
+      bar.style.display = 'flex';
+      container.innerHTML = watchList.map(sym => {
+        const isActive = sym === activeTab;
+        return `<div class="tab${isActive ? ' tab-active' : ''}" onclick="switchTab('${sym}')">${sym}<span class="tab-x" onmousedown="event.stopPropagation();closeTab('${sym}')">×</span></div>`;
+      }).join('');
+    }
+
+    function switchTab(sym) {
+      activeTab = sym;
+      renderTabs();
+      // Update left panel active highlight
+      document.querySelectorAll('.sl-item').forEach(e => e.classList.remove('active'));
+      document.getElementById('li-' + sym)?.classList.add('active');
+      // Show cached content immediately if available, then refresh
+      const wrap = document.getElementById('det-wrap');
+      document.getElementById('rp-empty').style.display = 'none';
+      wrap.style.display = 'block';
+      if (!prevDetails[sym]) {
+        wrap.innerHTML = `<div class="loader"><div class="spinner"></div> Loading ${sym}…</div>`;
+      }
+      fetchDetail(sym);
+      // Start independent timer if not already running
+      if (!tabTimers[sym]) {
+        tabTimers[sym] = setInterval(() => fetchDetail(sym), 15000);
+      }
+    }
+
+    function closeTab(sym) {
+      clearInterval(tabTimers[sym]);
+      delete tabTimers[sym];
+      delete prevDetails[sym];
+      const idx = watchList.indexOf(sym);
+      watchList = watchList.filter(s => s !== sym);
+      // Switch to adjacent tab or show empty state
+      if (activeTab === sym) {
+        activeTab = watchList[Math.min(idx, watchList.length - 1)] || null;
+      }
+      renderTabs();
+      if (activeTab) {
+        switchTab(activeTab);
+      } else {
+        document.getElementById('det-wrap').style.display = 'none';
+        document.getElementById('rp-empty').style.display = 'flex';
+        document.querySelectorAll('.sl-item').forEach(e => e.classList.remove('active'));
+      }
+    }
+
+    // ─── Select Symbol (adds/switches tab) ────────────────
+    async function selectSymbol(sym) {
+      sym = sym.toUpperCase().trim(); if (!sym) return;
+      document.getElementById('search-input').value = sym;
+      document.getElementById('suggestions').classList.remove('open');
+      if (!watchList.includes(sym)) watchList.push(sym);
+      switchTab(sym);
+    }
+
+    async function fetchDetail(sym) {
+      // Only render if this tab is still active
+      if (activeTab !== sym) return;
+      const wrap = document.getElementById('det-wrap');
+      if (!wrap) return;
+      try {
+        const d = await fetch(`/api/oi/symbol/${encodeURIComponent(sym)}`, { headers: getKiteHeaders(), credentials: 'include' }).then(r => r.json());
+        if (d.error && !d.ltp) throw new Error(d.error);
+        const spurtRow = spurtData.find(s => s.symbol === sym) || {};
+        const prev = prevDetails[sym] || {};
+        const changes = detectChanges(prev, d, spurtRow);
+        if (Object.keys(changes).length && Object.keys(prev).length) showToast(sym, changes);
+        const prevArrowState = prev.arrowState || {};
+        prevDetails[sym] = {
+          ...d,
+          ltp: d.ltp || spurtRow.ltp,
+          oi_change_pct: spurtRow.oi_change_pct,
+          arrowState: prevArrowState
+        };
+        // Only update DOM if still active tab
+        if (activeTab === sym) {
+          wrap.innerHTML = buildDetail(sym, d, spurtRow, changes, prev);
+          wrap.querySelector('.det-close')?.addEventListener('click', () => closeTab(sym));
+        }
+      } catch (e) {
+        if (activeTab !== sym) return;
+        if (!wrap.querySelector('.det-sym'))
+          wrap.innerHTML = `<div class="err-msg">⚠ ${sym}: ${e.message}</div>`;
+        else { const err = document.createElement('div'); err.className = 'err-msg'; err.textContent = '⚠ Refresh failed: ' + e.message; wrap.prepend(err); setTimeout(() => err.remove(), 4000); }
+      }
+    }
+
+    function closeDetail() {
+      // Close the active tab
+      if (activeTab) closeTab(activeTab);
+    }
+
+    // ─── Change Detection ───────────────────────────────
+    function detectChanges(prev, curr, spurtRow) {
+      const changes = {}; const ltp = spurtRow.ltp || curr.ltp;
+      if (prev.ltp && Math.abs(ltp - prev.ltp) > 0.05) changes.ltp = { old: prev.ltp, new: ltp };
+      if (prev.pcr && curr.pcr && Math.abs(curr.pcr - prev.pcr) > 0.01) changes.pcr = { old: prev.pcr, new: curr.pcr };
+      if (prev.max_pain && curr.max_pain && curr.max_pain !== prev.max_pain) changes.max_pain = { old: prev.max_pain, new: curr.max_pain };
+      if (prev.oi_change_pct && spurtRow.oi_change_pct && Math.abs(spurtRow.oi_change_pct - prev.oi_change_pct) > 0.1) changes.oi_change_pct = true;
+      return changes;
+    }
+    const alertBadge = ch => ch ? `<span class="alert-badge" title="Changed!">!</span>` : '';
+
+    // ─── Build Detail ───────────────────────────────────
+    function buildDetail(sym, d, spurtRow, changes = {}, prev = {}) {
+      // FIX: Use Kite LTP (d.ltp, 15s fresh) for stat strip, not spurtRow.ltp (NSE, 60s stale)
+      // spurtRow.ltp used only as emergency fallback if Kite hasn't returned yet
+      const ltp = d.ltp || spurtRow.ltp || 0;
+      // FIX: Use price_change_pct from Kite data (api_symbol) — accurate %, not absolute change
+      const priceChg = d.price_change_pct ?? spurtRow.price_change ?? 0;
+      const oiChgPct = spurtRow.oi_change_pct;
+      const currOI = spurtRow.curr_oi || 0;
+      const prevOI = spurtRow.prev_oi || 0;
+      const pcr = d.pcr;
+      const pv = d.pivots || {};
+      const strikes = d.strikes || {};
+      const top_ce = strikes.top_ce || [];
+      const top_pe = strikes.top_pe || [];
+      const isIndex = d.is_index || INDEX_SET.has(sym);
+      const now = new Date().toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+
+      // PCR label uses isIndex flag for correct threshold set
+      const { tag: pcrTag, cls: pcrCls, color: pcrColor } = getPCRLabel(pcr, isIndex);
+      const dirCls = priceChg > 0 ? 'tag-green' : priceChg < 0 ? 'tag-red' : 'tag-yellow';
+
+      // Market hours banner (Indian market: Mon-Fri 9:15-15:30 IST)
+      const mktBanner = isMarketOpen() ? '' :
+        `<div style="background:rgba(217,119,6,.1);border:1px solid rgba(217,119,6,.3);border-radius:6px;padding:5px 10px;font-size:9px;color:var(--yellow);margin-bottom:8px;">🕒 Market closed — showing last session data &nbsp;|&nbsp; NSE: Mon–Fri 9:15–15:30 IST</div>`;
+
+      // strikePCR client-side lookup REMOVED — backend now provides r.strike_pcr directly
+      // (previously rebuilt from chain_data here but was dead code after backend fix)
+
+      // FIX: Show pivot source badge so trader knows if pivots are from prev session or fallback
+      const pivotSrcBadge = d.pivot_source === 'prev_day'
+        ? `<span style="font-size:7px;background:rgba(22,163,74,.1);color:var(--green);border:1px solid rgba(22,163,74,.2);border-radius:3px;padding:1px 4px;margin-left:4px;">Prev Day ✓</span>`
+        : d.pivot_source === 'today_ohlc'
+          ? `<span style="font-size:7px;background:rgba(220,38,38,.1);color:var(--red);border:1px solid rgba(220,38,38,.2);border-radius:3px;padding:1px 4px;margin-left:4px;">Today OHLC</span>`
+          : '';
+
+      const pivotRows = pv.P ? `
+    <div class="kv"><span class="kv-k">R3</span><span class="kv-v kv-res">${fmt(pv.R3)}</span></div>
+    <div class="kv"><span class="kv-k">R2</span><span class="kv-v kv-res">${fmt(pv.R2)}</span></div>
+    <div class="kv"><span class="kv-k">R1</span><span class="kv-v kv-res">${fmt(pv.R1)}</span></div>
+    <div class="kv"><span class="kv-k">Pivot (P)</span><span class="kv-v kv-pivot">${fmt(pv.P)}</span></div>
+    <div class="kv"><span class="kv-k">S1</span><span class="kv-v kv-sup">${fmt(pv.S1)}</span></div>
+    <div class="kv"><span class="kv-k">S2</span><span class="kv-v kv-sup">${fmt(pv.S2)}</span></div>
+    <div class="kv"><span class="kv-k">S3</span><span class="kv-v kv-sup">${fmt(pv.S3)}</span></div>`
+        : '<div class="kv"><span class="kv-k">–</span><span class="kv-v neu">Connect Kite for data</span></div>';
+
+      const pivotRowsCompact = pv.P ? `
+        <div style="display: grid; grid-template-columns: 1fr 1.2fr; gap: 1px; font-size: 8.5px;">
+          <span style="color:var(--muted2);">R3:</span> <span class="kv-res" style="font-weight:600; text-align:right;">${fmt(pv.R3, 1)}</span>
+          <span style="color:var(--muted2);">R2:</span> <span class="kv-res" style="font-weight:600; text-align:right;">${fmt(pv.R2, 1)}</span>
+          <span style="color:var(--muted2);">R1:</span> <span class="kv-res" style="font-weight:600; text-align:right;">${fmt(pv.R1, 1)}</span>
+          <span style="color:var(--muted2);">PVT:</span> <span class="kv-pivot" style="font-weight:700; text-align:right; border-top: 1px solid rgba(255,255,255,0.08); border-bottom: 1px solid rgba(255,255,255,0.08);">${fmt(pv.P, 1)}</span>
+          <span style="color:var(--muted2);">S1:</span> <span class="kv-sup" style="font-weight:600; text-align:right;">${fmt(pv.S1, 1)}</span>
+          <span style="color:var(--muted2);">S2:</span> <span class="kv-sup" style="font-weight:600; text-align:right;">${fmt(pv.S2, 1)}</span>
+          <span style="color:var(--muted2);">S3:</span> <span class="kv-sup" style="font-weight:600; text-align:right;">${fmt(pv.S3, 1)}</span>
+        </div>`
+        : '<div style="color:var(--muted2); font-style:italic; font-size:8px;">Kite Not Connected</div>';
+
+      // Retrieve Layer 1 Futures Data with fail-safe fallbacks
+      const f = d.futures_data || {};
+      const fLtp = f.ltp || spurtRow.ltp || ltp || 0;
+      const fPriceChg = f.price_change_pct ?? priceChg;
+      const fOi = f.oi || currOI;
+      const fOiPrev = f.oi_prev || f.oi || prevOI;
+      const fOiChgPct = f.oi_change_pct ?? oiChgPct ?? 0;
+      const fBuildup = f.buildup || "–";
+
+      // Determine proper buildup CSS class
+      let buildupBadgeClass = "badge-flat";
+      if (fBuildup === "Long Buildup") buildupBadgeClass = "badge-lb";
+      else if (fBuildup === "Short Buildup") buildupBadgeClass = "badge-sb";
+      else if (fBuildup === "Short Covering") buildupBadgeClass = "badge-sc";
+      else if (fBuildup === "Long Unwinding") buildupBadgeClass = "badge-lu";
+
+      const layer1Html = `
+      <div class="layer-card l1" style="margin-bottom: 0;">
+        <div class="layer-title">
+          LAYER 1 — DIRECTIONAL COMMITMENT 
+          <span>FUTURES OI</span>
+        </div>
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+          <div>
+            <div style="font-size: 14px; font-weight: 700; color: var(--text);">₹${fmt(fLtp)}</div>
+            <div style="font-size: 9px;" class="${pclr(fPriceChg)}">${sign(fPriceChg)}${fmt(fPriceChg)}% today</div>
+          </div>
+          <div>
+            <span class="badge-buildup ${buildupBadgeClass}">${fBuildup}</span>
+          </div>
+        </div>
+        <div class="kv" style="border-top: 1px solid rgba(128,128,128,0.15); padding-top: 6px;">
+          <span class="kv-k">Futures OI (Curr/Prev)</span>
+          <span class="kv-v" style="font-weight:600;">${fmtOI(fOi)} / ${fmtOI(fOiPrev)}</span>
+        </div>
+        <div class="kv">
+          <span class="kv-k">Futures OI Change %</span>
+          <span class="kv-v ${pclr(fOiChgPct)}">${sign(fOiChgPct)}${fmt(fOiChgPct)}%</span>
+        </div>
+      </div>`;
+
+      const layer2Html = `
+      <div class="layer-card l2" style="margin-bottom: 0;">
+        <div class="layer-title">
+          LAYER 2 — SENTIMENT BIAS
+          <span>OPTIONS PCR</span>
+        </div>
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+          <div>
+            <div style="font-size: 14px; font-weight: 700; color: ${pcrColor};">${pcr != null ? fmt(pcr, 3) : '–'}</div>
+            <div style="font-size: 9px; color: var(--muted);">${pcrTag} Sentiment</div>
+          </div>
+          <div style="width: 80px; background: rgba(128,128,128,0.15); height: 4px; border-radius: 2px; position: relative;">
+            <div style="width: ${Math.min(100, (pcr || 0) * 50)}%; background: ${pcrColor}; height: 100%; border-radius: 2px;"></div>
+          </div>
+        </div>
+        <div class="kv" style="border-top: 1px solid rgba(128,128,128,0.15); padding-top: 6px;">
+          <span class="kv-k">PCR Ratio (Total PE / CE)</span>
+          <span class="kv-v" style="color: ${pcrColor}; font-weight: 600;">${pcr != null ? fmt(pcr, 2) : '–'}</span>
+        </div>
+      </div>`;
+
+      const layer3Html = `
+      <div class="layer-card l3" style="margin-bottom: 0;">
+        <div class="layer-title">
+          LAYER 3 — KEY TRADING BARRIERS
+          <span>STRIKE OI WALLS</span>
+        </div>
+        <div class="kv">
+          <span class="kv-k">CE Wall (Resistance)</span>
+          <span class="kv-v kv-res" style="font-weight: 600;">${strikes.ce_wall ? fmt(strikes.ce_wall, 0) : '–'}</span>
+        </div>
+        <div class="kv">
+          <span class="kv-k">PE Wall (Support)</span>
+          <span class="kv-v kv-sup" style="font-weight: 600;">${strikes.pe_wall ? fmt(strikes.pe_wall, 0) : '–'}</span>
+        </div>
+        <div class="kv" style="border-top: 1px solid rgba(128,128,128,0.15); padding-top: 6px;">
+          <span class="kv-k">Max Pain Strike</span>
+          <span class="kv-v kv-pivot" style="font-weight: 600;">${d.max_pain ? fmt(d.max_pain, 0) : '–'}</span>
+        </div>
+        <div class="kv">
+          <span class="kv-k">Max Pain vs LTP</span>
+          <span class="kv-v ${d.max_pain && ltp ? (d.max_pain > ltp ? 'pos' : 'neg') : 'neu'}">${d.max_pain && ltp ? (d.max_pain > ltp ? '▲ Above LTP' : '▼ Below LTP') : '–'}</span>
+        </div>
+      </div>`;
+
+
+      function strikeTable(rows, side) {
+        if (!rows?.length) return '<div style="color:var(--muted);font-size:9px;padding:6px">No data — connect Kite for option chain</div>';
+        const maxOI = Math.max(...rows.map(r => r.oi), 1);
+        return `<table class="mt"><thead><tr><th>Strike</th><th>OI</th><th>OI Chg</th><th>Strike PCR</th><th>Buildup</th><th>Trap</th></tr></thead><tbody>` +
+          rows.map(r => {
+            // Use backend-computed strike_pcr (covers all strikes, not just ±10 window)
+            const sPCR = r.strike_pcr != null ? fmt(r.strike_pcr, 2) : '–';
+            const pcrColor = sPCR !== '–' ? (parseFloat(sPCR) > 1 ? 'var(--green)' : 'var(--red)') : 'var(--muted)';
+            return `<tr>
+          <td><b>${fmt(r.strike, 0)}</b></td>
+          <td>${fmtOI(r.oi)}<span class="oi-bar" style="background:${side === 'ce' ? 'var(--red)' : 'var(--green)'};width:${Math.round((r.oi / maxOI) * 34)}px"></span></td>
+          <td class="${r.oi_chg >= 0 ? 'pos' : 'neg'}">${r.oi_chg >= 0 ? '+' : ''}${fmtOI(r.oi_chg)}</td>
+          <td style="color:${pcrColor}">${sPCR}</td>
+          <td><span class="${buCls(r.buildup)}">${r.buildup}</span></td>
+          <td>${r.trap ? `<span class="trap">⚠ ${r.trap}</span>` : ''}</td>
+        </tr>`;
+          }).join('') + `</tbody></table>`;
+      }
+
+      // Retrieve Transition Conviction Data
+      const tc = d.transition_conviction;
+      let transitionConvictionHtml = '';
+
+      if (tc && tc.strike_details && tc.strike_details.length > 0) {
+        const atmDetails = tc.strike_details.filter(s => s.zone === 'ATM±3');
+        const registryDetails = tc.strike_details.filter(s => s.zone === 'ATM±4-7');
+
+        const compositeVal = tc.composite_score;
+        const biasColor = compositeVal > 0 ? 'var(--green)' : compositeVal < 0 ? 'var(--red)' : 'var(--muted2)';
+        const biasText = tc.bias;
+        const netDrift = tc.net_drift || 'Neutral';
+        const driftColor = netDrift.startsWith('Bullish') ? 'var(--green)' : netDrift.startsWith('Bearish') ? 'var(--red)' : netDrift.startsWith('Range') ? 'var(--yellow)' : 'var(--accent)';
+
+        // Scale slider position from -15.0 (Bearish) to +15.0 (Bullish) to percent (0% - 100%)
+        const pct = Math.min(100, Math.max(0, ((compositeVal + 15) / 30) * 100));
+
+        // Render Alert Banner
+        let alertBannerHtml = '';
+        if (tc.alerts && tc.alerts.length > 0) {
+          alertBannerHtml = tc.alerts.map(a => `
+            <div style="background: rgba(220,38,38,0.1); border: 1px solid rgba(220,38,38,0.35); border-radius: 4px; padding: 5px 8px; margin-bottom: 5px; font-size: 9px; color: var(--red); display: flex; align-items: center; gap: 5px;">
+              <span>🚨</span>
+              <span><b>${a.type.toUpperCase()}:</b> ${a.message}</span>
+            </div>
+          `).join('');
+        } else {
+          alertBannerHtml = `
+            <div style="background: rgba(128,128,128,0.06); border: 1px solid rgba(128,128,128,0.15); border-radius: 4px; padding: 5px 8px; margin-bottom: 5px; font-size: 8.5px; color: var(--muted2); text-align: center;">
+              No active alerts in this cycle (or under cooldown suppression)
+            </div>
+          `;
+        }
+
+        const mapStateToClass = s => {
+          if (s === 'LB') return 'badge-lb';
+          if (s === 'LU') return 'badge-lu';
+          if (s === 'SB') return 'badge-sb';
+          if (s === 'SC') return 'badge-sc';
+          return 'badge-flat';
+        };
+
+        // Build ATM±3 table rows
+        const atmRows = atmDetails.map(row => {
+          const ceScore = row.ce.score;
+          const peScore = row.pe.score;
+          const ceScoreStr = ceScore > 0 ? `+${ceScore}` : ceScore;
+          const peScoreStr = peScore > 0 ? `+${peScore}` : peScore;
+          const isATM = row.strike === tc.atm_strike;
+
+          return `
+            <tr style="${isATM ? 'background: rgba(2, 132, 199, 0.06); font-weight: 600;' : ''}">
+              <td><b>${fmt(row.strike, 0)}</b> ${isATM ? '<span style="font-size:7px; background:var(--accent); color:#fff; padding:1px 3px; border-radius:2px; margin-left:3px;">ATM</span>' : ''}</td>
+              <td>
+                <span class="badge-buildup ${mapStateToClass(row.ce.to_state)}" style="font-size: 8px; padding: 1px 4px;">${row.ce.from_state || '–'} → ${row.ce.to_state}</span>
+                <span style="font-size: 8px; color: ${ceScore >= 0 ? 'var(--green)' : 'var(--red)'}; margin-left: 3px;">(${ceScoreStr})</span>
+              </td>
+              <td>
+                <span class="badge-buildup ${mapStateToClass(row.pe.to_state)}" style="font-size: 8px; padding: 1px 4px;">${row.pe.from_state || '–'} → ${row.pe.to_state}</span>
+                <span style="font-size: 8px; color: ${peScore >= 0 ? 'var(--green)' : 'var(--red)'}; margin-left: 3px;">(${peScoreStr})</span>
+              </td>
+              <td style="color: ${row.composite >= 0 ? 'var(--green)' : 'var(--red)'}; font-weight: 700;">
+                ${row.composite >= 0 ? '+' : ''}${fmt(row.composite)}
+              </td>
+              <td>
+                <span class="tag ${row.strength === 'High' ? 'tag-red' : row.strength === 'Medium' ? 'tag-yellow' : 'tag-blue'}" style="font-size: 7.5px; padding: 1px 4px;">
+                  ${row.strength}
+                </span>
+              </td>
+            </tr>
+          `;
+        }).join('');
+
+        transitionConvictionHtml = `
+          <div class="sec-head">🔄 State Transition Conviction</div>
+          <div class="layer-card" style="margin-bottom: 7px; border: 1px solid var(--border); border-radius: 7px; padding: 10px 12px;">
+            <div class="layer-title">
+              🔄 STATE TRANSITION CONVICTION METER
+              <span style="font-size: 7.5px; background: rgba(2, 132, 199, 0.1); color: var(--accent); border: 1px solid rgba(2, 132, 199, 0.2); border-radius: 3px; padding: 1px 4px;">ATM±3 Zone</span>
+            </div>
+            
+            <div class="cards-row" style="grid-template-columns: 1.25fr 0.75fr; gap: 8px; margin-bottom: 5px;">
+              <!-- Left: Gauge and Alerts -->
+              <div>
+                <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 4px;">
+                  <div>
+                    <div style="font-size: 13px; font-weight: 700; color: ${biasColor};">
+                      Composite Score: ${compositeVal >= 0 ? '+' : ''}${fmt(compositeVal)}
+                    </div>
+                    <div style="font-size: 9px; color: var(--muted2);">
+                      Active Bias: <b style="color: ${biasColor}">${biasText}</b>
+                    </div>
+                    <div style="font-size: 9px; color: var(--muted2); margin-top: 2px;">
+                      Net Drift: <b style="color: ${driftColor}">${netDrift}</b>
+                    </div>
+                  </div>
+                  <div style="text-align: right;">
+                    <div style="font-size: 8px; color: var(--muted2);">IV Window check</div>
+                    <span class="tag ${tc.is_event_window ? 'tag-yellow' : 'tag-green'}" style="font-size: 7px; padding: 1px 4px;">
+                      ${tc.is_event_window ? '⚠️ Event Dampened' : '✓ Normal'}
+                    </span>
+                  </div>
+                </div>
+                
+                <!-- Visual Gauge Slider -->
+                <div style="margin-bottom: 6px; position: relative;">
+                  <div style="height: 5px; background: linear-gradient(90deg, var(--red) 0%, #cbd5e1 50%, var(--green) 100%); border-radius: 3px; width: 100%;"></div>
+                  <div style="position: absolute; top: -3.5px; left: calc(${pct}% - 3px); width: 6px; height: 12px; background: var(--text); border: 1px solid #fff; border-radius: 2px; box-shadow: 0 1px 3px rgba(0,0,0,0.25);"></div>
+                </div>
+                <div style="display: flex; justify-content: space-between; font-size: 7.5px; color: var(--muted2); margin-bottom: 8px;">
+                  <span>Bearish (-15.0)</span>
+                  <span>Neutral (0.0)</span>
+                  <span>Bullish (+15.0)</span>
+                </div>
+                
+                ${alertBannerHtml}
+              </div>
+              
+              <!-- Right: Wall Strength Registry -->
+              <div style="background: rgba(128,128,128,0.03); border: 1px solid var(--border); border-radius: 6px; padding: 6px 8px;">
+                <div style="font-size: 8px; font-weight: 700; color: var(--muted2); text-transform: uppercase; margin-bottom: 4px; border-bottom: 1px solid rgba(128,128,128,0.1); padding-bottom: 2px;">
+                  🛡️ Wall Strength Registry (ATM±4–7)
+                </div>
+                <div style="max-height: 85px; overflow-y: auto; font-size: 8px; color: var(--text);">
+                  ${registryDetails.length > 0 ? registryDetails.map(r => {
+                    const ceTo = r.ce.to_state;
+                    const peTo = r.pe.to_state;
+                    const ceClass = ceTo === 'LB' || ceTo === 'SC' ? 'pos' : ceTo === 'LU' || ceTo === 'SB' ? 'neg' : 'neu';
+                    const peClass = peTo === 'LB' || peTo === 'SC' ? 'pos' : peTo === 'LU' || peTo === 'SB' ? 'neg' : 'neu';
+                    return `
+                      <div style="display:flex; justify-content:space-between; margin-bottom:3px; padding-bottom:3px; border-bottom:1px dashed rgba(128,128,128,0.08);">
+                        <span><b>Strike ${fmt(r.strike, 0)}:</b></span>
+                        <span>
+                          CE:<span class="${ceClass}">${ceTo}</span> | 
+                          PE:<span class="${peClass}">${peTo}</span>
+                        </span>
+                      </div>
+                    `;
+                  }).join('') : '<div style="color:var(--muted2); font-style:italic; font-size: 7.5px;">No logged strikes</div>'}
+                </div>
+              </div>
+            </div>
+            
+            <!-- ATM±3 Strikes Grid -->
+            <table class="mt" style="width: 100%; margin-top: 4px;">
+              <thead>
+                <tr>
+                  <th>Strike</th>
+                  <th>CE Transition (Score)</th>
+                  <th>PE Transition (Score)</th>
+                  <th>Composite</th>
+                  <th>Strength</th>
+                </tr>
+              </thead>
+              <tbody>
+                ${atmRows}
+              </tbody>
+            </table>
+          </div>
+        `;
+      }
+
+      const errHtml = (d.errors || []).filter(e => !e.includes('Kite not')).length ?
+        `<div class="err-msg" style="font-size:9px">⚠ ${d.errors.join(' | ')}</div>` : '';
+
+      return `
+    <!-- (a) Symbol + LTP header -->
+    ${mktBanner}
+    <div class="det-header">
+      <div class="det-sym-group">
+        <span class="det-sym">${sym}</span>
+        <div class="det-live"><div class="dot"></div> LIVE · ${now}</div>
+      </div>
+
+      <!-- (b) LTP | (a) OI Change | (c) Max Pain | (f) Overall PCR -->
+      <div class="stat-strip">
+        <div class="stat-box ${changes.ltp ? 'changed' : ''}">
+          ${alertBadge(changes.ltp)}<div class="stat-label">LTP</div>
+          <div class="stat-val ${pclr(priceChg)}">${fmt(ltp)}</div>
+          <div class="stat-sub">${sign(priceChg)}${fmt(priceChg)}% today</div>
+        </div>
+        <div class="stat-box ${changes.oi_change_pct ? 'changed' : ''}">
+          ${alertBadge(changes.oi_change_pct)}<div class="stat-label">OI Change %</div>
+          <div class="stat-val pos">${oiChgPct != null ? '+' + fmt(oiChgPct) + '%' : '–'}</div>
+          <div class="stat-sub">${fmtOI(prevOI)} → ${fmtOI(currOI)}</div>
+        </div>
+        <div class="stat-box ${changes.max_pain ? 'changed' : ''}">
+          ${alertBadge(changes.max_pain)}<div class="stat-label">Max Pain</div>
+          <div class="stat-val kv-pivot">${d.max_pain ? fmt(d.max_pain, 0) : '–'}</div>
+          <div class="stat-sub">${d.max_pain && ltp ? (d.max_pain > ltp ? '▲ Above LTP' : '▼ Below LTP') : '–'}</div>
+        </div>
+        <div class="stat-box ${changes.pcr ? 'changed' : ''}">
+          ${alertBadge(changes.pcr)}<div class="stat-label">Overall PCR</div>
+          <div class="stat-val" style="color:${pcrColor}">${pcr != null ? fmt(pcr, 3) : '–'}</div>
+          <div class="stat-sub">${pcrTag}</div>
+        </div>
+
+        <!-- Pivot Levels in header strip next to PCR -->
+        <div class="stat-box" style="min-width: 170px; max-width: 200px; padding: 4px 8px; display: flex; flex-direction: column; justify-content: space-between;">
+          <div class="stat-label" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2px;">
+            <span>Pivot Levels</span>
+            <span>${pivotSrcBadge}</span>
+          </div>
+          ${pv.P ? `
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 2px 14px; font-size: 9px; line-height: 1.05;">
+              <div><span style="color:var(--muted2)">R3:</span> <span class="kv-res" style="font-weight:600">${fmt(pv.R3, 0)}</span></div>
+              <div><span style="color:var(--muted2)">S1:</span> <span class="kv-sup" style="font-weight:600">${fmt(pv.S1, 0)}</span></div>
+              <div><span style="color:var(--muted2)">R2:</span> <span class="kv-res" style="font-weight:600">${fmt(pv.R2, 0)}</span></div>
+              <div><span style="color:var(--muted2)">S2:</span> <span class="kv-sup" style="font-weight:600">${fmt(pv.S2, 0)}</span></div>
+              <div><span style="color:var(--muted2)">R1:</span> <span class="kv-res" style="font-weight:600">${fmt(pv.R1, 0)}</span></div>
+              <div><span style="color:var(--muted2)">S3:</span> <span class="kv-sup" style="font-weight:600">${fmt(pv.S3, 0)}</span></div>
+              <div style="grid-column: span 2; border-top: 1px solid rgba(255,255,255,0.08); padding-top: 1px; text-align: center;">
+                <span style="color:var(--muted2)">PVT:</span> <span class="kv-pivot" style="font-weight:700">${fmt(pv.P, 0)}</span>
+              </div>
+            </div>
+          ` : `
+            <div style="color:var(--muted2); font-style:italic; font-size:8px; text-align:center; padding: 6px 0;">Kite Not Connected</div>
+          `}
+        </div>
+      </div>
+
+      <button class="det-close">✕ Close</button>
+    </div>
+    <!-- Tags: direction, PCR signal, expiry -->
+    <div class="tags">
+      <span class="tag ${dirCls}">${priceChg > 0 ? '▲ Bullish' : priceChg < 0 ? '▼ Bearish' : '↔ Neutral'}</span>
+      ${pcr != null ? `<span class="tag ${pcrCls}">PCR: ${fmt(pcr, 2)} · ${pcrTag}</span>` : ''}
+      ${d.expiry ? `<span class="tag tag-blue">Expiry: ${d.expiry}</span>` : ''}
+    </div>
+    ${errHtml}
+
+    <div style="display: grid; grid-template-columns: 1fr 1.2fr; gap: 10px; align-items: start; margin-top: 10px;">
+      <!-- Column 1: Stacked Analytics, Pivots, Strike PCR, and Retail Action -->
+      <div style="display: flex; flex-direction: column; gap: 7px;">
+        <!-- 1) F&O 3-Layer Analytics in 3 Columns -->
+        <div class="sec-head" style="margin-top: 0; margin-bottom: 4px;">📊 F&amp;O 3-Layer Analytics</div>
+        <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 5px; margin-bottom: 4px;">
+          ${layer1Html}
+          ${layer2Html}
+          ${layer3Html}
+        </div>
+
+        <!-- 3) Strike PCR Buildup Trap in 2 Columns -->
+        <div class="sec-head" style="margin-top: 4px; margin-bottom: 4px; padding-bottom: 2px;">(e) Strike PCR, Buildup, Trap</div>
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 5px; margin-bottom: 4px;">
+          <div class="card" style="margin-bottom: 0;">
+            <div class="card-title" style="color:var(--red)">📞 CE Writing — Resistance Zones</div>
+            ${strikeTable(top_ce, 'ce')}
+          </div>
+          <div class="card" style="margin-bottom: 0;">
+            <div class="card-title" style="color:var(--green)">📉 PE Writing — Support Zones</div>
+            ${strikeTable(top_pe, 'pe')}
+          </div>
+        </div>
+
+        <!-- 4) Live Retail Action and H Action in 2 Columns -->
+        <div class="sec-head" style="margin-top: 4px; margin-bottom: 4px;">⚡ Live Retail Action &amp; H-Action Signal</div>
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 5px; margin-bottom: 4px;">
+          <div class="card" style="margin-bottom: 0;">
+            ${d.gap_detected ? `<div style="background:rgba(217,119,6,.12);border:1px solid rgba(217,119,6,.35);border-radius:5px;padding:5px 8px;font-size:9px;color:var(--yellow);margin-bottom:8px;">⚡ Gap day detected — price/IV trends suppressed. Signal based on OI momentum only.</div>` : ''}
+            <div class="kv">
+              <span class="kv-k">Action</span>
+              <span class="kv-v" style="color:${(d.retail_action || '').includes('BUY') ? 'var(--green)' : 'var(--yellow)'}; font-weight:600">${d.retail_action || 'WAIT (No clear setup)'}</span>
+            </div>
+            ${d.signal_source ? `<div class="kv"><span class="kv-k" style="font-size:9px;opacity:.7">↳ Signal from</span><span class="kv-v" style="font-size:9px;color:var(--muted2)">${d.signal_source.side} ${fmt(d.signal_source.strike, 0)} &nbsp;·&nbsp; OI: ${fmtOI(d.signal_source.oi)}</span></div>` : ''}
+            <div class="kv">
+              <span class="kv-k">H-Action</span>
+              <span class="kv-v" style="color:var(--green); font-weight:600">${d.h_action || '—'}</span>
+            </div>
+            ${d.h_action_source ? `<div class="kv"><span class="kv-k" style="font-size:9px;opacity:.7">↳ H-Signal from</span><span class="kv-v" style="font-size:9px;color:var(--muted2)">${d.h_action_source.side} ${fmt(d.h_action_source.strike, 0)} &nbsp;·&nbsp; OI: ${fmtOI(d.h_action_source.oi)}</span></div>` : ''}
+            <div style="margin-top:6px; font-size:9px; color:var(--muted); text-align:right">Probabilistic signals — not guaranteed outcomes</div>
+          </div>
+          <div class="card" style="margin-bottom: 0;">
+            <div class="card-title" style="color:var(--accent)">🔁 F&amp;O Synergy Profile</div>
+            <div class="kv">
+              <span class="kv-k">Synergy Status</span>
+              <span class="kv-v" style="color:${(d.synergy_profile || '').includes('🟢') || (d.synergy_profile || '').includes('🪤') ? 'var(--green)' : (d.synergy_profile || '').includes('🔴') || (d.synergy_profile || '').includes('💀') ? 'var(--red)' : (d.synergy_profile || '').includes('⚡') ? 'var(--accent)' : 'var(--yellow)'}; font-weight:600">${d.synergy_profile || 'Mixed Flow (No Setup)'}</span>
+            </div>
+            <div class="kv">
+              <span class="kv-k">Action Plan</span>
+              <span class="kv-v" style="color:${(d.synergy_action || '').includes('BUY') ? 'var(--green)' : (d.synergy_action || '').includes('SELL') ? 'var(--accent)' : 'var(--yellow)'}; font-weight:600">${d.synergy_action || 'WAIT'}</span>
+            </div>
+            <div style="margin-top:6px; font-size:9px; color:var(--muted); text-align:right">Aligned to 7-Profile Institutional Matrix</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Column 2: Heatmap and State Transition Conviction -->
+      <div style="display: flex; flex-direction: column; gap: 7px;">
+        <!-- 1) OI Chain Heatmap -->
+        ${buildHeatmap(sym, d.chain_data, ltp, d.max_pain, d.straddle, d.atm, d.expiry, d.pcr, prev.chain_data, prev.arrowState)}
+
+        <!-- 2) State Transition Conviction -->
+        ${transitionConvictionHtml}
+
+        <!-- 3) AI Heatmap Analysis -->
+        <div class="ai-analysis-panel">
+          <button class="ai-analyze-btn ${aiAnalysisCache[sym]?.open ? 'open' : ''}" id="ai-btn-${sym}" onclick="runAiAnalysis('${sym}')">
+            <span class="ai-btn-left">
+              <span>✨</span>
+              <span class="ai-btn-label">AI Heatmap Analysis</span>
+            </span>
+            <span class="ai-chevron">▾</span>
+          </button>
+          <div class="ai-analysis-body ${aiAnalysisCache[sym]?.open ? 'open' : ''}" id="ai-body-${sym}" data-loaded="${aiAnalysisCache[sym]?.loaded || '0'}">
+            ${aiAnalysisCache[sym]?.html || ''}
+          </div>
+        </div>
+      </div>
+    </div>`;
+    }
+
+    // ─── OI Chain Heatmap ───────────────────────────────
+    function buildHeatmap(sym, chain, ltp, maxPain, straddle, atm, expiry, pcr, prevChain, prevArrows = {}) {
+      if (!chain?.length) return `
+    <div class="sec-head">OI Chain Heatmap</div>
+    <div class="heatmap-wrap" style="padding:16px;color:var(--muted);font-size:10px;text-align:center">
+      🔗 Connect Kite API to view live OI Chain Heatmap
+    </div>`;
+
+      const maxPEOI = Math.max(...chain.map(r => r.pe_oi), 1);
+      const maxCEOI = Math.max(...chain.map(r => r.ce_oi), 1);
+
+      // Build previous state lookup map for real-time tick-by-tick arrows
+      const prevMap = {};
+      if (prevChain && prevChain.length) {
+        prevChain.forEach(r => {
+          prevMap[r.strike] = {
+            ce_oi: r.ce_oi || 0,
+            pe_oi: r.pe_oi || 0
+          };
+        });
+      }
+
+      const newArrowState = {};
+
+      // Sort the chain by strike descending (max to low)
+      const sortedChain = [...chain].sort((a, b) => b.strike - a.strike);
+      const rows = sortedChain.map(r => {
+        const isATM = r.strike === atm;
+        const isMP = r.strike === maxPain;
+        const pePct = r.pe_oi / maxPEOI;
+        const cePct = r.ce_oi / maxCEOI;
+        const rowCls = isMP ? 'mp-row' : isATM ? 'atm-row' : '';
+        const sPCR = r.strike_pcr != null ? r.strike_pcr : (r.ce_oi > 0 ? (r.pe_oi / r.ce_oi) : null);
+        const pcrStr = sPCR !== null ? fmt(sPCR, 2) : '–';
+        const pcrColor = sPCR !== null ? (sPCR >= 1 ? 'var(--green)' : 'var(--red)') : 'var(--muted)';
+        const strikeLbl = `
+      ${isMP ? '<span class="mp-badge">MAX PAIN</span>' : ''}
+      ${isATM ? '<span class="atm-badge">ATM</span>' : ''}
+      ${fmt(r.strike, 0)}`;
+
+        // Calculate CE % Change
+        const baseCeOi = r.ce_oi - (r.ce_oi_chg || 0);
+        const cePctChg = baseCeOi > 0 ? ((r.ce_oi_chg || 0) / baseCeOi) * 100 : 0;
+        const cePctStr = cePctChg !== 0 ? ` <span style="font-size:9px; opacity:0.75">(${cePctChg > 0 ? '+' : ''}${cePctChg.toFixed(1)}%)</span>` : '';
+
+        // Calculate PE % Change
+        const basePeOi = r.pe_oi - (r.pe_oi_chg || 0);
+        const pePctChg = basePeOi > 0 ? ((r.pe_oi_chg || 0) / basePeOi) * 100 : 0;
+        const pePctStr = pePctChg !== 0 ? ` <span style="font-size:9px; opacity:0.75">(${pePctChg > 0 ? '+' : ''}${pePctChg.toFixed(1)}%)</span>` : '';
+
+        // Real-time tick arrows comparison next to absolute CE/PE OI with Delta Count Support
+        const lastCe = prevArrows[r.strike]?.ce || null;
+        const lastPe = prevArrows[r.strike]?.pe || null;
+
+        let ceDirection = lastCe ? lastCe.dir : '';
+        let ceCount = lastCe ? lastCe.count : '';
+        const prevStrike = prevMap[r.strike];
+
+        if (prevStrike) {
+          const prevCeVal = prevStrike.ce_oi;
+          const diff = r.ce_oi - prevCeVal;
+          if (diff > 0) {
+            ceDirection = '▲';
+            ceCount = '+' + fmtOI(diff);
+          } else if (diff < 0) {
+            ceDirection = '▼';
+            ceCount = '-' + fmtOI(Math.abs(diff));
+          }
+        }
+
+        // Save state for CE
+        newArrowState[r.strike] = newArrowState[r.strike] || {};
+        newArrowState[r.strike].ce = ceDirection ? { dir: ceDirection, count: ceCount } : null;
+
+        let ceArrowStr = '';
+        if (ceDirection === '▲') {
+          const countDisplay = ceCount ? ` (${ceCount})` : '';
+          ceArrowStr = ` <span class="arrow-up" style="color:var(--green); font-weight:bold; font-size:9.5px; margin-left:3px;" title="OI Increased since last refresh">▲${countDisplay}</span>`;
+        } else if (ceDirection === '▼') {
+          const countDisplay = ceCount ? ` (${ceCount})` : '';
+          ceArrowStr = ` <span class="arrow-down" style="color:var(--red); font-weight:bold; font-size:9.5px; margin-left:3px;" title="OI Decreased since last refresh">▼${countDisplay}</span>`;
+        }
+
+        let peDirection = lastPe ? lastPe.dir : '';
+        let peCount = lastPe ? lastPe.count : '';
+
+        if (prevStrike) {
+          const prevPeVal = prevStrike.pe_oi;
+          const diff = r.pe_oi - prevPeVal;
+          if (diff > 0) {
+            peDirection = '▲';
+            peCount = '+' + fmtOI(diff);
+          } else if (diff < 0) {
+            peDirection = '▼';
+            peCount = '-' + fmtOI(Math.abs(diff));
+          }
+        }
+
+        // Save state for PE
+        newArrowState[r.strike].pe = peDirection ? { dir: peDirection, count: peCount } : null;
+
+        let peArrowStr = '';
+        if (peDirection === '▲') {
+          const countDisplay = peCount ? ` (${peCount})` : '';
+          peArrowStr = ` <span class="arrow-up" style="color:var(--green); font-weight:bold; font-size:9.5px; margin-left:3px;" title="OI Increased since last refresh">▲${countDisplay}</span>`;
+        } else if (peDirection === '▼') {
+          const countDisplay = peCount ? ` (${peCount})` : '';
+          peArrowStr = ` <span class="arrow-down" style="color:var(--red); font-weight:bold; font-size:9.5px; margin-left:3px;" title="OI Decreased since last refresh">▼${countDisplay}</span>`;
+        }
+
+        const ceEodPct = r.ce_oi_eod_chg_pct || 0;
+        const peEodPct = r.pe_oi_eod_chg_pct || 0;
+        const ceEodStr = ceEodPct !== 0
+          ? ` <span class="${ceEodPct > 0 ? 'pos' : 'neg'}" style="font-size:8.5px; font-weight:600; margin-left:3px;">(${ceEodPct > 0 ? '+' : ''}${ceEodPct.toFixed(1)}%)</span>`
+          : '';
+        const peEodStr = peEodPct !== 0
+          ? ` <span class="${peEodPct > 0 ? 'pos' : 'neg'}" style="font-size:8.5px; font-weight:600; margin-left:3px;">(${peEodPct > 0 ? '+' : ''}${peEodPct.toFixed(1)}%)</span>`
+          : '';
+
+        // Per-strike action cell — derives color from action text
+        const ceAct = r.ce_action || '';
+        const peAct = r.pe_action || '';
+        const actText = ceAct || peAct || '';
+        const actColor = actText.includes('BUY') ? 'var(--green)' : actText.includes('WAIT') ? 'var(--yellow)' : 'var(--muted)';
+
+        return `<tr class="${rowCls}">
+      <td class="ce-cell" style="background:rgba(0,230,118,${(cePct * .35).toFixed(2)})">${fmtOI(r.ce_oi)}${ceEodStr}</td>
+      <td><span class="${buCls(r.ce_buildup)}" style="font-size:9px; font-weight:600">${buAbbr(r.ce_buildup)}</span></td>
+      <td class="${r.ce_oi_chg >= 0 ? 'pos' : 'neg'}">${r.ce_oi_chg >= 0 ? '+' : ''}${fmtOI(r.ce_oi_chg)}${cePctStr}</td>
+      <td>₹${fmt(r.ce_ltp, 1)}</td>
+      <td class="strike-td">${strikeLbl}</td>
+      <td>₹${fmt(r.pe_ltp, 1)}</td>
+      <td class="${r.pe_oi_chg >= 0 ? 'pos' : 'neg'}">${r.pe_oi_chg >= 0 ? '+' : ''}${fmtOI(r.pe_oi_chg)}${pePctStr}</td>
+      <td><span class="${buCls(r.pe_buildup)}" style="font-size:9px; font-weight:600">${buAbbr(r.pe_buildup)}</span></td>
+      <td class="pe-cell" style="background:rgba(255,61,113,${(pePct * .35).toFixed(2)})">${fmtOI(r.pe_oi)}${peEodStr}</td>
+      <td style="color:${pcrColor}; font-weight: 600;">${pcrStr}</td>
+      <td class="action-td" style="color:${actColor}; font-weight:600; font-size:9px; white-space:nowrap">${actText || '–'}</td>
+    </tr>`;
+      }).join('');
+
+      if (prevDetails[sym]) {
+        prevDetails[sym].arrowState = newArrowState;
+      }
+
+      return `
+    <div class="sec-head">OI Chain Heatmap</div>
+    <div class="heatmap-wrap">
+      <div class="heatmap-header">
+        <span class="hm-title">📊 OI CHAIN &nbsp;·&nbsp; ${expiry || '–'}</span>
+        <div class="hm-meta">
+          <span>Max Pain: <b class="kv-pivot">${maxPain ? fmt(maxPain, 0) : '–'}</b></span>
+          <span>Spot: <b>${fmt(ltp)}</b></span>
+          <span>Straddle: <b>₹${straddle ? fmt(straddle, 1) : '–'}</b></span>
+          <span>PCR: <b style="color:${pcr >= 1 ? 'var(--green)' : 'var(--red)'}">${pcr ? fmt(pcr, 2) : '–'}</b></span>
+        </div>
+      </div>
+      <div class="hm-legend">
+        <span><span class="leg-dot" style="background:var(--green)"></span>Call OI</span>
+        <span><span class="leg-dot" style="background:var(--red)"></span>Put OI</span>
+        <span><span class="leg-dot" style="background:var(--yellow)"></span>Max Pain</span>
+        <span><span class="leg-dot" style="background:var(--accent)"></span>ATM</span>
+      </div>
+      <table class="hm-table">
+        <thead><tr>
+          <th>CE OI</th><th>CE Buildup</th><th>&Delta;OI</th><th>CE LTP</th>
+          <th class="strike-th">STRIKE</th>
+          <th>PE LTP</th><th>&Delta;OI</th><th>PE Buildup</th><th>PE OI</th>
+          <th>PCR</th><th class="action-th">Action</th>
+        </tr></thead>
+        <tbody>${rows}</tbody>
+      </table>
+    </div>`;
+    }
+
+    // ─── AI Heatmap Analysis ─────────────────────────────
+    async function runAiAnalysis(sym) {
+      const btn  = document.getElementById(`ai-btn-${sym}`);
+      const body = document.getElementById(`ai-body-${sym}`);
+      if (!btn || !body) return;
+
+      // Initialize state object if not present
+      if (!aiAnalysisCache[sym]) {
+        aiAnalysisCache[sym] = { html: '', open: false, loaded: '0' };
+      }
+
+      // Toggle: if open and has content, just collapse and cache
+      const isOpen = body.classList.contains('open');
+      if (isOpen && body.dataset.loaded === '1') {
+        body.classList.remove('open');
+        btn.classList.remove('open');
+        aiAnalysisCache[sym].open = false;
+        return;
+      }
+
+      // If already open but failed/loading, let click re-trigger analysis
+      if (isOpen && body.dataset.loaded === '0' && !btn.disabled) {
+        // Fall through to run analysis
+      } else if (!isOpen && body.dataset.loaded === '1') {
+        // Just expand if already loaded but closed
+        body.classList.add('open');
+        btn.classList.add('open');
+        aiAnalysisCache[sym].open = true;
+        return;
+      }
+
+      // Get current symbol data
+      const d = prevDetails[sym];
+      if (!d || !d.chain_data || !d.chain_data.length) {
+        const errHtml = '<div class="ai-error">⚠ No heatmap data loaded. Select a symbol and wait for data.</div>';
+        body.innerHTML = errHtml;
+        body.classList.add('open');
+        btn.classList.add('open');
+        aiAnalysisCache[sym] = { html: errHtml, open: true, loaded: '0' };
+        return;
+      }
+
+      // Show loading state and cache it
+      btn.disabled = true;
+      btn.classList.add('loading', 'open');
+      const loadHtml = '<div class="ai-spinner">✨ Analyzing heatmap with Gemini AI…</div>';
+      body.innerHTML = loadHtml;
+      body.classList.add('open');
+      body.dataset.loaded = '0';
+      aiAnalysisCache[sym] = { html: loadHtml, open: true, loaded: '0' };
+
+      try {
+        const payload = {
+          chain_data : d.chain_data,
+          pcr        : d.pcr,
+          spot       : d.ltp ?? null,
+          max_pain   : d.max_pain,
+          straddle   : d.straddle,
+          expiry     : d.expiry,
+          atm        : d.atm
+        };
+
+        const res = await fetch(`/api/oi/symbol/${encodeURIComponent(sym)}/ai-analyze`, {
+          method : 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body   : JSON.stringify(payload)
+        });
+
+        const json = await res.json();
+
+        if (!json.ok) {
+          const errHtml = `<div class="ai-error">⚠ ${json.error || 'Unknown error'}</div>`;
+          body.innerHTML = errHtml;
+          body.dataset.loaded = '0';
+          aiAnalysisCache[sym] = { html: errHtml, open: true, loaded: '0' };
+        } else {
+          // Convert simple markdown to HTML (headers, bold, bullets)
+          const md = (json.analysis || '')
+            .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+            .replace(/^## (.+)$/gm,  '<h2>$1</h2>')
+            .replace(/^### (.+)$/gm, '<h3>$1</h3>')
+            .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
+            .replace(/^- (.+)$/gm, '<li>$1</li>')
+            .replace(/(<li>[\s\S]*?<\/li>)+/g, m => `<ul>${m}</ul>`)
+            .replace(/\n{2,}/g, '</p><p>')
+            .replace(/^(?!<[hul])/gm, '')
+            .replace(/<\/p><p>\s*(<[hul])/g, '$1')
+            .trim();
+
+          const parsedHtml = `<div>${md}</div>`;
+          body.innerHTML = parsedHtml;
+          body.dataset.loaded = '1';
+          aiAnalysisCache[sym] = { html: parsedHtml, open: true, loaded: '1' };
+        }
+      } catch (err) {
+        const errHtml = `<div class="ai-error">⚠ Request failed: ${err.message}</div>`;
+        body.innerHTML = errHtml;
+        body.dataset.loaded = '0';
+        aiAnalysisCache[sym] = { html: errHtml, open: true, loaded: '0' };
+      } finally {
+        btn.disabled = false;
+        btn.classList.remove('loading');
+      }
+    }
+
+
+    // ─── Events ─────────────────────────────────────────
+
+    const searchInput = document.getElementById('search-input');
+    const suggBox = document.getElementById('suggestions');
+    searchInput.addEventListener('input', () => showSugg(searchInput.value.trim().toUpperCase()));
+    searchInput.addEventListener('keydown', e => {
+      if (e.key === 'ArrowDown') { e.preventDefault(); moveSugg(1); }
+      else if (e.key === 'ArrowUp') { e.preventDefault(); moveSugg(-1); }
+      else if (e.key === 'Enter') { suggBox.classList.remove('open'); const sym = searchInput.value.trim().toUpperCase(); if (sym) selectSymbol(sym); }
+      else if (e.key === 'Escape') suggBox.classList.remove('open');
+    });
+    document.addEventListener('mousedown', e => { if (!e.target.closest('.search-wrap')) suggBox.classList.remove('open'); });
+    document.getElementById('search-btn').addEventListener('click', () => { suggBox.classList.remove('open'); const sym = searchInput.value.trim().toUpperCase(); if (sym) selectSymbol(sym); });
+
+    const slider = document.getElementById('min-pct-slider'), slVal = document.getElementById('min-pct-val');
+    slider.addEventListener('input', () => { minPct = Number(slider.value); slVal.textContent = minPct + '%'; });
+    slider.addEventListener('change', () => {
+      prevRankMap = {};  // reset rank map — new threshold = fresh baseline, no misleading badges
+      loadSpurt();
+    });
+    document.getElementById('manual-refresh').addEventListener('click', () => { loadSpurt(); startLeftCountdown(); });
+
+    // ─── Boot ────────────────────────────────────────────
+    loadSymbolList();
+    loadSpurt();
+    startLeftCountdown();
+  </script>
+</body>
+
+</html>

@@ -1,0 +1,1735 @@
+Werkzeug appears to be used in a production deployment. Consider switching to a production web server instead.
+  [ENV] Loaded .env from: /home/rajk/Downloads/TradeSignal -Backup April24-BKP1/.env
+  Cache DB: /home/rajk/Downloads/TradeSignal -Backup April24-BKP1/app/backend/tradesignal_cache.db
+
+==================================================
+  TradeSignal Backend Server
+  Running on http://localhost:5000
+  App:       http://localhost:5000/
+  WebSocket: ws://localhost:5000/socket.io/
+==================================================
+
+ * Serving Flask app 'server'
+ * Debug mode: off
+WARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.
+ * Running on all addresses (0.0.0.0)
+ * Running on http://127.0.0.1:5000
+ * Running on http://192.168.1.5:5000
+Press CTRL+C to quit
+WARNING:root:
+=== VALIDATE ENTRY: BSE SENSEX Price=76278.0 Date=2026-04-30 Time=11:25 ===
+
+127.0.0.1 - - [01/May/2026 01:33:05] "POST /api/validate-entry HTTP/1.1" 500 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 01:33:05] "[35m[1mPOST /api/validate-entry HTTP/1.1[0m" 500 -
+127.0.0.1 - - [01/May/2026 01:33:26] "GET /api/market-pulse HTTP/1.1" 401 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 01:33:26] "[31m[1mGET /api/market-pulse HTTP/1.1[0m" 401 -
+127.0.0.1 - - [01/May/2026 01:33:37] "GET / HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 01:33:37] "GET / HTTP/1.1" 200 -
+127.0.0.1 - - [01/May/2026 01:33:37] "GET /styles/main.css?v=5 HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 01:33:37] "GET /styles/main.css?v=5 HTTP/1.1" 200 -
+127.0.0.1 - - [01/May/2026 01:33:37] "GET /js/kite-api.js HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 01:33:37] "GET /js/kite-api.js HTTP/1.1" 200 -
+127.0.0.1 - - [01/May/2026 01:33:37] "GET /js/gap-analysis-engine.js HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 01:33:37] "GET /js/gap-analysis-engine.js HTTP/1.1" 200 -
+127.0.0.1 - - [01/May/2026 01:33:37] "GET /js/technical-indicators.js HTTP/1.1" 200 -
+127.0.0.1 - - [01/May/2026 01:33:37] "GET /js/lightweight-charts.standalone.production.js HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 01:33:37] "GET /js/technical-indicators.js HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 01:33:37] "GET /js/lightweight-charts.standalone.production.js HTTP/1.1" 200 -
+127.0.0.1 - - [01/May/2026 01:33:37] "GET /js/scoring-engine.js HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 01:33:37] "GET /js/scoring-engine.js HTTP/1.1" 200 -
+127.0.0.1 - - [01/May/2026 01:33:37] "GET /js/options-chain.js HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 01:33:37] "GET /js/options-chain.js HTTP/1.1" 200 -
+127.0.0.1 - - [01/May/2026 01:33:37] "GET /js/charts.js HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 01:33:37] "GET /js/charts.js HTTP/1.1" 200 -
+127.0.0.1 - - [01/May/2026 01:33:37] "GET /js/alerts.js HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 01:33:37] "GET /js/alerts.js HTTP/1.1" 200 -
+127.0.0.1 - - [01/May/2026 01:33:37] "GET /js/trade-journal.js HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 01:33:37] "GET /js/trade-journal.js HTTP/1.1" 200 -
+127.0.0.1 - - [01/May/2026 01:33:37] "GET /js/paper-trading.js HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 01:33:37] "GET /js/paper-trading.js HTTP/1.1" 200 -
+127.0.0.1 - - [01/May/2026 01:33:37] "GET /js/research-ai.js HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 01:33:37] "GET /js/research-ai.js HTTP/1.1" 200 -
+127.0.0.1 - - [01/May/2026 01:33:37] "GET /js/fno-session-analyzer.js HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 01:33:37] "GET /js/fno-session-analyzer.js HTTP/1.1" 200 -
+127.0.0.1 - - [01/May/2026 01:33:37] "GET /js/equity-screener.js HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 01:33:37] "GET /js/equity-screener.js HTTP/1.1" 200 -
+127.0.0.1 - - [01/May/2026 01:33:37] "GET /js/watchlist.js HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 01:33:37] "GET /js/watchlist.js HTTP/1.1" 200 -
+127.0.0.1 - - [01/May/2026 01:33:37] "GET /js/analysis.js HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 01:33:37] "GET /js/analysis.js HTTP/1.1" 200 -
+127.0.0.1 - - [01/May/2026 01:33:37] "GET /js/backtester.js HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 01:33:37] "GET /js/backtester.js HTTP/1.1" 200 -
+127.0.0.1 - - [01/May/2026 01:33:37] "GET /js/strategy-builder.js HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 01:33:37] "GET /js/strategy-builder.js HTTP/1.1" 200 -
+127.0.0.1 - - [01/May/2026 01:33:37] "GET /js/news-feed.js HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 01:33:37] "GET /js/news-feed.js HTTP/1.1" 200 -
+127.0.0.1 - - [01/May/2026 01:33:37] "GET /js/portfolio.js HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 01:33:37] "GET /js/portfolio.js HTTP/1.1" 200 -
+127.0.0.1 - - [01/May/2026 01:33:37] "GET /js/live-movers.js HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 01:33:37] "GET /js/live-movers.js HTTP/1.1" 200 -
+127.0.0.1 - - [01/May/2026 01:33:37] "GET /js/index-movers.js HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 01:33:37] "GET /js/index-movers.js HTTP/1.1" 200 -
+127.0.0.1 - - [01/May/2026 01:33:37] "GET /js/reco-tracker.js HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 01:33:37] "GET /js/reco-tracker.js HTTP/1.1" 200 -
+127.0.0.1 - - [01/May/2026 01:33:37] "GET /js/chart-signals.js HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 01:33:37] "GET /js/chart-signals.js HTTP/1.1" 200 -
+127.0.0.1 - - [01/May/2026 01:33:37] "GET /js/smc-dashboard.js HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 01:33:37] "GET /js/smc-dashboard.js HTTP/1.1" 200 -
+127.0.0.1 - - [01/May/2026 01:33:37] "GET /js/entry-validator.js HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 01:33:37] "GET /js/entry-validator.js HTTP/1.1" 200 -
+127.0.0.1 - - [01/May/2026 01:33:37] "GET /js/trade-tracker.js HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 01:33:37] "GET /js/trade-tracker.js HTTP/1.1" 200 -
+127.0.0.1 - - [01/May/2026 01:33:37] "GET /js/trade-cockpit.js HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 01:33:37] "GET /js/trade-cockpit.js HTTP/1.1" 200 -
+127.0.0.1 - - [01/May/2026 01:33:37] "GET /js/multi-chart.js?v=6 HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 01:33:37] "GET /js/multi-chart.js?v=6 HTTP/1.1" 200 -
+127.0.0.1 - - [01/May/2026 01:33:37] "GET /js/fno-trade-alerts.js?v=7 HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 01:33:37] "GET /js/fno-trade-alerts.js?v=7 HTTP/1.1" 200 -
+127.0.0.1 - - [01/May/2026 01:33:37] "GET /js/app.js HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 01:33:37] "GET /js/app.js HTTP/1.1" 200 -
+127.0.0.1 - - [01/May/2026 01:33:37] "GET /api/config HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 01:33:37] "GET /api/config HTTP/1.1" 200 -
+127.0.0.1 - - [01/May/2026 01:33:38] "GET /favicon.ico HTTP/1.1" 404 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 01:33:38] "[33mGET /favicon.ico HTTP/1.1[0m" 404 -
+127.0.0.1 - - [01/May/2026 01:33:39] "GET /api/earnings-calendar HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 01:33:39] "GET /api/earnings-calendar HTTP/1.1" 200 -
+127.0.0.1 - - [01/May/2026 01:33:41] "GET /api/market-pulse HTTP/1.1" 401 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 01:33:41] "[31m[1mGET /api/market-pulse HTTP/1.1[0m" 401 -
+WARNING:root:
+=== VALIDATE ENTRY: BSE SENSEX Price=76289.0 Date=2026-04-30 Time=11:25 ===
+
+127.0.0.1 - - [01/May/2026 01:33:57] "POST /api/validate-entry HTTP/1.1" 500 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 01:33:57] "[35m[1mPOST /api/validate-entry HTTP/1.1[0m" 500 -
+127.0.0.1 - - [01/May/2026 01:34:23] "GET /?type=login&status=success&request_token=J9Uvs9JIwcJk7V939dlASDLi1bQXlATF&action=login HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 01:34:23] "GET /?type=login&status=success&request_token=J9Uvs9JIwcJk7V939dlASDLi1bQXlATF&action=login HTTP/1.1" 200 -
+127.0.0.1 - - [01/May/2026 01:34:23] "GET /styles/main.css?v=5 HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 01:34:23] "GET /styles/main.css?v=5 HTTP/1.1" 200 -
+127.0.0.1 - - [01/May/2026 01:34:23] "GET /js/kite-api.js HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 01:34:23] "GET /js/kite-api.js HTTP/1.1" 200 -
+127.0.0.1 - - [01/May/2026 01:34:23] "GET /js/technical-indicators.js HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 01:34:23] "GET /js/technical-indicators.js HTTP/1.1" 200 -
+127.0.0.1 - - [01/May/2026 01:34:23] "GET /js/scoring-engine.js HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 01:34:23] "GET /js/scoring-engine.js HTTP/1.1" 200 -
+127.0.0.1 - - [01/May/2026 01:34:23] "GET /js/gap-analysis-engine.js HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 01:34:23] "GET /js/gap-analysis-engine.js HTTP/1.1" 200 -
+127.0.0.1 - - [01/May/2026 01:34:23] "GET /js/options-chain.js HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 01:34:23] "GET /js/options-chain.js HTTP/1.1" 200 -
+127.0.0.1 - - [01/May/2026 01:34:23] "GET /js/charts.js HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 01:34:23] "GET /js/charts.js HTTP/1.1" 200 -
+127.0.0.1 - - [01/May/2026 01:34:23] "GET /js/lightweight-charts.standalone.production.js HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 01:34:23] "GET /js/lightweight-charts.standalone.production.js HTTP/1.1" 200 -
+127.0.0.1 - - [01/May/2026 01:34:23] "GET /js/trade-journal.js HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 01:34:23] "GET /js/trade-journal.js HTTP/1.1" 200 -
+127.0.0.1 - - [01/May/2026 01:34:23] "GET /js/paper-trading.js HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 01:34:23] "GET /js/paper-trading.js HTTP/1.1" 200 -
+127.0.0.1 - - [01/May/2026 01:34:23] "GET /js/alerts.js HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 01:34:23] "GET /js/alerts.js HTTP/1.1" 200 -
+127.0.0.1 - - [01/May/2026 01:34:23] "GET /js/research-ai.js HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 01:34:23] "GET /js/research-ai.js HTTP/1.1" 200 -
+127.0.0.1 - - [01/May/2026 01:34:23] "GET /js/fno-session-analyzer.js HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 01:34:23] "GET /js/fno-session-analyzer.js HTTP/1.1" 200 -
+127.0.0.1 - - [01/May/2026 01:34:23] "GET /js/equity-screener.js HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 01:34:23] "GET /js/equity-screener.js HTTP/1.1" 200 -
+127.0.0.1 - - [01/May/2026 01:34:23] "GET /js/watchlist.js HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 01:34:23] "GET /js/watchlist.js HTTP/1.1" 200 -
+127.0.0.1 - - [01/May/2026 01:34:23] "GET /js/strategy-builder.js HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 01:34:23] "GET /js/strategy-builder.js HTTP/1.1" 200 -
+127.0.0.1 - - [01/May/2026 01:34:23] "GET /js/analysis.js HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 01:34:23] "GET /js/analysis.js HTTP/1.1" 200 -
+127.0.0.1 - - [01/May/2026 01:34:23] "GET /js/portfolio.js HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 01:34:23] "GET /js/portfolio.js HTTP/1.1" 200 -
+127.0.0.1 - - [01/May/2026 01:34:23] "GET /js/live-movers.js HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 01:34:23] "GET /js/live-movers.js HTTP/1.1" 200 -
+127.0.0.1 - - [01/May/2026 01:34:23] "GET /js/news-feed.js HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 01:34:23] "GET /js/news-feed.js HTTP/1.1" 200 -
+127.0.0.1 - - [01/May/2026 01:34:23] "GET /js/backtester.js HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 01:34:23] "GET /js/backtester.js HTTP/1.1" 200 -
+127.0.0.1 - - [01/May/2026 01:34:23] "GET /js/index-movers.js HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 01:34:23] "GET /js/index-movers.js HTTP/1.1" 200 -
+127.0.0.1 - - [01/May/2026 01:34:23] "GET /js/chart-signals.js HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 01:34:23] "GET /js/chart-signals.js HTTP/1.1" 200 -
+127.0.0.1 - - [01/May/2026 01:34:23] "GET /js/reco-tracker.js HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 01:34:23] "GET /js/reco-tracker.js HTTP/1.1" 200 -
+127.0.0.1 - - [01/May/2026 01:34:23] "GET /js/entry-validator.js HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 01:34:23] "GET /js/entry-validator.js HTTP/1.1" 200 -
+127.0.0.1 - - [01/May/2026 01:34:23] "GET /js/trade-tracker.js HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 01:34:23] "GET /js/trade-tracker.js HTTP/1.1" 200 -
+127.0.0.1 - - [01/May/2026 01:34:23] "GET /js/smc-dashboard.js HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 01:34:23] "GET /js/smc-dashboard.js HTTP/1.1" 200 -
+127.0.0.1 - - [01/May/2026 01:34:23] "GET /js/fno-trade-alerts.js?v=7 HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 01:34:23] "GET /js/fno-trade-alerts.js?v=7 HTTP/1.1" 200 -
+127.0.0.1 - - [01/May/2026 01:34:23] "GET /js/trade-cockpit.js HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 01:34:23] "GET /js/trade-cockpit.js HTTP/1.1" 200 -
+127.0.0.1 - - [01/May/2026 01:34:23] "GET /js/multi-chart.js?v=6 HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 01:34:23] "GET /js/multi-chart.js?v=6 HTTP/1.1" 200 -
+127.0.0.1 - - [01/May/2026 01:34:23] "GET /js/app.js HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 01:34:23] "GET /js/app.js HTTP/1.1" 200 -
+127.0.0.1 - - [01/May/2026 01:34:23] "GET /api/config HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 01:34:23] "GET /api/config HTTP/1.1" 200 -
+127.0.0.1 - - [01/May/2026 01:34:24] "POST /api/login HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 01:34:24] "POST /api/login HTTP/1.1" 200 -
+127.0.0.1 - - [01/May/2026 01:34:25] "GET /api/instruments HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 01:34:25] "GET /api/instruments HTTP/1.1" 200 -
+127.0.0.1 - - [01/May/2026 01:34:25] "GET /api/earnings-calendar HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 01:34:25] "GET /api/earnings-calendar HTTP/1.1" 200 -
+127.0.0.1 - - [01/May/2026 01:34:25] "GET /api/market-pulse HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 01:34:25] "GET /api/market-pulse HTTP/1.1" 200 -
+127.0.0.1 - - [01/May/2026 01:34:27] "GET /api/market-pulse HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 01:34:27] "GET /api/market-pulse HTTP/1.1" 200 -
+127.0.0.1 - - [01/May/2026 01:34:27] "GET /api/test HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 01:34:27] "GET /api/test HTTP/1.1" 200 -
+127.0.0.1 - - [01/May/2026 01:34:27] "GET /api/market-pulse HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 01:34:27] "GET /api/market-pulse HTTP/1.1" 200 -
+127.0.0.1 - - [01/May/2026 01:34:28] "GET /api/health HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 01:34:28] "GET /api/health HTTP/1.1" 200 -
+127.0.0.1 - - [01/May/2026 01:34:28] "GET /api/instruments HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 01:34:28] "GET /api/instruments HTTP/1.1" 200 -
+127.0.0.1 - - [01/May/2026 01:34:28] "GET /api/market-pulse HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 01:34:28] "GET /api/market-pulse HTTP/1.1" 200 -
+WARNING:root:
+=== VALIDATE ENTRY: BSE SENSEX Price=76289.0 Date=2026-04-30 Time=11:25 ===
+
+WARNING:root:[validate-entry] Fresh instruments token resolved: 265
+WARNING:root:[validate-entry] Token resolved: 265
+WARNING:root:[validate-entry] Live mode | Date=2026-04-30 11:25:00 | Range=2026-04-16 09:15:00 → 2026-04-30 15:30:00
+WARNING:root:[validate-entry] Fetching fresh data from Kite API
+WARNING:root:[validate-entry] ✓ Kite returned 750 candles
+WARNING:root:[validate-entry] ✓ Response: 750 candles | First=78091.7 | Last=77135.28
+WARNING:root:[validate-entry] ✓ Validation: valid=False confidence=71 setup=TYPE_2
+127.0.0.1 - - [01/May/2026 01:34:45] "POST /api/validate-entry HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 01:34:45] "POST /api/validate-entry HTTP/1.1" 200 -
+127.0.0.1 - - [01/May/2026 01:35:30] "GET /api/market-pulse HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 01:35:30] "GET /api/market-pulse HTTP/1.1" 200 -
+WARNING:root:
+=== VALIDATE ENTRY: BSE SENSEX Price=76414.0 Date=2026-04-30 Time=12:05 ===
+
+WARNING:root:[validate-entry] Fresh instruments token resolved: 265
+WARNING:root:[validate-entry] Token resolved: 265
+WARNING:root:[validate-entry] Live mode | Date=2026-04-30 12:05:00 | Range=2026-04-16 09:15:00 → 2026-04-30 15:30:00
+WARNING:root:[validate-entry] Fetching fresh data from Kite API
+WARNING:root:[validate-entry] ✓ Kite returned 750 candles
+WARNING:root:[validate-entry] ✓ Response: 750 candles | First=78091.7 | Last=77135.28
+WARNING:root:[validate-entry] ✓ Validation: valid=False confidence=75 setup=TYPE_2
+127.0.0.1 - - [01/May/2026 01:35:52] "POST /api/validate-entry HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 01:35:52] "POST /api/validate-entry HTTP/1.1" 200 -
+127.0.0.1 - - [01/May/2026 01:36:30] "GET /api/market-pulse HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 01:36:30] "GET /api/market-pulse HTTP/1.1" 200 -
+WARNING:root:
+=== VALIDATE ENTRY: BSE SENSEX Price=76529.0 Date=2026-04-30 Time=12:10 ===
+
+WARNING:root:[validate-entry] Fresh instruments token resolved: 265
+WARNING:root:[validate-entry] Token resolved: 265
+WARNING:root:[validate-entry] Live mode | Date=2026-04-30 12:10:00 | Range=2026-04-16 09:15:00 → 2026-04-30 15:30:00
+WARNING:root:[validate-entry] Fetching fresh data from Kite API
+WARNING:root:[validate-entry] ✓ Kite returned 750 candles
+WARNING:root:[validate-entry] ✓ Response: 750 candles | First=78091.7 | Last=77135.28
+WARNING:root:[validate-entry] ✓ Validation: valid=True confidence=89 setup=TYPE_2
+127.0.0.1 - - [01/May/2026 01:37:09] "POST /api/validate-entry HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 01:37:09] "POST /api/validate-entry HTTP/1.1" 200 -
+127.0.0.1 - - [01/May/2026 01:37:31] "GET /api/market-pulse HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 01:37:31] "GET /api/market-pulse HTTP/1.1" 200 -
+127.0.0.1 - - [01/May/2026 01:38:31] "GET /api/market-pulse HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 01:38:31] "GET /api/market-pulse HTTP/1.1" 200 -
+WARNING:root:
+=== VALIDATE ENTRY: NIFTY 50 Price=0 Date=2026-04-30 Time=None ===
+
+WARNING:root:[validate-entry] Fresh instruments token resolved: 256265
+WARNING:root:[validate-entry] Token resolved: 256265
+WARNING:root:[validate-entry] Live mode | Date=2026-04-30 09:15:00 | Range=2026-04-16 09:15:00 → 2026-04-30 15:30:00
+WARNING:root:[validate-entry] Fetching fresh data from Kite API
+WARNING:root:[validate-entry] ✓ Kite returned 750 candles
+WARNING:root:[validate-entry] ✓ Response: 750 candles | First=24207.55 | Last=24043.7
+WARNING:root:[validate-entry] ✓ Validation: valid=True confidence=93 setup=TYPE_2
+127.0.0.1 - - [01/May/2026 01:38:48] "POST /api/validate-entry HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 01:38:48] "POST /api/validate-entry HTTP/1.1" 200 -
+127.0.0.1 - - [01/May/2026 01:39:31] "GET /api/market-pulse HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 01:39:31] "GET /api/market-pulse HTTP/1.1" 200 -
+127.0.0.1 - - [01/May/2026 01:40:31] "GET /api/market-pulse HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 01:40:31] "GET /api/market-pulse HTTP/1.1" 200 -
+127.0.0.1 - - [01/May/2026 01:41:32] "GET /api/market-pulse HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 01:41:32] "GET /api/market-pulse HTTP/1.1" 200 -
+127.0.0.1 - - [01/May/2026 01:42:32] "GET /api/market-pulse HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 01:42:32] "GET /api/market-pulse HTTP/1.1" 200 -
+127.0.0.1 - - [01/May/2026 01:43:32] "GET /api/market-pulse HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 01:43:32] "GET /api/market-pulse HTTP/1.1" 200 -
+127.0.0.1 - - [01/May/2026 01:44:33] "GET /api/market-pulse HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 01:44:33] "GET /api/market-pulse HTTP/1.1" 200 -
+127.0.0.1 - - [01/May/2026 01:45:35] "GET /api/market-pulse HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 01:45:35] "GET /api/market-pulse HTTP/1.1" 200 -
+127.0.0.1 - - [01/May/2026 01:46:36] "GET /api/market-pulse HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 01:46:36] "GET /api/market-pulse HTTP/1.1" 200 -
+127.0.0.1 - - [01/May/2026 01:47:36] "GET /api/market-pulse HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 01:47:36] "GET /api/market-pulse HTTP/1.1" 200 -
+127.0.0.1 - - [01/May/2026 01:48:37] "GET /api/market-pulse HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 01:48:37] "GET /api/market-pulse HTTP/1.1" 200 -
+127.0.0.1 - - [01/May/2026 01:49:38] "GET /api/market-pulse HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 01:49:38] "GET /api/market-pulse HTTP/1.1" 200 -
+127.0.0.1 - - [01/May/2026 01:50:22] "GET / HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 01:50:22] "GET / HTTP/1.1" 200 -
+127.0.0.1 - - [01/May/2026 01:50:22] "GET /styles/main.css?v=5 HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 01:50:22] "GET /styles/main.css?v=5 HTTP/1.1" 200 -
+127.0.0.1 - - [01/May/2026 01:50:22] "GET /js/kite-api.js HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 01:50:22] "GET /js/kite-api.js HTTP/1.1" 200 -
+127.0.0.1 - - [01/May/2026 01:50:22] "GET /js/lightweight-charts.standalone.production.js HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 01:50:22] "GET /js/lightweight-charts.standalone.production.js HTTP/1.1" 200 -
+127.0.0.1 - - [01/May/2026 01:50:22] "GET /js/technical-indicators.js HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 01:50:22] "GET /js/technical-indicators.js HTTP/1.1" 200 -
+127.0.0.1 - - [01/May/2026 01:50:22] "GET /js/gap-analysis-engine.js HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 01:50:22] "GET /js/gap-analysis-engine.js HTTP/1.1" 200 -
+127.0.0.1 - - [01/May/2026 01:50:22] "GET /js/scoring-engine.js HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 01:50:22] "GET /js/scoring-engine.js HTTP/1.1" 200 -
+127.0.0.1 - - [01/May/2026 01:50:22] "GET /js/options-chain.js HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 01:50:22] "GET /js/options-chain.js HTTP/1.1" 200 -
+127.0.0.1 - - [01/May/2026 01:50:22] "GET /js/charts.js HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 01:50:22] "GET /js/charts.js HTTP/1.1" 200 -
+127.0.0.1 - - [01/May/2026 01:50:22] "GET /js/trade-journal.js HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 01:50:22] "GET /js/trade-journal.js HTTP/1.1" 200 -
+127.0.0.1 - - [01/May/2026 01:50:22] "GET /js/alerts.js HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 01:50:22] "GET /js/alerts.js HTTP/1.1" 200 -
+127.0.0.1 - - [01/May/2026 01:50:22] "GET /js/paper-trading.js HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 01:50:22] "GET /js/paper-trading.js HTTP/1.1" 200 -
+127.0.0.1 - - [01/May/2026 01:50:22] "GET /js/research-ai.js HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 01:50:22] "GET /js/research-ai.js HTTP/1.1" 200 -
+127.0.0.1 - - [01/May/2026 01:50:22] "GET /js/equity-screener.js HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 01:50:22] "GET /js/equity-screener.js HTTP/1.1" 200 -
+127.0.0.1 - - [01/May/2026 01:50:22] "GET /js/fno-session-analyzer.js HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 01:50:22] "GET /js/fno-session-analyzer.js HTTP/1.1" 200 -
+127.0.0.1 - - [01/May/2026 01:50:22] "GET /js/watchlist.js HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 01:50:22] "GET /js/watchlist.js HTTP/1.1" 200 -
+127.0.0.1 - - [01/May/2026 01:50:22] "GET /js/analysis.js HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 01:50:22] "GET /js/analysis.js HTTP/1.1" 200 -
+127.0.0.1 - - [01/May/2026 01:50:22] "GET /js/strategy-builder.js HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 01:50:22] "GET /js/strategy-builder.js HTTP/1.1" 200 -
+127.0.0.1 - - [01/May/2026 01:50:22] "GET /js/backtester.js HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 01:50:22] "GET /js/backtester.js HTTP/1.1" 200 -
+127.0.0.1 - - [01/May/2026 01:50:22] "GET /js/portfolio.js HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 01:50:22] "GET /js/portfolio.js HTTP/1.1" 200 -
+127.0.0.1 - - [01/May/2026 01:50:22] "GET /js/news-feed.js HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 01:50:22] "GET /js/news-feed.js HTTP/1.1" 200 -
+127.0.0.1 - - [01/May/2026 01:50:22] "GET /js/live-movers.js HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 01:50:22] "GET /js/live-movers.js HTTP/1.1" 200 -
+127.0.0.1 - - [01/May/2026 01:50:22] "GET /js/index-movers.js HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 01:50:22] "GET /js/index-movers.js HTTP/1.1" 200 -
+127.0.0.1 - - [01/May/2026 01:50:22] "GET /js/reco-tracker.js HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 01:50:22] "GET /js/reco-tracker.js HTTP/1.1" 200 -
+127.0.0.1 - - [01/May/2026 01:50:22] "GET /js/chart-signals.js HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 01:50:22] "GET /js/chart-signals.js HTTP/1.1" 200 -
+127.0.0.1 - - [01/May/2026 01:50:22] "GET /js/smc-dashboard.js HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 01:50:22] "GET /js/smc-dashboard.js HTTP/1.1" 200 -
+127.0.0.1 - - [01/May/2026 01:50:22] "GET /js/entry-validator.js HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 01:50:22] "GET /js/entry-validator.js HTTP/1.1" 200 -
+127.0.0.1 - - [01/May/2026 01:50:22] "GET /js/trade-cockpit.js HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 01:50:22] "GET /js/trade-cockpit.js HTTP/1.1" 200 -
+127.0.0.1 - - [01/May/2026 01:50:22] "GET /js/trade-tracker.js HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 01:50:22] "GET /js/trade-tracker.js HTTP/1.1" 200 -
+127.0.0.1 - - [01/May/2026 01:50:22] "GET /js/multi-chart.js?v=6 HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 01:50:22] "GET /js/multi-chart.js?v=6 HTTP/1.1" 200 -
+127.0.0.1 - - [01/May/2026 01:50:22] "GET /js/fno-trade-alerts.js?v=7 HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 01:50:22] "GET /js/fno-trade-alerts.js?v=7 HTTP/1.1" 200 -
+127.0.0.1 - - [01/May/2026 01:50:22] "GET /js/app.js HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 01:50:22] "GET /js/app.js HTTP/1.1" 200 -
+127.0.0.1 - - [01/May/2026 01:50:22] "GET /api/config HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 01:50:22] "GET /api/config HTTP/1.1" 200 -
+127.0.0.1 - - [01/May/2026 01:50:22] "GET /favicon.ico HTTP/1.1" 404 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 01:50:22] "[33mGET /favicon.ico HTTP/1.1[0m" 404 -
+127.0.0.1 - - [01/May/2026 01:50:24] "GET /api/earnings-calendar HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 01:50:24] "GET /api/earnings-calendar HTTP/1.1" 200 -
+127.0.0.1 - - [01/May/2026 01:50:26] "GET /api/market-pulse HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 01:50:26] "GET /api/market-pulse HTTP/1.1" 200 -
+WARNING:root:
+=== VALIDATE ENTRY: NIFTY 50 Price=0 Date=2026-04-30 Time=None ===
+
+WARNING:root:[validate-entry] Fresh instruments token resolved: 256265
+WARNING:root:[validate-entry] Token resolved: 256265
+WARNING:root:[validate-entry] Live mode | Date=2026-04-30 09:15:00 | Range=2026-04-16 09:15:00 → 2026-04-30 15:30:00
+WARNING:root:[validate-entry] Fetching fresh data from Kite API
+WARNING:root:[validate-entry] ✓ Kite returned 750 candles
+WARNING:root:[validate-entry] ✓ Response: 750 candles | First=24207.55 | Last=24043.7
+WARNING:root:[validate-entry] ✓ Validation: valid=True confidence=93 setup=TYPE_2
+127.0.0.1 - - [01/May/2026 01:50:31] "POST /api/validate-entry HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 01:50:31] "POST /api/validate-entry HTTP/1.1" 200 -
+WARNING:root:
+=== VALIDATE ENTRY: NIFTY 50 Price=0 Date=2026-04-30 Time=None ===
+
+WARNING:root:[validate-entry] Fresh instruments token resolved: 256265
+WARNING:root:[validate-entry] Token resolved: 256265
+WARNING:root:[validate-entry] Live mode | Date=2026-04-30 09:15:00 | Range=2026-04-16 09:15:00 → 2026-04-30 15:30:00
+WARNING:root:[validate-entry] Fetching fresh data from Kite API
+WARNING:root:[validate-entry] ✓ Kite returned 250 candles
+WARNING:root:[validate-entry] ✓ Response: 250 candles | First=24233.35 | Last=24043.7
+WARNING:root:[validate-entry] ✓ Validation: valid=False confidence=52 setup=NONE
+127.0.0.1 - - [01/May/2026 01:50:41] "POST /api/validate-entry HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 01:50:41] "POST /api/validate-entry HTTP/1.1" 200 -
+WARNING:root:
+=== VALIDATE ENTRY: NIFTY 50 Price=0 Date=2026-04-30 Time=None ===
+
+WARNING:root:[validate-entry] Fresh instruments token resolved: 256265
+WARNING:root:[validate-entry] Token resolved: 256265
+WARNING:root:[validate-entry] Live mode | Date=2026-04-30 09:15:00 | Range=2026-04-16 09:15:00 → 2026-04-30 15:30:00
+WARNING:root:[validate-entry] Fetching fresh data from Kite API
+WARNING:root:[validate-entry] ✓ Kite returned 750 candles
+WARNING:root:[validate-entry] ✓ Response: 750 candles | First=24207.55 | Last=24043.7
+WARNING:root:[validate-entry] ✓ Validation: valid=True confidence=93 setup=TYPE_2
+127.0.0.1 - - [01/May/2026 01:51:21] "POST /api/validate-entry HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 01:51:21] "POST /api/validate-entry HTTP/1.1" 200 -
+127.0.0.1 - - [01/May/2026 01:51:26] "GET /api/market-pulse HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 01:51:26] "GET /api/market-pulse HTTP/1.1" 200 -
+127.0.0.1 - - [01/May/2026 01:52:26] "GET /api/market-pulse HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 01:52:26] "GET /api/market-pulse HTTP/1.1" 200 -
+127.0.0.1 - - [01/May/2026 01:53:26] "GET /api/market-pulse HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 01:53:26] "GET /api/market-pulse HTTP/1.1" 200 -
+127.0.0.1 - - [01/May/2026 01:54:27] "GET /api/market-pulse HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 01:54:27] "GET /api/market-pulse HTTP/1.1" 200 -
+127.0.0.1 - - [01/May/2026 01:55:27] "GET /api/market-pulse HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 01:55:27] "GET /api/market-pulse HTTP/1.1" 200 -
+127.0.0.1 - - [01/May/2026 01:56:27] "GET /api/market-pulse HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 01:56:27] "GET /api/market-pulse HTTP/1.1" 200 -
+127.0.0.1 - - [01/May/2026 01:57:27] "GET /api/market-pulse HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 01:57:27] "GET /api/market-pulse HTTP/1.1" 200 -
+WARNING:root:
+=== VALIDATE ENTRY: NIFTY 50 Price=0 Date=2026-04-30 Time=None ===
+
+WARNING:root:[validate-entry] Fresh instruments token resolved: 256265
+WARNING:root:[validate-entry] Token resolved: 256265
+WARNING:root:[validate-entry] Live mode | Date=2026-04-30 09:15:00 | Range=2026-04-16 09:15:00 → 2026-04-30 15:30:00
+WARNING:root:[validate-entry] Fetching fresh data from Kite API
+WARNING:root:[validate-entry] ✓ Kite returned 750 candles
+WARNING:root:[validate-entry] ✓ Response: 750 candles | First=24207.55 | Last=24043.7
+WARNING:root:[validate-entry] ✓ Validation: valid=True confidence=93 setup=TYPE_2
+127.0.0.1 - - [01/May/2026 01:58:05] "POST /api/validate-entry HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 01:58:05] "POST /api/validate-entry HTTP/1.1" 200 -
+127.0.0.1 - - [01/May/2026 01:58:29] "GET /api/market-pulse HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 01:58:29] "GET /api/market-pulse HTTP/1.1" 200 -
+127.0.0.1 - - [01/May/2026 01:59:30] "GET /api/market-pulse HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 01:59:30] "GET /api/market-pulse HTTP/1.1" 200 -
+127.0.0.1 - - [01/May/2026 02:00:30] "GET /api/market-pulse HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 02:00:30] "GET /api/market-pulse HTTP/1.1" 200 -
+127.0.0.1 - - [01/May/2026 02:01:31] "GET /api/market-pulse HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 02:01:31] "GET /api/market-pulse HTTP/1.1" 200 -
+127.0.0.1 - - [01/May/2026 02:02:31] "GET /api/market-pulse HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 02:02:31] "GET /api/market-pulse HTTP/1.1" 200 -
+127.0.0.1 - - [01/May/2026 02:03:31] "GET /api/market-pulse HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 02:03:31] "GET /api/market-pulse HTTP/1.1" 200 -
+127.0.0.1 - - [01/May/2026 02:04:31] "GET /api/market-pulse HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 02:04:31] "GET /api/market-pulse HTTP/1.1" 200 -
+127.0.0.1 - - [01/May/2026 02:05:31] "GET /api/market-pulse HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 02:05:31] "GET /api/market-pulse HTTP/1.1" 200 -
+127.0.0.1 - - [01/May/2026 02:06:26] "GET / HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 02:06:26] "GET / HTTP/1.1" 200 -
+127.0.0.1 - - [01/May/2026 02:06:26] "GET /styles/main.css?v=5 HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 02:06:26] "GET /styles/main.css?v=5 HTTP/1.1" 200 -
+127.0.0.1 - - [01/May/2026 02:06:26] "GET /js/lightweight-charts.standalone.production.js HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 02:06:26] "GET /js/lightweight-charts.standalone.production.js HTTP/1.1" 200 -
+127.0.0.1 - - [01/May/2026 02:06:26] "GET /js/kite-api.js HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 02:06:26] "GET /js/kite-api.js HTTP/1.1" 200 -
+127.0.0.1 - - [01/May/2026 02:06:26] "GET /js/technical-indicators.js HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 02:06:26] "GET /js/technical-indicators.js HTTP/1.1" 200 -
+127.0.0.1 - - [01/May/2026 02:06:26] "GET /js/gap-analysis-engine.js HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 02:06:26] "GET /js/gap-analysis-engine.js HTTP/1.1" 200 -
+127.0.0.1 - - [01/May/2026 02:06:26] "GET /js/scoring-engine.js HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 02:06:26] "GET /js/scoring-engine.js HTTP/1.1" 200 -
+127.0.0.1 - - [01/May/2026 02:06:26] "GET /js/options-chain.js HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 02:06:26] "GET /js/options-chain.js HTTP/1.1" 200 -
+127.0.0.1 - - [01/May/2026 02:06:26] "GET /js/charts.js HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 02:06:26] "GET /js/charts.js HTTP/1.1" 200 -
+127.0.0.1 - - [01/May/2026 02:06:26] "GET /js/trade-journal.js HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 02:06:26] "GET /js/trade-journal.js HTTP/1.1" 200 -
+127.0.0.1 - - [01/May/2026 02:06:26] "GET /js/alerts.js HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 02:06:26] "GET /js/alerts.js HTTP/1.1" 200 -
+127.0.0.1 - - [01/May/2026 02:06:26] "GET /js/paper-trading.js HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 02:06:26] "GET /js/paper-trading.js HTTP/1.1" 200 -
+127.0.0.1 - - [01/May/2026 02:06:26] "GET /js/research-ai.js HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 02:06:26] "GET /js/research-ai.js HTTP/1.1" 200 -
+127.0.0.1 - - [01/May/2026 02:06:26] "GET /js/fno-session-analyzer.js HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 02:06:26] "GET /js/fno-session-analyzer.js HTTP/1.1" 200 -
+127.0.0.1 - - [01/May/2026 02:06:26] "GET /js/equity-screener.js HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 02:06:26] "GET /js/equity-screener.js HTTP/1.1" 200 -
+127.0.0.1 - - [01/May/2026 02:06:26] "GET /js/analysis.js HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 02:06:26] "GET /js/analysis.js HTTP/1.1" 200 -
+127.0.0.1 - - [01/May/2026 02:06:26] "GET /js/watchlist.js HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 02:06:26] "GET /js/watchlist.js HTTP/1.1" 200 -
+127.0.0.1 - - [01/May/2026 02:06:26] "GET /js/strategy-builder.js HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 02:06:26] "GET /js/strategy-builder.js HTTP/1.1" 200 -
+127.0.0.1 - - [01/May/2026 02:06:26] "GET /js/backtester.js HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 02:06:26] "GET /js/backtester.js HTTP/1.1" 200 -
+127.0.0.1 - - [01/May/2026 02:06:26] "GET /js/portfolio.js HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 02:06:26] "GET /js/portfolio.js HTTP/1.1" 200 -
+127.0.0.1 - - [01/May/2026 02:06:26] "GET /js/news-feed.js HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 02:06:26] "GET /js/news-feed.js HTTP/1.1" 200 -
+127.0.0.1 - - [01/May/2026 02:06:26] "GET /js/live-movers.js HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 02:06:26] "GET /js/live-movers.js HTTP/1.1" 200 -
+127.0.0.1 - - [01/May/2026 02:06:26] "GET /js/index-movers.js HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 02:06:26] "GET /js/index-movers.js HTTP/1.1" 200 -
+127.0.0.1 - - [01/May/2026 02:06:26] "GET /js/reco-tracker.js HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 02:06:26] "GET /js/reco-tracker.js HTTP/1.1" 200 -
+127.0.0.1 - - [01/May/2026 02:06:26] "GET /js/chart-signals.js HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 02:06:26] "GET /js/chart-signals.js HTTP/1.1" 200 -
+127.0.0.1 - - [01/May/2026 02:06:26] "GET /js/smc-dashboard.js HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 02:06:26] "GET /js/smc-dashboard.js HTTP/1.1" 200 -
+127.0.0.1 - - [01/May/2026 02:06:26] "GET /js/entry-validator.js HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 02:06:26] "GET /js/entry-validator.js HTTP/1.1" 200 -
+127.0.0.1 - - [01/May/2026 02:06:26] "GET /js/trade-tracker.js HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 02:06:26] "GET /js/trade-tracker.js HTTP/1.1" 200 -
+127.0.0.1 - - [01/May/2026 02:06:26] "GET /js/trade-cockpit.js HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 02:06:26] "GET /js/trade-cockpit.js HTTP/1.1" 200 -
+127.0.0.1 - - [01/May/2026 02:06:26] "GET /js/fno-trade-alerts.js?v=7 HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 02:06:26] "GET /js/fno-trade-alerts.js?v=7 HTTP/1.1" 200 -
+127.0.0.1 - - [01/May/2026 02:06:26] "GET /js/multi-chart.js?v=6 HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 02:06:26] "GET /js/multi-chart.js?v=6 HTTP/1.1" 200 -
+127.0.0.1 - - [01/May/2026 02:06:26] "GET /js/app.js HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 02:06:26] "GET /js/app.js HTTP/1.1" 200 -
+127.0.0.1 - - [01/May/2026 02:06:26] "GET /api/config HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 02:06:26] "GET /api/config HTTP/1.1" 200 -
+127.0.0.1 - - [01/May/2026 02:06:27] "GET /favicon.ico HTTP/1.1" 404 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 02:06:27] "[33mGET /favicon.ico HTTP/1.1[0m" 404 -
+127.0.0.1 - - [01/May/2026 02:06:28] "GET /api/earnings-calendar HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 02:06:28] "GET /api/earnings-calendar HTTP/1.1" 200 -
+127.0.0.1 - - [01/May/2026 02:06:30] "GET /api/market-pulse HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 02:06:30] "GET /api/market-pulse HTTP/1.1" 200 -
+WARNING:root:
+=== VALIDATE ENTRY: NIFTY 50 Price=0 Date=2026-04-30 Time=None ===
+
+WARNING:root:[validate-entry] Fresh instruments token resolved: 256265
+WARNING:root:[validate-entry] Token resolved: 256265
+WARNING:root:[validate-entry] Live mode | Date=2026-04-30 09:15:00 | Range=2026-04-16 09:15:00 → 2026-04-30 15:30:00
+WARNING:root:[validate-entry] Fetching fresh data from Kite API
+WARNING:root:[validate-entry] ✓ Kite returned 750 candles
+WARNING:root:[validate-entry] ✓ Response: 750 candles | First=24207.55 | Last=24043.7
+WARNING:root:[validate-entry] ✓ Validation: valid=True confidence=93 setup=TYPE_2
+127.0.0.1 - - [01/May/2026 02:06:33] "POST /api/validate-entry HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 02:06:33] "POST /api/validate-entry HTTP/1.1" 200 -
+127.0.0.1 - - [01/May/2026 02:07:30] "GET /api/market-pulse HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 02:07:30] "GET /api/market-pulse HTTP/1.1" 200 -
+127.0.0.1 - - [01/May/2026 02:08:31] "GET /api/market-pulse HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 02:08:31] "GET /api/market-pulse HTTP/1.1" 200 -
+127.0.0.1 - - [01/May/2026 02:09:31] "GET /api/market-pulse HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 02:09:31] "GET /api/market-pulse HTTP/1.1" 200 -
+127.0.0.1 - - [01/May/2026 02:10:31] "GET /api/market-pulse HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 02:10:31] "GET /api/market-pulse HTTP/1.1" 200 -
+127.0.0.1 - - [01/May/2026 02:11:32] "GET /api/market-pulse HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 02:11:32] "GET /api/market-pulse HTTP/1.1" 200 -
+127.0.0.1 - - [01/May/2026 02:12:34] "GET /api/market-pulse HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 02:12:34] "GET /api/market-pulse HTTP/1.1" 200 -
+127.0.0.1 - - [01/May/2026 02:13:35] "GET /api/market-pulse HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 02:13:35] "GET /api/market-pulse HTTP/1.1" 200 -
+127.0.0.1 - - [01/May/2026 02:14:36] "GET /api/market-pulse HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 02:14:36] "GET /api/market-pulse HTTP/1.1" 200 -
+127.0.0.1 - - [01/May/2026 02:15:36] "GET /api/market-pulse HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 02:15:36] "GET /api/market-pulse HTTP/1.1" 200 -
+127.0.0.1 - - [01/May/2026 02:15:51] "GET / HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 02:15:51] "GET / HTTP/1.1" 200 -
+127.0.0.1 - - [01/May/2026 02:15:51] "GET /styles/main.css?v=5 HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 02:15:51] "GET /styles/main.css?v=5 HTTP/1.1" 200 -
+127.0.0.1 - - [01/May/2026 02:15:51] "GET /js/kite-api.js HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 02:15:51] "GET /js/kite-api.js HTTP/1.1" 200 -
+127.0.0.1 - - [01/May/2026 02:15:51] "GET /js/gap-analysis-engine.js HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 02:15:51] "GET /js/gap-analysis-engine.js HTTP/1.1" 200 -
+127.0.0.1 - - [01/May/2026 02:15:51] "GET /js/lightweight-charts.standalone.production.js HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 02:15:51] "GET /js/lightweight-charts.standalone.production.js HTTP/1.1" 200 -
+127.0.0.1 - - [01/May/2026 02:15:51] "GET /js/technical-indicators.js HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 02:15:51] "GET /js/technical-indicators.js HTTP/1.1" 200 -
+127.0.0.1 - - [01/May/2026 02:15:51] "GET /js/scoring-engine.js HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 02:15:51] "GET /js/scoring-engine.js HTTP/1.1" 200 -
+127.0.0.1 - - [01/May/2026 02:15:51] "GET /js/options-chain.js HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 02:15:51] "GET /js/options-chain.js HTTP/1.1" 200 -
+127.0.0.1 - - [01/May/2026 02:15:51] "GET /js/charts.js HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 02:15:51] "GET /js/charts.js HTTP/1.1" 200 -
+127.0.0.1 - - [01/May/2026 02:15:51] "GET /js/alerts.js HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 02:15:51] "GET /js/alerts.js HTTP/1.1" 200 -
+127.0.0.1 - - [01/May/2026 02:15:51] "GET /js/trade-journal.js HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 02:15:51] "GET /js/trade-journal.js HTTP/1.1" 200 -
+127.0.0.1 - - [01/May/2026 02:15:51] "GET /js/paper-trading.js HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 02:15:51] "GET /js/paper-trading.js HTTP/1.1" 200 -
+127.0.0.1 - - [01/May/2026 02:15:51] "GET /js/research-ai.js HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 02:15:51] "GET /js/research-ai.js HTTP/1.1" 200 -
+127.0.0.1 - - [01/May/2026 02:15:51] "GET /js/equity-screener.js HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 02:15:51] "GET /js/equity-screener.js HTTP/1.1" 200 -
+127.0.0.1 - - [01/May/2026 02:15:51] "GET /js/fno-session-analyzer.js HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 02:15:51] "GET /js/fno-session-analyzer.js HTTP/1.1" 200 -
+127.0.0.1 - - [01/May/2026 02:15:51] "GET /js/watchlist.js HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 02:15:51] "GET /js/watchlist.js HTTP/1.1" 200 -
+127.0.0.1 - - [01/May/2026 02:15:51] "GET /js/analysis.js HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 02:15:51] "GET /js/analysis.js HTTP/1.1" 200 -
+127.0.0.1 - - [01/May/2026 02:15:51] "GET /js/strategy-builder.js HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 02:15:51] "GET /js/strategy-builder.js HTTP/1.1" 200 -
+127.0.0.1 - - [01/May/2026 02:15:51] "GET /js/backtester.js HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 02:15:51] "GET /js/backtester.js HTTP/1.1" 200 -
+127.0.0.1 - - [01/May/2026 02:15:51] "GET /js/portfolio.js HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 02:15:51] "GET /js/portfolio.js HTTP/1.1" 200 -
+127.0.0.1 - - [01/May/2026 02:15:51] "GET /js/news-feed.js HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 02:15:51] "GET /js/news-feed.js HTTP/1.1" 200 -
+127.0.0.1 - - [01/May/2026 02:15:51] "GET /js/live-movers.js HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 02:15:51] "GET /js/live-movers.js HTTP/1.1" 200 -
+127.0.0.1 - - [01/May/2026 02:15:51] "GET /js/index-movers.js HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 02:15:51] "GET /js/index-movers.js HTTP/1.1" 200 -
+127.0.0.1 - - [01/May/2026 02:15:52] "GET /js/reco-tracker.js HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 02:15:52] "GET /js/reco-tracker.js HTTP/1.1" 200 -
+127.0.0.1 - - [01/May/2026 02:15:52] "GET /js/chart-signals.js HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 02:15:52] "GET /js/chart-signals.js HTTP/1.1" 200 -
+127.0.0.1 - - [01/May/2026 02:15:52] "GET /js/smc-dashboard.js HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 02:15:52] "GET /js/smc-dashboard.js HTTP/1.1" 200 -
+127.0.0.1 - - [01/May/2026 02:15:52] "GET /js/entry-validator.js HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 02:15:52] "GET /js/entry-validator.js HTTP/1.1" 200 -
+127.0.0.1 - - [01/May/2026 02:15:52] "GET /js/trade-tracker.js HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 02:15:52] "GET /js/trade-tracker.js HTTP/1.1" 200 -
+127.0.0.1 - - [01/May/2026 02:15:52] "GET /js/trade-cockpit.js HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 02:15:52] "GET /js/trade-cockpit.js HTTP/1.1" 200 -
+127.0.0.1 - - [01/May/2026 02:15:52] "GET /js/fno-trade-alerts.js?v=7 HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 02:15:52] "GET /js/fno-trade-alerts.js?v=7 HTTP/1.1" 200 -
+127.0.0.1 - - [01/May/2026 02:15:52] "GET /js/multi-chart.js?v=6 HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 02:15:52] "GET /js/multi-chart.js?v=6 HTTP/1.1" 200 -
+127.0.0.1 - - [01/May/2026 02:15:52] "GET /js/app.js HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 02:15:52] "GET /js/app.js HTTP/1.1" 200 -
+127.0.0.1 - - [01/May/2026 02:15:52] "GET /api/config HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 02:15:52] "GET /api/config HTTP/1.1" 200 -
+127.0.0.1 - - [01/May/2026 02:15:52] "GET /favicon.ico HTTP/1.1" 404 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 02:15:52] "[33mGET /favicon.ico HTTP/1.1[0m" 404 -
+127.0.0.1 - - [01/May/2026 02:15:54] "GET /api/earnings-calendar HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 02:15:54] "GET /api/earnings-calendar HTTP/1.1" 200 -
+127.0.0.1 - - [01/May/2026 02:15:55] "GET /api/market-pulse HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 02:15:55] "GET /api/market-pulse HTTP/1.1" 200 -
+WARNING:root:
+=== VALIDATE ENTRY: NIFTY 50 Price=0 Date=2026-04-30 Time=None ===
+
+WARNING:root:[validate-entry] Fresh instruments lookup failed for NIFTY 50: HTTPSConnectionPool(host='api.kite.trade', port=443): Read timed out. (read timeout=7)
+WARNING:root:[validate-entry] LTP token resolved: 256265
+WARNING:root:[validate-entry] Token resolved: 256265
+WARNING:root:[validate-entry] Live mode | Date=2026-04-30 09:15:00 | Range=2026-04-16 09:15:00 → 2026-04-30 15:30:00
+WARNING:root:[validate-entry] Fetching fresh data from Kite API
+WARNING:root:[validate-entry] ✓ Kite returned 750 candles
+WARNING:root:[validate-entry] ✓ Response: 750 candles | First=24207.55 | Last=24043.7
+WARNING:root:[validate-entry] ✓ Validation: valid=True confidence=93 setup=TYPE_2
+127.0.0.1 - - [01/May/2026 02:16:04] "POST /api/validate-entry HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 02:16:04] "POST /api/validate-entry HTTP/1.1" 200 -
+127.0.0.1 - - [01/May/2026 02:16:56] "GET /api/market-pulse HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 02:16:56] "GET /api/market-pulse HTTP/1.1" 200 -
+127.0.0.1 - - [01/May/2026 02:17:24] "GET / HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 02:17:24] "GET / HTTP/1.1" 200 -
+127.0.0.1 - - [01/May/2026 02:17:24] "GET /styles/main.css?v=5 HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 02:17:24] "GET /styles/main.css?v=5 HTTP/1.1" 200 -
+127.0.0.1 - - [01/May/2026 02:17:24] "GET /js/kite-api.js HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 02:17:24] "GET /js/kite-api.js HTTP/1.1" 200 -
+127.0.0.1 - - [01/May/2026 02:17:24] "GET /js/technical-indicators.js HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 02:17:24] "GET /js/technical-indicators.js HTTP/1.1" 200 -
+127.0.0.1 - - [01/May/2026 02:17:24] "GET /js/gap-analysis-engine.js HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 02:17:24] "GET /js/gap-analysis-engine.js HTTP/1.1" 200 -
+127.0.0.1 - - [01/May/2026 02:17:24] "GET /js/options-chain.js HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 02:17:24] "GET /js/options-chain.js HTTP/1.1" 200 -
+127.0.0.1 - - [01/May/2026 02:17:24] "GET /js/scoring-engine.js HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 02:17:24] "GET /js/scoring-engine.js HTTP/1.1" 200 -
+127.0.0.1 - - [01/May/2026 02:17:24] "GET /js/lightweight-charts.standalone.production.js HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 02:17:24] "GET /js/lightweight-charts.standalone.production.js HTTP/1.1" 200 -
+127.0.0.1 - - [01/May/2026 02:17:24] "GET /js/charts.js HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 02:17:24] "GET /js/charts.js HTTP/1.1" 200 -
+127.0.0.1 - - [01/May/2026 02:17:24] "GET /js/alerts.js HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 02:17:24] "GET /js/alerts.js HTTP/1.1" 200 -
+127.0.0.1 - - [01/May/2026 02:17:24] "GET /js/trade-journal.js HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 02:17:24] "GET /js/trade-journal.js HTTP/1.1" 200 -
+127.0.0.1 - - [01/May/2026 02:17:24] "GET /js/paper-trading.js HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 02:17:24] "GET /js/paper-trading.js HTTP/1.1" 200 -
+127.0.0.1 - - [01/May/2026 02:17:24] "GET /js/research-ai.js HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 02:17:24] "GET /js/research-ai.js HTTP/1.1" 200 -
+127.0.0.1 - - [01/May/2026 02:17:24] "GET /js/fno-session-analyzer.js HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 02:17:24] "GET /js/fno-session-analyzer.js HTTP/1.1" 200 -
+127.0.0.1 - - [01/May/2026 02:17:24] "GET /js/equity-screener.js HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 02:17:24] "GET /js/equity-screener.js HTTP/1.1" 200 -
+127.0.0.1 - - [01/May/2026 02:17:24] "GET /js/analysis.js HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 02:17:24] "GET /js/analysis.js HTTP/1.1" 200 -
+127.0.0.1 - - [01/May/2026 02:17:24] "GET /js/watchlist.js HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 02:17:24] "GET /js/watchlist.js HTTP/1.1" 200 -
+127.0.0.1 - - [01/May/2026 02:17:24] "GET /js/strategy-builder.js HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 02:17:24] "GET /js/strategy-builder.js HTTP/1.1" 200 -
+127.0.0.1 - - [01/May/2026 02:17:24] "GET /js/live-movers.js HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 02:17:24] "GET /js/live-movers.js HTTP/1.1" 200 -
+127.0.0.1 - - [01/May/2026 02:17:24] "GET /js/portfolio.js HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 02:17:24] "GET /js/portfolio.js HTTP/1.1" 200 -
+127.0.0.1 - - [01/May/2026 02:17:24] "GET /js/backtester.js HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 02:17:24] "GET /js/backtester.js HTTP/1.1" 200 -
+127.0.0.1 - - [01/May/2026 02:17:24] "GET /js/news-feed.js HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 02:17:24] "GET /js/news-feed.js HTTP/1.1" 200 -
+127.0.0.1 - - [01/May/2026 02:17:24] "GET /js/index-movers.js HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 02:17:24] "GET /js/index-movers.js HTTP/1.1" 200 -
+127.0.0.1 - - [01/May/2026 02:17:24] "GET /js/reco-tracker.js HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 02:17:24] "GET /js/reco-tracker.js HTTP/1.1" 200 -
+127.0.0.1 - - [01/May/2026 02:17:24] "GET /js/smc-dashboard.js HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 02:17:24] "GET /js/smc-dashboard.js HTTP/1.1" 200 -
+127.0.0.1 - - [01/May/2026 02:17:24] "GET /js/chart-signals.js HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 02:17:24] "GET /js/chart-signals.js HTTP/1.1" 200 -
+127.0.0.1 - - [01/May/2026 02:17:24] "GET /js/trade-tracker.js HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 02:17:24] "GET /js/trade-tracker.js HTTP/1.1" 200 -
+127.0.0.1 - - [01/May/2026 02:17:24] "GET /js/trade-cockpit.js HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 02:17:24] "GET /js/trade-cockpit.js HTTP/1.1" 200 -
+127.0.0.1 - - [01/May/2026 02:17:24] "GET /js/entry-validator.js HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 02:17:24] "GET /js/entry-validator.js HTTP/1.1" 200 -
+127.0.0.1 - - [01/May/2026 02:17:24] "GET /js/fno-trade-alerts.js?v=7 HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 02:17:24] "GET /js/fno-trade-alerts.js?v=7 HTTP/1.1" 200 -
+127.0.0.1 - - [01/May/2026 02:17:24] "GET /js/multi-chart.js?v=6 HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 02:17:24] "GET /js/multi-chart.js?v=6 HTTP/1.1" 200 -
+127.0.0.1 - - [01/May/2026 02:17:24] "GET /js/app.js HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 02:17:24] "GET /js/app.js HTTP/1.1" 200 -
+127.0.0.1 - - [01/May/2026 02:17:24] "GET /api/config HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 02:17:24] "GET /api/config HTTP/1.1" 200 -
+127.0.0.1 - - [01/May/2026 02:17:26] "GET /api/earnings-calendar HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 02:17:26] "GET /api/earnings-calendar HTTP/1.1" 200 -
+127.0.0.1 - - [01/May/2026 02:17:27] "GET /api/test HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 02:17:27] "GET /api/test HTTP/1.1" 200 -
+127.0.0.1 - - [01/May/2026 02:17:27] "GET /api/market-pulse HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 02:17:27] "GET /api/market-pulse HTTP/1.1" 200 -
+127.0.0.1 - - [01/May/2026 02:17:27] "GET /api/market-pulse HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 02:17:27] "GET /api/market-pulse HTTP/1.1" 200 -
+127.0.0.1 - - [01/May/2026 02:17:28] "GET /api/instruments HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 02:17:28] "GET /api/instruments HTTP/1.1" 200 -
+127.0.0.1 - - [01/May/2026 02:17:28] "GET /api/health HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 02:17:28] "GET /api/health HTTP/1.1" 200 -
+127.0.0.1 - - [01/May/2026 02:17:28] "GET /api/market-pulse HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 02:17:28] "GET /api/market-pulse HTTP/1.1" 200 -
+WARNING:root:
+=== VALIDATE ENTRY: TRENT Price=0 Date=2026-04-30 Time=None ===
+
+WARNING:root:[validate-entry] Fresh instruments token resolved: 502785
+WARNING:root:[validate-entry] Token resolved: 502785
+WARNING:root:[validate-entry] Live mode | Date=2026-04-30 09:15:00 | Range=2026-04-16 09:15:00 → 2026-04-30 15:30:00
+WARNING:root:[validate-entry] Fetching fresh data from Kite API
+WARNING:root:[validate-entry] ✓ Kite returned 750 candles
+WARNING:root:[validate-entry] ✓ Response: 750 candles | First=4125.1 | Last=4148.0
+WARNING:root:[validate-entry] ✓ Validation: valid=False confidence=18 setup=NONE
+127.0.0.1 - - [01/May/2026 02:17:44] "POST /api/validate-entry HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 02:17:44] "POST /api/validate-entry HTTP/1.1" 200 -
+127.0.0.1 - - [01/May/2026 02:18:28] "GET /api/market-pulse HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 02:18:28] "GET /api/market-pulse HTTP/1.1" 200 -
+WARNING:root:
+=== VALIDATE ENTRY: MOTILALOFS Price=0 Date=2026-04-30 Time=None ===
+
+WARNING:root:[validate-entry] Fresh instruments token resolved: 3826433
+WARNING:root:[validate-entry] Token resolved: 3826433
+WARNING:root:[validate-entry] Live mode | Date=2026-04-30 09:15:00 | Range=2026-04-16 09:15:00 → 2026-04-30 15:30:00
+WARNING:root:[validate-entry] Fetching fresh data from Kite API
+WARNING:root:[validate-entry] ✓ Kite returned 750 candles
+WARNING:root:[validate-entry] ✓ Response: 750 candles | First=789.9 | Last=807.0
+WARNING:root:[validate-entry] ✓ Validation: valid=False confidence=65 setup=TYPE_2
+127.0.0.1 - - [01/May/2026 02:19:01] "POST /api/validate-entry HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 02:19:01] "POST /api/validate-entry HTTP/1.1" 200 -
+127.0.0.1 - - [01/May/2026 02:19:29] "GET /api/market-pulse HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 02:19:29] "GET /api/market-pulse HTTP/1.1" 200 -
+127.0.0.1 - - [01/May/2026 02:20:29] "GET /api/market-pulse HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 02:20:29] "GET /api/market-pulse HTTP/1.1" 200 -
+127.0.0.1 - - [01/May/2026 02:21:29] "GET /api/market-pulse HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 02:21:29] "GET /api/market-pulse HTTP/1.1" 200 -
+127.0.0.1 - - [01/May/2026 02:22:29] "GET /api/market-pulse HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 02:22:29] "GET /api/market-pulse HTTP/1.1" 200 -
+127.0.0.1 - - [01/May/2026 02:23:29] "GET /api/market-pulse HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 02:23:29] "GET /api/market-pulse HTTP/1.1" 200 -
+127.0.0.1 - - [01/May/2026 02:24:29] "GET /api/market-pulse HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 02:24:29] "GET /api/market-pulse HTTP/1.1" 200 -
+127.0.0.1 - - [01/May/2026 02:25:30] "GET /api/market-pulse HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 02:25:30] "GET /api/market-pulse HTTP/1.1" 200 -
+127.0.0.1 - - [01/May/2026 02:25:54] "GET / HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 02:25:54] "GET / HTTP/1.1" 200 -
+127.0.0.1 - - [01/May/2026 02:25:54] "GET /styles/main.css?v=5 HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 02:25:54] "GET /styles/main.css?v=5 HTTP/1.1" 200 -
+127.0.0.1 - - [01/May/2026 02:25:54] "GET /js/kite-api.js HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 02:25:54] "GET /js/kite-api.js HTTP/1.1" 200 -
+127.0.0.1 - - [01/May/2026 02:25:54] "GET /js/technical-indicators.js HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 02:25:54] "GET /js/technical-indicators.js HTTP/1.1" 200 -
+127.0.0.1 - - [01/May/2026 02:25:54] "GET /js/scoring-engine.js HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 02:25:54] "GET /js/scoring-engine.js HTTP/1.1" 200 -
+127.0.0.1 - - [01/May/2026 02:25:54] "GET /js/gap-analysis-engine.js HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 02:25:54] "GET /js/gap-analysis-engine.js HTTP/1.1" 200 -
+127.0.0.1 - - [01/May/2026 02:25:54] "GET /js/options-chain.js HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 02:25:54] "GET /js/options-chain.js HTTP/1.1" 200 -
+127.0.0.1 - - [01/May/2026 02:25:54] "GET /js/charts.js HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 02:25:54] "GET /js/charts.js HTTP/1.1" 200 -
+127.0.0.1 - - [01/May/2026 02:25:54] "GET /js/alerts.js HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 02:25:54] "GET /js/alerts.js HTTP/1.1" 200 -
+127.0.0.1 - - [01/May/2026 02:25:54] "GET /js/trade-journal.js HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 02:25:54] "GET /js/trade-journal.js HTTP/1.1" 200 -
+127.0.0.1 - - [01/May/2026 02:25:54] "GET /js/lightweight-charts.standalone.production.js HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 02:25:54] "GET /js/lightweight-charts.standalone.production.js HTTP/1.1" 200 -
+127.0.0.1 - - [01/May/2026 02:25:54] "GET /js/paper-trading.js HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 02:25:54] "GET /js/paper-trading.js HTTP/1.1" 200 -
+127.0.0.1 - - [01/May/2026 02:25:54] "GET /js/research-ai.js HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 02:25:54] "GET /js/research-ai.js HTTP/1.1" 200 -
+127.0.0.1 - - [01/May/2026 02:25:54] "GET /js/fno-session-analyzer.js HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 02:25:54] "GET /js/fno-session-analyzer.js HTTP/1.1" 200 -
+127.0.0.1 - - [01/May/2026 02:25:54] "GET /js/analysis.js HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 02:25:54] "GET /js/analysis.js HTTP/1.1" 200 -
+127.0.0.1 - - [01/May/2026 02:25:54] "GET /js/equity-screener.js HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 02:25:54] "GET /js/equity-screener.js HTTP/1.1" 200 -
+127.0.0.1 - - [01/May/2026 02:25:54] "GET /js/watchlist.js HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 02:25:54] "GET /js/watchlist.js HTTP/1.1" 200 -
+127.0.0.1 - - [01/May/2026 02:25:54] "GET /js/backtester.js HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 02:25:54] "GET /js/backtester.js HTTP/1.1" 200 -
+127.0.0.1 - - [01/May/2026 02:25:54] "GET /js/strategy-builder.js HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 02:25:54] "GET /js/strategy-builder.js HTTP/1.1" 200 -
+127.0.0.1 - - [01/May/2026 02:25:54] "GET /js/index-movers.js HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 02:25:54] "GET /js/index-movers.js HTTP/1.1" 200 -
+127.0.0.1 - - [01/May/2026 02:25:54] "GET /js/live-movers.js HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 02:25:54] "GET /js/live-movers.js HTTP/1.1" 200 -
+127.0.0.1 - - [01/May/2026 02:25:54] "GET /js/portfolio.js HTTP/1.1" 200 -
+127.0.0.1 - - [01/May/2026 02:25:54] "GET /js/news-feed.js HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 02:25:54] "GET /js/portfolio.js HTTP/1.1" 200 -
+127.0.0.1 - - [01/May/2026 02:25:54] "GET /js/chart-signals.js HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 02:25:54] "GET /js/news-feed.js HTTP/1.1" 200 -
+127.0.0.1 - - [01/May/2026 02:25:54] "GET /js/smc-dashboard.js HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 02:25:54] "GET /js/chart-signals.js HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 02:25:54] "GET /js/smc-dashboard.js HTTP/1.1" 200 -
+127.0.0.1 - - [01/May/2026 02:25:54] "GET /js/reco-tracker.js HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 02:25:54] "GET /js/reco-tracker.js HTTP/1.1" 200 -
+127.0.0.1 - - [01/May/2026 02:25:54] "GET /js/trade-cockpit.js HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 02:25:54] "GET /js/trade-cockpit.js HTTP/1.1" 200 -
+127.0.0.1 - - [01/May/2026 02:25:54] "GET /js/entry-validator.js HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 02:25:54] "GET /js/entry-validator.js HTTP/1.1" 200 -
+127.0.0.1 - - [01/May/2026 02:25:54] "GET /js/fno-trade-alerts.js?v=7 HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 02:25:54] "GET /js/fno-trade-alerts.js?v=7 HTTP/1.1" 200 -
+127.0.0.1 - - [01/May/2026 02:25:54] "GET /js/trade-tracker.js HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 02:25:54] "GET /js/trade-tracker.js HTTP/1.1" 200 -
+127.0.0.1 - - [01/May/2026 02:25:54] "GET /js/multi-chart.js?v=6 HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 02:25:54] "GET /js/multi-chart.js?v=6 HTTP/1.1" 200 -
+127.0.0.1 - - [01/May/2026 02:25:54] "GET /js/app.js HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 02:25:54] "GET /js/app.js HTTP/1.1" 200 -
+127.0.0.1 - - [01/May/2026 02:25:54] "GET /api/config HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 02:25:54] "GET /api/config HTTP/1.1" 200 -
+127.0.0.1 - - [01/May/2026 02:25:55] "GET /favicon.ico HTTP/1.1" 404 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 02:25:55] "[33mGET /favicon.ico HTTP/1.1[0m" 404 -
+127.0.0.1 - - [01/May/2026 02:25:56] "GET /api/earnings-calendar HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 02:25:56] "GET /api/earnings-calendar HTTP/1.1" 200 -
+127.0.0.1 - - [01/May/2026 02:25:57] "GET /api/market-pulse HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 02:25:57] "GET /api/market-pulse HTTP/1.1" 200 -
+WARNING:root:
+=== VALIDATE ENTRY: APOLLOHOSP Price=0 Date=2026-04-30 Time=None ===
+
+WARNING:root:[validate-entry] Fresh instruments token resolved: 40193
+WARNING:root:[validate-entry] Token resolved: 40193
+WARNING:root:[validate-entry] Live mode | Date=2026-04-30 09:15:00 | Range=2026-04-16 09:15:00 → 2026-04-30 15:30:00
+WARNING:root:[validate-entry] Fetching fresh data from Kite API
+WARNING:root:[validate-entry] ✓ Kite returned 750 candles
+WARNING:root:[validate-entry] ✓ Response: 750 candles | First=7565.5 | Last=7620.5
+WARNING:root:[validate-entry] ✓ Validation: valid=False confidence=42 setup=NONE
+127.0.0.1 - - [01/May/2026 02:26:08] "POST /api/validate-entry HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 02:26:08] "POST /api/validate-entry HTTP/1.1" 200 -
+127.0.0.1 - - [01/May/2026 02:26:58] "GET /api/market-pulse HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 02:26:58] "GET /api/market-pulse HTTP/1.1" 200 -
+WARNING:root:
+=== VALIDATE ENTRY: APOLLOHOSP Price=0 Date=2026-04-30 Time=None ===
+
+WARNING:root:[validate-entry] Fresh instruments token resolved: 40193
+WARNING:root:[validate-entry] Token resolved: 40193
+WARNING:root:[validate-entry] Live mode | Date=2026-04-30 09:15:00 | Range=2026-04-16 09:15:00 → 2026-04-30 15:30:00
+WARNING:root:[validate-entry] Fetching fresh data from Kite API
+WARNING:root:[validate-entry] ✓ Kite returned 130 candles
+WARNING:root:[validate-entry] ✓ Response: 130 candles | First=7549.5 | Last=7620.5
+WARNING:root:[validate-entry] ✓ Validation: valid=False confidence=21 setup=NONE
+127.0.0.1 - - [01/May/2026 02:27:46] "POST /api/validate-entry HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 02:27:46] "POST /api/validate-entry HTTP/1.1" 200 -
+127.0.0.1 - - [01/May/2026 02:27:58] "GET /api/market-pulse HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 02:27:58] "GET /api/market-pulse HTTP/1.1" 200 -
+127.0.0.1 - - [01/May/2026 02:28:58] "GET /api/market-pulse HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 02:28:58] "GET /api/market-pulse HTTP/1.1" 200 -
+127.0.0.1 - - [01/May/2026 02:29:59] "GET /api/market-pulse HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 02:29:59] "GET /api/market-pulse HTTP/1.1" 200 -
+127.0.0.1 - - [01/May/2026 02:31:00] "GET /api/market-pulse HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 02:31:00] "GET /api/market-pulse HTTP/1.1" 200 -
+127.0.0.1 - - [01/May/2026 02:32:01] "GET /api/market-pulse HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 02:32:01] "GET /api/market-pulse HTTP/1.1" 200 -
+127.0.0.1 - - [01/May/2026 02:33:02] "GET /api/market-pulse HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 02:33:02] "GET /api/market-pulse HTTP/1.1" 200 -
+127.0.0.1 - - [01/May/2026 02:34:03] "GET /api/market-pulse HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 02:34:03] "GET /api/market-pulse HTTP/1.1" 200 -
+127.0.0.1 - - [01/May/2026 02:35:04] "GET /api/market-pulse HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 02:35:04] "GET /api/market-pulse HTTP/1.1" 200 -
+127.0.0.1 - - [01/May/2026 02:36:05] "GET /api/market-pulse HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 02:36:05] "GET /api/market-pulse HTTP/1.1" 200 -
+127.0.0.1 - - [01/May/2026 02:37:07] "GET /api/market-pulse HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 02:37:07] "GET /api/market-pulse HTTP/1.1" 200 -
+127.0.0.1 - - [01/May/2026 02:38:07] "GET /api/market-pulse HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 02:38:07] "GET /api/market-pulse HTTP/1.1" 200 -
+127.0.0.1 - - [01/May/2026 02:39:08] "GET /api/market-pulse HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 02:39:08] "GET /api/market-pulse HTTP/1.1" 200 -
+127.0.0.1 - - [01/May/2026 02:40:09] "GET /api/market-pulse HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 02:40:09] "GET /api/market-pulse HTTP/1.1" 200 -
+127.0.0.1 - - [01/May/2026 02:41:11] "GET /api/market-pulse HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 02:41:11] "GET /api/market-pulse HTTP/1.1" 200 -
+127.0.0.1 - - [01/May/2026 02:42:12] "GET /api/market-pulse HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 02:42:12] "GET /api/market-pulse HTTP/1.1" 200 -
+127.0.0.1 - - [01/May/2026 02:42:56] "GET / HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 02:42:56] "GET / HTTP/1.1" 200 -
+127.0.0.1 - - [01/May/2026 02:42:56] "GET /styles/main.css?v=5 HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 02:42:56] "GET /styles/main.css?v=5 HTTP/1.1" 200 -
+127.0.0.1 - - [01/May/2026 02:42:56] "GET /js/kite-api.js HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 02:42:56] "GET /js/kite-api.js HTTP/1.1" 200 -
+127.0.0.1 - - [01/May/2026 02:42:56] "GET /js/lightweight-charts.standalone.production.js HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 02:42:56] "GET /js/lightweight-charts.standalone.production.js HTTP/1.1" 200 -
+127.0.0.1 - - [01/May/2026 02:42:56] "GET /js/gap-analysis-engine.js HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 02:42:56] "GET /js/gap-analysis-engine.js HTTP/1.1" 200 -
+127.0.0.1 - - [01/May/2026 02:42:56] "GET /js/technical-indicators.js HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 02:42:56] "GET /js/technical-indicators.js HTTP/1.1" 200 -
+127.0.0.1 - - [01/May/2026 02:42:56] "GET /js/scoring-engine.js HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 02:42:56] "GET /js/scoring-engine.js HTTP/1.1" 200 -
+127.0.0.1 - - [01/May/2026 02:42:56] "GET /js/options-chain.js HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 02:42:56] "GET /js/options-chain.js HTTP/1.1" 200 -
+127.0.0.1 - - [01/May/2026 02:42:56] "GET /js/charts.js HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 02:42:56] "GET /js/charts.js HTTP/1.1" 200 -
+127.0.0.1 - - [01/May/2026 02:42:56] "GET /js/alerts.js HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 02:42:56] "GET /js/alerts.js HTTP/1.1" 200 -
+127.0.0.1 - - [01/May/2026 02:42:56] "GET /js/trade-journal.js HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 02:42:56] "GET /js/trade-journal.js HTTP/1.1" 200 -
+127.0.0.1 - - [01/May/2026 02:42:56] "GET /js/paper-trading.js HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 02:42:56] "GET /js/paper-trading.js HTTP/1.1" 200 -
+127.0.0.1 - - [01/May/2026 02:42:56] "GET /js/research-ai.js HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 02:42:56] "GET /js/research-ai.js HTTP/1.1" 200 -
+127.0.0.1 - - [01/May/2026 02:42:56] "GET /js/equity-screener.js HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 02:42:56] "GET /js/equity-screener.js HTTP/1.1" 200 -
+127.0.0.1 - - [01/May/2026 02:42:56] "GET /js/fno-session-analyzer.js HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 02:42:56] "GET /js/fno-session-analyzer.js HTTP/1.1" 200 -
+127.0.0.1 - - [01/May/2026 02:42:56] "GET /js/watchlist.js HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 02:42:56] "GET /js/watchlist.js HTTP/1.1" 200 -
+127.0.0.1 - - [01/May/2026 02:42:56] "GET /js/analysis.js HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 02:42:56] "GET /js/analysis.js HTTP/1.1" 200 -
+127.0.0.1 - - [01/May/2026 02:42:56] "GET /js/strategy-builder.js HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 02:42:56] "GET /js/strategy-builder.js HTTP/1.1" 200 -
+127.0.0.1 - - [01/May/2026 02:42:56] "GET /js/backtester.js HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 02:42:56] "GET /js/backtester.js HTTP/1.1" 200 -
+127.0.0.1 - - [01/May/2026 02:42:56] "GET /js/news-feed.js HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 02:42:56] "GET /js/news-feed.js HTTP/1.1" 200 -
+127.0.0.1 - - [01/May/2026 02:42:56] "GET /js/portfolio.js HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 02:42:56] "GET /js/portfolio.js HTTP/1.1" 200 -
+127.0.0.1 - - [01/May/2026 02:42:56] "GET /js/live-movers.js HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 02:42:56] "GET /js/live-movers.js HTTP/1.1" 200 -
+127.0.0.1 - - [01/May/2026 02:42:56] "GET /js/index-movers.js HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 02:42:56] "GET /js/index-movers.js HTTP/1.1" 200 -
+127.0.0.1 - - [01/May/2026 02:42:56] "GET /js/reco-tracker.js HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 02:42:56] "GET /js/reco-tracker.js HTTP/1.1" 200 -
+127.0.0.1 - - [01/May/2026 02:42:56] "GET /js/chart-signals.js HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 02:42:56] "GET /js/chart-signals.js HTTP/1.1" 200 -
+127.0.0.1 - - [01/May/2026 02:42:56] "GET /js/smc-dashboard.js HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 02:42:56] "GET /js/smc-dashboard.js HTTP/1.1" 200 -
+127.0.0.1 - - [01/May/2026 02:42:56] "GET /js/entry-validator.js HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 02:42:56] "GET /js/entry-validator.js HTTP/1.1" 200 -
+127.0.0.1 - - [01/May/2026 02:42:56] "GET /js/trade-tracker.js HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 02:42:56] "GET /js/trade-tracker.js HTTP/1.1" 200 -
+127.0.0.1 - - [01/May/2026 02:42:56] "GET /js/trade-cockpit.js HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 02:42:56] "GET /js/trade-cockpit.js HTTP/1.1" 200 -
+127.0.0.1 - - [01/May/2026 02:42:56] "GET /js/fno-trade-alerts.js?v=7 HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 02:42:56] "GET /js/fno-trade-alerts.js?v=7 HTTP/1.1" 200 -
+127.0.0.1 - - [01/May/2026 02:42:56] "GET /js/multi-chart.js?v=6 HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 02:42:56] "GET /js/multi-chart.js?v=6 HTTP/1.1" 200 -
+127.0.0.1 - - [01/May/2026 02:42:56] "GET /js/app.js HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 02:42:56] "GET /js/app.js HTTP/1.1" 200 -
+127.0.0.1 - - [01/May/2026 02:42:56] "GET /api/config HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 02:42:56] "GET /api/config HTTP/1.1" 200 -
+127.0.0.1 - - [01/May/2026 02:42:56] "GET /favicon.ico HTTP/1.1" 404 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 02:42:56] "[33mGET /favicon.ico HTTP/1.1[0m" 404 -
+127.0.0.1 - - [01/May/2026 02:42:58] "GET /api/earnings-calendar HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 02:42:58] "GET /api/earnings-calendar HTTP/1.1" 200 -
+127.0.0.1 - - [01/May/2026 02:43:00] "GET /api/market-pulse HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 02:43:00] "GET /api/market-pulse HTTP/1.1" 200 -
+WARNING:root:
+=== VALIDATE ENTRY: ABB Price=0 Date=2026-04-30 Time=None ===
+
+WARNING:root:[validate-entry] Fresh instruments token resolved: 3329
+WARNING:root:[validate-entry] Token resolved: 3329
+WARNING:root:[validate-entry] Live mode | Date=2026-04-30 09:15:00 | Range=2026-04-16 09:15:00 → 2026-04-30 15:30:00
+WARNING:root:[validate-entry] Fetching fresh data from Kite API
+WARNING:root:[validate-entry] ✓ Kite returned 750 candles
+WARNING:root:[validate-entry] ✓ Response: 750 candles | First=6928.5 | Last=7259.0
+WARNING:root:[validate-entry] ✓ Validation: valid=True confidence=91 setup=TYPE_2
+127.0.0.1 - - [01/May/2026 02:43:02] "POST /api/validate-entry HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 02:43:02] "POST /api/validate-entry HTTP/1.1" 200 -
+127.0.0.1 - - [01/May/2026 02:44:00] "GET /api/market-pulse HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 02:44:00] "GET /api/market-pulse HTTP/1.1" 200 -
+WARNING:root:
+=== VALIDATE ENTRY: ONGC Price=0 Date=2026-04-30 Time=None ===
+
+WARNING:root:[validate-entry] Fresh instruments token resolved: 633601
+WARNING:root:[validate-entry] Token resolved: 633601
+WARNING:root:[validate-entry] Live mode | Date=2026-04-30 09:15:00 | Range=2026-04-16 09:15:00 → 2026-04-30 15:30:00
+WARNING:root:[validate-entry] Fetching fresh data from Kite API
+WARNING:root:[validate-entry] ✓ Kite returned 750 candles
+WARNING:root:[validate-entry] ✓ Response: 750 candles | First=284.15 | Last=299.0
+WARNING:root:[validate-entry] ✓ Validation: valid=False confidence=30 setup=NONE
+127.0.0.1 - - [01/May/2026 02:44:13] "POST /api/validate-entry HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 02:44:13] "POST /api/validate-entry HTTP/1.1" 200 -
+127.0.0.1 - - [01/May/2026 02:45:00] "GET /api/market-pulse HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 02:45:00] "GET /api/market-pulse HTTP/1.1" 200 -
+WARNING:root:
+=== VALIDATE ENTRY: ONGC Price=0 Date=2026-04-30 Time=None ===
+
+WARNING:root:[validate-entry] Fresh instruments token resolved: 633601
+WARNING:root:[validate-entry] Token resolved: 633601
+WARNING:root:[validate-entry] Live mode | Date=2026-04-30 09:15:00 | Range=2026-04-16 09:15:00 → 2026-04-30 15:30:00
+WARNING:root:[validate-entry] Fetching fresh data from Kite API
+WARNING:root:[validate-entry] ✓ Kite returned 130 candles
+WARNING:root:[validate-entry] ✓ Response: 130 candles | First=283.1 | Last=299.0
+WARNING:root:[validate-entry] ✓ Validation: valid=False confidence=13 setup=NONE
+127.0.0.1 - - [01/May/2026 02:45:06] "POST /api/validate-entry HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 02:45:06] "POST /api/validate-entry HTTP/1.1" 200 -
+127.0.0.1 - - [01/May/2026 02:46:00] "GET /api/market-pulse HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 02:46:00] "GET /api/market-pulse HTTP/1.1" 200 -
+WARNING:root:
+=== VALIDATE ENTRY: BSE Price=0 Date=2026-04-30 Time=None ===
+
+127.0.0.1 - - [01/May/2026 02:46:17] "POST /api/validate-entry HTTP/1.1" 404 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 02:46:17] "[33mPOST /api/validate-entry HTTP/1.1[0m" 404 -
+WARNING:root:
+=== VALIDATE ENTRY: SUNPHARMA Price=0 Date=2026-04-30 Time=None ===
+
+WARNING:root:[validate-entry] Fresh instruments token resolved: 857857
+WARNING:root:[validate-entry] Token resolved: 857857
+WARNING:root:[validate-entry] Live mode | Date=2026-04-30 09:15:00 | Range=2026-04-16 09:15:00 → 2026-04-30 15:30:00
+WARNING:root:[validate-entry] Fetching fresh data from Kite API
+WARNING:root:[validate-entry] ✓ Kite returned 750 candles
+WARNING:root:[validate-entry] ✓ Response: 750 candles | First=1686.8 | Last=1814.3
+WARNING:root:[validate-entry] ✓ Validation: valid=True confidence=90 setup=TYPE_2
+127.0.0.1 - - [01/May/2026 02:46:43] "POST /api/validate-entry HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 02:46:43] "POST /api/validate-entry HTTP/1.1" 200 -
+127.0.0.1 - - [01/May/2026 02:47:01] "GET /api/market-pulse HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 02:47:01] "GET /api/market-pulse HTTP/1.1" 200 -
+127.0.0.1 - - [01/May/2026 02:48:01] "GET /api/market-pulse HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 02:48:01] "GET /api/market-pulse HTTP/1.1" 200 -
+127.0.0.1 - - [01/May/2026 02:49:01] "GET /api/market-pulse HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 02:49:01] "GET /api/market-pulse HTTP/1.1" 200 -
+127.0.0.1 - - [01/May/2026 02:50:01] "GET /api/market-pulse HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 02:50:01] "GET /api/market-pulse HTTP/1.1" 200 -
+127.0.0.1 - - [01/May/2026 02:51:01] "GET /api/market-pulse HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 02:51:01] "GET /api/market-pulse HTTP/1.1" 200 -
+127.0.0.1 - - [01/May/2026 02:51:56] "GET / HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 02:51:56] "GET / HTTP/1.1" 200 -
+127.0.0.1 - - [01/May/2026 02:51:56] "GET /styles/main.css?v=5 HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 02:51:56] "GET /styles/main.css?v=5 HTTP/1.1" 200 -
+127.0.0.1 - - [01/May/2026 02:51:56] "GET /js/kite-api.js HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 02:51:56] "GET /js/kite-api.js HTTP/1.1" 200 -
+127.0.0.1 - - [01/May/2026 02:51:56] "GET /js/scoring-engine.js HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 02:51:56] "GET /js/scoring-engine.js HTTP/1.1" 200 -
+127.0.0.1 - - [01/May/2026 02:51:56] "GET /js/gap-analysis-engine.js HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 02:51:56] "GET /js/gap-analysis-engine.js HTTP/1.1" 200 -
+127.0.0.1 - - [01/May/2026 02:51:56] "GET /js/lightweight-charts.standalone.production.js HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 02:51:56] "GET /js/lightweight-charts.standalone.production.js HTTP/1.1" 200 -
+127.0.0.1 - - [01/May/2026 02:51:56] "GET /js/technical-indicators.js HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 02:51:56] "GET /js/technical-indicators.js HTTP/1.1" 200 -
+127.0.0.1 - - [01/May/2026 02:51:56] "GET /js/options-chain.js HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 02:51:56] "GET /js/options-chain.js HTTP/1.1" 200 -
+127.0.0.1 - - [01/May/2026 02:51:56] "GET /js/charts.js HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 02:51:56] "GET /js/charts.js HTTP/1.1" 200 -
+127.0.0.1 - - [01/May/2026 02:51:56] "GET /js/alerts.js HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 02:51:56] "GET /js/alerts.js HTTP/1.1" 200 -
+127.0.0.1 - - [01/May/2026 02:51:56] "GET /js/trade-journal.js HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 02:51:56] "GET /js/trade-journal.js HTTP/1.1" 200 -
+127.0.0.1 - - [01/May/2026 02:51:56] "GET /js/paper-trading.js HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 02:51:56] "GET /js/paper-trading.js HTTP/1.1" 200 -
+127.0.0.1 - - [01/May/2026 02:51:56] "GET /js/research-ai.js HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 02:51:56] "GET /js/research-ai.js HTTP/1.1" 200 -
+127.0.0.1 - - [01/May/2026 02:51:56] "GET /js/fno-session-analyzer.js HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 02:51:56] "GET /js/fno-session-analyzer.js HTTP/1.1" 200 -
+127.0.0.1 - - [01/May/2026 02:51:56] "GET /js/equity-screener.js HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 02:51:56] "GET /js/equity-screener.js HTTP/1.1" 200 -
+127.0.0.1 - - [01/May/2026 02:51:56] "GET /js/analysis.js HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 02:51:56] "GET /js/analysis.js HTTP/1.1" 200 -
+127.0.0.1 - - [01/May/2026 02:51:56] "GET /js/watchlist.js HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 02:51:56] "GET /js/watchlist.js HTTP/1.1" 200 -
+127.0.0.1 - - [01/May/2026 02:51:56] "GET /js/strategy-builder.js HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 02:51:56] "GET /js/strategy-builder.js HTTP/1.1" 200 -
+127.0.0.1 - - [01/May/2026 02:51:56] "GET /js/backtester.js HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 02:51:56] "GET /js/backtester.js HTTP/1.1" 200 -
+127.0.0.1 - - [01/May/2026 02:51:56] "GET /js/portfolio.js HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 02:51:56] "GET /js/portfolio.js HTTP/1.1" 200 -
+127.0.0.1 - - [01/May/2026 02:51:56] "GET /js/news-feed.js HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 02:51:56] "GET /js/news-feed.js HTTP/1.1" 200 -
+127.0.0.1 - - [01/May/2026 02:51:56] "GET /js/live-movers.js HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 02:51:56] "GET /js/live-movers.js HTTP/1.1" 200 -
+127.0.0.1 - - [01/May/2026 02:51:56] "GET /js/index-movers.js HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 02:51:56] "GET /js/index-movers.js HTTP/1.1" 200 -
+127.0.0.1 - - [01/May/2026 02:51:56] "GET /js/chart-signals.js HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 02:51:56] "GET /js/chart-signals.js HTTP/1.1" 200 -
+127.0.0.1 - - [01/May/2026 02:51:56] "GET /js/reco-tracker.js HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 02:51:56] "GET /js/reco-tracker.js HTTP/1.1" 200 -
+127.0.0.1 - - [01/May/2026 02:51:56] "GET /js/smc-dashboard.js HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 02:51:56] "GET /js/smc-dashboard.js HTTP/1.1" 200 -
+127.0.0.1 - - [01/May/2026 02:51:56] "GET /js/entry-validator.js HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 02:51:56] "GET /js/entry-validator.js HTTP/1.1" 200 -
+127.0.0.1 - - [01/May/2026 02:51:56] "GET /js/trade-tracker.js HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 02:51:56] "GET /js/trade-tracker.js HTTP/1.1" 200 -
+127.0.0.1 - - [01/May/2026 02:51:56] "GET /js/trade-cockpit.js HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 02:51:56] "GET /js/trade-cockpit.js HTTP/1.1" 200 -
+127.0.0.1 - - [01/May/2026 02:51:56] "GET /js/fno-trade-alerts.js?v=7 HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 02:51:56] "GET /js/fno-trade-alerts.js?v=7 HTTP/1.1" 200 -
+127.0.0.1 - - [01/May/2026 02:51:56] "GET /js/multi-chart.js?v=6 HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 02:51:56] "GET /js/multi-chart.js?v=6 HTTP/1.1" 200 -
+127.0.0.1 - - [01/May/2026 02:51:56] "GET /js/app.js HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 02:51:56] "GET /js/app.js HTTP/1.1" 200 -
+127.0.0.1 - - [01/May/2026 02:51:57] "GET /api/config HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 02:51:57] "GET /api/config HTTP/1.1" 200 -
+127.0.0.1 - - [01/May/2026 02:51:57] "GET /favicon.ico HTTP/1.1" 404 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 02:51:57] "[33mGET /favicon.ico HTTP/1.1[0m" 404 -
+127.0.0.1 - - [01/May/2026 02:51:58] "GET /api/earnings-calendar HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 02:51:58] "GET /api/earnings-calendar HTTP/1.1" 200 -
+127.0.0.1 - - [01/May/2026 02:52:00] "GET /api/market-pulse HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 02:52:00] "GET /api/market-pulse HTTP/1.1" 200 -
+WARNING:root:
+=== VALIDATE ENTRY: ABB Price=0 Date=2026-04-30 Time=None ===
+
+WARNING:root:[validate-entry] Fresh instruments token resolved: 3329
+WARNING:root:[validate-entry] Token resolved: 3329
+WARNING:root:[validate-entry] Live mode | Date=2026-04-30 09:15:00 | Range=2026-04-16 09:15:00 → 2026-04-30 15:30:00
+WARNING:root:[validate-entry] Fetching fresh data from Kite API
+WARNING:root:[validate-entry] ✓ Kite returned 750 candles
+WARNING:root:[validate-entry] ✓ Response: 750 candles | First=6928.5 | Last=7259.0
+WARNING:root:[validate-entry] ✓ Validation: valid=True confidence=91 setup=TYPE_2
+127.0.0.1 - - [01/May/2026 02:52:01] "POST /api/validate-entry HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 02:52:01] "POST /api/validate-entry HTTP/1.1" 200 -
+WARNING:root:
+=== VALIDATE ENTRY: ABB Price=0 Date=2026-04-30 Time=None ===
+
+WARNING:root:[validate-entry] Fresh instruments token resolved: 3329
+WARNING:root:[validate-entry] Token resolved: 3329
+WARNING:root:[validate-entry] Live mode | Date=2026-04-30 09:15:00 | Range=2026-04-16 09:15:00 → 2026-04-30 15:30:00
+WARNING:root:[validate-entry] Fetching fresh data from Kite API
+WARNING:root:[validate-entry] ✓ Kite returned 250 candles
+WARNING:root:[validate-entry] ✓ Response: 250 candles | First=6976.0 | Last=7259.0
+WARNING:root:[validate-entry] ✓ Validation: valid=True confidence=69 setup=TYPE_4
+127.0.0.1 - - [01/May/2026 02:52:34] "POST /api/validate-entry HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 02:52:34] "POST /api/validate-entry HTTP/1.1" 200 -
+WARNING:root:
+=== VALIDATE ENTRY: ABB Price=0 Date=2026-04-30 Time=None ===
+
+WARNING:root:[validate-entry] Fresh instruments token resolved: 3329
+WARNING:root:[validate-entry] Token resolved: 3329
+WARNING:root:[validate-entry] Live mode | Date=2026-04-30 09:15:00 | Range=2026-04-16 09:15:00 → 2026-04-30 15:30:00
+WARNING:root:[validate-entry] Fetching fresh data from Kite API
+WARNING:root:[validate-entry] ✓ Kite returned 750 candles
+WARNING:root:[validate-entry] ✓ Response: 750 candles | First=6928.5 | Last=7259.0
+WARNING:root:[validate-entry] ✓ Validation: valid=True confidence=91 setup=TYPE_2
+127.0.0.1 - - [01/May/2026 02:52:46] "POST /api/validate-entry HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 02:52:46] "POST /api/validate-entry HTTP/1.1" 200 -
+WARNING:root:
+=== VALIDATE ENTRY: TRENT Price=0 Date=2026-04-30 Time=None ===
+
+WARNING:root:[validate-entry] Fresh instruments token resolved: 502785
+WARNING:root:[validate-entry] Token resolved: 502785
+WARNING:root:[validate-entry] Live mode | Date=2026-04-30 09:15:00 | Range=2026-04-16 09:15:00 → 2026-04-30 15:30:00
+WARNING:root:[validate-entry] Fetching fresh data from Kite API
+WARNING:root:[validate-entry] ✓ Kite returned 750 candles
+WARNING:root:[validate-entry] ✓ Response: 750 candles | First=4125.1 | Last=4148.0
+WARNING:root:[validate-entry] ✓ Validation: valid=False confidence=18 setup=NONE
+127.0.0.1 - - [01/May/2026 02:52:54] "POST /api/validate-entry HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 02:52:54] "POST /api/validate-entry HTTP/1.1" 200 -
+127.0.0.1 - - [01/May/2026 02:53:00] "GET /api/market-pulse HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 02:53:00] "GET /api/market-pulse HTTP/1.1" 200 -
+127.0.0.1 - - [01/May/2026 02:54:00] "GET /api/market-pulse HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 02:54:00] "GET /api/market-pulse HTTP/1.1" 200 -
+WARNING:root:
+=== VALIDATE ENTRY: abb Price=0 Date=2026-04-30 Time=None ===
+
+127.0.0.1 - - [01/May/2026 02:54:13] "POST /api/validate-entry HTTP/1.1" 404 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 02:54:13] "[33mPOST /api/validate-entry HTTP/1.1[0m" 404 -
+WARNING:root:
+=== VALIDATE ENTRY: ABB Price=0 Date=2026-04-30 Time=None ===
+
+WARNING:root:[validate-entry] Fresh instruments token resolved: 3329
+WARNING:root:[validate-entry] Token resolved: 3329
+WARNING:root:[validate-entry] Live mode | Date=2026-04-30 09:15:00 | Range=2026-04-16 09:15:00 → 2026-04-30 15:30:00
+WARNING:root:[validate-entry] Fetching fresh data from Kite API
+WARNING:root:[validate-entry] ✓ Kite returned 750 candles
+WARNING:root:[validate-entry] ✓ Response: 750 candles | First=6928.5 | Last=7259.0
+WARNING:root:[validate-entry] ✓ Validation: valid=True confidence=91 setup=TYPE_2
+127.0.0.1 - - [01/May/2026 02:54:16] "POST /api/validate-entry HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 02:54:16] "POST /api/validate-entry HTTP/1.1" 200 -
+127.0.0.1 - - [01/May/2026 02:55:01] "GET /api/market-pulse HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 02:55:01] "GET /api/market-pulse HTTP/1.1" 200 -
+127.0.0.1 - - [01/May/2026 02:56:01] "GET /api/market-pulse HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 02:56:01] "GET /api/market-pulse HTTP/1.1" 200 -
+127.0.0.1 - - [01/May/2026 02:57:01] "GET /api/market-pulse HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 02:57:01] "GET /api/market-pulse HTTP/1.1" 200 -
+127.0.0.1 - - [01/May/2026 02:58:03] "GET /api/market-pulse HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 02:58:03] "GET /api/market-pulse HTTP/1.1" 200 -
+127.0.0.1 - - [01/May/2026 02:59:03] "GET /api/market-pulse HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 02:59:03] "GET /api/market-pulse HTTP/1.1" 200 -
+127.0.0.1 - - [01/May/2026 02:59:07] "GET / HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 02:59:07] "GET / HTTP/1.1" 200 -
+127.0.0.1 - - [01/May/2026 02:59:07] "GET /styles/main.css?v=5 HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 02:59:07] "GET /styles/main.css?v=5 HTTP/1.1" 200 -
+127.0.0.1 - - [01/May/2026 02:59:07] "GET /js/lightweight-charts.standalone.production.js HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 02:59:07] "GET /js/lightweight-charts.standalone.production.js HTTP/1.1" 200 -
+127.0.0.1 - - [01/May/2026 02:59:07] "GET /js/kite-api.js HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 02:59:07] "GET /js/kite-api.js HTTP/1.1" 200 -
+127.0.0.1 - - [01/May/2026 02:59:07] "GET /js/scoring-engine.js HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 02:59:07] "GET /js/scoring-engine.js HTTP/1.1" 200 -
+127.0.0.1 - - [01/May/2026 02:59:07] "GET /js/gap-analysis-engine.js HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 02:59:07] "GET /js/gap-analysis-engine.js HTTP/1.1" 200 -
+127.0.0.1 - - [01/May/2026 02:59:07] "GET /js/technical-indicators.js HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 02:59:07] "GET /js/technical-indicators.js HTTP/1.1" 200 -
+127.0.0.1 - - [01/May/2026 02:59:07] "GET /js/options-chain.js HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 02:59:07] "GET /js/options-chain.js HTTP/1.1" 200 -
+127.0.0.1 - - [01/May/2026 02:59:07] "GET /js/charts.js HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 02:59:07] "GET /js/charts.js HTTP/1.1" 200 -
+127.0.0.1 - - [01/May/2026 02:59:07] "GET /js/trade-journal.js HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 02:59:07] "GET /js/trade-journal.js HTTP/1.1" 200 -
+127.0.0.1 - - [01/May/2026 02:59:07] "GET /js/alerts.js HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 02:59:07] "GET /js/alerts.js HTTP/1.1" 200 -
+127.0.0.1 - - [01/May/2026 02:59:07] "GET /js/paper-trading.js HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 02:59:07] "GET /js/paper-trading.js HTTP/1.1" 200 -
+127.0.0.1 - - [01/May/2026 02:59:07] "GET /js/research-ai.js HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 02:59:07] "GET /js/research-ai.js HTTP/1.1" 200 -
+127.0.0.1 - - [01/May/2026 02:59:07] "GET /js/equity-screener.js HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 02:59:07] "GET /js/equity-screener.js HTTP/1.1" 200 -
+127.0.0.1 - - [01/May/2026 02:59:07] "GET /js/fno-session-analyzer.js HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 02:59:07] "GET /js/fno-session-analyzer.js HTTP/1.1" 200 -
+127.0.0.1 - - [01/May/2026 02:59:07] "GET /js/watchlist.js HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 02:59:07] "GET /js/watchlist.js HTTP/1.1" 200 -
+127.0.0.1 - - [01/May/2026 02:59:07] "GET /js/analysis.js HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 02:59:07] "GET /js/analysis.js HTTP/1.1" 200 -
+127.0.0.1 - - [01/May/2026 02:59:07] "GET /js/strategy-builder.js HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 02:59:07] "GET /js/strategy-builder.js HTTP/1.1" 200 -
+127.0.0.1 - - [01/May/2026 02:59:07] "GET /js/backtester.js HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 02:59:07] "GET /js/backtester.js HTTP/1.1" 200 -
+127.0.0.1 - - [01/May/2026 02:59:07] "GET /js/portfolio.js HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 02:59:07] "GET /js/portfolio.js HTTP/1.1" 200 -
+127.0.0.1 - - [01/May/2026 02:59:07] "GET /js/news-feed.js HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 02:59:07] "GET /js/news-feed.js HTTP/1.1" 200 -
+127.0.0.1 - - [01/May/2026 02:59:07] "GET /js/live-movers.js HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 02:59:07] "GET /js/live-movers.js HTTP/1.1" 200 -
+127.0.0.1 - - [01/May/2026 02:59:07] "GET /js/index-movers.js HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 02:59:07] "GET /js/index-movers.js HTTP/1.1" 200 -
+127.0.0.1 - - [01/May/2026 02:59:07] "GET /js/reco-tracker.js HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 02:59:07] "GET /js/reco-tracker.js HTTP/1.1" 200 -
+127.0.0.1 - - [01/May/2026 02:59:07] "GET /js/chart-signals.js HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 02:59:07] "GET /js/chart-signals.js HTTP/1.1" 200 -
+127.0.0.1 - - [01/May/2026 02:59:07] "GET /js/smc-dashboard.js HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 02:59:07] "GET /js/smc-dashboard.js HTTP/1.1" 200 -
+127.0.0.1 - - [01/May/2026 02:59:07] "GET /js/entry-validator.js HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 02:59:07] "GET /js/entry-validator.js HTTP/1.1" 200 -
+127.0.0.1 - - [01/May/2026 02:59:07] "GET /js/trade-tracker.js HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 02:59:07] "GET /js/trade-tracker.js HTTP/1.1" 200 -
+127.0.0.1 - - [01/May/2026 02:59:07] "GET /js/trade-cockpit.js HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 02:59:07] "GET /js/trade-cockpit.js HTTP/1.1" 200 -
+127.0.0.1 - - [01/May/2026 02:59:07] "GET /js/fno-trade-alerts.js?v=7 HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 02:59:07] "GET /js/fno-trade-alerts.js?v=7 HTTP/1.1" 200 -
+127.0.0.1 - - [01/May/2026 02:59:07] "GET /js/multi-chart.js?v=6 HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 02:59:07] "GET /js/multi-chart.js?v=6 HTTP/1.1" 200 -
+127.0.0.1 - - [01/May/2026 02:59:07] "GET /js/app.js HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 02:59:07] "GET /js/app.js HTTP/1.1" 200 -
+127.0.0.1 - - [01/May/2026 02:59:08] "GET /api/config HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 02:59:08] "GET /api/config HTTP/1.1" 200 -
+127.0.0.1 - - [01/May/2026 02:59:08] "GET /favicon.ico HTTP/1.1" 404 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 02:59:08] "[33mGET /favicon.ico HTTP/1.1[0m" 404 -
+127.0.0.1 - - [01/May/2026 02:59:09] "GET /api/earnings-calendar HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 02:59:09] "GET /api/earnings-calendar HTTP/1.1" 200 -
+127.0.0.1 - - [01/May/2026 02:59:11] "GET /api/market-pulse HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 02:59:11] "GET /api/market-pulse HTTP/1.1" 200 -
+WARNING:root:
+=== VALIDATE ENTRY: ABB Price=0 Date=2026-04-30 Time=None ===
+
+WARNING:root:[validate-entry] Fresh instruments token resolved: 3329
+WARNING:root:[validate-entry] Token resolved: 3329
+WARNING:root:[validate-entry] Live mode | Date=2026-04-30 09:15:00 | Range=2026-04-16 09:15:00 → 2026-04-30 15:30:00
+WARNING:root:[validate-entry] Fetching fresh data from Kite API
+WARNING:root:[validate-entry] ✓ Kite returned 750 candles
+WARNING:root:[validate-entry] ✓ Response: 750 candles | First=6928.5 | Last=7259.0
+WARNING:root:[validate-entry] ✓ Validation: valid=True confidence=91 setup=TYPE_2
+127.0.0.1 - - [01/May/2026 02:59:12] "POST /api/validate-entry HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 02:59:12] "POST /api/validate-entry HTTP/1.1" 200 -
+127.0.0.1 - - [01/May/2026 03:00:11] "GET /api/market-pulse HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 03:00:11] "GET /api/market-pulse HTTP/1.1" 200 -
+WARNING:root:
+=== VALIDATE ENTRY: SUNPHARMA Price=0 Date=2026-04-30 Time=None ===
+
+WARNING:root:[validate-entry] Fresh instruments token resolved: 857857
+WARNING:root:[validate-entry] Token resolved: 857857
+WARNING:root:[validate-entry] Live mode | Date=2026-04-30 09:15:00 | Range=2026-04-16 09:15:00 → 2026-04-30 15:30:00
+WARNING:root:[validate-entry] Fetching fresh data from Kite API
+WARNING:root:[validate-entry] ✓ Kite returned 750 candles
+WARNING:root:[validate-entry] ✓ Response: 750 candles | First=1686.8 | Last=1814.3
+WARNING:root:[validate-entry] ✓ Validation: valid=True confidence=90 setup=TYPE_2
+127.0.0.1 - - [01/May/2026 03:00:54] "POST /api/validate-entry HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 03:00:54] "POST /api/validate-entry HTTP/1.1" 200 -
+127.0.0.1 - - [01/May/2026 03:01:11] "GET /api/market-pulse HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 03:01:11] "GET /api/market-pulse HTTP/1.1" 200 -
+127.0.0.1 - - [01/May/2026 03:02:11] "GET /api/market-pulse HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 03:02:11] "GET /api/market-pulse HTTP/1.1" 200 -
+127.0.0.1 - - [01/May/2026 03:03:11] "GET /api/market-pulse HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 03:03:11] "GET /api/market-pulse HTTP/1.1" 200 -
+127.0.0.1 - - [01/May/2026 03:04:11] "GET /api/market-pulse HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 03:04:11] "GET /api/market-pulse HTTP/1.1" 200 -
+127.0.0.1 - - [01/May/2026 03:05:11] "GET /api/market-pulse HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 03:05:11] "GET /api/market-pulse HTTP/1.1" 200 -
+127.0.0.1 - - [01/May/2026 03:06:04] "GET / HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 03:06:04] "GET / HTTP/1.1" 200 -
+127.0.0.1 - - [01/May/2026 03:06:04] "GET /styles/main.css?v=5 HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 03:06:04] "GET /styles/main.css?v=5 HTTP/1.1" 200 -
+127.0.0.1 - - [01/May/2026 03:06:04] "GET /js/kite-api.js HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 03:06:04] "GET /js/kite-api.js HTTP/1.1" 200 -
+127.0.0.1 - - [01/May/2026 03:06:04] "GET /js/scoring-engine.js HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 03:06:04] "GET /js/scoring-engine.js HTTP/1.1" 200 -
+127.0.0.1 - - [01/May/2026 03:06:04] "GET /js/technical-indicators.js HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 03:06:04] "GET /js/technical-indicators.js HTTP/1.1" 200 -
+127.0.0.1 - - [01/May/2026 03:06:04] "GET /js/gap-analysis-engine.js HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 03:06:04] "GET /js/gap-analysis-engine.js HTTP/1.1" 200 -
+127.0.0.1 - - [01/May/2026 03:06:04] "GET /js/options-chain.js HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 03:06:04] "GET /js/options-chain.js HTTP/1.1" 200 -
+127.0.0.1 - - [01/May/2026 03:06:04] "GET /js/lightweight-charts.standalone.production.js HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 03:06:04] "GET /js/lightweight-charts.standalone.production.js HTTP/1.1" 200 -
+127.0.0.1 - - [01/May/2026 03:06:04] "GET /js/charts.js HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 03:06:04] "GET /js/charts.js HTTP/1.1" 200 -
+127.0.0.1 - - [01/May/2026 03:06:04] "GET /js/research-ai.js HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 03:06:04] "GET /js/research-ai.js HTTP/1.1" 200 -
+127.0.0.1 - - [01/May/2026 03:06:04] "GET /js/trade-journal.js HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 03:06:04] "GET /js/trade-journal.js HTTP/1.1" 200 -
+127.0.0.1 - - [01/May/2026 03:06:04] "GET /js/alerts.js HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 03:06:04] "GET /js/alerts.js HTTP/1.1" 200 -
+127.0.0.1 - - [01/May/2026 03:06:04] "GET /js/paper-trading.js HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 03:06:04] "GET /js/paper-trading.js HTTP/1.1" 200 -
+127.0.0.1 - - [01/May/2026 03:06:04] "GET /js/fno-session-analyzer.js HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 03:06:04] "GET /js/fno-session-analyzer.js HTTP/1.1" 200 -
+127.0.0.1 - - [01/May/2026 03:06:04] "GET /js/equity-screener.js HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 03:06:04] "GET /js/equity-screener.js HTTP/1.1" 200 -
+127.0.0.1 - - [01/May/2026 03:06:04] "GET /js/backtester.js HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 03:06:04] "GET /js/backtester.js HTTP/1.1" 200 -
+127.0.0.1 - - [01/May/2026 03:06:04] "GET /js/strategy-builder.js HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 03:06:04] "GET /js/strategy-builder.js HTTP/1.1" 200 -
+127.0.0.1 - - [01/May/2026 03:06:04] "GET /js/portfolio.js HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 03:06:04] "GET /js/portfolio.js HTTP/1.1" 200 -
+127.0.0.1 - - [01/May/2026 03:06:04] "GET /js/watchlist.js HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 03:06:04] "GET /js/watchlist.js HTTP/1.1" 200 -
+127.0.0.1 - - [01/May/2026 03:06:04] "GET /js/analysis.js HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 03:06:04] "GET /js/analysis.js HTTP/1.1" 200 -
+127.0.0.1 - - [01/May/2026 03:06:04] "GET /js/news-feed.js HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 03:06:04] "GET /js/news-feed.js HTTP/1.1" 200 -
+127.0.0.1 - - [01/May/2026 03:06:04] "GET /js/live-movers.js HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 03:06:04] "GET /js/live-movers.js HTTP/1.1" 200 -
+127.0.0.1 - - [01/May/2026 03:06:04] "GET /js/index-movers.js HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 03:06:04] "GET /js/index-movers.js HTTP/1.1" 200 -
+127.0.0.1 - - [01/May/2026 03:06:04] "GET /js/chart-signals.js HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 03:06:04] "GET /js/chart-signals.js HTTP/1.1" 200 -
+127.0.0.1 - - [01/May/2026 03:06:04] "GET /js/reco-tracker.js HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 03:06:04] "GET /js/reco-tracker.js HTTP/1.1" 200 -
+127.0.0.1 - - [01/May/2026 03:06:04] "GET /js/trade-tracker.js HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 03:06:04] "GET /js/trade-tracker.js HTTP/1.1" 200 -
+127.0.0.1 - - [01/May/2026 03:06:04] "GET /js/entry-validator.js HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 03:06:04] "GET /js/entry-validator.js HTTP/1.1" 200 -
+127.0.0.1 - - [01/May/2026 03:06:04] "GET /js/smc-dashboard.js HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 03:06:04] "GET /js/smc-dashboard.js HTTP/1.1" 200 -
+127.0.0.1 - - [01/May/2026 03:06:04] "GET /js/trade-cockpit.js HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 03:06:04] "GET /js/trade-cockpit.js HTTP/1.1" 200 -
+127.0.0.1 - - [01/May/2026 03:06:04] "GET /js/fno-trade-alerts.js?v=7 HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 03:06:04] "GET /js/fno-trade-alerts.js?v=7 HTTP/1.1" 200 -
+127.0.0.1 - - [01/May/2026 03:06:04] "GET /js/multi-chart.js?v=6 HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 03:06:04] "GET /js/multi-chart.js?v=6 HTTP/1.1" 200 -
+127.0.0.1 - - [01/May/2026 03:06:04] "GET /js/app.js HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 03:06:04] "GET /js/app.js HTTP/1.1" 200 -
+127.0.0.1 - - [01/May/2026 03:06:04] "GET /api/config HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 03:06:04] "GET /api/config HTTP/1.1" 200 -
+127.0.0.1 - - [01/May/2026 03:06:04] "GET /favicon.ico HTTP/1.1" 404 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 03:06:04] "[33mGET /favicon.ico HTTP/1.1[0m" 404 -
+127.0.0.1 - - [01/May/2026 03:06:06] "GET /api/earnings-calendar HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 03:06:06] "GET /api/earnings-calendar HTTP/1.1" 200 -
+127.0.0.1 - - [01/May/2026 03:06:07] "GET /api/market-pulse HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 03:06:07] "GET /api/market-pulse HTTP/1.1" 200 -
+WARNING:root:
+=== VALIDATE ENTRY: SUNPHARMA Price=0 Date=2026-04-30 Time=None ===
+
+WARNING:root:[validate-entry] Fresh instruments token resolved: 857857
+WARNING:root:[validate-entry] Token resolved: 857857
+WARNING:root:[validate-entry] Live mode | Date=2026-04-30 09:15:00 | Range=2026-04-16 09:15:00 → 2026-04-30 15:30:00
+WARNING:root:[validate-entry] Fetching fresh data from Kite API
+WARNING:root:[validate-entry] ✓ Kite returned 750 candles
+WARNING:root:[validate-entry] ✓ Response: 750 candles | First=1686.8 | Last=1814.3
+WARNING:root:[validate-entry] ✓ Validation: valid=True confidence=90 setup=TYPE_2
+127.0.0.1 - - [01/May/2026 03:06:10] "POST /api/validate-entry HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 03:06:10] "POST /api/validate-entry HTTP/1.1" 200 -
+127.0.0.1 - - [01/May/2026 03:06:32] "GET / HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 03:06:32] "GET / HTTP/1.1" 200 -
+127.0.0.1 - - [01/May/2026 03:06:32] "GET /styles/main.css?v=5 HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 03:06:32] "GET /styles/main.css?v=5 HTTP/1.1" 200 -
+127.0.0.1 - - [01/May/2026 03:06:32] "GET /js/gap-analysis-engine.js HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 03:06:32] "GET /js/gap-analysis-engine.js HTTP/1.1" 200 -
+127.0.0.1 - - [01/May/2026 03:06:32] "GET /js/kite-api.js HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 03:06:32] "GET /js/kite-api.js HTTP/1.1" 200 -
+127.0.0.1 - - [01/May/2026 03:06:32] "GET /js/scoring-engine.js HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 03:06:32] "GET /js/scoring-engine.js HTTP/1.1" 200 -
+127.0.0.1 - - [01/May/2026 03:06:32] "GET /js/technical-indicators.js HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 03:06:32] "GET /js/technical-indicators.js HTTP/1.1" 200 -
+127.0.0.1 - - [01/May/2026 03:06:32] "GET /js/options-chain.js HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 03:06:32] "GET /js/options-chain.js HTTP/1.1" 200 -
+127.0.0.1 - - [01/May/2026 03:06:32] "GET /js/lightweight-charts.standalone.production.js HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 03:06:32] "GET /js/lightweight-charts.standalone.production.js HTTP/1.1" 200 -
+127.0.0.1 - - [01/May/2026 03:06:32] "GET /js/trade-journal.js HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 03:06:32] "GET /js/trade-journal.js HTTP/1.1" 200 -
+127.0.0.1 - - [01/May/2026 03:06:32] "GET /js/paper-trading.js HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 03:06:32] "GET /js/paper-trading.js HTTP/1.1" 200 -
+127.0.0.1 - - [01/May/2026 03:06:32] "GET /js/alerts.js HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 03:06:32] "GET /js/alerts.js HTTP/1.1" 200 -
+127.0.0.1 - - [01/May/2026 03:06:32] "GET /js/charts.js HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 03:06:32] "GET /js/charts.js HTTP/1.1" 200 -
+127.0.0.1 - - [01/May/2026 03:06:32] "GET /js/research-ai.js HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 03:06:32] "GET /js/research-ai.js HTTP/1.1" 200 -
+127.0.0.1 - - [01/May/2026 03:06:32] "GET /js/fno-session-analyzer.js HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 03:06:32] "GET /js/fno-session-analyzer.js HTTP/1.1" 200 -
+127.0.0.1 - - [01/May/2026 03:06:32] "GET /js/backtester.js HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 03:06:32] "GET /js/backtester.js HTTP/1.1" 200 -
+127.0.0.1 - - [01/May/2026 03:06:32] "GET /js/watchlist.js HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 03:06:32] "GET /js/watchlist.js HTTP/1.1" 200 -
+127.0.0.1 - - [01/May/2026 03:06:32] "GET /js/equity-screener.js HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 03:06:32] "GET /js/equity-screener.js HTTP/1.1" 200 -
+127.0.0.1 - - [01/May/2026 03:06:32] "GET /js/analysis.js HTTP/1.1" 200 -
+127.0.0.1 - - [01/May/2026 03:06:32] "GET /js/strategy-builder.js HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 03:06:32] "GET /js/analysis.js HTTP/1.1" 200 -
+127.0.0.1 - - [01/May/2026 03:06:32] "GET /js/portfolio.js HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 03:06:32] "GET /js/strategy-builder.js HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 03:06:32] "GET /js/portfolio.js HTTP/1.1" 200 -
+127.0.0.1 - - [01/May/2026 03:06:32] "GET /js/news-feed.js HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 03:06:32] "GET /js/news-feed.js HTTP/1.1" 200 -
+127.0.0.1 - - [01/May/2026 03:06:32] "GET /js/index-movers.js HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 03:06:32] "GET /js/index-movers.js HTTP/1.1" 200 -
+127.0.0.1 - - [01/May/2026 03:06:32] "GET /js/live-movers.js HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 03:06:32] "GET /js/live-movers.js HTTP/1.1" 200 -
+127.0.0.1 - - [01/May/2026 03:06:32] "GET /js/chart-signals.js HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 03:06:32] "GET /js/chart-signals.js HTTP/1.1" 200 -
+127.0.0.1 - - [01/May/2026 03:06:32] "GET /js/smc-dashboard.js HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 03:06:32] "GET /js/smc-dashboard.js HTTP/1.1" 200 -
+127.0.0.1 - - [01/May/2026 03:06:32] "GET /js/reco-tracker.js HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 03:06:32] "GET /js/reco-tracker.js HTTP/1.1" 200 -
+127.0.0.1 - - [01/May/2026 03:06:32] "GET /js/trade-tracker.js HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 03:06:32] "GET /js/trade-tracker.js HTTP/1.1" 200 -
+127.0.0.1 - - [01/May/2026 03:06:32] "GET /js/entry-validator.js HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 03:06:32] "GET /js/entry-validator.js HTTP/1.1" 200 -
+127.0.0.1 - - [01/May/2026 03:06:32] "GET /js/trade-cockpit.js HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 03:06:32] "GET /js/trade-cockpit.js HTTP/1.1" 200 -
+127.0.0.1 - - [01/May/2026 03:06:32] "GET /js/fno-trade-alerts.js?v=7 HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 03:06:32] "GET /js/fno-trade-alerts.js?v=7 HTTP/1.1" 200 -
+127.0.0.1 - - [01/May/2026 03:06:32] "GET /js/multi-chart.js?v=6 HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 03:06:32] "GET /js/multi-chart.js?v=6 HTTP/1.1" 200 -
+127.0.0.1 - - [01/May/2026 03:06:32] "GET /js/app.js HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 03:06:32] "GET /js/app.js HTTP/1.1" 200 -
+127.0.0.1 - - [01/May/2026 03:06:32] "GET /api/config HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 03:06:32] "GET /api/config HTTP/1.1" 200 -
+127.0.0.1 - - [01/May/2026 03:06:33] "GET /favicon.ico HTTP/1.1" 404 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 03:06:33] "[33mGET /favicon.ico HTTP/1.1[0m" 404 -
+127.0.0.1 - - [01/May/2026 03:06:33] "GET /api/earnings-calendar HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 03:06:33] "GET /api/earnings-calendar HTTP/1.1" 200 -
+127.0.0.1 - - [01/May/2026 03:06:39] "GET /api/health HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 03:06:39] "GET /api/health HTTP/1.1" 200 -
+127.0.0.1 - - [01/May/2026 03:06:40] "GET /api/test HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 03:06:40] "GET /api/test HTTP/1.1" 200 -
+127.0.0.1 - - [01/May/2026 03:06:40] "GET /api/market-pulse HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 03:06:40] "GET /api/market-pulse HTTP/1.1" 200 -
+127.0.0.1 - - [01/May/2026 03:06:40] "GET /api/market-pulse HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 03:06:40] "GET /api/market-pulse HTTP/1.1" 200 -
+127.0.0.1 - - [01/May/2026 03:06:41] "GET /api/instruments HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 03:06:41] "GET /api/instruments HTTP/1.1" 200 -
+127.0.0.1 - - [01/May/2026 03:06:41] "GET /api/market-pulse HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 03:06:41] "GET /api/market-pulse HTTP/1.1" 200 -
+WARNING:root:
+=== VALIDATE ENTRY: SUNPHARMA Price=0 Date=2026-04-30 Time=None ===
+
+WARNING:root:[validate-entry] Fresh instruments token resolved: 857857
+WARNING:root:[validate-entry] Token resolved: 857857
+WARNING:root:[validate-entry] Live mode | Date=2026-04-30 09:15:00 | Range=2026-04-16 09:15:00 → 2026-04-30 15:30:00
+WARNING:root:[validate-entry] Fetching fresh data from Kite API
+WARNING:root:[validate-entry] ✓ Kite returned 750 candles
+WARNING:root:[validate-entry] ✓ Response: 750 candles | First=1686.8 | Last=1814.3
+WARNING:root:[validate-entry] ✓ Validation: valid=True confidence=90 setup=TYPE_2
+127.0.0.1 - - [01/May/2026 03:06:48] "POST /api/validate-entry HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 03:06:48] "POST /api/validate-entry HTTP/1.1" 200 -
+127.0.0.1 - - [01/May/2026 03:07:41] "GET /api/market-pulse HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 03:07:41] "GET /api/market-pulse HTTP/1.1" 200 -
+127.0.0.1 - - [01/May/2026 03:08:42] "GET /api/market-pulse HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 03:08:42] "GET /api/market-pulse HTTP/1.1" 200 -
+127.0.0.1 - - [01/May/2026 03:09:42] "GET /api/market-pulse HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 03:09:42] "GET /api/market-pulse HTTP/1.1" 200 -
+127.0.0.1 - - [01/May/2026 03:10:42] "GET /api/market-pulse HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 03:10:42] "GET /api/market-pulse HTTP/1.1" 200 -
+127.0.0.1 - - [01/May/2026 03:10:42] "GET / HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 03:10:42] "GET / HTTP/1.1" 200 -
+127.0.0.1 - - [01/May/2026 03:10:42] "GET /styles/main.css?v=5 HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 03:10:42] "GET /styles/main.css?v=5 HTTP/1.1" 200 -
+127.0.0.1 - - [01/May/2026 03:10:42] "GET /js/kite-api.js HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 03:10:42] "GET /js/kite-api.js HTTP/1.1" 200 -
+127.0.0.1 - - [01/May/2026 03:10:42] "GET /js/technical-indicators.js HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 03:10:42] "GET /js/technical-indicators.js HTTP/1.1" 200 -
+127.0.0.1 - - [01/May/2026 03:10:42] "GET /js/lightweight-charts.standalone.production.js HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 03:10:42] "GET /js/lightweight-charts.standalone.production.js HTTP/1.1" 200 -
+127.0.0.1 - - [01/May/2026 03:10:42] "GET /js/gap-analysis-engine.js HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 03:10:42] "GET /js/gap-analysis-engine.js HTTP/1.1" 200 -
+127.0.0.1 - - [01/May/2026 03:10:42] "GET /js/scoring-engine.js HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 03:10:42] "GET /js/scoring-engine.js HTTP/1.1" 200 -
+127.0.0.1 - - [01/May/2026 03:10:42] "GET /js/options-chain.js HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 03:10:42] "GET /js/options-chain.js HTTP/1.1" 200 -
+127.0.0.1 - - [01/May/2026 03:10:42] "GET /js/charts.js HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 03:10:42] "GET /js/charts.js HTTP/1.1" 200 -
+127.0.0.1 - - [01/May/2026 03:10:42] "GET /js/alerts.js HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 03:10:42] "GET /js/alerts.js HTTP/1.1" 200 -
+127.0.0.1 - - [01/May/2026 03:10:42] "GET /js/trade-journal.js HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 03:10:42] "GET /js/trade-journal.js HTTP/1.1" 200 -
+127.0.0.1 - - [01/May/2026 03:10:42] "GET /js/paper-trading.js HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 03:10:42] "GET /js/paper-trading.js HTTP/1.1" 200 -
+127.0.0.1 - - [01/May/2026 03:10:42] "GET /js/research-ai.js HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 03:10:42] "GET /js/research-ai.js HTTP/1.1" 200 -
+127.0.0.1 - - [01/May/2026 03:10:42] "GET /js/fno-session-analyzer.js HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 03:10:42] "GET /js/fno-session-analyzer.js HTTP/1.1" 200 -
+127.0.0.1 - - [01/May/2026 03:10:42] "GET /js/equity-screener.js HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 03:10:42] "GET /js/equity-screener.js HTTP/1.1" 200 -
+127.0.0.1 - - [01/May/2026 03:10:42] "GET /js/watchlist.js HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 03:10:42] "GET /js/watchlist.js HTTP/1.1" 200 -
+127.0.0.1 - - [01/May/2026 03:10:42] "GET /js/analysis.js HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 03:10:42] "GET /js/analysis.js HTTP/1.1" 200 -
+127.0.0.1 - - [01/May/2026 03:10:42] "GET /js/strategy-builder.js HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 03:10:42] "GET /js/strategy-builder.js HTTP/1.1" 200 -
+127.0.0.1 - - [01/May/2026 03:10:42] "GET /js/backtester.js HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 03:10:42] "GET /js/backtester.js HTTP/1.1" 200 -
+127.0.0.1 - - [01/May/2026 03:10:42] "GET /js/news-feed.js HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 03:10:42] "GET /js/news-feed.js HTTP/1.1" 200 -
+127.0.0.1 - - [01/May/2026 03:10:42] "GET /js/portfolio.js HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 03:10:42] "GET /js/portfolio.js HTTP/1.1" 200 -
+127.0.0.1 - - [01/May/2026 03:10:42] "GET /js/live-movers.js HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 03:10:42] "GET /js/live-movers.js HTTP/1.1" 200 -
+127.0.0.1 - - [01/May/2026 03:10:42] "GET /js/index-movers.js HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 03:10:42] "GET /js/index-movers.js HTTP/1.1" 200 -
+127.0.0.1 - - [01/May/2026 03:10:42] "GET /js/chart-signals.js HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 03:10:42] "GET /js/chart-signals.js HTTP/1.1" 200 -
+127.0.0.1 - - [01/May/2026 03:10:42] "GET /js/reco-tracker.js HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 03:10:42] "GET /js/reco-tracker.js HTTP/1.1" 200 -
+127.0.0.1 - - [01/May/2026 03:10:42] "GET /js/smc-dashboard.js HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 03:10:42] "GET /js/smc-dashboard.js HTTP/1.1" 200 -
+127.0.0.1 - - [01/May/2026 03:10:42] "GET /js/entry-validator.js HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 03:10:42] "GET /js/entry-validator.js HTTP/1.1" 200 -
+127.0.0.1 - - [01/May/2026 03:10:42] "GET /js/trade-tracker.js HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 03:10:42] "GET /js/trade-tracker.js HTTP/1.1" 200 -
+127.0.0.1 - - [01/May/2026 03:10:42] "GET /js/trade-cockpit.js HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 03:10:42] "GET /js/trade-cockpit.js HTTP/1.1" 200 -
+127.0.0.1 - - [01/May/2026 03:10:42] "GET /js/fno-trade-alerts.js?v=7 HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 03:10:42] "GET /js/fno-trade-alerts.js?v=7 HTTP/1.1" 200 -
+127.0.0.1 - - [01/May/2026 03:10:42] "GET /js/multi-chart.js?v=6 HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 03:10:42] "GET /js/multi-chart.js?v=6 HTTP/1.1" 200 -
+127.0.0.1 - - [01/May/2026 03:10:42] "GET /js/app.js HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 03:10:42] "GET /js/app.js HTTP/1.1" 200 -
+127.0.0.1 - - [01/May/2026 03:10:43] "GET /api/config HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 03:10:43] "GET /api/config HTTP/1.1" 200 -
+127.0.0.1 - - [01/May/2026 03:10:43] "GET /favicon.ico HTTP/1.1" 404 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 03:10:43] "[33mGET /favicon.ico HTTP/1.1[0m" 404 -
+127.0.0.1 - - [01/May/2026 03:10:44] "GET /api/earnings-calendar HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 03:10:44] "GET /api/earnings-calendar HTTP/1.1" 200 -
+127.0.0.1 - - [01/May/2026 03:10:46] "GET /api/market-pulse HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 03:10:46] "GET /api/market-pulse HTTP/1.1" 200 -
+127.0.0.1 - - [01/May/2026 03:10:47] "GET /api/test HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 03:10:47] "GET /api/test HTTP/1.1" 200 -
+127.0.0.1 - - [01/May/2026 03:10:47] "GET /api/market-pulse HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 03:10:47] "GET /api/market-pulse HTTP/1.1" 200 -
+127.0.0.1 - - [01/May/2026 03:10:48] "GET /api/health HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 03:10:48] "GET /api/health HTTP/1.1" 200 -
+127.0.0.1 - - [01/May/2026 03:10:48] "GET /api/instruments HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 03:10:48] "GET /api/instruments HTTP/1.1" 200 -
+127.0.0.1 - - [01/May/2026 03:10:48] "GET /api/market-pulse HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 03:10:48] "GET /api/market-pulse HTTP/1.1" 200 -
+WARNING:root:
+=== VALIDATE ENTRY: SUNPHARMA Price=0 Date=2026-04-30 Time=None ===
+
+WARNING:root:[validate-entry] Fresh instruments token resolved: 857857
+WARNING:root:[validate-entry] Token resolved: 857857
+WARNING:root:[validate-entry] Live mode | Date=2026-04-30 09:15:00 | Range=2026-04-16 09:15:00 → 2026-04-30 15:30:00
+WARNING:root:[validate-entry] Fetching fresh data from Kite API
+WARNING:root:[validate-entry] ✓ Kite returned 750 candles
+WARNING:root:[validate-entry] ✓ Response: 750 candles | First=1686.8 | Last=1814.3
+WARNING:root:[validate-entry] ✓ Validation: valid=True confidence=90 setup=TYPE_2
+127.0.0.1 - - [01/May/2026 03:10:55] "POST /api/validate-entry HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 03:10:55] "POST /api/validate-entry HTTP/1.1" 200 -
+127.0.0.1 - - [01/May/2026 03:11:02] "GET /styles/main.css?v=5 HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 03:11:02] "GET /styles/main.css?v=5 HTTP/1.1" 200 -
+127.0.0.1 - - [01/May/2026 03:11:02] "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 03:11:02] "[33mGET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1[0m" 404 -
+127.0.0.1 - - [01/May/2026 03:11:48] "GET /api/market-pulse HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 03:11:48] "GET /api/market-pulse HTTP/1.1" 200 -
+127.0.0.1 - - [01/May/2026 03:12:48] "GET /api/market-pulse HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 03:12:48] "GET /api/market-pulse HTTP/1.1" 200 -
+127.0.0.1 - - [01/May/2026 03:13:24] "GET / HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 03:13:24] "GET / HTTP/1.1" 200 -
+127.0.0.1 - - [01/May/2026 03:13:24] "GET /styles/main.css?v=5 HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 03:13:24] "GET /styles/main.css?v=5 HTTP/1.1" 200 -
+127.0.0.1 - - [01/May/2026 03:13:24] "GET /js/kite-api.js HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 03:13:24] "GET /js/kite-api.js HTTP/1.1" 200 -
+127.0.0.1 - - [01/May/2026 03:13:24] "GET /js/technical-indicators.js HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 03:13:24] "GET /js/technical-indicators.js HTTP/1.1" 200 -
+127.0.0.1 - - [01/May/2026 03:13:24] "GET /js/lightweight-charts.standalone.production.js HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 03:13:24] "GET /js/lightweight-charts.standalone.production.js HTTP/1.1" 200 -
+127.0.0.1 - - [01/May/2026 03:13:24] "GET /js/gap-analysis-engine.js HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 03:13:24] "GET /js/gap-analysis-engine.js HTTP/1.1" 200 -
+127.0.0.1 - - [01/May/2026 03:13:24] "GET /js/scoring-engine.js HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 03:13:24] "GET /js/scoring-engine.js HTTP/1.1" 200 -
+127.0.0.1 - - [01/May/2026 03:13:24] "GET /js/charts.js HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 03:13:24] "GET /js/charts.js HTTP/1.1" 200 -
+127.0.0.1 - - [01/May/2026 03:13:24] "GET /js/options-chain.js HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 03:13:24] "GET /js/options-chain.js HTTP/1.1" 200 -
+127.0.0.1 - - [01/May/2026 03:13:24] "GET /js/alerts.js HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 03:13:24] "GET /js/alerts.js HTTP/1.1" 200 -
+127.0.0.1 - - [01/May/2026 03:13:24] "GET /js/trade-journal.js HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 03:13:24] "GET /js/trade-journal.js HTTP/1.1" 200 -
+127.0.0.1 - - [01/May/2026 03:13:24] "GET /js/paper-trading.js HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 03:13:24] "GET /js/paper-trading.js HTTP/1.1" 200 -
+127.0.0.1 - - [01/May/2026 03:13:24] "GET /js/research-ai.js HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 03:13:24] "GET /js/research-ai.js HTTP/1.1" 200 -
+127.0.0.1 - - [01/May/2026 03:13:24] "GET /js/fno-session-analyzer.js HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 03:13:24] "GET /js/fno-session-analyzer.js HTTP/1.1" 200 -
+127.0.0.1 - - [01/May/2026 03:13:24] "GET /js/equity-screener.js HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 03:13:24] "GET /js/equity-screener.js HTTP/1.1" 200 -
+127.0.0.1 - - [01/May/2026 03:13:24] "GET /js/watchlist.js HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 03:13:24] "GET /js/watchlist.js HTTP/1.1" 200 -
+127.0.0.1 - - [01/May/2026 03:13:24] "GET /js/analysis.js HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 03:13:24] "GET /js/analysis.js HTTP/1.1" 200 -
+127.0.0.1 - - [01/May/2026 03:13:24] "GET /js/backtester.js HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 03:13:24] "GET /js/backtester.js HTTP/1.1" 200 -
+127.0.0.1 - - [01/May/2026 03:13:24] "GET /js/strategy-builder.js HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 03:13:24] "GET /js/strategy-builder.js HTTP/1.1" 200 -
+127.0.0.1 - - [01/May/2026 03:13:24] "GET /js/news-feed.js HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 03:13:24] "GET /js/news-feed.js HTTP/1.1" 200 -
+127.0.0.1 - - [01/May/2026 03:13:24] "GET /js/portfolio.js HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 03:13:24] "GET /js/portfolio.js HTTP/1.1" 200 -
+127.0.0.1 - - [01/May/2026 03:13:24] "GET /js/live-movers.js HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 03:13:24] "GET /js/live-movers.js HTTP/1.1" 200 -
+127.0.0.1 - - [01/May/2026 03:13:24] "GET /js/index-movers.js HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 03:13:24] "GET /js/index-movers.js HTTP/1.1" 200 -
+127.0.0.1 - - [01/May/2026 03:13:24] "GET /js/reco-tracker.js HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 03:13:24] "GET /js/reco-tracker.js HTTP/1.1" 200 -
+127.0.0.1 - - [01/May/2026 03:13:24] "GET /js/chart-signals.js HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 03:13:24] "GET /js/chart-signals.js HTTP/1.1" 200 -
+127.0.0.1 - - [01/May/2026 03:13:24] "GET /js/smc-dashboard.js HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 03:13:24] "GET /js/smc-dashboard.js HTTP/1.1" 200 -
+127.0.0.1 - - [01/May/2026 03:13:24] "GET /js/entry-validator.js HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 03:13:24] "GET /js/entry-validator.js HTTP/1.1" 200 -
+127.0.0.1 - - [01/May/2026 03:13:24] "GET /js/trade-tracker.js HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 03:13:24] "GET /js/trade-tracker.js HTTP/1.1" 200 -
+127.0.0.1 - - [01/May/2026 03:13:24] "GET /js/trade-cockpit.js HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 03:13:24] "GET /js/trade-cockpit.js HTTP/1.1" 200 -
+127.0.0.1 - - [01/May/2026 03:13:24] "GET /js/fno-trade-alerts.js?v=7 HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 03:13:24] "GET /js/fno-trade-alerts.js?v=7 HTTP/1.1" 200 -
+127.0.0.1 - - [01/May/2026 03:13:24] "GET /js/multi-chart.js?v=6 HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 03:13:24] "GET /js/multi-chart.js?v=6 HTTP/1.1" 200 -
+127.0.0.1 - - [01/May/2026 03:13:24] "GET /js/app.js HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 03:13:24] "GET /js/app.js HTTP/1.1" 200 -
+127.0.0.1 - - [01/May/2026 03:13:24] "GET /api/config HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 03:13:24] "GET /api/config HTTP/1.1" 200 -
+127.0.0.1 - - [01/May/2026 03:13:25] "GET /favicon.ico HTTP/1.1" 404 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 03:13:25] "[33mGET /favicon.ico HTTP/1.1[0m" 404 -
+127.0.0.1 - - [01/May/2026 03:13:26] "GET /api/earnings-calendar HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 03:13:26] "GET /api/earnings-calendar HTTP/1.1" 200 -
+127.0.0.1 - - [01/May/2026 03:13:28] "GET /api/market-pulse HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 03:13:28] "GET /api/market-pulse HTTP/1.1" 200 -
+127.0.0.1 - - [01/May/2026 03:13:28] "GET /api/health HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 03:13:28] "GET /api/health HTTP/1.1" 200 -
+127.0.0.1 - - [01/May/2026 03:13:29] "GET /api/test HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 03:13:29] "GET /api/test HTTP/1.1" 200 -
+127.0.0.1 - - [01/May/2026 03:13:29] "GET /api/market-pulse HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 03:13:29] "GET /api/market-pulse HTTP/1.1" 200 -
+127.0.0.1 - - [01/May/2026 03:13:30] "GET /api/instruments HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 03:13:30] "GET /api/instruments HTTP/1.1" 200 -
+127.0.0.1 - - [01/May/2026 03:13:30] "GET /api/market-pulse HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 03:13:30] "GET /api/market-pulse HTTP/1.1" 200 -
+WARNING:root:
+=== VALIDATE ENTRY: SUNPHARMA Price=0 Date=2026-04-30 Time=None ===
+
+WARNING:root:[validate-entry] Fresh instruments token resolved: 857857
+WARNING:root:[validate-entry] Token resolved: 857857
+WARNING:root:[validate-entry] Live mode | Date=2026-04-30 09:15:00 | Range=2026-04-16 09:15:00 → 2026-04-30 15:30:00
+WARNING:root:[validate-entry] Fetching fresh data from Kite API
+WARNING:root:[validate-entry] ✓ Kite returned 750 candles
+WARNING:root:[validate-entry] ✓ Response: 750 candles | First=1686.8 | Last=1814.3
+WARNING:root:[validate-entry] ✓ Validation: valid=True confidence=90 setup=TYPE_2
+127.0.0.1 - - [01/May/2026 03:13:36] "POST /api/validate-entry HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 03:13:36] "POST /api/validate-entry HTTP/1.1" 200 -
+WARNING:root:
+=== VALIDATE ENTRY: SUNPHARMA Price=0 Date=2026-04-30 Time=None ===
+
+WARNING:root:[validate-entry] Fresh instruments token resolved: 857857
+WARNING:root:[validate-entry] Token resolved: 857857
+WARNING:root:[validate-entry] Live mode | Date=2026-04-30 09:15:00 | Range=2026-04-16 09:15:00 → 2026-04-30 15:30:00
+WARNING:root:[validate-entry] Fetching fresh data from Kite API
+WARNING:root:[validate-entry] ✓ Kite returned 750 candles
+WARNING:root:[validate-entry] ✓ Response: 750 candles | First=1686.8 | Last=1814.3
+WARNING:root:[validate-entry] ✓ Validation: valid=True confidence=90 setup=TYPE_2
+127.0.0.1 - - [01/May/2026 03:13:42] "POST /api/validate-entry HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 03:13:42] "POST /api/validate-entry HTTP/1.1" 200 -
+127.0.0.1 - - [01/May/2026 03:13:56] "GET /styles/main.css?v=5 HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 03:13:56] "GET /styles/main.css?v=5 HTTP/1.1" 200 -
+127.0.0.1 - - [01/May/2026 03:13:56] "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 03:13:56] "[33mGET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1[0m" 404 -
+127.0.0.1 - - [01/May/2026 03:14:31] "GET /api/market-pulse HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 03:14:31] "GET /api/market-pulse HTTP/1.1" 200 -
+127.0.0.1 - - [01/May/2026 03:14:39] "GET / HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 03:14:39] "GET / HTTP/1.1" 200 -
+127.0.0.1 - - [01/May/2026 03:14:39] "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 03:14:39] "[33mGET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1[0m" 404 -
+127.0.0.1 - - [01/May/2026 03:14:39] "GET /styles/main.css?v=5 HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 03:14:39] "GET /styles/main.css?v=5 HTTP/1.1" 200 -
+127.0.0.1 - - [01/May/2026 03:14:39] "GET /js/technical-indicators.js HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 03:14:39] "GET /js/technical-indicators.js HTTP/1.1" 200 -
+127.0.0.1 - - [01/May/2026 03:14:39] "GET /js/kite-api.js HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 03:14:39] "GET /js/kite-api.js HTTP/1.1" 200 -
+127.0.0.1 - - [01/May/2026 03:14:39] "GET /js/gap-analysis-engine.js HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 03:14:39] "GET /js/gap-analysis-engine.js HTTP/1.1" 200 -
+127.0.0.1 - - [01/May/2026 03:14:39] "GET /js/options-chain.js HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 03:14:39] "GET /js/options-chain.js HTTP/1.1" 200 -
+127.0.0.1 - - [01/May/2026 03:14:39] "GET /js/scoring-engine.js HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 03:14:39] "GET /js/scoring-engine.js HTTP/1.1" 200 -
+127.0.0.1 - - [01/May/2026 03:14:39] "GET /js/charts.js HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 03:14:39] "GET /js/charts.js HTTP/1.1" 200 -
+127.0.0.1 - - [01/May/2026 03:14:39] "GET /js/lightweight-charts.standalone.production.js HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 03:14:39] "GET /js/lightweight-charts.standalone.production.js HTTP/1.1" 200 -
+127.0.0.1 - - [01/May/2026 03:14:39] "GET /js/alerts.js HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 03:14:39] "GET /js/alerts.js HTTP/1.1" 200 -
+127.0.0.1 - - [01/May/2026 03:14:39] "GET /js/trade-journal.js HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 03:14:39] "GET /js/trade-journal.js HTTP/1.1" 200 -
+127.0.0.1 - - [01/May/2026 03:14:39] "GET /js/fno-session-analyzer.js HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 03:14:39] "GET /js/fno-session-analyzer.js HTTP/1.1" 200 -
+127.0.0.1 - - [01/May/2026 03:14:39] "GET /js/paper-trading.js HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 03:14:39] "GET /js/paper-trading.js HTTP/1.1" 200 -
+127.0.0.1 - - [01/May/2026 03:14:39] "GET /js/equity-screener.js HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 03:14:39] "GET /js/equity-screener.js HTTP/1.1" 200 -
+127.0.0.1 - - [01/May/2026 03:14:39] "GET /js/analysis.js HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 03:14:39] "GET /js/analysis.js HTTP/1.1" 200 -
+127.0.0.1 - - [01/May/2026 03:14:39] "GET /js/research-ai.js HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 03:14:39] "GET /js/research-ai.js HTTP/1.1" 200 -
+127.0.0.1 - - [01/May/2026 03:14:39] "GET /js/watchlist.js HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 03:14:39] "GET /js/watchlist.js HTTP/1.1" 200 -
+127.0.0.1 - - [01/May/2026 03:14:39] "GET /js/strategy-builder.js HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 03:14:39] "GET /js/strategy-builder.js HTTP/1.1" 200 -
+127.0.0.1 - - [01/May/2026 03:14:39] "GET /js/backtester.js HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 03:14:39] "GET /js/backtester.js HTTP/1.1" 200 -
+127.0.0.1 - - [01/May/2026 03:14:39] "GET /js/portfolio.js HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 03:14:39] "GET /js/portfolio.js HTTP/1.1" 200 -
+127.0.0.1 - - [01/May/2026 03:14:39] "GET /js/news-feed.js HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 03:14:39] "GET /js/news-feed.js HTTP/1.1" 200 -
+127.0.0.1 - - [01/May/2026 03:14:39] "GET /js/live-movers.js HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 03:14:39] "GET /js/live-movers.js HTTP/1.1" 200 -
+127.0.0.1 - - [01/May/2026 03:14:39] "GET /js/reco-tracker.js HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 03:14:39] "GET /js/reco-tracker.js HTTP/1.1" 200 -
+127.0.0.1 - - [01/May/2026 03:14:39] "GET /js/chart-signals.js HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 03:14:39] "GET /js/chart-signals.js HTTP/1.1" 200 -
+127.0.0.1 - - [01/May/2026 03:14:39] "GET /js/index-movers.js HTTP/1.1" 200 -
+127.0.0.1 - - [01/May/2026 03:14:39] "GET /js/smc-dashboard.js HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 03:14:39] "GET /js/index-movers.js HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 03:14:39] "GET /js/smc-dashboard.js HTTP/1.1" 200 -
+127.0.0.1 - - [01/May/2026 03:14:39] "GET /js/entry-validator.js HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 03:14:39] "GET /js/entry-validator.js HTTP/1.1" 200 -
+127.0.0.1 - - [01/May/2026 03:14:39] "GET /js/trade-tracker.js HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 03:14:39] "GET /js/trade-tracker.js HTTP/1.1" 200 -
+127.0.0.1 - - [01/May/2026 03:14:39] "GET /js/trade-cockpit.js HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 03:14:39] "GET /js/trade-cockpit.js HTTP/1.1" 200 -
+127.0.0.1 - - [01/May/2026 03:14:39] "GET /js/fno-trade-alerts.js?v=7 HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 03:14:39] "GET /js/fno-trade-alerts.js?v=7 HTTP/1.1" 200 -
+127.0.0.1 - - [01/May/2026 03:14:39] "GET /js/multi-chart.js?v=6 HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 03:14:39] "GET /js/multi-chart.js?v=6 HTTP/1.1" 200 -
+127.0.0.1 - - [01/May/2026 03:14:39] "GET /js/app.js HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 03:14:39] "GET /js/app.js HTTP/1.1" 200 -
+127.0.0.1 - - [01/May/2026 03:14:39] "GET /api/config HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 03:14:39] "GET /api/config HTTP/1.1" 200 -
+127.0.0.1 - - [01/May/2026 03:14:41] "GET /api/earnings-calendar HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 03:14:41] "GET /api/earnings-calendar HTTP/1.1" 200 -
+127.0.0.1 - - [01/May/2026 03:14:42] "GET /api/market-pulse HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 03:14:42] "GET /api/market-pulse HTTP/1.1" 200 -
+127.0.0.1 - - [01/May/2026 03:14:45] "GET /api/test HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 03:14:45] "GET /api/test HTTP/1.1" 200 -
+127.0.0.1 - - [01/May/2026 03:14:46] "GET /api/market-pulse HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 03:14:46] "GET /api/market-pulse HTTP/1.1" 200 -
+127.0.0.1 - - [01/May/2026 03:14:46] "GET /api/instruments HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 03:14:46] "GET /api/instruments HTTP/1.1" 200 -
+127.0.0.1 - - [01/May/2026 03:14:47] "GET /api/market-pulse HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 03:14:47] "GET /api/market-pulse HTTP/1.1" 200 -
+127.0.0.1 - - [01/May/2026 03:14:48] "GET /api/health HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [01/May/2026 03:14:48] "GET /api/health HTTP/1.1" 200 -

@@ -1,0 +1,571 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>TradeSignal | Market Profiler</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #f0f4f8;
+      --surface: #ffffff;
+      --card: #f7f9fc;
+      --border: #e2e8f0;
+      --text: #000000;
+      --muted: #111827;
+      --bull: #079669;
+      --bear: #dc2626;
+      --blue: #2563eb;
+      --warn: #c27c0e;
+    }
+    * { box-sizing:border-box; margin:0; padding:0; }
+    body { background:var(--bg); color:var(--text); font-family:'Inter',sans-serif; -webkit-font-smoothing:antialiased; height:100vh; display:flex; flex-direction:column; overflow:hidden; min-width: 1280px; }
+    .header, .addbar, #kite-banner, #grid { min-width: 1280px; }
+
+    /* HEADER */
+    .header { display:flex; justify-content:space-between; align-items:center; padding:8px 16px; background:var(--surface); border-bottom:1px solid var(--border); flex-shrink:0; box-shadow:0 1px 3px rgba(0,0,0,0.06); }
+    .title { font-size:13px; font-weight:700; letter-spacing:0.5px; display:flex; align-items:center; gap:8px; color:var(--text); }
+    .status-wrap { display:flex; align-items:center; gap:10px; font-size:11px; font-family:'IBM Plex Mono',monospace; }
+    .dot { width:8px; height:8px; border-radius:50%; background:var(--border); }
+    .dot.on { background:var(--bull); box-shadow:0 0 8px rgba(7,150,105,0.4); }
+
+    /* KITE BANNER */
+    #kite-banner { display:none; background:rgba(194,124,14,0.08); border-bottom:1px solid rgba(194,124,14,0.25); padding:6px 16px; font-size:11px; font-family:'IBM Plex Mono',monospace; color:var(--warn); align-items:center; gap:10px; flex-shrink:0; }
+
+    /* SEARCH BAR */
+    .addbar { display:flex; gap:10px; padding:7px 16px; background:var(--surface); border-bottom:1px solid var(--border); align-items:center; flex-shrink:0; }
+    .search-wrap { position:relative; flex:1; max-width:420px; }
+    .search-input { width:100%; background:var(--bg); border:1px solid var(--border); color:var(--text); padding:6px 10px; font-family:'IBM Plex Mono',monospace; font-size:11px; border-radius:6px; outline:none; transition:border 0.2s; }
+    .search-input::placeholder { color: #475569; opacity: 1; font-weight: 500; }
+    .search-input:focus { border-color:var(--blue); }
+    .search-drop { position:absolute; top:calc(100% + 4px); left:0; right:0; z-index:100; background:var(--surface); border:1px solid var(--border); border-radius:8px; max-height:240px; overflow-y:auto; display:none; box-shadow:0 4px 20px rgba(0,0,0,0.12); }
+    .search-drop.open { display:block; }
+    .drop-item { display:flex; align-items:center; gap:10px; padding:8px 12px; cursor:pointer; border-bottom:1px solid var(--border); }
+    .drop-item:hover, .drop-item.active { background:rgba(37,99,235,0.05); }
+    .drop-sym { font-weight:600; font-size:12px; width:120px; color:var(--text); }
+    .drop-name { font-size:10px; color:var(--muted); flex:1; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+    .drop-tag { font-size:9px; padding:2px 6px; border-radius:3px; font-weight:700; background:rgba(37,99,235,0.1); color:var(--blue); }
+
+    /* GRID */
+    #grid { flex:1; padding:12px 16px; overflow-y:auto; display:grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap:12px; align-content:start; align-items:start; }
+
+    /* CARD */
+    .card { background:var(--surface); border:1px solid var(--border); border-radius:10px; padding:14px 16px; display:flex; flex-direction:column; gap:10px; box-shadow:0 1px 4px rgba(0,0,0,0.06); }
+    .card-head { display:flex; justify-content:space-between; align-items:flex-start; border-bottom:1px solid var(--border); padding-bottom:10px; }
+    .sym-title { font-size:22px; font-weight:700; font-family:'IBM Plex Mono',monospace; letter-spacing:-0.5px; color:var(--text); }
+    .ltp { font-size:20px; font-weight:600; font-family:'IBM Plex Mono',monospace; color:var(--bull); }
+
+    /* BADGES — filled style */
+    .badge { font-family:'IBM Plex Mono',monospace; font-size:10px; padding:3px 8px; border-radius:4px; font-weight:700; white-space:nowrap; letter-spacing:0.5px; }
+    .b-bull    { background:rgba(7,150,105,0.12); color:var(--bull); border:1px solid rgba(7,150,105,0.25); }
+    .b-bear    { background:rgba(220,38,38,0.12); color:var(--bear); border:1px solid rgba(220,38,38,0.25); }
+    .b-neutral { background:rgba(92,107,138,0.12); color:var(--muted); border:1px solid rgba(92,107,138,0.25); }
+    .b-warn    { background:rgba(194,124,14,0.12); color:var(--warn); border:1px solid rgba(194,124,14,0.25); }
+
+    /* BTN */
+    .btn-reset { background:var(--bg); border:1px solid var(--border); color:var(--muted); font-size:9px; padding:3px 9px; border-radius:4px; cursor:pointer; font-family:'IBM Plex Mono',monospace; letter-spacing:0.5px; font-weight:600; transition:background 0.15s; }
+    .btn-reset:hover { background:var(--border); }
+    .btn-close { background:var(--bear); border:none; color:#fff; font-size:13px; width:22px; height:22px; border-radius:4px; cursor:pointer; line-height:1; display:flex; align-items:center; justify-content:center; }
+
+    /* PRE-MARKET OHLC BAR */
+    .pre-stats { display:none; gap:14px; font-size:10px; color:var(--muted); font-family:'IBM Plex Mono',monospace; padding:5px 0 2px; flex-wrap:wrap; }
+    .pre-stats b { color:var(--text); font-weight:600; }
+
+    /* PANELS — 2×2 grid */
+    .panels { display:grid; grid-template-columns:1fr 1fr; gap:10px; min-width:0; }
+    .panel { background:var(--card); border:1px solid var(--border); border-radius:8px; padding:12px 14px; display:flex; flex-direction:column; gap:8px; position:relative; min-width:0; }
+    .panel-title { font-size:9px; font-weight:700; color:var(--muted); letter-spacing:1.2px; text-transform:uppercase; border-bottom:1px solid var(--border); padding-bottom:6px; }
+
+    /* STAT ROW (horizontal labels + big values) */
+    .stat-row { display:flex; gap:18px; flex-wrap:wrap; }
+    .stat { display:flex; flex-direction:column; gap:3px; }
+    .stat-label { font-size:8px; font-weight:600; color:var(--muted); letter-spacing:0.8px; text-transform:uppercase; }
+    .stat-val { font-size:17px; font-weight:600; font-family:'IBM Plex Mono',monospace; color:var(--text); line-height:1.1; }
+    .stat-val.bull { color:var(--bull); }
+    .stat-val.bear { color:var(--bear); }
+
+    /* ORDER BOOK */
+    .book-grid { display:grid; grid-template-columns:1fr 58px 1fr; gap:1px; font-family:'IBM Plex Mono',monospace; font-size:9px; margin-top:4px; }
+    .bh { color:var(--muted); font-weight:600; letter-spacing:0.5px; border-bottom:1px solid var(--border); padding-bottom:3px; margin-bottom:2px; }
+    .bq, .aq { position:relative; overflow:hidden; z-index:1; padding:1px 0; }
+    .wall-tag { background:var(--warn); color:#fff; font-size:7px; padding:1px 3px; border-radius:2px; margin-left:3px; letter-spacing:0.8px; }
+    .lvl-cluster-bid { background:rgba(7,150,105,0.12); }
+    .lvl-cluster-ask { background:rgba(220,38,38,0.12); }
+    .lvl-wall-bid    { background:rgba(7,150,105,0.28); font-weight:700; }
+    .lvl-wall-ask    { background:rgba(220,38,38,0.28); font-weight:700; }
+    .lvl-absorbed    { background:rgba(194,124,14,0.15); color:var(--warn); font-style:italic; }
+    .vol-bar-wrap { position:relative; width:32px; height:5px; background:var(--border); border-radius:2px; display:inline-block; vertical-align:middle; margin:0 2px; }
+    .vol-bar      { position:absolute; top:0; height:100%; border-radius:2px; }
+    .vol-bar-bid  { right:0; background:rgba(7,150,105,0.55); }
+    .vol-bar-ask  { left:0;  background:rgba(220,38,38,0.55); }
+    .imb-bar-row  { display:flex; align-items:center; gap:6px; font-family:'IBM Plex Mono',monospace; font-size:10px; margin:4px 0; }
+    .imb-track    { flex:1; height:7px; background:var(--border); border-radius:4px; overflow:hidden; }
+    .imb-fill     { height:100%; transition:width 0.3s ease; border-radius:4px; }
+    .oi-desc      { font-size:10px; color:var(--muted); margin-top:4px; }
+
+    /* OFF-HOURS OVERLAY */
+    .panel-na { pointer-events:none; }
+    
+    /* CHARTS */
+    .charts-row { display:grid; grid-template-columns:1fr 1fr 1fr; gap:10px; min-width:0; }
+    .chart-box  { background:var(--card); border:1px solid var(--border); border-radius:8px; padding:8px 10px; min-width:0; overflow:hidden; }
+    .chart-label { font-size:9px; font-weight:700; color:var(--muted); letter-spacing:1px; text-transform:uppercase; margin-bottom:4px; white-space:nowrap; text-overflow:ellipsis; overflow:hidden; }
+    .chart-canvas { height:90px; position:relative; width:100%; min-width:0; }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <div class="title">📊 Market Profiler</div>
+    <div class="status-wrap">
+      <div class="dot" id="dot"></div>
+      <span id="live-lbl">CONNECTING...</span>
+      <span id="updated" style="color:var(--muted)"></span>
+    </div>
+  </div>
+
+  <div id="kite-banner">
+    <span>⚠ Kite session not found — pre-market data unavailable.</span>
+    <a href="/" style="color:var(--warn);text-decoration:underline;cursor:pointer">Go to Dashboard to login →</a>
+    <span onclick="document.getElementById('kite-banner').style.display='none'" style="margin-left:auto;cursor:pointer;opacity:0.6">✕</span>
+  </div>
+
+  <div class="addbar">
+    <div class="search-wrap">
+      <input class="search-input" id="searchInput" placeholder="Search symbol — NIFTY 50, RELIANCE..." autocomplete="off">
+      <div class="search-drop" id="searchDrop"></div>
+    </div>
+    <span style="font-size:11px;color:var(--muted)" id="instrCount">Loading instruments...</span>
+  </div>
+
+  <div id="grid"></div>
+
+<script>
+// ── Chart defaults (light theme) ─────────────────────────────────────────────
+Chart.defaults.color = '#5c6b8a';
+Chart.defaults.font.family = "'IBM Plex Mono', monospace";
+Chart.defaults.font.size = 9;
+
+// ── State ─────────────────────────────────────────────────────────────────────
+const watched = [];
+const charts  = {};
+let timer = null;
+
+// ── Instruments ───────────────────────────────────────────────────────────────
+const INDICES = [
+  {sym:'NIFTY 50',          token:256265,  tag:'idx', exchange:'NSE'},
+  {sym:'NIFTY BANK',        token:260105,  tag:'idx', exchange:'NSE'},
+  {sym:'NIFTY FIN SERVICE', token:257801,  tag:'idx', exchange:'NSE'},
+  {sym:'NIFTY MIDCAP SELECT',token:288009, tag:'idx', exchange:'NSE'},
+  {sym:'NIFTY 100',         token:258049,  tag:'idx', exchange:'NSE'},
+  {sym:'INDIA VIX',         token:264969,  tag:'idx', exchange:'NSE'},
+  {sym:'NIFTY IT',          token:259849,  tag:'idx', exchange:'NSE'},
+  {sym:'NIFTY AUTO',        token:261641,  tag:'idx', exchange:'NSE'},
+  {sym:'NIFTY PHARMA',      token:261637,  tag:'idx', exchange:'NSE'},
+  {sym:'NIFTY METAL',       token:261465,  tag:'idx', exchange:'NSE'},
+  {sym:'NIFTY REALTY',      token:261529,  tag:'idx', exchange:'NSE'},
+  {sym:'NIFTY ENERGY',      token:261673,  tag:'idx', exchange:'NSE'},
+  {sym:'NIFTY FMCG',        token:261441,  tag:'idx', exchange:'NSE'},
+  {sym:'SENSEX',            token:265,     tag:'idx', exchange:'BSE'},
+  {sym:'BANKEX',            token:274441,  tag:'idx', exchange:'BSE'},
+];
+let allInstruments = [...INDICES];
+let dropActive = -1;
+
+async function loadInstruments(){
+  try{
+    const r = await fetch('/api/equity-list');
+    const d = await r.json();
+    const stocks = (d.stocks||[]).map(s=>({sym:s.tradingsymbol, token:s.instrument_token, tag:'fno', name:s.name, alias:s.alias||'', exchange:s.exchange||'NSE'}));
+    allInstruments = [...INDICES, ...stocks];
+    document.getElementById('instrCount').textContent = `${stocks.length} stocks, ${INDICES.length} indices loaded`;
+  } catch(e){}
+}
+
+// ── Search dropdown ───────────────────────────────────────────────────────────
+const inp  = document.getElementById('searchInput');
+const drop = document.getElementById('searchDrop');
+inp.addEventListener('input', () => {
+  const q = inp.value.trim().toLowerCase();
+  if(!q) { drop.classList.remove('open'); return; }
+  const res = allInstruments.filter(i => i.sym.toLowerCase().includes(q)||(i.name||'').toLowerCase().includes(q)||(i.alias||'').toLowerCase().includes(q)).slice(0,20);
+  drop.innerHTML = res.map((r,idx) => `
+    <div class="drop-item" onmousedown="selectSym('${r.sym}',${r.token},'${r.tag}','${r.exchange||'NSE'}')">
+      <span class="drop-sym">${r.sym}</span>
+      <span class="drop-name">${r.name||'Index'}</span>
+      <span class="drop-tag">${r.tag.toUpperCase()}</span>
+    </div>`).join('');
+  drop.classList.toggle('open', res.length > 0);
+});
+inp.addEventListener('blur', () => setTimeout(()=>drop.classList.remove('open'), 150));
+
+async function selectSym(sym, token, tag, exchange){
+  inp.value = ''; drop.classList.remove('open');
+  if(watched.find(w=>w.sym===sym)) return;
+  const body = { symbol:sym, token, exchange: exchange||'NSE' };
+  // fo_token is NOT sent — the backend auto-resolves the nearest NFO futures
+  // contract token from kite.instruments('NFO') on subscribe.
+  const res = await fetch('/market/api/subscribe', {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(body)});
+  const data = await res.json().catch(()=>({}));
+  if(data.fo_token) console.log(`[Market] ${sym} fo_token resolved: ${data.fo_token}`);
+  else              console.log(`[Market] ${sym} no fo_token (index or non-F&O) — OI panel will show NO_DATA`);
+  watched.push({sym, token});
+  createCard(sym, token);
+  if(!timer) timer = setInterval(poll, 1000);
+}
+
+async function removeSym(sym, token){
+  await fetch('/market/api/unsubscribe', {method:'POST', body:JSON.stringify({token})});
+  watched.splice(watched.findIndex(w=>w.sym===sym), 1);
+  const id = sym.replace(/\s+/g,'_');
+  document.getElementById('card-'+id)?.remove();
+  if(charts[sym]){ charts[sym].cvd.destroy(); charts[sym].vwap.destroy(); charts[sym].oi.destroy(); delete charts[sym]; }
+  if(!watched.length){ clearInterval(timer); timer=null; }
+}
+
+async function resetSym(sym){
+  await fetch('/market/api/reset/'+encodeURIComponent(sym), {method:'POST'});
+}
+
+// ── createCard ────────────────────────────────────────────────────────────────
+function createCard(sym, token){
+  const id  = sym.replace(/\s+/g,'_');
+  const div = document.createElement('div');
+  div.className = 'card'; div.id = 'card-'+id;
+  div.innerHTML = `
+    <div class="card-head">
+      <!-- LEFT: symbol + signal badge + pre-market OHLC -->
+      <div style="display:flex;flex-direction:column;gap:4px;min-width:0">
+        <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+          <span class="sym-title">${sym}</span>
+          <span class="badge b-neutral" id="overall-${id}">WAITING</span>
+        </div>
+        <div class="pre-stats" id="pre-stats-${id}">
+          PREV: <b id="prev-${id}">—</b> &nbsp; O: <b id="open-${id}">—</b> &nbsp; H: <b id="high-${id}" style="color:var(--bull)">—</b> &nbsp; L: <b id="low-${id}" style="color:var(--bear)">—</b>
+        </div>
+      </div>
+      <!-- RIGHT: price + change + buttons -->
+      <div style="display:flex;align-items:center;gap:8px;flex-shrink:0;margin-left:12px">
+        <div style="text-align:right">
+          <div style="display:flex;align-items:baseline;gap:6px">
+            <span class="ltp" id="ltp-${id}">—</span>
+            <span id="chg-${id}" style="font-size:12px;font-weight:600;font-family:'IBM Plex Mono',monospace"></span>
+          </div>
+        </div>
+        <button class="btn-reset" onclick="resetSym('${sym}')">RESET</button>
+        <button class="btn-close" onclick="removeSym('${sym}',${token})">×</button>
+      </div>
+    </div>
+    <div class="panels">
+      <!-- CVD -->
+      <div class="panel" id="p-cvd-${id}">
+        <div class="panel-title">① CVD — Cumulative Volume Delta</div>
+        <div class="stat-row">
+          <div class="stat"><div class="stat-label">CVD</div><div class="stat-val bull" id="cvd-${id}">—</div></div>
+          <div class="stat"><div class="stat-label">Buy Vol</div><div class="stat-val bull" id="bvol-${id}">—</div></div>
+          <div class="stat"><div class="stat-label">Sell Vol</div><div class="stat-val bear" id="svol-${id}">—</div></div>
+          <div class="stat"><div class="stat-label">Ticks</div><div class="stat-val" id="ticks-${id}">—</div></div>
+        </div>
+        <div style="display:flex;gap:6px;align-items:center">
+          <span class="badge b-neutral" id="cvd-sig-${id}">WAITING</span>
+          <span class="badge b-neutral" id="div-sig-${id}" style="display:none"></span>
+        </div>
+      </div>
+      <!-- VWAP -->
+      <div class="panel" id="p-vwap-${id}">
+        <div class="panel-title">② VWAP + Volume</div>
+        <div class="stat-row">
+          <div class="stat"><div class="stat-label">VWAP</div><div class="stat-val" id="vwap-${id}">—</div></div>
+          <div class="stat"><div class="stat-label">+1σ</div><div class="stat-val bull" id="vup-${id}">—</div></div>
+          <div class="stat"><div class="stat-label">-1σ</div><div class="stat-val bear" id="vdn-${id}">—</div></div>
+          <div class="stat"><div class="stat-label">Vol Trend</div><div class="stat-val" id="vtrd-${id}">—</div></div>
+        </div>
+        <span class="badge b-neutral" id="vwap-sig-${id}">WAITING</span>
+      </div>
+      <!-- ORDER BOOK -->
+      <div class="panel" id="p-book-${id}">
+        <div class="panel-title">③ Order Book — 20 Level Depth</div>
+        <div class="stat-row">
+          <div class="stat"><div class="stat-label">Top5 IMB</div><div class="stat-val bull" id="t5imb-${id}">—</div></div>
+          <div class="stat"><div class="stat-label">Full IMB</div><div class="stat-val" id="fullimb-${id}">—</div></div>
+          <div class="stat"><div class="stat-label">Bid Qty</div><div class="stat-val bull" id="bq-${id}">—</div></div>
+          <div class="stat"><div class="stat-label">Ask Qty</div><div class="stat-val bear" id="aq-${id}">—</div></div>
+        </div>
+        <div class="imb-bar-row">
+          <span style="color:var(--bull);font-family:'IBM Plex Mono',monospace;font-size:10px" id="bid-pct-${id}">—</span>
+          <div class="imb-track"><div class="imb-fill" id="imb-bar-${id}" style="width:50%;background:var(--border)"></div></div>
+          <span style="color:var(--bear);font-family:'IBM Plex Mono',monospace;font-size:10px" id="ask-pct-${id}">—</span>
+        </div>
+        <span class="badge b-neutral" id="book-sig-${id}">WAITING</span>
+        <div class="book-grid" id="book-${id}"></div>
+      </div>
+      <!-- OI -->
+      <div class="panel" id="p-oi-${id}">
+        <div class="panel-title">④ OI + Volume (F&amp;O)</div>
+        <div class="stat-row">
+          <div class="stat"><div class="stat-label">OI</div><div class="stat-val" id="oi-${id}">—</div></div>
+          <div class="stat"><div class="stat-label">OI Chg</div><div class="stat-val" id="oichg-${id}">—</div></div>
+          <div class="stat"><div class="stat-label">Volume</div><div class="stat-val" id="oivol-${id}">—</div></div>
+        </div>
+        <span class="badge b-neutral" id="oi-sig-${id}">WAITING</span>
+        <div class="oi-desc" id="oi-desc-${id}"></div>
+      </div>
+    </div>
+    <div class="charts-row">
+      <div class="chart-box"><div class="chart-label">CVD vs Price</div><div class="chart-canvas"><canvas id="ch-cvd-${id}"></canvas></div></div>
+      <div class="chart-box"><div class="chart-label">VWAP vs Price</div><div class="chart-canvas"><canvas id="ch-vwap-${id}"></canvas></div></div>
+      <div class="chart-box"><div class="chart-label">OI vs Volume</div><div class="chart-canvas"><canvas id="ch-oi-${id}"></canvas></div></div>
+    </div>
+  `;
+  document.getElementById('grid').appendChild(div);
+
+  const o = {responsive:true, maintainAspectRatio:false, plugins:{legend:{display:false}}, scales:{x:{display:false}, y:{position:'right', grid:{color:'rgba(0,0,0,0.05)'}, ticks:{color:'#5c6b8a', font:{size:9}}}}};
+  charts[sym] = {
+    cvd:  new Chart(document.getElementById('ch-cvd-'+id).getContext('2d'),  {type:'line', options:{...o}, data:{labels:[], datasets:[{label:'CVD',   data:[], borderColor:'#079669', borderWidth:1.5, pointRadius:0, tension:0.3, fill:false}]}}),
+    vwap: new Chart(document.getElementById('ch-vwap-'+id).getContext('2d'), {type:'line', options:{...o}, data:{labels:[], datasets:[{label:'VWAP',  data:[], borderColor:'#2563eb', borderWidth:1.5, pointRadius:0, tension:0.3}, {label:'Price', data:[], borderColor:'#94a3b8', borderWidth:1, borderDash:[3,3], pointRadius:0, tension:0.3}]}}),
+    oi:   new Chart(document.getElementById('ch-oi-'+id).getContext('2d'),   {type:'line', options:{...o}, data:{labels:[], datasets:[{label:'OI',    data:[], borderColor:'#c27c0e', borderWidth:1.5, pointRadius:0, tension:0.3}]}})
+  };
+}
+
+// ── Polling ────────────────────────────────────────────────────────────────────
+async function poll(){
+  if(!watched.length) return;
+  try{
+    const r = await fetch('/market/api/all');
+    if(!r.ok) throw new Error();
+    const data = await r.json();
+    if(!Array.isArray(data)) return;
+    data.forEach(updateUI);
+
+    const snap = data[0];
+    const session = snap ? snap.session : 'CLOSED';
+    const dot = document.getElementById('dot');
+    const lbl = document.getElementById('live-lbl');
+    if(session==='live'){
+      dot.className='dot on'; lbl.textContent='LIVE'; lbl.style.color='var(--bull)';
+    } else if(session==='premarket'){
+      dot.className='dot'; dot.style.background='var(--warn)'; lbl.textContent='PRE-MARKET'; lbl.style.color='var(--warn)';
+    } else {
+      dot.className='dot'; dot.style.background='var(--border)'; lbl.textContent='MARKET CLOSED'; lbl.style.color='var(--muted)';
+    }
+    document.getElementById('updated').textContent = new Date().toLocaleTimeString();
+  } catch(e){
+    document.getElementById('live-lbl').textContent='ERROR'; document.getElementById('live-lbl').style.color='var(--bear)';
+  }
+}
+
+// ── Helpers ────────────────────────────────────────────────────────────────────
+const fmt  = v => v != null ? Number(v).toLocaleString('en-IN', {maximumFractionDigits:2}) : '—';
+const fmtK = v => { if(v==null) return '—'; const a=Math.abs(v); const s=v<0?'-':''; return a>=1e7?s+(a/1e7).toFixed(2)+'Cr':a>=1e5?s+(a/1e5).toFixed(2)+'L':a>=1000?s+(a/1000).toFixed(1)+'K':s+a.toFixed(0); };
+const fmtSigned = v => { if(v==null) return '—'; return (v>0?'+':'')+fmtK(v); };
+
+const BADGE_MAP = {
+  BULLISH:'b-bull', BEARISH:'b-bear', NEUTRAL:'b-neutral', WAITING:'b-neutral',
+  ABOVE_VWAP:'b-bull', BELOW_VWAP:'b-bear', AT_VWAP:'b-neutral',
+  STRONG_BUY_PRESSURE:'b-bull', BUY_PRESSURE:'b-bull', ASK_WALL_ABSORBED:'b-bull',
+  STRONG_SELL_PRESSURE:'b-bear', SELL_PRESSURE:'b-bear', BID_WALL_ABSORBED:'b-bear',
+  BALANCED:'b-neutral', FRESH_POSITIONS:'b-bull', WEAK_TREND:'b-warn',
+  UNWINDING:'b-bear', INDECISION:'b-neutral', NO_DATA:'b-neutral',
+  STRONG_BULL:'b-bull', MILD_BULL:'b-bull', MILD_BEAR:'b-bear', STRONG_BEAR:'b-bear',
+  RISING:'b-bull', FALLING:'b-bear', FLAT:'b-neutral', CLOSED:'b-neutral', OFF_HOURS:'b-neutral'
+};
+
+function renderBook(elId, bk){
+  const el = document.getElementById(elId);
+  if(!el) return;
+  const bids = bk.bids||[], asks = bk.asks||[];
+  const maxL = Math.max(bids.length, asks.length, 1);
+  const maxQ = Math.max(...bids.map(b=>b.quantity||0), ...asks.map(a=>a.quantity||0), 1);
+  const wallB = new Set((bk.bid_walls||[]).map(w=>w.price));
+  const wallA = new Set((bk.ask_walls||[]).map(w=>w.price));
+  const clusB = new Set((bk.bid_clusters||[]).map(c=>c.price));
+  const clusA = new Set((bk.ask_clusters||[]).map(c=>c.price));
+  const absB  = new Set(bk.absorbed_bid_walls||[]);
+  const absA  = new Set(bk.absorbed_ask_walls||[]);
+  let h = `<div class="bh" style="text-align:right">BID QTY</div><div class="bh" style="text-align:center">PRICE</div><div class="bh">ASK QTY</div>`;
+  for(let i=0;i<Math.min(maxL,10);i++){
+    const b=bids[i], a=asks[i];
+    const bp=b?.price, bq=b?.quantity||0, ap=a?.price, aq=a?.quantity||0;
+    const bw=wallB.has(bp), aw=wallA.has(ap), bc=clusB.has(bp), ac=clusA.has(ap);
+    const abB=absB.has(bp), abA=absA.has(ap);
+    const bClass=abB?'bq lvl-absorbed':bw?'bq lvl-wall-bid':bc?'bq lvl-cluster-bid':'bq';
+    const aClass=abA?'aq lvl-absorbed':aw?'aq lvl-wall-ask':ac?'aq lvl-cluster-ask':'aq';
+    const bBar=bq?`<span class="vol-bar-wrap"><span class="vol-bar vol-bar-bid" style="width:${Math.round(bq/maxQ*100)}%"></span></span>`:'';
+    const aBar=aq?`<span class="vol-bar-wrap"><span class="vol-bar vol-bar-ask" style="width:${Math.round(aq/maxQ*100)}%"></span></span>`:'';
+    h+=`<div class="${bClass}" style="text-align:right">${b?fmtK(bq)+(bw?`<span class="wall-tag">WALL</span>`:''):''}${bBar}</div>`;
+    h+=`<div style="text-align:center;color:var(--muted);font-weight:600">${bp??''}</div>`;
+    h+=`<div class="${aClass}">${aBar}${a?fmtK(aq)+(aw?`<span class="wall-tag">WALL</span>`:''):''}</div>`;
+  }
+  el.innerHTML=h;
+}
+
+// ── updateUI ───────────────────────────────────────────────────────────────────
+function updateUI(snap){
+  const id   = snap.symbol.replace(/\s+/g,'_');
+  if(!document.getElementById('card-'+id)) return;
+  const live = snap.market_open;
+
+  // ── LTP + Change ──
+  let ltp=snap.last_price, chgPct=null;
+  if(!live && snap.premarket){
+    ltp    = snap.premarket.last_price;
+    chgPct = snap.premarket.change_pct;
+    const pre = document.getElementById('pre-stats-'+id);
+    if(pre){
+      pre.style.display='flex';
+      document.getElementById('prev-'+id).textContent = fmt(snap.premarket.prev_close);
+      document.getElementById('open-'+id).textContent = fmt(snap.premarket.open);
+      document.getElementById('high-'+id).textContent = fmt(snap.premarket.high);
+      document.getElementById('low-'+id).textContent  = fmt(snap.premarket.low);
+    }
+  } else if(!live && !snap.premarket){
+    const pre = document.getElementById('pre-stats-'+id);
+    if(pre){ pre.style.display='flex'; pre.innerHTML='<span style="color:var(--bear)">Kite Disconnected — No Pre-market Data</span>'; }
+  } else {
+    const pre = document.getElementById('pre-stats-'+id);
+    if(pre) pre.style.display='none';
+  }
+  const ltpEl = document.getElementById('ltp-'+id);
+  if(ltp) { ltpEl.textContent='₹'+fmt(ltp); ltpEl.style.color = chgPct!=null ? (chgPct>=0?'var(--bull)':'var(--bear)') : 'var(--bull)'; }
+  if(chgPct!=null){
+    const el=document.getElementById('chg-'+id);
+    el.textContent=(chgPct>=0?'+':'')+chgPct+'%';
+    el.style.color=chgPct>=0?'var(--bull)':'var(--bear)';
+  }
+
+  // ── Overall badge ──
+  const ov = live ? (snap.overall||'WAITING') : 'OFF_HOURS';
+  const ovEl = document.getElementById('overall-'+id);
+  ovEl.textContent=ov.replace(/_/g,' '); ovEl.className='badge '+(BADGE_MAP[ov]||'b-neutral');
+
+  // ── N/A overlay on off-hours panels ──
+  ['cvd','vwap','book'].forEach(p=>{
+    const el=document.getElementById('p-'+p+'-'+id);
+    if(el){ if(!live) el.classList.add('panel-na'); else el.classList.remove('panel-na'); }
+  });
+
+  // ── CVD ──
+  if(snap.cvd && live){
+    const c=snap.cvd;
+    const cvdEl=document.getElementById('cvd-'+id);
+    cvdEl.textContent=fmtSigned(c.cvd);
+    cvdEl.className='stat-val '+(c.cvd>0?'bull':c.cvd<0?'bear':'');
+    document.getElementById('bvol-'+id).textContent=fmtK(c.buy_vol);
+    document.getElementById('svol-'+id).textContent=fmtK(c.sell_vol);
+    document.getElementById('ticks-'+id).textContent=c.tick_count;
+    const sigEl=document.getElementById('cvd-sig-'+id);
+    sigEl.textContent=c.bias; sigEl.className='badge '+(BADGE_MAP[c.bias]||'b-neutral');
+    const divEl=document.getElementById('div-sig-'+id);
+    if(divEl && c.divergence && c.divergence!=='NONE'){
+      divEl.textContent=c.divergence.replace(/_/g,' '); divEl.className='badge b-warn'; divEl.style.display='';
+    } else if(divEl){ divEl.style.display='none'; }
+    if(charts[snap.symbol]&&c.history){
+      charts[snap.symbol].cvd.data.labels=c.history.map(h=>h.ts);
+      charts[snap.symbol].cvd.data.datasets[0].data=c.history.map(h=>h.cvd);
+      charts[snap.symbol].cvd.update('none');
+    }
+  } else if(!live){
+    ['cvd','bvol','svol','ticks'].forEach(k=>{ const el=document.getElementById(k+'-'+id); if(el) el.textContent='N/A'; });
+    const sig=document.getElementById('cvd-sig-'+id); if(sig){sig.textContent='N/A'; sig.className='badge b-neutral';}
+  }
+
+  // ── VWAP ──
+  if(snap.vwap && live){
+    const v=snap.vwap;
+    document.getElementById('vwap-'+id).textContent=fmt(v.vwap);
+    document.getElementById('vup-'+id).textContent=fmt(v.upper_band);
+    document.getElementById('vdn-'+id).textContent=fmt(v.lower_band);
+    const vtEl=document.getElementById('vtrd-'+id); vtEl.textContent=v.vol_trend||'—';
+    vtEl.style.color=v.vol_trend==='RISING'?'var(--bull)':v.vol_trend==='FALLING'?'var(--bear)':'var(--text)';
+    const sigEl=document.getElementById('vwap-sig-'+id);
+    sigEl.textContent=v.signal; sigEl.className='badge '+(BADGE_MAP[v.signal]||'b-neutral');
+    if(charts[snap.symbol]&&v.history){
+      charts[snap.symbol].vwap.data.labels=v.history.map(h=>h.ts);
+      charts[snap.symbol].vwap.data.datasets[0].data=v.history.map(h=>h.vwap);
+      charts[snap.symbol].vwap.data.datasets[1].data=v.history.map(h=>h.price);
+      charts[snap.symbol].vwap.update('none');
+    }
+  } else if(!live){
+    ['vwap','vup','vdn','vtrd'].forEach(k=>{ const el=document.getElementById(k+'-'+id); if(el) el.textContent='N/A'; });
+    const sig=document.getElementById('vwap-sig-'+id); if(sig){sig.textContent='N/A'; sig.className='badge b-neutral';}
+  }
+
+  // ── OI (always active) ──
+  if(live && snap.oi_volume){
+    const o=snap.oi_volume;
+    document.getElementById('oi-'+id).textContent=fmtK(o.oi);
+    const ochgEl=document.getElementById('oichg-'+id);
+    ochgEl.textContent=fmtSigned(o.oi_chg);
+    ochgEl.style.color=o.oi_chg>0?'var(--bull)':o.oi_chg<0?'var(--bear)':'var(--text)';
+    document.getElementById('oivol-'+id).textContent=fmtK(o.volume);
+    const oSig=document.getElementById('oi-sig-'+id);
+    oSig.textContent=o.signal; oSig.className='badge '+(BADGE_MAP[o.signal]||'b-neutral');
+    document.getElementById('oi-desc-'+id).textContent=o.description||'';
+    if(charts[snap.symbol]&&o.history){
+      charts[snap.symbol].oi.data.labels=o.history.map(h=>h.ts);
+      charts[snap.symbol].oi.data.datasets[0].data=o.history.map(h=>h.oi);
+      charts[snap.symbol].oi.update('none');
+    }
+  } else if(!live && snap.premarket){
+    document.getElementById('oi-'+id).textContent=fmtK(snap.premarket.oi)||'—';
+    document.getElementById('oichg-'+id).textContent='N/A';
+    document.getElementById('oivol-'+id).textContent=fmtK(snap.premarket.volume)||'—';
+    const oSig=document.getElementById('oi-sig-'+id); oSig.textContent='CLOSED'; oSig.className='badge b-neutral';
+    document.getElementById('oi-desc-'+id).textContent='Pre-market snapshot';
+  }
+
+  // ── Order Book ──
+  if(snap.order_book && live){
+    const bk=snap.order_book;
+    document.getElementById('bq-'+id).textContent=fmtK(bk.total_bid_qty);
+    document.getElementById('aq-'+id).textContent=fmtK(bk.total_ask_qty);
+    document.getElementById('t5imb-'+id).textContent=bk.top5_imbalance!=null?bk.top5_imbalance.toFixed(2):'—';
+    document.getElementById('fullimb-'+id).textContent=bk.imbalance!=null?bk.imbalance.toFixed(2):'—';
+    const tot=(bk.total_bid_qty||0)+(bk.total_ask_qty||0);
+    if(tot>0){
+      const bp=Math.round((bk.total_bid_qty/tot)*100);
+      document.getElementById('bid-pct-'+id).textContent=bp+'%';
+      document.getElementById('ask-pct-'+id).textContent=(100-bp)+'%';
+      document.getElementById('imb-bar-'+id).style.width=bp+'%';
+      document.getElementById('imb-bar-'+id).style.background=bp>=50?'var(--bull)':'var(--bear)';
+    }
+    const bkSig=document.getElementById('book-sig-'+id);
+    bkSig.textContent=bk.signal; bkSig.className='badge '+(BADGE_MAP[bk.signal]||'b-neutral');
+    renderBook('book-'+id, bk);
+  } else if(!live){
+    ['bq','aq','t5imb','fullimb','bid-pct','ask-pct'].forEach(k=>{ const el=document.getElementById(k+'-'+id); if(el) el.textContent='N/A'; });
+    const bkSig=document.getElementById('book-sig-'+id); if(bkSig){bkSig.textContent='N/A'; bkSig.className='badge b-neutral';}
+    const bkEl=document.getElementById('book-'+id);
+    if(bkEl) bkEl.innerHTML='<div style="text-align:center;padding:12px;color:var(--muted);font-size:9px;letter-spacing:1px">ORDER BOOK N/A DURING OFF HOURS</div>';
+    document.getElementById('imb-bar-'+id).style.width='50%';
+    document.getElementById('imb-bar-'+id).style.background='var(--border)';
+  }
+}
+
+// ── Page init ──────────────────────────────────────────────────────────────────
+async function initPage(){
+  try{
+    const r = await fetch('/market/api/status');
+    const d = await r.json();
+    const dot=document.getElementById('dot'), lbl=document.getElementById('live-lbl');
+    const banner=document.getElementById('kite-banner');
+    if(!d.kite_ok){
+      banner.style.display='flex';
+      dot.className='dot'; dot.style.background='var(--bear)';
+      lbl.textContent='KITE DISCONNECTED'; lbl.style.color='var(--bear)';
+    } else {
+      banner.style.display='none';
+      if(d.session==='live'){ dot.className='dot on'; lbl.textContent='LIVE'; lbl.style.color='var(--bull)'; }
+      else if(d.session==='premarket'){ dot.className='dot'; dot.style.background='var(--warn)'; lbl.textContent='PRE-MARKET'; lbl.style.color='var(--warn)'; }
+      else { dot.className='dot'; dot.style.background='var(--border)'; lbl.textContent='MARKET CLOSED'; lbl.style.color='var(--muted)'; }
+    }
+  } catch(e){
+    document.getElementById('live-lbl').textContent='SERVER ERROR';
+    document.getElementById('live-lbl').style.color='var(--bear)';
+  }
+  loadInstruments();
+}
+
+initPage();
+</script>
+</body>
+</html>

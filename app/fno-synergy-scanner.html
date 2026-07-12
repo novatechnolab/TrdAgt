@@ -1,0 +1,1038 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>F&O Synergy Scanner — TradeSignal</title>
+  <meta name="description" content="Real-time F&O Synergy Scanner — 7-Profile Institutional Combination Matrix with live WebSocket alerts.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;700&family=Syne:wght@700;800&display=swap" rel="stylesheet">
+  <script src="https://cdn.socket.io/4.7.5/socket.io.min.js"></script>
+  <style>
+    :root {
+      --bg:      #f8fafc;
+      --surface: #ffffff;
+      --surface2:#f1f5f9;
+      --border:  #e2e8f0;
+      --accent:  #0284c7;
+      --green:   #16a34a;
+      --red:     #dc2626;
+      --orange:  #ea580c;
+      --yellow:  #ca8a04;
+      --purple:  #9333ea;
+      --text:    #0f172a;
+      --muted:   #64748b;
+      --muted2:  #475569;
+    }
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html, body { height: 100%; background: var(--bg); color: var(--text); font-family: 'JetBrains Mono', monospace; min-width: 1280px; }
+    .hdr, .toolbar, .stats-row, .main-layout { min-width: 1280px; }
+
+    /* ── Header ── */
+    .hdr {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 12px 20px; background: var(--surface);
+      border-bottom: 1px solid var(--border); position: sticky; top: 0; z-index: 100;
+    }
+    .hdr-title { font-family: 'Syne', sans-serif; font-size: 15px; font-weight: 800; letter-spacing: 1px; }
+    .hdr-title span { color: var(--accent); }
+    .hdr-right { display: flex; align-items: center; gap: 12px; }
+    .status-dot {
+      width: 8px; height: 8px; border-radius: 50%; background: var(--muted);
+      transition: background .4s;
+    }
+    .status-dot.live { background: var(--green); box-shadow: 0 0 6px var(--green); animation: pulse 2s infinite; }
+    .status-dot.warn { background: var(--yellow); }
+    @keyframes pulse { 0%,100%{opacity:1}50%{opacity:.4} }
+    .status-label { font-size: 9px; color: var(--muted2); letter-spacing: 1px; text-transform: uppercase; }
+    .back-btn {
+      font-size: 9px; letter-spacing: 1px; text-transform: uppercase;
+      color: var(--muted2); text-decoration: none; padding: 5px 10px;
+      border: 1px solid var(--border); border-radius: 5px; transition: all .2s;
+    }
+    .back-btn:hover { color: var(--accent); border-color: var(--accent); }
+
+    /* ── Toolbar ── */
+    .toolbar {
+      display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
+      padding: 10px 20px; border-bottom: 1px solid var(--border);
+      background: var(--surface2);
+    }
+    .filter-btn {
+      font-family: 'JetBrains Mono', monospace; font-size: 9px; letter-spacing: 1px;
+      text-transform: uppercase; padding: 5px 12px; border-radius: 5px;
+      border: 1px solid var(--border); background: transparent; color: var(--muted2);
+      cursor: pointer; transition: all .2s;
+    }
+    .filter-btn:hover  { color: var(--text); border-color: var(--muted2); }
+    .filter-btn.active { color: var(--accent); border-color: var(--accent); background: rgba(2,132,199,.08); }
+    .count-badge {
+      font-size: 9px; padding: 3px 8px; border-radius: 10px;
+      background: rgba(2,132,199,.1); color: var(--accent); letter-spacing: 1px;
+    }
+    .count-badge.alert { background: rgba(22,163,74,.12); color: var(--green); }
+    .spacer { flex: 1; }
+    .scan-time { font-size: 9px; color: var(--muted); }
+
+    /* ── Stats Row ── */
+    .stats-row {
+      display: flex; gap: 1px; background: var(--border);
+      border-bottom: 1px solid var(--border);
+    }
+    .stat-box {
+      flex: 1; background: var(--surface); padding: 10px 16px;
+      display: flex; flex-direction: column; gap: 3px;
+    }
+    .stat-label { font-size: 8px; letter-spacing: 1.5px; text-transform: uppercase; color: var(--muted2); }
+    .stat-val   { font-size: 18px; font-weight: 700; }
+
+    /* ── Main Table ── */
+    .table-wrap {
+      overflow: auto;
+      max-height: calc(100vh - 145px);
+      border-bottom: 1px solid var(--border);
+    }
+    table { width: 100%; border-collapse: collapse; }
+    thead th {
+      font-size: 8px; letter-spacing: 1.5px; text-transform: uppercase;
+      color: var(--muted2); padding: 8px 12px; text-align: left;
+      background: var(--surface2); border-bottom: 1px solid var(--border);
+      position: sticky; top: 0; z-index: 10;
+    }
+    tbody tr {
+      border-bottom: 1px solid var(--border);
+      transition: background .15s;
+      cursor: pointer;
+    }
+    tbody tr:hover { background: var(--surface2); }
+    tbody tr.new-alert { animation: flashRow .8s ease; }
+    @keyframes flashRow {
+      0%   { background: rgba(0,230,118,.18); }
+      100% { background: transparent; }
+    }
+    td { padding: 9px 12px; font-size: 11px; vertical-align: middle; }
+
+
+    .buildup-pill {
+      display: inline-block; font-size: 8px; padding: 2px 6px; border-radius: 4px; white-space: nowrap;
+    }
+    .bp-long    { background: rgba(22,163,74,.1);  color: var(--green); }
+    .bp-short   { background: rgba(220,38,38,.1); color: var(--red); }
+    .bp-cover   { background: rgba(2,132,199,.1);  color: var(--accent); }
+    .bp-unwind  { background: rgba(202,138,4,.1); color: var(--yellow); }
+    .bp-flat    { background: rgba(100,116,139,.1);  color: var(--muted2); }
+
+    .action-text { font-size: 10px; font-weight: 600; }
+    .action-call { color: var(--green); }
+    .action-put  { color: var(--red); }
+    .action-wait { color: var(--muted2); }
+    .action-sell { color: var(--accent); }
+
+    .sym-link { color: var(--text); text-decoration: none; font-weight: 700; }
+    .sym-link:hover { color: var(--accent); }
+    .ltp-val { color: var(--muted2); font-size: 10px; }
+
+    .time-tag { font-size: 9px; color: var(--muted); }
+
+    /* ── Retail Signal Pills ── */
+    .retail-pill {
+      display: inline-block; font-size: 9px; font-weight: 600;
+      padding: 3px 7px; border-radius: 4px; white-space: nowrap; letter-spacing: .3px;
+    }
+    .retail-buy  { background: rgba(22,163,74,.12);  color: var(--green);  border: 1px solid rgba(22,163,74,.3); }
+    .retail-sell { background: rgba(220,38,38,.12); color: var(--red);    border: 1px solid rgba(220,38,38,.3); }
+    .retail-warn { background: rgba(202,138,4,.1);  color: var(--yellow); border: 1px solid rgba(202,138,4,.25); }
+    .retail-wait { font-size: 9px; color: var(--muted); }
+    .haction-src { font-size: 8px; color: var(--muted); margin-top: 2px; }
+    .loading-sig { font-size: 9px; color: var(--muted); animation: pulse 1.5s infinite; }
+    .er-badge { font-size: 8px; font-weight: 700; padding: 1px 4px; border-radius: 3px; margin-left: 5px; white-space: nowrap; }
+    .er-strong  { background: rgba(22,163,74,.12); color: var(--green); border: 1px solid rgba(22,163,74,.25); }
+    .er-mod     { background: rgba(202,138,4,.1);  color: var(--yellow); border: 1px solid rgba(202,138,4,.2); }
+    .spot-chg  { font-size: 9px; margin-left: 5px; font-weight: 600; }
+    .chg-up    { color: var(--green); }
+    .chg-dn    { color: var(--red); }
+    .sort-select {
+      background: var(--surface); border: 1px solid var(--border);
+      color: var(--text); border-radius: 4px; padding: 2px 6px;
+      font-size: 10px; cursor: pointer; margin-left: 6px;
+    }
+
+    /* ── Intraday Confluence Badges ── */
+    .intraday-confluence-wrap {
+      display: flex;
+      flex-direction: column;
+      gap: 3px;
+      margin-top: 5px;
+      font-family: 'Inter', sans-serif;
+    }
+    .zone-badge {
+      font-size: 8px;
+      font-weight: 700;
+      padding: 1px 4px;
+      border-radius: 3px;
+      letter-spacing: .5px;
+      width: fit-content;
+    }
+    .action-pill {
+      font-size: 8px;
+      font-weight: 600;
+      padding: 1px 4px;
+      border-radius: 3px;
+      width: fit-content;
+      border: 1px solid transparent;
+    }
+    
+    /* Zone Colors */
+    .zone-badge.zone-bull { background: rgba(22, 163, 74, 0.12); color: var(--green); border: 1px solid rgba(22, 163, 74, 0.2); }
+    .zone-badge.zone-mild-bull { background: rgba(22, 163, 74, 0.06); color: rgba(22, 163, 74, 0.85); border: 1px dashed rgba(22, 163, 74, 0.2); }
+    .zone-badge.zone-bear { background: rgba(220, 38, 38, 0.12); color: var(--red); border: 1px solid rgba(220, 38, 38, 0.2); }
+    .zone-badge.zone-mild-bear { background: rgba(220, 38, 38, 0.06); color: rgba(220, 38, 38, 0.85); border: 1px dashed rgba(220, 38, 38, 0.2); }
+    .zone-badge.zone-neut { background: var(--surface2); color: var(--muted); border: 1px solid var(--border); }
+    
+    /* Action Colors */
+    .action-pill.act-buy-ce { background: var(--green); color: #fff; font-weight: 700; }
+    .action-pill.act-buy-pe { background: var(--red); color: #fff; font-weight: 700; }
+    .action-pill.act-bias-ce { background: rgba(22, 163, 74, 0.05); color: var(--green); border: 1px solid rgba(22, 163, 74, 0.2); }
+    .action-pill.act-bias-pe { background: rgba(220, 38, 38, 0.05); color: var(--red); border: 1px solid rgba(220, 38, 38, 0.2); }
+    .action-pill.act-neut { background: transparent; color: var(--muted2); border: 1px solid var(--border); }
+
+    /* ── Empty / Loading State ── */
+    .empty-state {
+      display: flex; flex-direction: column; align-items: center;
+      justify-content: center; padding: 80px 20px; gap: 12px;
+      color: var(--muted2); text-align: center;
+    }
+    .empty-state .icon { font-size: 48px; }
+    .empty-state p { font-size: 11px; max-width: 320px; line-height: 1.6; }
+
+    /* ── Alert Toast ── */
+    #toast-container {
+      position: fixed; top: 70px; right: 16px; z-index: 999;
+      display: flex; flex-direction: column; gap: 8px; pointer-events: none;
+    }
+    .toast {
+      background: var(--surface2); border: 1px solid var(--green);
+      border-left: 3px solid var(--green); border-radius: 7px;
+      padding: 10px 14px; min-width: 260px; max-width: 320px;
+      box-shadow: 0 4px 20px rgba(0,0,0,.08);
+      animation: slideIn .3s ease;
+      pointer-events: auto;
+    }
+    .toast.bearish { border-color: var(--red); border-left-color: var(--red); }
+    @keyframes slideIn { from { transform: translateX(120%); opacity: 0; } to { transform: none; opacity: 1; } }
+    .toast-sym   { font-weight: 700; font-size: 12px; }
+    .toast-prof  { font-size: 9px; color: var(--muted2); margin-top: 2px; }
+
+    /* ── Flexbox Layout Wrap ── */
+    .main-layout {
+      display: flex;
+      width: 100%;
+      height: calc(100vh - 145px);
+      overflow: hidden;
+      background: var(--bg);
+    }
+    
+    /* Modify existing table-wrap to flex correctly */
+    .table-wrap {
+      flex: 1;
+      overflow: auto;
+      max-height: 100% !important; /* Managed by main-layout height */
+      border-right: 1px solid var(--border);
+    }
+
+    /* ── CPR Alerts Sidebar Styling ── */
+    .sidebar-alerts {
+      width: 320px;
+      min-width: 320px;
+      display: flex;
+      flex-direction: column;
+      height: 100%;
+      background: var(--surface);
+      border-left: 1px solid var(--border);
+      overflow: hidden;
+    }
+    .sidebar-hdr {
+      padding: 12px 16px;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background: var(--surface2);
+    }
+    .sidebar-title {
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 1.5px;
+      text-transform: uppercase;
+      color: var(--text);
+    }
+    .clear-alerts-btn {
+      background: none;
+      border: 1px solid var(--border);
+      color: var(--muted2);
+      font-size: 8px;
+      font-weight: bold;
+      padding: 4px 8px;
+      border-radius: 4px;
+      cursor: pointer;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      transition: all 0.2s;
+    }
+    .clear-alerts-btn:hover {
+      color: var(--accent);
+      border-color: var(--accent);
+      background: rgba(2, 132, 199, 0.05);
+    }
+    
+    .cpr-alerts-list {
+      flex: 1;
+      overflow-y: auto;
+      padding: 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    /* CPR Crossover Alert Cards */
+    .cpr-alert-card {
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-left: 4px solid var(--muted);
+      border-radius: 6px;
+      padding: 10px 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      transition: all 0.2s;
+      animation: alertSlideIn 0.3s ease;
+      cursor: pointer;
+    }
+    .cpr-alert-card:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+      border-color: var(--muted2);
+    }
+    
+    /* Dynamic Crossing Indicator Colors */
+    .cpr-alert-card.tc_cross_above { border-left-color: var(--green); }
+    .cpr-alert-card.tc_cross_below { border-left-color: var(--red); }
+    .cpr-alert-card.bc_cross_above { border-left-color: var(--green); }
+    .cpr-alert-card.bc_cross_below { border-left-color: var(--red); }
+    
+    @keyframes alertSlideIn {
+      from { transform: translateX(30px); opacity: 0; }
+      to { transform: translateX(0); opacity: 1; }
+    }
+    
+    .cpr-alert-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .cpr-alert-sym {
+      font-size: 11px;
+      font-weight: 700;
+      color: var(--text);
+      display: flex;
+      align-items: center;
+      gap: 5px;
+    }
+    .cpr-alert-time {
+      font-size: 8px;
+      color: var(--muted);
+    }
+    .cpr-alert-msg {
+      font-size: 9.5px;
+      font-weight: 700;
+    }
+    .cpr-alert-card.tc_cross_above .cpr-alert-msg { color: var(--green); }
+    .cpr-alert-card.tc_cross_below .cpr-alert-msg { color: var(--red); }
+    .cpr-alert-card.bc_cross_above .cpr-alert-msg { color: var(--green); }
+    .cpr-alert-card.bc_cross_below .cpr-alert-msg { color: var(--red); }
+    
+    .cpr-alert-details {
+      font-size: 8.5px;
+      color: var(--muted2);
+      display: flex;
+      justify-content: space-between;
+      margin-top: 2px;
+      border-top: 1px dotted var(--border);
+      padding-top: 4px;
+    }
+  </style>
+</head>
+<body>
+
+<!-- Header -->
+<header class="hdr">
+  <div class="hdr-title">⚡ F&amp;O <span>Synergy</span> Scanner</div>
+  <div class="hdr-right">
+    <select class="sort-select" id="ticker-config-select" onchange="updateTickerConfig(this.value)" title="WebSocket Route Type" style="margin-left: 0; margin-right: 12px; height: 32px; font-weight: 600; padding: 2px 8px; border-radius: 4px; background: rgba(255,255,255,0.06); border: 1px solid var(--border); color: #fff; outline: none; cursor: pointer;">
+      <option value="centralized">WS: Centralized (Shared)</option>
+      <option value="dedicated">WS: Dedicated (Real-time)</option>
+    </select>
+    <div id="status-dot" class="status-dot"></div>
+    <span id="status-label" class="status-label">Connecting…</span>
+    <a class="back-btn" href="oi-spurt-scanner.html">← OI Scanner</a>
+  </div>
+</header>
+
+<!-- Toolbar -->
+<div class="toolbar">
+  <button class="filter-btn active" id="f-all" onclick="setFilter('all')"         >All Stocks</button>
+  <button class="filter-btn" id="f-buy"        onclick="setFilter('buy')"         >🔔 BUY Alerts Only</button>
+  <button class="filter-btn" id="f-retail-buy" onclick="setFilter('retail-buy')"  >📊 Retail BUY</button>
+  <button class="filter-btn" id="f-any-buy"    onclick="setFilter('any-buy')"     >⚡ Any BUY Signal</button>
+  <button class="filter-btn" id="f-bull"       onclick="setFilter('bull')"        >🟢 Bull-Lock</button>
+  <button class="filter-btn" id="f-bear"       onclick="setFilter('bear')"        >🔴 Bear-Lock</button>
+  <button class="filter-btn" id="f-squeeze"    onclick="setFilter('squeeze')"     >⚡ V-Squeeze</button>
+  <button class="filter-btn" id="f-flush"      onclick="setFilter('flush')"       >💀 Floor Collapse</button>
+  <button class="filter-btn" id="f-linear"     onclick="setFilter('linear')"      >📈 Linear Move</button>
+  <button class="filter-btn" id="f-multi-confluence" onclick="setFilter('multi-confluence')">🌟 Multi-Confluence</button>
+  <div class="spacer"></div>
+  <select class="sort-select" id="sort-select" onchange="setSort(this.value)" title="Sort order">
+    <option value="default">Sort: Default</option>
+    <option value="pct-high">% ↓ High→Low</option>
+    <option value="pct-low">% ↑ Low→High</option>
+    <option value="open-gap-closest">Open Gap ↓ Closest</option>
+    <option value="discount-zone">Zone: Discounted First</option>
+    <option value="premium-zone">Zone: Premium First</option>
+    <option value="rvol-high">RVOL ↓ High→Low</option>
+    <option value="opening-positive">5M Candle: Positive First</option>
+    <option value="opening-negative">5M Candle: Negative First</option>
+  </select>
+  <span class="count-badge alert" id="alert-count">0 alerts</span>
+  <span class="count-badge"       id="total-count">0 scanned</span>
+  <span class="scan-time"         id="scan-time"></span>
+</div>
+
+<!-- Stats Row -->
+<div class="stats-row">
+  <div class="stat-box">
+    <div class="stat-label">🟢 Bull-Lock</div>
+    <div class="stat-val" id="s-bull" style="color:var(--green)">0</div>
+  </div>
+  <div class="stat-box">
+    <div class="stat-label">🔴 Bear-Lock</div>
+    <div class="stat-val" id="s-bear" style="color:var(--red)">0</div>
+  </div>
+  <div class="stat-box">
+    <div class="stat-label">⚡ V-Squeeze</div>
+    <div class="stat-val" id="s-squeeze" style="color:var(--accent)">0</div>
+  </div>
+  <div class="stat-box">
+    <div class="stat-label">💀 Floor Collapse</div>
+    <div class="stat-val" id="s-flush" style="color:var(--red)">0</div>
+  </div>
+  <div class="stat-box">
+    <div class="stat-label">🟡 Other Profiles</div>
+    <div class="stat-val" id="s-other" style="color:var(--yellow)">0</div>
+  </div>
+  <div class="stat-box">
+    <div class="stat-label">🔁 Mixed Flow</div>
+    <div class="stat-val" id="s-mixed" style="color:var(--muted2)">0</div>
+  </div>
+</div>
+
+<!-- Main Layout Container -->
+<div class="main-layout">
+  <div class="table-wrap">
+    <table id="synergy-table">
+      <thead>
+        <tr>
+          <th>Symbol</th>
+          <th>Futures Buildup</th>
+          <th>CE Wall Buildup</th>
+          <th>PE Wall Buildup</th>
+          <th>Retail Action</th>
+          <th>H-Action (Inst.)</th>
+          <th>Updated</th>
+        </tr>
+      </thead>
+      <tbody id="synergy-body">
+        <tr><td colspan="7">
+          <div class="empty-state">
+            <div class="icon">⏳</div>
+            <p>Loading synergy scanner… WebSocket connects after 12-minute API warm-up at server start.<br><br>
+            This page shows live data during market hours (9:15–15:30 IST).</p>
+          </div>
+        </td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- CPR Alerts Sidebar -->
+  <div class="sidebar-alerts">
+    <div class="sidebar-hdr">
+      <span class="sidebar-title">⚡ CPR CROSS ALERTS</span>
+      <button class="clear-alerts-btn" onclick="clearCprAlerts()">Clear</button>
+    </div>
+    <div id="cpr-alerts-list" class="cpr-alerts-list">
+      <div class="empty-state" style="padding: 60px 10px;">
+        <div class="icon">🔔</div>
+        <p>No TC/BC level crossings detected yet.<br>Listening for real-time live crossovers...</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+<!-- Toast container -->
+<div id="toast-container"></div>
+
+<script>
+  // ── State ──
+  let _allResults = {};
+  let _filter = 'all';
+  let _sort   = 'default';
+  let _socket = null;
+  let _retailRenderTimer = null;  // debounce handle for retail-filter re-renders
+
+  // ── Socket.IO Connection ──
+  function connectSocket() {
+    _socket = io({ transports: ['polling'] });
+
+    _socket.on('connect', () => {
+      setStatus('live', 'Live Feed');
+    });
+
+    _socket.on('disconnect', () => {
+      setStatus('warn', 'Reconnecting…');
+    });
+
+    // Real-time push alert when a stock fires a BUY-class synergy
+    _socket.on('synergy_alert', (data) => {
+      _allResults[data.symbol] = data;
+      renderTable();
+      updateStats();
+      showToast(data);
+    });
+
+    // Periodic full-state sync (every 60s emitted by server for catch-up)
+    _socket.on('synergy_update', (payload) => {
+      if (payload && payload.results) {
+        payload.results.forEach(r => { _allResults[r.symbol] = r; });
+        renderTable();
+        updateStats();
+        setScanTime(payload.timestamp);
+      }
+    });
+
+    // Real-time push alert for CPR crossings
+    _socket.on('cpr_cross_alert', (data) => {
+      addCprAlert(data);
+    });
+  }
+
+  // ── REST Polling Fallback (every 90s) ──
+  async function pollRest() {
+    try {
+      const r = await fetch('/api/oi/synergy-scan');
+      if (!r.ok) return;
+      const data = await r.json();
+      if (data.results) {
+        data.results.forEach(row => { _allResults[row.symbol] = row; });
+        renderTable();
+        updateStats();
+        setScanTime(data.timestamp);
+        document.getElementById('alert-count').textContent = data.alerts + ' alerts';
+        document.getElementById('total-count').textContent = data.count + ' scanned';
+      }
+      if (data.cpr_alerts) {
+        renderCprAlerts(data.cpr_alerts);
+      }
+    } catch(e) { /* ignore */ }
+  }
+
+  // ── UI Helpers ──
+  function setStatus(cls, label) {
+    const dot = document.getElementById('status-dot');
+    dot.className = 'status-dot ' + cls;
+    document.getElementById('status-label').textContent = label;
+  }
+
+  function setScanTime(ts) {
+    if (!ts) return;
+    const t = new Date(ts);
+    document.getElementById('scan-time').textContent =
+      'Updated ' + t.toLocaleTimeString('en-IN', {hour:'2-digit', minute:'2-digit', second:'2-digit'});
+  }
+
+  function setFilter(f) {
+    _filter = f;
+    document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+    document.getElementById('f-' + f)?.classList.add('active');
+    renderTable();
+  }
+
+  function setSort(s) {
+    _sort = s;
+    renderTable();
+  }
+
+  // ── Badge / Pill Helpers ──
+
+  function buildupPill(b) {
+    const cls = b === 'Long Buildup' ? 'bp-long' :
+                b === 'Short Buildup' ? 'bp-short' :
+                b === 'Short Covering' ? 'bp-cover' :
+                b === 'Long Unwinding' ? 'bp-unwind' : 'bp-flat';
+    return `<span class="buildup-pill ${cls}">${b || '–'}</span>`;
+  }
+
+
+  function getZoneClass(zone) {
+    if (!zone) return 'zone-neut';
+    if (zone.includes("Discount")) return "zone-bull";
+    if (zone.includes("Premium")) return "zone-bear";
+    return "zone-neut";
+  }
+
+  function getActionClass(action) {
+    if (!action) return 'act-neut';
+    if (action === "CE buy") return "act-buy-ce";
+    if (action === "PE buy") return "act-buy-pe";
+    if (action.includes("CE bias") || action.includes("CE only")) return "act-bias-ce";
+    if (action.includes("PE bias") || action.includes("PE only")) return "act-bias-pe";
+    return "act-neut";
+  }
+
+  // ── Filter Logic ──
+  function filterResults(results) {
+    if (_filter === 'all')     return results;
+    if (_filter === 'buy')     return results.filter(r => r.is_buy_signal);
+    if (_filter === 'bull')       return results.filter(r => (r.synergy_profile||'').includes('🟢'));
+    if (_filter === 'bear')       return results.filter(r => (r.synergy_profile||'').includes('🔴'));
+    if (_filter === 'squeeze')    return results.filter(r => (r.synergy_profile||'').includes('⚡'));
+    if (_filter === 'flush')      return results.filter(r => (r.synergy_profile||'').includes('💀'));
+    // Retail-based filters — cross-reference _retailCache
+    if (_filter === 'retail-buy') return results.filter(r => {
+      const rc = _retailCache[r.symbol];
+      return rc && /BUY/.test(rc.retail_action);
+    });
+    if (_filter === 'any-buy')    return results.filter(r => {
+      const rc = _retailCache[r.symbol];
+      return r.is_buy_signal || (rc && /BUY/.test(rc.retail_action));
+    });
+    if (_filter === 'linear')     return results.filter(r =>
+      r.er_tier === 'strong' || r.er_tier === 'moderate');
+    if (_filter === 'multi-confluence') return results.filter(r => r.is_confluence_active);
+    return results;
+  }
+
+  // ── Render Table ──
+  // Canonical index display order — always pinned to top, never sorted
+  const INDEX_ORDER = ['NIFTY', 'BANKNIFTY', 'FINNIFTY', 'MIDCPNIFTY', 'SENSEX', 'BANKEX'];
+
+  function renderTable() {
+    const body = document.getElementById('synergy-body');
+    const allResults = Object.values(_allResults);
+
+    // ── Split into indices (fixed order) and stocks (user-sort order) ──
+    const indexMap   = {};
+    allResults.forEach(r => { if (r.is_index) indexMap[r.symbol] = r; });
+    const indexRows  = INDEX_ORDER.map(s => indexMap[s]).filter(Boolean);
+    let   stockRows  = allResults.filter(r => !r.is_index);
+
+    // Apply user-selected sort to stocks only
+    if (_sort === 'pct-high') {
+      stockRows.sort((a, b) => (b.spot_change_pct ?? -999) - (a.spot_change_pct ?? -999));
+    } else if (_sort === 'pct-low') {
+      stockRows.sort((a, b) => (a.spot_change_pct ?? 999) - (b.spot_change_pct ?? 999));
+    } else if (_sort === 'open-gap-closest') {
+      stockRows.sort((a, b) => {
+        const gapA = a.open_gap_pct != null ? Math.abs(a.open_gap_pct) : 999;
+        const gapB = b.open_gap_pct != null ? Math.abs(b.open_gap_pct) : 999;
+        return gapA - gapB;
+      });
+    } else if (_sort === 'discount-zone') {
+      const zoneRanks = {
+        "Deep Discount": 1,
+        "Discount": 2,
+        "Mild Discount": 3,
+        "Equilibrium": 4,
+        "Mild Premium": 5,
+        "Premium": 6,
+        "Deep Premium": 7
+      };
+      stockRows.sort((a, b) => {
+        const rankA = zoneRanks[a.intraday_zone] ?? 4;
+        const rankB = zoneRanks[b.intraday_zone] ?? 4;
+        if (rankA !== rankB) return rankA - rankB;
+        return (a.dr_pct ?? 50) - (b.dr_pct ?? 50);
+      });
+    } else if (_sort === 'premium-zone') {
+      const zoneRanks = {
+        "Deep Discount": 1,
+        "Discount": 2,
+        "Mild Discount": 3,
+        "Equilibrium": 4,
+        "Mild Premium": 5,
+        "Premium": 6,
+        "Deep Premium": 7
+      };
+      stockRows.sort((a, b) => {
+        const rankA = zoneRanks[a.intraday_zone] ?? 4;
+        const rankB = zoneRanks[b.intraday_zone] ?? 4;
+        if (rankA !== rankB) return rankB - rankA;
+        return (b.dr_pct ?? 50) - (a.dr_pct ?? 50);
+      });
+    } else if (_sort === 'rvol-high') {
+      stockRows.sort((a, b) => (b.rvol_ratio ?? -999) - (a.rvol_ratio ?? -999));
+    } else if (_sort === 'opening-positive') {
+      stockRows.sort((a, b) => {
+        const valA = a.opening_5m_dir === 'positive' ? 1 : 0;
+        const valB = b.opening_5m_dir === 'positive' ? 1 : 0;
+        if (valA !== valB) return valB - valA;
+        return (b.spot_change_pct ?? -999) - (a.spot_change_pct ?? -999);
+      });
+    } else if (_sort === 'opening-negative') {
+      stockRows.sort((a, b) => {
+        const valA = a.opening_5m_dir === 'negative' ? 1 : 0;
+        const valB = b.opening_5m_dir === 'negative' ? 1 : 0;
+        if (valA !== valB) return valB - valA;
+        return (a.spot_change_pct ?? 999) - (b.spot_change_pct ?? 999);
+      });
+    } else {
+      // Default: BUY signals first, then A-Z
+      stockRows.sort((a, b) => {
+        if (a.is_buy_signal && !b.is_buy_signal) return -1;
+        if (!a.is_buy_signal && b.is_buy_signal)  return 1;
+        return (a.symbol || '').localeCompare(b.symbol || '');
+      });
+    }
+
+    // Indices pinned to top always; stocks follow with their sort
+    let results = [...indexRows, ...stockRows];
+
+    const filtered = filterResults(results);
+
+    if (filtered.length === 0) {
+      body.innerHTML = `<tr><td colspan="7">
+        <div class="empty-state">
+          <div class="icon">🔍</div>
+          <p>No matching synergy profiles yet.<br>
+          Scanner fires when Futures + CE Wall + PE Wall buildups align with one of the 7 institutional profiles.</p>
+        </div>
+      </td></tr>`;
+      return;
+    }
+
+    body.innerHTML = filtered.map((r, i) => {
+      const oisym = encodeURIComponent(r.symbol);
+      const rc = _retailCache[r.symbol];
+      const rHtml = rc ? _retailHtml(rc.retail_action)              : `<span class="loading-sig">…</span>`;
+      const hHtml = rc ? _hactionHtml(rc.h_action, rc.h_action_source) : `<span class="loading-sig">…</span>`;
+
+      // ── Divider row before first non-index stock ──
+      const prevR = filtered[i - 1];
+      const divider = (prevR && prevR.is_index && !r.is_index)
+        ? `<tr style="background:transparent;pointer-events:none">
+            <td colspan="7" style="padding:2px 8px;font-size:9px;font-weight:700;letter-spacing:.08em;
+              color:var(--muted2);border-bottom:1px solid var(--border);text-transform:uppercase">
+              ─── F&amp;O Stocks ───────────────────────────────────────────────────
+            </td></tr>`
+        : '';
+
+      // ── Dynamic Row Style Highlighting (CE buys light green, PE buys light red, No trade yellow) ──
+      let rowStyle = '';
+      if (r.is_index) {
+        rowStyle = `style="background:rgba(255,193,7,0.05);border-left:3px solid rgba(255,193,7,0.45)"`;
+      } else if (r.intraday_action === 'CE buy') {
+        // CE buys highlighted in light green
+        rowStyle = `style="background:rgba(34,197,94,0.06);border-left:3px solid rgba(34,197,94,0.7)"`;
+      } else if (r.intraday_action === 'PE buy') {
+        // PE buys highlighted in light red
+        rowStyle = `style="background:rgba(239,68,68,0.06);border-left:3px solid rgba(239,68,68,0.7)"`;
+      } else if (r.intraday_action === 'No trade') {
+        // No trade highlighted in yellow/gold
+        rowStyle = `style="background:rgba(234,179,8,0.05);border-left:3px solid rgba(234,179,8,0.5)"`;
+      } else if (r.intraday_action && r.intraday_action.includes('CE bias')) {
+        // CE bias soft tint
+        rowStyle = `style="background:rgba(34,197,94,0.02);border-left:3px solid rgba(34,197,94,0.35)"`;
+      } else if (r.intraday_action && r.intraday_action.includes('PE bias')) {
+        // PE bias soft tint
+        rowStyle = `style="background:rgba(239,68,68,0.02);border-left:3px solid rgba(239,68,68,0.35)"`;
+      } else if (r.intraday_action && r.intraday_action.includes('only on strong')) {
+        // Mild bias soft tint
+        rowStyle = `style="background:rgba(249,115,22,0.02);border-left:3px solid rgba(249,115,22,0.35)"`;
+      }
+
+      const idxBadge = r.is_index
+        ? `<span style="font-size:8px;font-weight:700;letter-spacing:.05em;color:#f5a623;
+             background:rgba(245,166,35,0.15);border-radius:3px;padding:1px 4px;margin-left:4px">IDX</span>`
+        : '';
+
+      return divider + `<tr onclick="window.open('oi-spurt-scanner.html?symbol=${oisym}', '_blank')" ${rowStyle}>
+        <td>
+          <div style="display:flex; align-items:center; gap:6px; white-space:nowrap; margin-bottom: 2px;">
+            <a class="sym-link" href="oi-spurt-scanner.html?symbol=${oisym}" target="_blank">${r.symbol}</a>${idxBadge}
+            <span class="ltp-val" style="margin-left: 2px;">₹${r.ltp ?? '–'}</span>
+            ${
+              r.spot_change_pct != null ? `<span class="spot-chg ${r.spot_change_pct >= 0 ? 'chg-up' : 'chg-dn'}">${r.spot_change_pct >= 0 ? '▲' : '▼'} ${Math.abs(r.spot_change_pct).toFixed(2)}%</span>` : ''
+            }${
+              r.open_gap_pct != null ? `<span class="spot-chg" style="color:var(--muted2); font-weight:normal" title="Open Gap: ${r.open_gap_pct >= 0 ? '+' : ''}${r.open_gap_pct}%"> (O: ${r.open_gap_pct >= 0 ? '+' : ''}${r.open_gap_pct}%)</span>` : ''
+            }${
+              r.rvol_ratio != null ? (() => {
+                const rvol = r.rvol_ratio;
+                const rvolColor = rvol >= 3 ? '#ff7b72' : rvol >= 2 ? '#3fb950' : rvol >= 1 ? '#e3b341' : '#8b949e';
+                const avgVolStr = r.avg_volume_m != null ? `/${r.avg_volume_m}M` : '';
+                return `<span style="font-size: 9.5px; font-weight: 700; color: ${rvolColor}; margin-left: 8px; opacity: 0.92;" title="Relative Volume vs 20-day avg baseline">RVOL: ${rvol}x${avgVolStr}</span>`;
+              })() : `<span style="font-size: 9.5px; font-weight: 500; color: var(--muted2); margin-left: 8px;" title="RVOL warming up...">– RVOL</span>`
+            }${
+              r.er_tier === 'strong'   ? `<span class="er-badge er-strong" title="ER ${r.efficiency_ratio} — Linear">📈 Lin</span>` :
+              r.er_tier === 'moderate' ? `<span class="er-badge er-mod"    title="ER ${r.efficiency_ratio} — Forming">〰 Mod</span>` : ''
+            }${
+              r.opening_5m_dir != null ? `<span style="font-size: 9.5px; font-weight: 700; color: ${r.opening_5m_dir === 'positive' ? '#3fb950' : r.opening_5m_dir === 'negative' ? '#ff7b72' : '#8b949e'}; margin-left: 8px; opacity: 0.92;" title="5-minute Opening Candle Direction">5M: ${r.opening_5m_dir === 'positive' ? '🟢 POS' : r.opening_5m_dir === 'negative' ? '🔴 NEG' : '⚪ FLAT'}</span>` : ''
+            }
+          </div>
+          ${
+            r.intraday_zone != null ? `
+              <div class="intraday-confluence-wrap" style="margin-top: 2px;" title="Confluence: PDL ₹${r.pdl} - PDH ₹${r.pdh} | CPR: BC ₹${r.bc} - TC ₹${r.tc} | DR%: ${r.dr_pct}% | CPR Pos: ${r.cpr_pos}${r.weekly_dr != null ? ` | Weekly: PWH ₹${r.pwh} - PWL ₹${r.pwl} | Weekly DR%: ${r.weekly_dr}% | Sizing: ${r.multi_action}` : ''}">
+                <div style="display:flex;gap:3px;align-items:center">
+                  <div class="zone-badge ${getZoneClass(r.intraday_zone)}">${r.intraday_zone.toUpperCase()} (${r.dr_pct != null ? r.dr_pct.toFixed(0) : '–'}%)</div>
+                  <div class="action-pill ${getActionClass(r.intraday_action)}">${r.intraday_action.toUpperCase()}${r.is_confluence_active ? '*' : ''}</div>
+                </div>
+              </div>` : ''
+          }
+        </td>
+        <td>${buildupPill(r.futures_buildup)}</td>
+        <td>${buildupPill(r.ce_buildup)}</td>
+        <td>${buildupPill(r.pe_buildup)}</td>
+        <td data-retail="${r.symbol}">${rHtml}</td>
+        <td data-haction="${r.symbol}">${hHtml}</td>
+        <td><span class="time-tag">${r.last_updated || '–'}</span></td>
+      </tr>`;
+    }).join('');
+
+    // Enqueue lazy retail fetch for each visible symbol (rate-limited, cached)
+    filtered.forEach(r => enqueueRetail(r.symbol));
+
+    document.getElementById('alert-count').textContent =
+      results.filter(r => r.is_buy_signal).length + ' alerts';
+    document.getElementById('total-count').textContent =
+      results.length + ' scanned';
+  }
+
+  // ── Stats Update ──
+  function updateStats() {
+    const r = Object.values(_allResults);
+    document.getElementById('s-bull').textContent    = r.filter(x => (x.synergy_profile||'').includes('🟢')).length;
+    document.getElementById('s-bear').textContent    = r.filter(x => (x.synergy_profile||'').includes('🔴')).length;
+    document.getElementById('s-squeeze').textContent = r.filter(x => (x.synergy_profile||'').includes('⚡')).length;
+    document.getElementById('s-flush').textContent   = r.filter(x => (x.synergy_profile||'').includes('💀')).length;
+    document.getElementById('s-other').textContent   = r.filter(x => (x.synergy_profile||'').includes('🟡') || (x.synergy_profile||'').includes('🪤') || (x.synergy_profile||'').includes('🔁')).length;
+    document.getElementById('s-mixed').textContent   = r.filter(x => (x.synergy_profile||'').includes('Mixed')).length;
+  }
+
+  // ── Toast Alert ──
+  function showToast(data) {
+    const isBear = (data.synergy_profile||'').includes('🔴') || (data.synergy_profile||'').includes('💀');
+    const tc = document.getElementById('toast-container');
+    const t  = document.createElement('div');
+    t.className = 'toast' + (isBear ? ' bearish' : '');
+    t.innerHTML = `
+      <div class="toast-sym">🔔 ${data.symbol}</div>
+      <div class="toast-prof">${data.synergy_profile}</div>`;
+    tc.appendChild(t);
+    setTimeout(() => t.remove(), 8000);
+  }
+
+  // ── Retail Signal Lazy Fetch (Option A: frontend-driven, rate-limited) ─────
+  const _retailCache = {};      // { symbol: { retail_action, h_action, h_action_source, ts } }
+  const _fetchQueue  = [];
+  const _fetchingNow = new Set();
+  const RETAIL_TTL   = 300_000; // 5-min cache per symbol
+  const FETCH_CONC   = 3;       // max concurrent fetches
+
+  function enqueueRetail(sym) {
+    if (_fetchingNow.has(sym)) return;
+    const c = _retailCache[sym];
+    // Cache hit: renderTable() already inlined the cached data in the row HTML — just return.
+    // Do NOT call _updateRetailCells here; that would trigger renderTable → enqueueRetail loop.
+    if (c && Date.now() - c.ts < RETAIL_TTL) return;
+    if (!_fetchQueue.includes(sym)) _fetchQueue.push(sym);
+    _drainQueue();
+  }
+
+  function _drainQueue() {
+    while (_fetchQueue.length > 0 && _fetchingNow.size < FETCH_CONC) {
+      const sym = _fetchQueue.shift();
+      _fetchingNow.add(sym);
+      fetch(`/api/oi/symbol/${encodeURIComponent(sym)}`)
+        .then(r => r.ok ? r.json() : null)
+        .then(data => {
+          _fetchingNow.delete(sym);
+          if (data && !data.error) {
+            const entry = {
+              retail_action:   data.retail_action   || '',
+              h_action:        data.h_action         || '',
+              h_action_source: data.h_action_source  || null,
+              ts: Date.now(),
+            };
+            _retailCache[sym] = entry;
+            _updateRetailCells(sym, entry);
+          }
+          _drainQueue();
+        })
+        .catch(() => { _fetchingNow.delete(sym); _drainQueue(); });
+    }
+  }
+
+  function _updateRetailCells(sym, entry) {
+    const rCell = document.querySelector(`td[data-retail="${sym}"]`);
+    const hCell = document.querySelector(`td[data-haction="${sym}"]`);
+    if (rCell) rCell.innerHTML = _retailHtml(entry.retail_action);
+    if (hCell) hCell.innerHTML = _hactionHtml(entry.h_action, entry.h_action_source);
+    // Debounced re-render for retail filters: batches all simultaneous fetch completions
+    // into a single renderTable() call 300ms after the last update — prevents thrashing.
+    if (_filter === 'retail-buy' || _filter === 'any-buy') {
+      if (_retailRenderTimer) clearTimeout(_retailRenderTimer);
+      _retailRenderTimer = setTimeout(renderTable, 300);
+    }
+  }
+
+  function _retailHtml(action) {
+    if (!action || action.startsWith('WAIT') || action === '') return `<span class="retail-wait">WAIT</span>`;
+    const isBuy  = action.includes('BUY');
+    const isSell = /SELL|EXIT|BOOK/.test(action);
+    const cls = isBuy ? 'retail-buy' : isSell ? 'retail-sell' : 'retail-wait';
+    return `<span class="retail-pill ${cls}">${action}</span>`;
+  }
+
+  function _hactionHtml(h_action, source) {
+    if (!h_action) return `<span class="retail-wait">–</span>`;
+    const isBuy  = h_action.includes('BUY');
+    const isWait = /WAIT|CONSOL|PREPARE/.test(h_action);
+    const cls    = isBuy ? 'retail-buy' : isWait ? 'retail-warn' : 'retail-wait';
+    const label  = h_action.replace(/^[\u2605\u2606]+\s*/, '').trim(); // strip stars
+    let srcHtml  = '';
+    if (source) {
+      const oiK = source.oi ? ` · OI: ${(source.oi / 1000).toFixed(1)}K` : '';
+      srcHtml = `<div class="haction-src">${source.side} ${source.strike}${oiK}</div>`;
+    }
+    return `<span class="retail-pill ${cls}" title="${h_action}">${label}</span>${srcHtml}`;
+  }
+
+  // ── CPR Crossing Alerts State & Render ──
+  let _cprAlerts = [];
+
+  function renderCprAlerts(alerts) {
+    if (!alerts || alerts.length === 0) return;
+    
+    // Merge new alerts and remove duplicates
+    alerts.forEach(newAlert => {
+      const exists = _cprAlerts.some(a => 
+        a.symbol === newAlert.symbol && 
+        a.timestamp === newAlert.timestamp && 
+        a.type === newAlert.type
+      );
+      if (!exists) {
+        _cprAlerts.push(newAlert);
+      }
+    });
+
+    // Sort: newest first
+    _cprAlerts.sort((a, b) => b.timestamp.localeCompare(a.timestamp));
+    _cprAlerts = _cprAlerts.slice(0, 50); // Keep last 50
+    updateCprSidebar();
+  }
+
+  function addCprAlert(newAlert) {
+    console.log("⚡ [Synergy Dashboard] CPR Cross Alert received:", newAlert);
+    const exists = _cprAlerts.some(a => 
+      a.symbol === newAlert.symbol && 
+      a.timestamp === newAlert.timestamp && 
+      a.type === newAlert.type
+    );
+    if (exists) return;
+    
+    _cprAlerts.unshift(newAlert); // Add to top
+    _cprAlerts = _cprAlerts.slice(0, 50); // Keep last 50
+    updateCprSidebar();
+  }
+
+  function clearCprAlerts() {
+    _cprAlerts = [];
+    updateCprSidebar();
+  }
+
+  function updateCprSidebar() {
+    const list = document.getElementById('cpr-alerts-list');
+    if (!list) return;
+    
+    if (_cprAlerts.length === 0) {
+      list.innerHTML = `
+        <div class="empty-state" style="padding: 60px 10px;">
+          <div class="icon">🔔</div>
+          <p>No TC/BC level crossings detected yet.<br>Listening for real-time live crossovers...</p>
+        </div>`;
+      return;
+    }
+    
+    list.innerHTML = _cprAlerts.map(a => {
+      const isIndex = INDEX_ORDER.includes(a.symbol);
+      const idxBadge = isIndex 
+        ? `<span style="font-size:7px; font-weight:700; letter-spacing:.05em; color:#f5a623; background:rgba(245,166,35,0.15); border-radius:3px; padding:0.5px 3px; margin-left:4px;">IDX</span>`
+        : '';
+        
+      const levelLabel = a.type.includes('tc') ? 'TC' : 'BC';
+      const levelVal = a.type.includes('tc') ? a.tc : a.bc;
+      const arrow = a.type.includes('above') ? '▲' : '▼';
+      
+      return `
+        <div class="cpr-alert-card ${a.type}" onclick="window.open('oi-spurt-scanner.html?symbol=${encodeURIComponent(a.symbol)}', '_blank')">
+          <div class="cpr-alert-header">
+            <span class="cpr-alert-sym">${a.symbol} ${idxBadge}</span>
+            <span class="cpr-alert-time">${a.timestamp}</span>
+          </div>
+          <div class="cpr-alert-msg">${arrow} ${a.message}</div>
+          <div class="cpr-alert-details">
+            <span>LTP: ₹${typeof a.ltp === 'number' ? a.ltp.toFixed(2) : (a.ltp || '–')}</span>
+            <span>${levelLabel}: ₹${typeof levelVal === 'number' ? levelVal.toFixed(2) : (levelVal || '–')}</span>
+          </div>
+        </div>`;
+    }).join('');
+  }
+
+  // ── Ticker Config Fetch & Update ──
+  async function fetchTickerConfig() {
+    try {
+      const res = await fetch('/api/ticker/config');
+      if (res.ok) {
+        const config = await res.json();
+        const select = document.getElementById('ticker-config-select');
+        if (select && config.synergy) {
+          select.value = config.synergy;
+        }
+      }
+    } catch (e) {
+      console.error("Failed to fetch ticker config", e);
+    }
+  }
+
+  async function updateTickerConfig(val) {
+    try {
+      const res = await fetch('/api/ticker/config', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ synergy: val })
+      });
+      if (res.ok) {
+        const data = await res.json();
+        alert("WebSocket mode updated! Please restart the server terminal to apply changes.");
+      }
+    } catch (e) {
+      alert("Failed to update WebSocket configuration: " + e);
+    }
+  }
+
+  // ── Boot ──
+  fetchTickerConfig();
+  connectSocket();
+  pollRest(); // immediate first poll — populates table before first Socket.IO broadcast (60s)
+  setInterval(pollRest, 300000); // REST fallback every 5 min (Socket.IO is primary real-time path)
+</script>
+</body>
+</html>

@@ -1,0 +1,19 @@
+# TradeSignal — Termux-compatible requirements
+# Use this file on Android/Termux: pip install -r requirements-termux.txt
+#
+# Key differences from requirements.txt:
+#  - gevent omitted (fails to build on Termux ARM; not needed as gunicorn is not used)
+#  - gunicorn omitted (not needed; socketio.run() is used)
+#  - waitress omitted (not needed on Android)
+#  - numpy/pandas omitted (installed via Termux pkg and inherited via --system-site-packages)
+#  - flask-compress kept (pure Python, works fine)
+
+Flask>=3.0.3
+flask-cors>=4.0.1
+flask-compress>=1.15
+flask-socketio>=5.3.6
+kiteconnect>=5.0.1
+python-dotenv>=1.0.1
+feedparser>=6.0.11
+requests>=2.31.0
+pytz>=2024.1

@@ -1,0 +1,313 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>TradeSignal — Regression Runner</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { background: #0f1117; color: #e0e0e0; font-family: 'Consolas', monospace; padding: 20px; }
+    h1 { color: #42A5F5; margin-bottom: 6px; }
+    .subtitle { color: #888; font-size: 0.85rem; margin-bottom: 20px; }
+    .toolbar { display: flex; gap: 10px; margin-bottom: 16px; flex-wrap: wrap; align-items: center; }
+    button { padding: 8px 18px; border: none; border-radius: 6px; cursor: pointer; font-weight: 600; font-size: 0.85rem; }
+    #btn-run  { background: #1565C0; color: #fff; }
+    #btn-load { background: #444; color: #fff; }
+    input[type=file] { display: none; }
+    .status-bar { background: #1a1d27; border-radius: 6px; padding: 10px 14px; margin-bottom: 16px;
+                  display: flex; justify-content: space-between; align-items: center; font-size: 0.85rem; }
+    .totals { display: flex; gap: 16px; }
+    .t-pass { color: #26A69A; font-weight: 700; }
+    .t-fail { color: #EF5350; font-weight: 700; }
+    .t-warn { color: #FF9800; font-weight: 700; }
+    .scenario-grid { display: grid; gap: 10px; }
+    .card { background: #1a1d27; border-radius: 8px; padding: 14px;
+            border-left: 4px solid #2a2d3a; transition: border-color 0.2s; }
+    .card.pass { border-left-color: #26A69A; }
+    .card.fail { border-left-color: #EF5350; }
+    .card.warn { border-left-color: #FF9800; }
+    .card-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; }
+    .card-id { font-weight: 700; color: #e0e0e0; font-size: 0.88rem; }
+    .badge { padding: 2px 10px; border-radius: 4px; font-size: 0.72rem; font-weight: 700; }
+    .badge-pass { background: #26A69A22; color: #26A69A; border: 1px solid #26A69A55; }
+    .badge-fail { background: #EF535022; color: #EF5350; border: 1px solid #EF535055; }
+    .badge-warn { background: #FF980022; color: #FF9800; border: 1px solid #FF980055; }
+    .badge-pend { background: #33333322; color: #888; border: 1px solid #44444455; }
+    .desc { color: #666; font-size: 0.75rem; margin-bottom: 8px; }
+    .diff-grid { display: grid; grid-template-columns: repeat(5,1fr); gap: 6px; margin-bottom: 8px; }
+    .kv { background: #12141c; border-radius: 4px; padding: 5px 8px; }
+    .kv label { display: block; font-size: 0.58rem; color: #555; text-transform: uppercase; margin-bottom: 2px; }
+    .kv .val-golden { font-size: 0.72rem; color: #888; }
+    .kv .val-current { font-size: 0.82rem; font-weight: 600; }
+    .kv.changed .val-current { color: #EF5350; }
+    .kv.ok      .val-current { color: #26A69A; }
+    .kv.warn    .val-current { color: #FF9800; }
+    details { margin-top: 6px; }
+    summary { font-size: 0.72rem; color: #555; cursor: pointer; }
+    pre { background: #12141c; padding: 10px; border-radius: 4px; font-size: 0.68rem;
+          overflow-x: auto; max-height: 220px; margin-top: 6px; white-space: pre-wrap; }
+    .diff-line-add { color: #26A69A; }
+    .diff-line-rem { color: #EF5350; }
+    .diff-line-ctx { color: #666; }
+    #golden-status { font-size: 0.8rem; color: #FF9800; }
+    .progress { height: 3px; background: #1565C0; border-radius: 2px;
+                transition: width 0.3s; width: 0; margin-bottom: 16px; }
+  </style>
+</head>
+<body>
+  <h1>🔬 Regression Runner</h1>
+  <p class="subtitle">
+    Loads golden baseline JSON, runs same scenarios through the <strong>current validator</strong>,
+    and diffs every key field. Use this after migration to verify zero behavioural change.
+  </p>
+
+  <div class="toolbar">
+    <button id="btn-load" onclick="document.getElementById('file-input').click()">📂 LOAD golden.json</button>
+    <input type="file" id="file-input" accept=".json" onchange="loadGolden(event)">
+    <button id="btn-run" onclick="runRegression()" disabled>▶ RUN REGRESSION</button>
+    <span id="golden-status">No golden file loaded.</span>
+  </div>
+
+  <div class="progress" id="progress-bar"></div>
+
+  <div class="status-bar">
+    <span id="run-status">Load a golden.json file then press Run.</span>
+    <div class="totals">
+      <span class="t-pass">✅ <span id="cnt-pass">0</span> PASS</span>
+      <span class="t-warn">⚠ <span id="cnt-warn">0</span> DRIFT</span>
+      <span class="t-fail">❌ <span id="cnt-fail">0</span> FAIL</span>
+    </div>
+  </div>
+
+  <div class="scenario-grid" id="grid"></div>
+
+  <!-- Dependencies -->
+  <script src="../../app/js/technical-indicators.js"></script>
+  <script src="../../app/js/gap-analysis-engine.js"></script>
+  <script src="../../app/js/entry-validator.js"></script>
+  <script src="fixtures/ohlcv_factory.js"></script>
+
+  <script>
+    let goldenData = null;
+    let cntPass = 0, cntWarn = 0, cntFail = 0;
+
+    // ── Comparison config: which fields must be exact, which can drift ───────
+    const EXACT_FIELDS = [
+      'isValid', 'direction', 'setupType', 'riskLevel',
+      'preConditions.emaStack', 'preConditions.vwapSide', 'preConditions.ema50Trend',
+      'triggerCheck.passed', 'gapException.isGap', 'gapOverride.isOverride',
+      'gapOverride.gapTier',
+    ];
+    // Numeric fields: pass if within tolerance
+    const NUMERIC_FIELDS = [
+      { key: 'confidence', tol: 3 },
+      { key: 'stopLoss',   tol: 1.0 },
+      { key: 'indicators.ema9',  tol: 2.0 },
+      { key: 'indicators.ema21', tol: 2.0 },
+      { key: 'indicators.rsi',   tol: 2.0 },
+      { key: 'indicators.adx',   tol: 3.0 },
+      { key: 'indicatorScore.score', tol: 0.05 },
+    ];
+
+    function getPath(obj, path) {
+      return path.split('.').reduce((o, k) => (o != null ? o[k] : undefined), obj);
+    }
+
+    // ── Load golden JSON ─────────────────────────────────────────────────────
+    function loadGolden(event) {
+      const file = event.target.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        try {
+          goldenData = JSON.parse(e.target.result);
+          document.getElementById('golden-status').textContent =
+            `✅ Loaded: ${Object.keys(goldenData).length} scenarios from ${file.name}`;
+          document.getElementById('golden-status').style.color = '#26A69A';
+          document.getElementById('btn-run').disabled = false;
+          buildGrid();
+        } catch(err) {
+          document.getElementById('golden-status').textContent = `❌ Invalid JSON: ${err.message}`;
+        }
+      };
+      reader.readAsText(file);
+    }
+
+    // ── Build UI grid ────────────────────────────────────────────────────────
+    function buildGrid() {
+      const grid = document.getElementById('grid');
+      grid.innerHTML = '';
+      Object.keys(goldenData).forEach(id => {
+        const entry = goldenData[id];
+        const card = document.createElement('div');
+        card.className = 'card';
+        card.id = `card-${id}`;
+        card.innerHTML = `
+          <div class="card-header">
+            <span class="card-id">${id}</span>
+            <span class="badge badge-pend" id="badge-${id}">PENDING</span>
+          </div>
+          <div class="desc">${entry.description}</div>
+          <div class="diff-grid" id="diff-${id}"></div>
+          <details id="details-${id}">
+            <summary>View field diff</summary>
+            <pre id="pre-${id}">—</pre>
+          </details>`;
+        grid.appendChild(card);
+      });
+    }
+
+    // ── Run regression ───────────────────────────────────────────────────────
+    async function runRegression() {
+      cntPass = 0; cntWarn = 0; cntFail = 0;
+      updateCounters();
+      const ids = Object.keys(goldenData);
+      const bar = document.getElementById('progress-bar');
+
+      for (let i = 0; i < ids.length; i++) {
+        const id = ids[i];
+        bar.style.width = `${Math.round((i / ids.length) * 100)}%`;
+        document.getElementById('run-status').textContent =
+          `Running ${i+1}/${ids.length}: ${id}`;
+        await new Promise(r => setTimeout(r, 10));
+
+        const entry = goldenData[id];
+        const sc = OHLCVFactory.SCENARIOS[id];
+
+        if (!sc) {
+          markCard(id, 'warn', `SCENARIO NOT FOUND in factory`);
+          cntWarn++;
+          updateCounters();
+          continue;
+        }
+
+        try {
+          const validator = new EntryValidator();
+          const current = validator.validate({
+            symbol:      sc.params.symbol,
+            direction:   sc.params.direction,
+            price:       sc.params.price,
+            ohlcv:       sc.ohlcv,
+            snapshot:    sc.params.snapshot || {},
+            optionsData: sc.params.optionsData || {},
+            targetDate:  sc.params.targetDate,
+            entryTime:   sc.params.entryTime,
+          });
+
+          const golden = entry.golden;
+          const diffs = compareResults(golden, current);
+          renderDiff(id, golden, current, diffs);
+
+          const hasFail = diffs.some(d => d.status === 'FAIL');
+          const hasWarn = diffs.some(d => d.status === 'WARN');
+
+          if (hasFail) {
+            markCard(id, 'fail', `FAIL — ${diffs.filter(d=>d.status==='FAIL').length} field(s) changed`);
+            cntFail++;
+          } else if (hasWarn) {
+            markCard(id, 'warn', `DRIFT — within tolerance`);
+            cntWarn++;
+          } else {
+            markCard(id, 'pass', 'PASS');
+            cntPass++;
+          }
+        } catch(e) {
+          markCard(id, 'fail', `ERROR: ${e.message}`);
+          cntFail++;
+        }
+        updateCounters();
+      }
+
+      bar.style.width = '100%';
+      bar.style.background = cntFail > 0 ? '#EF5350' : cntWarn > 0 ? '#FF9800' : '#26A69A';
+      document.getElementById('run-status').textContent =
+        `✅ Done. ${cntPass} pass, ${cntWarn} drift, ${cntFail} fail.`;
+    }
+
+    // ── Compare golden vs current ────────────────────────────────────────────
+    function compareResults(golden, current) {
+      const diffs = [];
+
+      // Exact fields
+      EXACT_FIELDS.forEach(path => {
+        const g = getPath(golden, path);
+        const c = getPath(current, path);
+        const match = JSON.stringify(g) === JSON.stringify(c);
+        diffs.push({ path, golden: g, current: c, status: match ? 'OK' : 'FAIL' });
+      });
+
+      // Numeric fields with tolerance
+      NUMERIC_FIELDS.forEach(({ key, tol }) => {
+        const g = getPath(golden, key);
+        const c = getPath(current, key);
+        if (g == null && c == null) return;
+        const diff = Math.abs((g || 0) - (c || 0));
+        const status = diff === 0 ? 'OK' : diff <= tol ? 'WARN' : 'FAIL';
+        diffs.push({ path: key, golden: g, current: c, diff: diff.toFixed(3), tol, status });
+      });
+
+      return diffs;
+    }
+
+    // ── Render diff cells ────────────────────────────────────────────────────
+    function renderDiff(id, golden, current, diffs) {
+      const container = document.getElementById(`diff-${id}`);
+      const pre = document.getElementById(`pre-${id}`);
+
+      const cells = [
+        { label: 'isValid', g: golden.isValid, c: current.isValid },
+        { label: 'Confidence', g: golden.confidence, c: current.confidence },
+        { label: 'Setup Type', g: golden.setupType, c: current.setupType },
+        { label: 'Stop Loss', g: golden.stopLoss, c: current.stopLoss },
+        { label: 'Risk Level', g: golden.riskLevel, c: current.riskLevel },
+      ];
+
+      container.innerHTML = cells.map(({ label, g, c }) => {
+        const match = JSON.stringify(g) === JSON.stringify(c);
+        const cls = match ? 'ok' : 'changed';
+        return `<div class="kv ${cls}">
+          <label>${label}</label>
+          <div class="val-golden">${JSON.stringify(g)}</div>
+          <div class="val-current">${JSON.stringify(c)}</div>
+        </div>`;
+      }).join('');
+
+      // Text diff of reasoning arrays
+      const gReasoning = (golden.reasoning || []);
+      const cReasoning = (current.reasoning || []);
+      let diffLines = [];
+      gReasoning.forEach((line, i) => {
+        if (cReasoning[i] === line) diffLines.push(`  ${line}`);
+        else {
+          diffLines.push(`- ${line}`);
+          if (cReasoning[i]) diffLines.push(`+ ${cReasoning[i]}`);
+        }
+      });
+      cReasoning.slice(gReasoning.length).forEach(l => diffLines.push(`+ ${l}`));
+
+      const allDiffs = diffs.filter(d => d.status !== 'OK');
+      const diffText = allDiffs.length === 0
+        ? '✅ All fields match exactly.'
+        : allDiffs.map(d =>
+            `[${d.status}] ${d.path}: golden=${JSON.stringify(d.golden)} current=${JSON.stringify(d.current)}` +
+            (d.diff ? ` (diff=${d.diff}, tol=${d.tol})` : '')
+          ).join('\n');
+
+      pre.textContent = diffText + '\n\n=== REASONING DIFF ===\n' + diffLines.join('\n');
+    }
+
+    function markCard(id, state, text) {
+      const card = document.getElementById(`card-${id}`);
+      const badge = document.getElementById(`badge-${id}`);
+      card.className = `card ${state}`;
+      badge.textContent = text;
+      badge.className = `badge badge-${state}`;
+    }
+
+    function updateCounters() {
+      document.getElementById('cnt-pass').textContent = cntPass;
+      document.getElementById('cnt-warn').textContent = cntWarn;
+      document.getElementById('cnt-fail').textContent = cntFail;
+    }
+  </script>
+</body>
+</html>

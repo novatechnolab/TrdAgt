@@ -1,0 +1,1523 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>OI Spurt Scanner — NSE F&O</title>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;600;700&family=Syne:wght@400;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #070b0f;
+    --surface: #0d1318;
+    --card: #111820;
+    --border: #1e2d3d;
+    --border2: #243344;
+    --accent: #00d4ff;
+    --accent2: #0099cc;
+    --bull: #00e676;
+    --bear: #ff3d71;
+    --warn: #ffb300;
+    --text: #e2eaf2;
+    --muted: #5a7a94;
+    --dim: #2a3f52;
+    --glow-bull: rgba(0,230,118,0.15);
+    --glow-bear: rgba(255,61,113,0.15);
+    --glow-accent: rgba(0,212,255,0.12);
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'JetBrains Mono', monospace;
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* Scanline effect */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background: repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(0,212,255,0.015) 2px, rgba(0,212,255,0.015) 4px);
+    pointer-events: none;
+    z-index: 1000;
+  }
+
+  /* Header */
+  .header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 14px 24px;
+    border-bottom: 1px solid var(--border);
+    background: linear-gradient(90deg, rgba(0,212,255,0.04), transparent);
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    backdrop-filter: blur(12px);
+  }
+
+  .logo {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .logo-icon {
+    width: 34px; height: 34px;
+    background: linear-gradient(135deg, var(--accent), #0066aa);
+    border-radius: 8px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 16px;
+    box-shadow: 0 0 16px rgba(0,212,255,0.3);
+  }
+
+  .logo-text {
+    font-family: 'Syne', sans-serif;
+    font-size: 15px;
+    font-weight: 700;
+    color: var(--text);
+    letter-spacing: 0.5px;
+  }
+
+  .logo-sub {
+    font-size: 9px;
+    color: var(--muted);
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    margin-top: 1px;
+  }
+
+  .header-center {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+  }
+
+  .market-pill {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    padding: 5px 14px;
+    font-size: 11px;
+  }
+
+  .pulse-dot {
+    width: 7px; height: 7px;
+    border-radius: 50%;
+    background: var(--bull);
+    box-shadow: 0 0 8px var(--bull);
+    animation: pulse 1.5s infinite;
+  }
+
+  @keyframes pulse {
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50% { opacity: 0.5; transform: scale(0.8); }
+  }
+
+  .clock {
+    font-size: 13px;
+    color: var(--accent);
+    letter-spacing: 1px;
+  }
+
+  .header-right {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  /* API Config Panel */
+  .api-bar {
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+    padding: 10px 24px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex-wrap: wrap;
+  }
+
+  .api-bar label {
+    font-size: 10px;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    white-space: nowrap;
+  }
+
+  .api-input {
+    background: var(--card);
+    border: 1px solid var(--border2);
+    color: var(--text);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    padding: 6px 10px;
+    border-radius: 6px;
+    outline: none;
+    transition: border-color 0.2s;
+  }
+
+  .api-input:focus { border-color: var(--accent); }
+  .api-input.token { width: 260px; }
+  .api-input.small { width: 80px; }
+
+  .btn {
+    padding: 7px 16px;
+    border-radius: 6px;
+    border: none;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    font-weight: 600;
+    cursor: pointer;
+    letter-spacing: 0.5px;
+    transition: all 0.2s;
+    white-space: nowrap;
+  }
+
+  .btn-primary {
+    background: linear-gradient(135deg, var(--accent), var(--accent2));
+    color: #000;
+    box-shadow: 0 0 12px rgba(0,212,255,0.25);
+  }
+
+  .btn-primary:hover { box-shadow: 0 0 20px rgba(0,212,255,0.45); transform: translateY(-1px); }
+
+  .btn-ghost {
+    background: transparent;
+    border: 1px solid var(--border2);
+    color: var(--muted);
+  }
+
+  .btn-ghost:hover { border-color: var(--accent); color: var(--accent); }
+
+  .btn-demo {
+    background: rgba(255,179,0,0.1);
+    border: 1px solid rgba(255,179,0,0.3);
+    color: var(--warn);
+  }
+
+  .btn-demo:hover { background: rgba(255,179,0,0.2); }
+
+  .connection-status {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 10px;
+    padding: 5px 12px;
+    border-radius: 20px;
+    border: 1px solid var(--border);
+  }
+
+  .connection-status.connected { border-color: rgba(0,230,118,0.3); color: var(--bull); background: rgba(0,230,118,0.05); }
+  .connection-status.disconnected { border-color: rgba(255,61,113,0.3); color: var(--bear); background: rgba(255,61,113,0.05); }
+  .connection-status.demo { border-color: rgba(255,179,0,0.3); color: var(--warn); background: rgba(255,179,0,0.05); }
+
+  /* Filter Bar */
+  .filter-bar {
+    padding: 12px 24px;
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    flex-wrap: wrap;
+  }
+
+  .filter-group {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .filter-label {
+    font-size: 9px;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+  }
+
+  .filter-input {
+    background: var(--card);
+    border: 1px solid var(--border2);
+    color: var(--text);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    padding: 5px 10px;
+    border-radius: 6px;
+    outline: none;
+    width: 70px;
+  }
+
+  .filter-input:focus { border-color: var(--accent); }
+
+  .toggle-group {
+    display: flex;
+    gap: 4px;
+  }
+
+  .toggle-btn {
+    padding: 5px 12px;
+    border-radius: 5px;
+    border: 1px solid var(--border2);
+    background: transparent;
+    color: var(--muted);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+
+  .toggle-btn.active-bull { background: rgba(0,230,118,0.12); border-color: rgba(0,230,118,0.4); color: var(--bull); }
+  .toggle-btn.active-bear { background: rgba(255,61,113,0.12); border-color: rgba(255,61,113,0.4); color: var(--bear); }
+  .toggle-btn.active-all { background: rgba(0,212,255,0.1); border-color: rgba(0,212,255,0.35); color: var(--accent); }
+
+  .divider { width: 1px; height: 24px; background: var(--border); }
+
+  /* Stats Bar */
+  .stats-bar {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 1px;
+    background: var(--border);
+    border-bottom: 1px solid var(--border);
+  }
+
+  .stat-card {
+    background: var(--surface);
+    padding: 12px 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+
+  .stat-label {
+    font-size: 9px;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+  }
+
+  .stat-val {
+    font-family: 'Syne', sans-serif;
+    font-size: 22px;
+    font-weight: 700;
+    line-height: 1;
+  }
+
+  .stat-val.bull { color: var(--bull); }
+  .stat-val.bear { color: var(--bear); }
+  .stat-val.accent { color: var(--accent); }
+  .stat-val.warn { color: var(--warn); }
+
+  .stat-sub {
+    font-size: 9px;
+    color: var(--dim);
+  }
+
+  /* Main Content */
+  .main {
+    padding: 20px 24px;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+  }
+
+  .section-title {
+    font-family: 'Syne', sans-serif;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: var(--muted);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 12px;
+  }
+
+  .section-title::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: var(--border);
+  }
+
+  .section-badge {
+    font-size: 9px;
+    padding: 2px 8px;
+    border-radius: 10px;
+    background: var(--border);
+    color: var(--muted);
+  }
+
+  /* Scanner Table */
+  .scanner-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 12px;
+  }
+
+  .scanner-table thead tr {
+    background: var(--surface);
+    border-bottom: 2px solid var(--border2);
+  }
+
+  .scanner-table th {
+    padding: 10px 14px;
+    text-align: left;
+    font-size: 9px;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    color: var(--muted);
+    font-weight: 500;
+    white-space: nowrap;
+  }
+
+  .scanner-table th.right { text-align: right; }
+
+  .scanner-table tbody tr {
+    border-bottom: 1px solid var(--border);
+    transition: background 0.15s;
+    cursor: pointer;
+  }
+
+  .scanner-table tbody tr:hover { background: rgba(0,212,255,0.03); }
+
+  .scanner-table td {
+    padding: 11px 14px;
+    white-space: nowrap;
+  }
+
+  .scanner-table td.right { text-align: right; }
+
+  .symbol-cell {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .symbol-icon {
+    width: 30px; height: 30px;
+    border-radius: 6px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 10px;
+    font-weight: 700;
+    flex-shrink: 0;
+  }
+
+  .symbol-icon.bull-icon { background: rgba(0,230,118,0.12); color: var(--bull); border: 1px solid rgba(0,230,118,0.2); }
+  .symbol-icon.bear-icon { background: rgba(255,61,113,0.12); color: var(--bear); border: 1px solid rgba(255,61,113,0.2); }
+
+  .symbol-name {
+    font-weight: 600;
+    font-size: 13px;
+    color: var(--text);
+  }
+
+  .symbol-sector {
+    font-size: 9px;
+    color: var(--muted);
+    margin-top: 1px;
+  }
+
+  .price-up { color: var(--bull); }
+  .price-down { color: var(--bear); }
+  .price-neutral { color: var(--text); }
+
+  .change-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 3px 8px;
+    border-radius: 5px;
+    font-size: 11px;
+    font-weight: 600;
+  }
+
+  .change-badge.up { background: rgba(0,230,118,0.12); color: var(--bull); }
+  .change-badge.down { background: rgba(255,61,113,0.12); color: var(--bear); }
+
+  .oi-bar-wrap {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .oi-bar-bg {
+    width: 70px;
+    height: 5px;
+    background: var(--border2);
+    border-radius: 3px;
+    overflow: hidden;
+  }
+
+  .oi-bar-fill {
+    height: 100%;
+    border-radius: 3px;
+    transition: width 0.5s ease;
+  }
+
+  .oi-bar-fill.bull { background: var(--bull); box-shadow: 0 0 6px rgba(0,230,118,0.5); }
+  .oi-bar-fill.bear { background: var(--bear); box-shadow: 0 0 6px rgba(255,61,113,0.5); }
+
+  .oi-val {
+    font-size: 11px;
+    font-weight: 600;
+    min-width: 50px;
+    text-align: right;
+  }
+
+  /* Signal Badge */
+  .signal-wrap {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    align-items: flex-end;
+  }
+
+  .signal-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 5px 12px;
+    border-radius: 6px;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 1px;
+    border: 1px solid;
+  }
+
+  .signal-badge.call {
+    background: rgba(0,230,118,0.1);
+    color: var(--bull);
+    border-color: rgba(0,230,118,0.3);
+    box-shadow: 0 0 12px rgba(0,230,118,0.1);
+  }
+
+  .signal-badge.put {
+    background: rgba(255,61,113,0.1);
+    color: var(--bear);
+    border-color: rgba(255,61,113,0.3);
+    box-shadow: 0 0 12px rgba(255,61,113,0.1);
+  }
+
+  .signal-badge.neutral {
+    background: rgba(90,122,148,0.1);
+    color: var(--muted);
+    border-color: var(--border2);
+  }
+
+  .signal-strike {
+    font-size: 9px;
+    color: var(--muted);
+    text-align: right;
+  }
+
+  /* Confidence meter */
+  .conf-wrap {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .conf-dots {
+    display: flex;
+    gap: 3px;
+  }
+
+  .conf-dot {
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    background: var(--border2);
+    transition: background 0.3s;
+  }
+
+  .conf-dot.filled-bull { background: var(--bull); box-shadow: 0 0 5px rgba(0,230,118,0.5); }
+  .conf-dot.filled-bear { background: var(--bear); box-shadow: 0 0 5px rgba(255,61,113,0.5); }
+  .conf-dot.filled-warn { background: var(--warn); }
+
+  .conf-label {
+    font-size: 9px;
+    color: var(--muted);
+  }
+
+  .trigger-tags {
+    display: flex;
+    gap: 4px;
+    flex-wrap: wrap;
+  }
+
+  .tag {
+    font-size: 8px;
+    padding: 2px 6px;
+    border-radius: 3px;
+    border: 1px solid var(--border2);
+    color: var(--muted);
+    letter-spacing: 0.5px;
+  }
+
+  .tag.oi-tag { border-color: rgba(0,212,255,0.3); color: var(--accent); background: rgba(0,212,255,0.05); }
+  .tag.price-tag { border-color: rgba(255,179,0,0.3); color: var(--warn); background: rgba(255,179,0,0.05); }
+  .tag.vol-tag { border-color: rgba(0,230,118,0.25); color: var(--bull); background: rgba(0,230,118,0.05); }
+
+  /* Alert log */
+  .alert-log {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 16px;
+    max-height: 160px;
+    overflow-y: auto;
+  }
+
+  .alert-log::-webkit-scrollbar { width: 4px; }
+  .alert-log::-webkit-scrollbar-track { background: var(--border); }
+  .alert-log::-webkit-scrollbar-thumb { background: var(--accent2); border-radius: 2px; }
+
+  .alert-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 5px 0;
+    border-bottom: 1px solid var(--border);
+    font-size: 11px;
+    animation: slideIn 0.3s ease;
+  }
+
+  @keyframes slideIn {
+    from { opacity: 0; transform: translateX(-10px); }
+    to { opacity: 1; transform: translateX(0); }
+  }
+
+  .alert-item:last-child { border-bottom: none; }
+
+  .alert-time {
+    color: var(--muted);
+    font-size: 10px;
+    min-width: 48px;
+  }
+
+  .alert-sym {
+    font-weight: 700;
+    min-width: 80px;
+  }
+
+  .alert-msg { color: var(--muted); flex: 1; }
+
+  /* No market hours overlay */
+  .premarket-banner {
+    background: rgba(255,179,0,0.05);
+    border: 1px solid rgba(255,179,0,0.2);
+    border-radius: 8px;
+    padding: 12px 20px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    font-size: 11px;
+    color: var(--warn);
+    display: none;
+  }
+
+  /* Table container */
+  .table-wrap {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    overflow: hidden;
+  }
+
+  .table-toolbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px 16px;
+    border-bottom: 1px solid var(--border);
+    background: var(--surface);
+  }
+
+  .search-input {
+    background: var(--card);
+    border: 1px solid var(--border2);
+    color: var(--text);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    padding: 6px 12px;
+    border-radius: 6px;
+    outline: none;
+    width: 180px;
+  }
+
+  .search-input:focus { border-color: var(--accent); }
+
+  .empty-state {
+    padding: 60px 20px;
+    text-align: center;
+    color: var(--muted);
+  }
+
+  .empty-icon { font-size: 36px; margin-bottom: 12px; opacity: 0.5; }
+  .empty-msg { font-size: 12px; }
+
+  /* Row highlight animation */
+  @keyframes rowFlash {
+    0% { background: rgba(0,212,255,0.12); }
+    100% { background: transparent; }
+  }
+
+  .row-new { animation: rowFlash 1.5s ease; }
+
+  /* Scrollable table */
+  .table-scroll { overflow-x: auto; }
+
+  /* Bottom status */
+  .status-footer {
+    padding: 8px 24px;
+    background: var(--surface);
+    border-top: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    font-size: 10px;
+    color: var(--muted);
+    position: sticky;
+    bottom: 0;
+  }
+
+  .refresh-indicator {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .spin {
+    width: 10px; height: 10px;
+    border: 1.5px solid var(--border2);
+    border-top-color: var(--accent);
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+    display: none;
+  }
+
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .spin.active { display: block; }
+
+  /* Settings Modal */
+  .modal-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.7);
+    z-index: 500;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    backdrop-filter: blur(4px);
+  }
+
+  .modal-overlay.open { display: flex; }
+
+  .modal {
+    background: var(--card);
+    border: 1px solid var(--border2);
+    border-radius: 12px;
+    padding: 28px;
+    width: 460px;
+    max-width: 95vw;
+    box-shadow: 0 24px 64px rgba(0,0,0,0.6);
+  }
+
+  .modal-title {
+    font-family: 'Syne', sans-serif;
+    font-size: 16px;
+    font-weight: 700;
+    margin-bottom: 20px;
+    color: var(--text);
+  }
+
+  .modal-field {
+    margin-bottom: 16px;
+  }
+
+  .modal-field label {
+    display: block;
+    font-size: 10px;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+    margin-bottom: 6px;
+  }
+
+  .modal-field input, .modal-field select {
+    width: 100%;
+    background: var(--surface);
+    border: 1px solid var(--border2);
+    color: var(--text);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px;
+    padding: 8px 12px;
+    border-radius: 6px;
+    outline: none;
+  }
+
+  .modal-field input:focus, .modal-field select:focus { border-color: var(--accent); }
+
+  .modal-field select option { background: var(--card); }
+
+  .modal-hint {
+    font-size: 9px;
+    color: var(--dim);
+    margin-top: 4px;
+    line-height: 1.5;
+  }
+
+  .modal-actions {
+    display: flex;
+    gap: 10px;
+    margin-top: 24px;
+    justify-content: flex-end;
+  }
+
+  .oi-threshold-display {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .threshold-val {
+    font-size: 20px;
+    font-weight: 700;
+    color: var(--accent);
+    font-family: 'Syne', sans-serif;
+    min-width: 50px;
+  }
+
+  input[type=range] {
+    -webkit-appearance: none;
+    width: 100%;
+    height: 4px;
+    background: var(--border2);
+    border-radius: 2px;
+    outline: none;
+    margin-top: 8px;
+  }
+
+  input[type=range]::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    width: 16px; height: 16px;
+    border-radius: 50%;
+    background: var(--accent);
+    cursor: pointer;
+    box-shadow: 0 0 8px rgba(0,212,255,0.5);
+  }
+
+  /* Responsive adjustments */
+  @media (max-width: 900px) {
+    .stats-bar { grid-template-columns: repeat(3, 1fr); }
+    .header-center { display: none; }
+  }
+</style>
+</head>
+<body>
+
+<!-- Header -->
+<div class="header">
+  <div class="logo">
+    <div class="logo-icon">⚡</div>
+    <div>
+      <div class="logo-text">OI SPURT SCANNER</div>
+      <div class="logo-sub">NSE F&O Universe · 180 Stocks</div>
+    </div>
+  </div>
+  <div class="header-center">
+    <div class="market-pill">
+      <div class="pulse-dot" id="marketDot"></div>
+      <span id="marketStatus">MARKET OPEN</span>
+    </div>
+    <div class="clock" id="clock">--:--:--</div>
+  </div>
+  <div class="header-right">
+    <button class="btn btn-ghost" onclick="openSettings()">⚙ Settings</button>
+    <div class="connection-status disconnected" id="connStatus">
+      <span>●</span> <span id="connLabel">Not Connected</span>
+    </div>
+  </div>
+</div>
+
+<!-- API Config Bar -->
+<div class="api-bar">
+  <label>API KEY</label>
+  <input type="password" class="api-input token" id="apiKey" placeholder="Kite Connect API Key">
+  <label>ACCESS TOKEN</label>
+  <input type="password" class="api-input token" id="accessToken" placeholder="Access Token (from login flow)">
+  <button class="btn btn-primary" onclick="connectKite()">▶ Connect</button>
+  <button class="btn btn-demo" onclick="startDemo()">◈ Demo Mode</button>
+  <div style="margin-left:auto; font-size:10px; color:var(--muted);">
+    Refresh: <select class="api-input small" id="refreshInterval" style="width:70px">
+      <option value="30">30s</option>
+      <option value="60" selected>60s</option>
+      <option value="120">2m</option>
+      <option value="300">5m</option>
+    </select>
+  </div>
+</div>
+
+<!-- Filter Bar -->
+<div class="filter-bar">
+  <div class="filter-group">
+    <span class="filter-label">OI Spurt %</span>
+    <input type="number" class="filter-input" id="oiThresh" value="15" min="5" max="100">
+    <span style="font-size:10px;color:var(--muted);">%</span>
+  </div>
+  <div class="divider"></div>
+  <div class="filter-group">
+    <span class="filter-label">Price Change %</span>
+    <input type="number" class="filter-input" id="priceThresh" value="7" min="1" max="20">
+    <span style="font-size:10px;color:var(--muted);">%</span>
+  </div>
+  <div class="divider"></div>
+  <div class="filter-group">
+    <span class="filter-label">Min OI (Lots)</span>
+    <input type="number" class="filter-input" id="minOI" value="500" style="width:80px">
+  </div>
+  <div class="divider"></div>
+  <div class="filter-group">
+    <span class="filter-label">Signal Filter</span>
+    <div class="toggle-group">
+      <button class="toggle-btn active-all" onclick="setFilter('ALL', this)" id="filterAll">ALL</button>
+      <button class="toggle-btn" onclick="setFilter('CALL', this)" id="filterCall">CALL</button>
+      <button class="toggle-btn" onclick="setFilter('PUT', this)" id="filterPut">PUT</button>
+    </div>
+  </div>
+  <div class="divider"></div>
+  <div class="filter-group">
+    <span class="filter-label">After</span>
+    <input type="time" class="filter-input" id="startTime" value="09:30" style="width:90px">
+  </div>
+  <button class="btn btn-primary" onclick="applyFilters()" style="margin-left:auto">Apply Filters</button>
+</div>
+
+<!-- Stats Bar -->
+<div class="stats-bar">
+  <div class="stat-card">
+    <span class="stat-label">Total Alerts</span>
+    <span class="stat-val accent" id="statTotal">0</span>
+    <span class="stat-sub">Since 9:30 AM</span>
+  </div>
+  <div class="stat-card">
+    <span class="stat-label">CALL Signals</span>
+    <span class="stat-val bull" id="statCall">0</span>
+    <span class="stat-sub">Bullish setups</span>
+  </div>
+  <div class="stat-card">
+    <span class="stat-label">PUT Signals</span>
+    <span class="stat-val bear" id="statPut">0</span>
+    <span class="stat-sub">Bearish setups</span>
+  </div>
+  <div class="stat-card">
+    <span class="stat-label">Avg OI Spurt</span>
+    <span class="stat-val warn" id="statAvgOI">0%</span>
+    <span class="stat-sub">Active alerts</span>
+  </div>
+  <div class="stat-card">
+    <span class="stat-label">High Confidence</span>
+    <span class="stat-val accent" id="statHigh">0</span>
+    <span class="stat-sub">Score ≥ 4/5</span>
+  </div>
+</div>
+
+<!-- Main Content -->
+<div class="main">
+
+  <!-- Alert Log -->
+  <div>
+    <div class="section-title">Live Alert Log <span class="section-badge" id="alertCount">0 alerts</span></div>
+    <div class="alert-log" id="alertLog">
+      <div style="color:var(--muted);font-size:11px;text-align:center;padding:20px;">Connect API or start Demo to see live alerts</div>
+    </div>
+  </div>
+
+  <!-- Scanner Table -->
+  <div>
+    <div class="section-title">OI Spurt Signals <span class="section-badge" id="rowCount">0 stocks</span></div>
+    <div class="table-wrap">
+      <div class="table-toolbar">
+        <input type="text" class="search-input" placeholder="Search symbol..." id="searchBox" oninput="filterTable()">
+        <div style="display:flex;gap:8px;align-items:center">
+          <span style="font-size:10px;color:var(--muted);" id="lastRefresh">Not refreshed</span>
+          <button class="btn btn-ghost" onclick="manualRefresh()" style="padding:5px 10px">↻ Refresh</button>
+          <button class="btn btn-ghost" onclick="exportCSV()" style="padding:5px 10px">↓ CSV</button>
+        </div>
+      </div>
+      <div class="table-scroll">
+        <table class="scanner-table">
+          <thead>
+            <tr>
+              <th>Symbol</th>
+              <th class="right">LTP</th>
+              <th class="right">Change %</th>
+              <th>OI Change</th>
+              <th class="right">Volume</th>
+              <th>Triggers</th>
+              <th>Signal</th>
+              <th>Confidence</th>
+              <th class="right">Strike / Expiry</th>
+              <th class="right">Alert Time</th>
+            </tr>
+          </thead>
+          <tbody id="scannerBody">
+            <tr>
+              <td colspan="10">
+                <div class="empty-state">
+                  <div class="empty-icon">📡</div>
+                  <div class="empty-msg">Connect to Kite API or start Demo Mode to begin scanning</div>
+                </div>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<!-- Status Footer -->
+<div class="status-footer">
+  <div class="refresh-indicator">
+    <div class="spin" id="spinner"></div>
+    <span id="footerMsg">Ready — Connect API to start scanning</span>
+  </div>
+  <span>NSE F&O Scanner · v2.0 · Kite Connect</span>
+</div>
+
+<!-- Settings Modal -->
+<div class="modal-overlay" id="settingsModal">
+  <div class="modal">
+    <div class="modal-title">⚙ OI Spurt Thresholds</div>
+
+    <div class="modal-field">
+      <label>OI Spurt Trigger (%)</label>
+      <div class="oi-threshold-display">
+        <span class="threshold-val" id="oiThreshDisplay">15%</span>
+        <input type="range" min="5" max="100" step="5" value="15" id="oiThreshSlider" oninput="updateThreshDisplay()">
+      </div>
+      <div class="modal-hint">OI change % in the current candle vs previous candle. 15% = moderate spurt. 25%+ = aggressive buildup.</div>
+    </div>
+
+    <div class="modal-field">
+      <label>Price Change for CALL/PUT Flag (%)</label>
+      <input type="number" value="7" id="priceFlagThresh" min="1" max="30">
+      <div class="modal-hint">Stock price change % from previous close. Above +7% → CALL bias. Below -7% → PUT bias.</div>
+    </div>
+
+    <div class="modal-field">
+      <label>Volume Spike Multiplier</label>
+      <input type="number" value="1.5" id="volMultiplier" step="0.25" min="1" max="10">
+      <div class="modal-hint">Volume vs 20-day avg. 1.5x = 50% above average. Adds volume confirmation to signal.</div>
+    </div>
+
+    <div class="modal-field">
+      <label>Confidence Scoring Logic</label>
+      <select id="confLogic">
+        <option value="combined">Combined (OI + Price + Volume)</option>
+        <option value="oi_price">OI + Price only</option>
+        <option value="oi_only">OI spurt only</option>
+      </select>
+      <div class="modal-hint">Determines which factors are used to compute the 1–5 confidence score shown in table.</div>
+    </div>
+
+    <div class="modal-field">
+      <label>Signal Logic</label>
+      <select id="signalLogic">
+        <option value="price_oi">Price direction + OI buildup</option>
+        <option value="price_only">Price direction only (≥ threshold)</option>
+        <option value="oi_only">OI spurt direction only</option>
+      </select>
+      <div class="modal-hint">How CALL vs PUT is determined. Recommended: Price direction + OI buildup.</div>
+    </div>
+
+    <div class="modal-actions">
+      <button class="btn btn-ghost" onclick="closeSettings()">Cancel</button>
+      <button class="btn btn-primary" onclick="saveSettings()">Save & Apply</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ── State ──────────────────────────────────────────────────────────────────
+const state = {
+  mode: 'idle', // idle | demo | live
+  apiKey: '',
+  accessToken: '',
+  alerts: [],
+  rows: [],
+  filter: 'ALL',
+  refreshTimer: null,
+  settings: {
+    oiThresh: 15,
+    priceThresh: 7,
+    volMultiplier: 1.5,
+    minOI: 500,
+    confLogic: 'combined',
+    signalLogic: 'price_oi',
+    startTime: '09:30'
+  }
+};
+
+// ── NSE F&O Stock universe (representative 60, full 180 in production) ──
+const FO_STOCKS = [
+  {sym:'RELIANCE',sec:'Energy'}, {sym:'TCS',sec:'IT'}, {sym:'INFY',sec:'IT'},
+  {sym:'HDFCBANK',sec:'Banking'}, {sym:'ICICIBANK',sec:'Banking'}, {sym:'SBIN',sec:'Banking'},
+  {sym:'AXISBANK',sec:'Banking'}, {sym:'KOTAKBANK',sec:'Banking'}, {sym:'BANDHANBNK',sec:'Banking'},
+  {sym:'BAJFINANCE',sec:'NBFC'}, {sym:'BAJAJFINSV',sec:'NBFC'}, {sym:'HDFCLIFE',sec:'Insurance'},
+  {sym:'SBILIFE',sec:'Insurance'}, {sym:'ICICIGI',sec:'Insurance'}, {sym:'WIPRO',sec:'IT'},
+  {sym:'HCLTECH',sec:'IT'}, {sym:'TECHM',sec:'IT'}, {sym:'LTI',sec:'IT'},
+  {sym:'PERSISTENT',sec:'IT'}, {sym:'MPHASIS',sec:'IT'}, {sym:'LTIM',sec:'IT'},
+  {sym:'TATAMOTORS',sec:'Auto'}, {sym:'MARUTI',sec:'Auto'}, {sym:'M&M',sec:'Auto'},
+  {sym:'HEROMOTOCO',sec:'Auto'}, {sym:'BAJAJ-AUTO',sec:'Auto'}, {sym:'EICHERMOT',sec:'Auto'},
+  {sym:'TITAN',sec:'Consumer'}, {sym:'TRENT',sec:'Retail'}, {sym:'DMART',sec:'Retail'},
+  {sym:'HINDUNILVR',sec:'FMCG'}, {sym:'NESTLEIND',sec:'FMCG'}, {sym:'BRITANNIA',sec:'FMCG'},
+  {sym:'ITC',sec:'FMCG'}, {sym:'GODREJCP',sec:'FMCG'}, {sym:'MARICO',sec:'FMCG'},
+  {sym:'SUNPHARMA',sec:'Pharma'}, {sym:'DRREDDY',sec:'Pharma'}, {sym:'CIPLA',sec:'Pharma'},
+  {sym:'DIVISLAB',sec:'Pharma'}, {sym:'BIOCON',sec:'Pharma'}, {sym:'AUROPHARMA',sec:'Pharma'},
+  {sym:'ADANIPORTS',sec:'Infra'}, {sym:'ADANIENT',sec:'Conglomerate'}, {sym:'ADANIGREEN',sec:'Energy'},
+  {sym:'NTPC',sec:'Utilities'}, {sym:'POWERGRID',sec:'Utilities'}, {sym:'ONGC',sec:'Energy'},
+  {sym:'COALINDIA',sec:'Commodities'}, {sym:'VEDL',sec:'Metals'}, {sym:'HINDALCO',sec:'Metals'},
+  {sym:'TATASTEEL',sec:'Metals'}, {sym:'JSWSTEEL',sec:'Metals'}, {sym:'SAIL',sec:'Metals'},
+  {sym:'BHARTIARTL',sec:'Telecom'}, {sym:'ULTRACEMCO',sec:'Cement'}, {sym:'AMBUJACEM',sec:'Cement'},
+  {sym:'GRASIM',sec:'Cement'}, {sym:'LT',sec:'Infra'}, {sym:'DIXON',sec:'Electronics'},
+  {sym:'BSE',sec:'Exchange'}, {sym:'MCX',sec:'Exchange'}, {sym:'NIFTY',sec:'Index'},
+  {sym:'BANKNIFTY',sec:'Index'}, {sym:'FINNIFTY',sec:'Index'}, {sym:'MIDCPNIFTY',sec:'Index'},
+  {sym:'HDFC',sec:'Finance'}, {sym:'INDUSINDBK',sec:'Banking'}, {sym:'PNB',sec:'Banking'},
+  {sym:'BANKBARODA',sec:'Banking'}, {sym:'CANBK',sec:'Banking'}, {sym:'FEDERALBNK',sec:'Banking'},
+  {sym:'ZOMATO',sec:'Consumer Tech'}, {sym:'NYKAA',sec:'Consumer Tech'}, {sym:'PAYTM',sec:'Fintech'},
+  {sym:'POLICYBZR',sec:'Fintech'}, {sym:'IRCTC',sec:'Travel'}, {sym:'INDIGO',sec:'Aviation'},
+  {sym:'SIEMENS',sec:'Capital Goods'}, {sym:'ABB',sec:'Capital Goods'}, {sym:'HAVELLS',sec:'Electricals'},
+  {sym:'VOLTAS',sec:'Electricals'}, {sym:'WHIRLPOOL',sec:'Appliances'}, {sym:'PIDILITIND',sec:'Chemicals'},
+  {sym:'SRF',sec:'Chemicals'}, {sym:'AARTIIND',sec:'Chemicals'}, {sym:'DEEPAKNITRITE',sec:'Chemicals'},
+  {sym:'GMRINFRA',sec:'Infra'}, {sym:'IDFCFIRSTB',sec:'Banking'}, {sym:'RBLBANK',sec:'Banking'}
+];
+
+// Base prices for demo
+const basePrices = {};
+FO_STOCKS.forEach(s => { basePrices[s.sym] = Math.floor(Math.random() * 4000) + 200; });
+
+// ── Clock ────────────────────────────────────────────────────────────────
+function updateClock() {
+  const now = new Date();
+  document.getElementById('clock').textContent = now.toLocaleTimeString('en-IN', {hour12: false});
+  const h = now.getHours(), m = now.getMinutes();
+  const isOpen = (h > 9 || (h === 9 && m >= 15)) && (h < 15 || (h === 15 && m <= 30));
+  document.getElementById('marketDot').style.background = isOpen ? 'var(--bull)' : 'var(--bear)';
+  document.getElementById('marketStatus').textContent = isOpen ? 'MARKET OPEN' : 'MARKET CLOSED';
+}
+setInterval(updateClock, 1000);
+updateClock();
+
+// ── Settings Modal ────────────────────────────────────────────────────────
+function openSettings() { document.getElementById('settingsModal').classList.add('open'); }
+function closeSettings() { document.getElementById('settingsModal').classList.remove('open'); }
+function updateThreshDisplay() {
+  const v = document.getElementById('oiThreshSlider').value;
+  document.getElementById('oiThreshDisplay').textContent = v + '%';
+}
+function saveSettings() {
+  state.settings.oiThresh = parseFloat(document.getElementById('oiThreshSlider').value);
+  state.settings.priceThresh = parseFloat(document.getElementById('priceFlagThresh').value);
+  state.settings.volMultiplier = parseFloat(document.getElementById('volMultiplier').value);
+  state.settings.confLogic = document.getElementById('confLogic').value;
+  state.settings.signalLogic = document.getElementById('signalLogic').value;
+  document.getElementById('oiThresh').value = state.settings.oiThresh;
+  document.getElementById('priceThresh').value = state.settings.priceThresh;
+  closeSettings();
+  if (state.mode !== 'idle') applyFilters();
+}
+
+// ── Filter logic ──────────────────────────────────────────────────────────
+function setFilter(type, btn) {
+  state.filter = type;
+  document.querySelectorAll('.toggle-btn').forEach(b => b.className = 'toggle-btn');
+  btn.classList.add(type === 'CALL' ? 'active-bull' : type === 'PUT' ? 'active-bear' : 'active-all');
+  renderTable();
+}
+
+function applyFilters() {
+  state.settings.oiThresh = parseFloat(document.getElementById('oiThresh').value) || 15;
+  state.settings.priceThresh = parseFloat(document.getElementById('priceThresh').value) || 7;
+  state.settings.minOI = parseFloat(document.getElementById('minOI').value) || 500;
+  state.settings.startTime = document.getElementById('startTime').value;
+  renderTable();
+}
+
+function filterTable() { renderTable(); }
+
+// ── Signal Engine ─────────────────────────────────────────────────────────
+function computeSignal(row) {
+  const { priceChange, oiChange, volRatio } = row;
+  const { priceThresh, oiThresh, volMultiplier, signalLogic, confLogic } = state.settings;
+
+  let signal = 'NEUTRAL';
+  if (signalLogic === 'price_oi') {
+    if (priceChange >= priceThresh && oiChange > 0) signal = 'CALL';
+    else if (priceChange <= -priceThresh && oiChange > 0) signal = 'PUT';
+    else if (priceChange >= priceThresh) signal = 'CALL';
+    else if (priceChange <= -priceThresh) signal = 'PUT';
+  } else if (signalLogic === 'price_only') {
+    if (priceChange >= priceThresh) signal = 'CALL';
+    else if (priceChange <= -priceThresh) signal = 'PUT';
+  } else {
+    if (oiChange >= oiThresh) signal = priceChange >= 0 ? 'CALL' : 'PUT';
+  }
+
+  // Confidence (1–5)
+  let conf = 0;
+  if (confLogic === 'combined') {
+    if (Math.abs(oiChange) >= oiThresh) conf++;
+    if (Math.abs(oiChange) >= oiThresh * 1.5) conf++;
+    if (Math.abs(priceChange) >= priceThresh) conf++;
+    if (Math.abs(priceChange) >= priceThresh * 1.5) conf++;
+    if (volRatio >= volMultiplier) conf++;
+  } else if (confLogic === 'oi_price') {
+    conf = Math.min(5, Math.floor(Math.abs(oiChange) / oiThresh * 2) + (Math.abs(priceChange) >= priceThresh ? 2 : 0));
+  } else {
+    conf = Math.min(5, Math.floor(Math.abs(oiChange) / oiThresh * 2.5));
+  }
+  conf = Math.max(1, Math.min(5, conf));
+
+  // Suggest strike (ATM ± 1 strike)
+  const atmStrike = Math.round(row.ltp / 50) * 50;
+  const strikeOffset = signal === 'CALL' ? atmStrike + 50 : signal === 'PUT' ? atmStrike - 50 : atmStrike;
+  const expiry = getNextExpiry();
+
+  return { signal, confidence: conf, suggestedStrike: strikeOffset, expiry };
+}
+
+function getNextExpiry() {
+  const now = new Date();
+  const day = now.getDay();
+  const daysToThurs = (4 - day + 7) % 7 || 7;
+  const expiry = new Date(now);
+  expiry.setDate(now.getDate() + daysToThurs);
+  return expiry.toLocaleDateString('en-IN', {day:'2-digit', month:'short'});
+}
+
+// ── Demo Mode ─────────────────────────────────────────────────────────────
+let demoInterval = null;
+const demoRows = [];
+
+function startDemo() {
+  state.mode = 'demo';
+  document.getElementById('connStatus').className = 'connection-status demo';
+  document.getElementById('connLabel').textContent = 'Demo Mode';
+  document.getElementById('footerMsg').textContent = 'Demo mode — Simulated live data';
+  setStatus('demo');
+  clearAlertLog();
+  demoRows.length = 0;
+  state.rows = [];
+  state.alerts = [];
+  generateDemoData();
+  if (demoInterval) clearInterval(demoInterval);
+  demoInterval = setInterval(generateDemoData, 12000);
+}
+
+function generateDemoData() {
+  showSpinner(true);
+  const now = new Date();
+  const timeStr = now.toLocaleTimeString('en-IN', {hour:'2-digit', minute:'2-digit', second:'2-digit', hour12:false});
+
+  // Pick 3–6 random stocks to trigger alerts
+  const triggered = [];
+  const shuffled = [...FO_STOCKS].sort(() => Math.random() - 0.5).slice(0, Math.floor(Math.random() * 4) + 3);
+
+  shuffled.forEach(stock => {
+    const isBull = Math.random() > 0.45;
+    const basePrice = basePrices[stock.sym];
+    const priceChange = isBull
+      ? (Math.random() * 12 + 5) * (Math.random() > 0.3 ? 1 : 0.5)
+      : -(Math.random() * 12 + 5) * (Math.random() > 0.3 ? 1 : 0.5);
+    const ltp = +(basePrice * (1 + priceChange / 100)).toFixed(2);
+    const oiChange = +(Math.random() * 40 + 8).toFixed(1);
+    const volRatio = +(Math.random() * 3 + 0.8).toFixed(2);
+    const oi = Math.floor(Math.random() * 5000 + 500);
+
+    const row = { sym: stock.sym, sec: stock.sec, ltp, priceChange: +priceChange.toFixed(2), oiChange, volRatio, oi, time: timeStr };
+    const sig = computeSignal(row);
+    row.signal = sig.signal;
+    row.confidence = sig.confidence;
+    row.suggestedStrike = sig.suggestedStrike;
+    row.expiry = sig.expiry;
+
+    // Check thresholds
+    const oiOk = oiChange >= state.settings.oiThresh;
+    const priceOk = Math.abs(priceChange) >= state.settings.priceThresh;
+    const oiOkMinOI = oi >= state.settings.minOI;
+
+    if ((oiOk || priceOk) && oiOkMinOI) {
+      triggered.push(row);
+
+      // Add to alert log
+      addAlert(timeStr, stock.sym, priceChange, oiChange, sig.signal);
+    }
+  });
+
+  // Merge with existing rows (update or add)
+  triggered.forEach(r => {
+    const idx = state.rows.findIndex(x => x.sym === r.sym);
+    if (idx >= 0) state.rows[idx] = r;
+    else state.rows.unshift(r);
+  });
+
+  renderTable();
+  updateStats();
+  document.getElementById('lastRefresh').textContent = 'Refreshed ' + timeStr;
+  showSpinner(false);
+}
+
+function addAlert(time, sym, priceChange, oiChange, signal) {
+  const log = document.getElementById('alertLog');
+  if (log.querySelector('div[style]')) log.innerHTML = '';
+
+  const item = document.createElement('div');
+  item.className = 'alert-item';
+
+  const signalColor = signal === 'CALL' ? 'var(--bull)' : signal === 'PUT' ? 'var(--bear)' : 'var(--muted)';
+  const dir = priceChange >= 0 ? '▲' : '▼';
+
+  item.innerHTML = `
+    <span class="alert-time">${time}</span>
+    <span class="alert-sym" style="color:${signalColor}">${sym}</span>
+    <span class="alert-msg">Price ${dir} ${Math.abs(priceChange).toFixed(2)}% | OI Spurt +${oiChange}%</span>
+    <span class="signal-badge ${signal.toLowerCase()}" style="padding:2px 8px;font-size:10px">${signal}</span>
+  `;
+  log.insertBefore(item, log.firstChild);
+  state.alerts.push({time, sym, priceChange, oiChange, signal});
+  document.getElementById('alertCount').textContent = state.alerts.length + ' alerts';
+}
+
+function clearAlertLog() {
+  document.getElementById('alertLog').innerHTML = '<div style="color:var(--muted);font-size:11px;text-align:center;padding:20px;">Waiting for signals...</div>';
+  state.alerts = [];
+  document.getElementById('alertCount').textContent = '0 alerts';
+}
+
+// ── Render Table ──────────────────────────────────────────────────────────
+function renderTable() {
+  const body = document.getElementById('scannerBody');
+  const search = document.getElementById('searchBox').value.toUpperCase();
+
+  let filtered = state.rows.filter(r => {
+    if (search && !r.sym.includes(search)) return false;
+    if (state.filter === 'CALL' && r.signal !== 'CALL') return false;
+    if (state.filter === 'PUT' && r.signal !== 'PUT') return false;
+    return true;
+  });
+
+  if (filtered.length === 0) {
+    body.innerHTML = `<tr><td colspan="10"><div class="empty-state"><div class="empty-icon">🔍</div><div class="empty-msg">No signals match current filters</div></div></td></tr>`;
+    document.getElementById('rowCount').textContent = '0 stocks';
+    return;
+  }
+
+  document.getElementById('rowCount').textContent = filtered.length + ' stocks';
+
+  body.innerHTML = filtered.map(r => {
+    const up = r.priceChange >= 0;
+    const changeClass = up ? 'up' : 'down';
+    const arrow = up ? '▲' : '▼';
+    const oiBarPct = Math.min(100, (r.oiChange / 60) * 100);
+    const volDisp = r.volRatio >= 1.5 ? `<span style="color:var(--bull)">${r.volRatio}x ▲</span>` : `${r.volRatio}x`;
+
+    // Triggers
+    const tags = [];
+    if (r.oiChange >= state.settings.oiThresh) tags.push(`<span class="tag oi-tag">OI +${r.oiChange}%</span>`);
+    if (Math.abs(r.priceChange) >= state.settings.priceThresh) tags.push(`<span class="tag price-tag">PRICE ${arrow}${Math.abs(r.priceChange)}%</span>`);
+    if (r.volRatio >= state.settings.volMultiplier) tags.push(`<span class="tag vol-tag">VOL ${r.volRatio}x</span>`);
+
+    // Confidence dots
+    const dots = [1,2,3,4,5].map(i => {
+      const cls = i <= r.confidence
+        ? r.signal === 'CALL' ? 'filled-bull' : r.signal === 'PUT' ? 'filled-bear' : 'filled-warn'
+        : '';
+      return `<div class="conf-dot ${cls}"></div>`;
+    }).join('');
+
+    const signalIcon = r.signal === 'CALL' ? 'C' : r.signal === 'PUT' ? 'P' : '–';
+    const iconClass = r.signal === 'CALL' ? 'bull-icon' : r.signal === 'PUT' ? 'bear-icon' : 'bear-icon';
+
+    return `<tr class="row-new">
+      <td>
+        <div class="symbol-cell">
+          <div class="symbol-icon ${iconClass}">${signalIcon}</div>
+          <div>
+            <div class="symbol-name">${r.sym}</div>
+            <div class="symbol-sector">${r.sec}</div>
+          </div>
+        </div>
+      </td>
+      <td class="right" style="font-weight:600">₹${r.ltp.toLocaleString('en-IN')}</td>
+      <td class="right"><span class="change-badge ${changeClass}">${arrow} ${Math.abs(r.priceChange)}%</span></td>
+      <td>
+        <div class="oi-bar-wrap">
+          <div class="oi-bar-bg"><div class="oi-bar-fill ${up ? 'bull' : 'bear'}" style="width:${oiBarPct}%"></div></div>
+          <span class="oi-val" style="color:${up ? 'var(--bull)' : 'var(--bear)'}">+${r.oiChange}%</span>
+        </div>
+      </td>
+      <td class="right">${volDisp}</td>
+      <td><div class="trigger-tags">${tags.join('')}</div></td>
+      <td>
+        <div class="signal-wrap">
+          <span class="signal-badge ${r.signal.toLowerCase()}">${r.signal === 'CALL' ? '▲ CALL' : r.signal === 'PUT' ? '▼ PUT' : '– NEUTRAL'}</span>
+        </div>
+      </td>
+      <td>
+        <div class="conf-wrap">
+          <div class="conf-dots">${dots}</div>
+          <span class="conf-label">${r.confidence}/5</span>
+        </div>
+      </td>
+      <td class="right" style="font-size:11px">
+        <div style="color:var(--text)">₹${r.suggestedStrike}</div>
+        <div style="color:var(--muted);font-size:9px">${r.expiry}</div>
+      </td>
+      <td class="right" style="color:var(--muted);font-size:10px">${r.time}</td>
+    </tr>`;
+  }).join('');
+}
+
+// ── Stats ─────────────────────────────────────────────────────────────────
+function updateStats() {
+  const rows = state.rows;
+  const calls = rows.filter(r => r.signal === 'CALL').length;
+  const puts = rows.filter(r => r.signal === 'PUT').length;
+  const avgOI = rows.length ? (rows.reduce((a,r) => a + r.oiChange, 0) / rows.length).toFixed(1) : 0;
+  const high = rows.filter(r => r.confidence >= 4).length;
+
+  document.getElementById('statTotal').textContent = rows.length;
+  document.getElementById('statCall').textContent = calls;
+  document.getElementById('statPut').textContent = puts;
+  document.getElementById('statAvgOI').textContent = avgOI + '%';
+  document.getElementById('statHigh').textContent = high;
+}
+
+// ── Kite Connect Live ─────────────────────────────────────────────────────
+function connectKite() {
+  const key = document.getElementById('apiKey').value.trim();
+  const token = document.getElementById('accessToken').value.trim();
+  if (!key || !token) { alert('Please enter API Key and Access Token'); return; }
+  state.apiKey = key;
+  state.accessToken = token;
+  fetchKiteData();
+}
+
+async function fetchKiteData() {
+  showSpinner(true);
+  document.getElementById('footerMsg').textContent = 'Fetching live data from Kite...';
+
+  try {
+    // NOTE: Kite API requires a backend proxy due to CORS.
+    // Point this to your Node.js/Python proxy endpoint.
+    const PROXY = 'http://localhost:5000';
+
+    // Fetch OI data for F&O instruments
+    const instruments = FO_STOCKS.map(s => `NSE:${s.sym}`).join(',');
+    const resp = await fetch(`${PROXY}/kite/quote?symbols=${instruments}`, {
+      headers: { 'Authorization': `token ${state.apiKey}:${state.accessToken}` }
+    });
+
+    if (!resp.ok) throw new Error('API error: ' + resp.status);
+    const data = await resp.json();
+
+    processKiteData(data);
+    setStatus('connected');
+    document.getElementById('connStatus').className = 'connection-status connected';
+    document.getElementById('connLabel').textContent = 'Live';
+    state.mode = 'live';
+
+    // Schedule refresh
+    const interval = parseInt(document.getElementById('refreshInterval').value) * 1000;
+    if (state.refreshTimer) clearInterval(state.refreshTimer);
+    state.refreshTimer = setInterval(fetchKiteData, interval);
+
+  } catch (e) {
+    document.getElementById('footerMsg').textContent = '⚠ Connection failed — ' + e.message + ' (Need backend proxy on localhost:5000)';
+    document.getElementById('connStatus').className = 'connection-status disconnected';
+    document.getElementById('connLabel').textContent = 'Error';
+  }
+  showSpinner(false);
+}
+
+function processKiteData(kiteResponse) {
+  const now = new Date();
+  const timeStr = now.toLocaleTimeString('en-IN', {hour12:false});
+  const newRows = [];
+
+  Object.entries(kiteResponse.data || {}).forEach(([symbol, quote]) => {
+    const sym = symbol.replace('NSE:', '');
+    const stock = FO_STOCKS.find(s => s.sym === sym);
+    if (!stock) return;
+
+    const ltp = quote.last_price;
+    const closeYday = quote.ohlc?.close || ltp;
+    const priceChange = +((ltp - closeYday) / closeYday * 100).toFixed(2);
+    const oi = quote.oi || 0;
+    const oiDayAgo = quote.oi_day_high || oi;
+    const oiChange = oiDayAgo > 0 ? +((oi - oiDayAgo) / oiDayAgo * 100).toFixed(1) : 0;
+    const vol = quote.volume || 0;
+    const avgVol = quote.average_price || 1;
+    const volRatio = +(vol / (avgVol * 100000 || 1)).toFixed(2);
+
+    const row = { sym, sec: stock.sec, ltp, priceChange, oiChange, volRatio, oi: oi/100, time: timeStr };
+    const sig = computeSignal(row);
+    row.signal = sig.signal;
+    row.confidence = sig.confidence;
+    row.suggestedStrike = sig.suggestedStrike;
+    row.expiry = sig.expiry;
+
+    const oiOk = Math.abs(oiChange) >= state.settings.oiThresh;
+    const priceOk = Math.abs(priceChange) >= state.settings.priceThresh;
+
+    if (oiOk || priceOk) {
+      newRows.push(row);
+      addAlert(timeStr, sym, priceChange, oiChange, sig.signal);
+    }
+  });
+
+  state.rows = newRows.sort((a, b) => Math.abs(b.oiChange) - Math.abs(a.oiChange));
+  renderTable();
+  updateStats();
+  document.getElementById('lastRefresh').textContent = 'Live · ' + timeStr;
+}
+
+// ── Export CSV ────────────────────────────────────────────────────────────
+function exportCSV() {
+  if (state.rows.length === 0) { alert('No data to export'); return; }
+  const headers = ['Symbol','Sector','LTP','Change%','OI Change%','Volume Ratio','Signal','Confidence','Strike','Expiry','Time'];
+  const rows = state.rows.map(r => [r.sym,r.sec,r.ltp,r.priceChange,r.oiChange,r.volRatio,r.signal,r.confidence,r.suggestedStrike,r.expiry,r.time]);
+  const csv = [headers, ...rows].map(r => r.join(',')).join('\n');
+  const blob = new Blob([csv], {type:'text/csv'});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = `oi_spurt_${new Date().toISOString().slice(0,10)}.csv`;
+  a.click();
+}
+
+// ── Manual Refresh ────────────────────────────────────────────────────────
+function manualRefresh() {
+  if (state.mode === 'demo') generateDemoData();
+  else if (state.mode === 'live') fetchKiteData();
+}
+
+// ── Helpers ───────────────────────────────────────────────────────────────
+function showSpinner(on) { document.getElementById('spinner').classList.toggle('active', on); }
+function setStatus(s) { document.getElementById('footerMsg').textContent = s === 'demo' ? '◈ Demo mode active — refreshing every 12s' : '▶ Live data · Auto-refreshing'; }
+
+// ── Init ──────────────────────────────────────────────────────────────────
+document.getElementById('filterAll').classList.add('active-all');
+</script>
+</body>
+</html>

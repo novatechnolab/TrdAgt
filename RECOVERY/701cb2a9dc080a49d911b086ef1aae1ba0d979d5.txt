@@ -1,0 +1,1604 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>FNO Trap Detector — TradeSignal</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#0d0f14;--bg-card:#13161d;--bg-elevated:#1a1e27;--bg-hover:#20242f;
+  --border:#252a35;--border-hi:#2e3445;
+  --text-primary:#e8eaf0;--text-secondary:#8892a4;--text-muted:#4a5268;
+  --accent:#4da6ff;--accent-dim:#2a5a8a;
+  --trade-green:#00d084;--put-red:#ff4d6d;--wait-gold:#f5a623;--avoid-amber:#ff8c42;
+  --font-ui:'Inter',sans-serif;--font-mono:'JetBrains Mono',monospace;
+  --r-sm:6px;--r-md:10px;--r-lg:14px;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100vh;overflow:hidden;background:var(--bg);color:var(--text-primary);font-family:var(--font-ui)}
+
+/* ── APP SHELL ── */
+#app{display:flex;flex-direction:column;height:100vh;overflow:hidden}
+
+/* ── HEADER ── */
+#fno-header{
+  display:flex;align-items:center;gap:10px;
+  padding:0 14px;height:46px;flex-shrink:0;
+  background:var(--bg-card);border-bottom:1px solid var(--border-hi);
+}
+#fno-logo{
+  font-size:13px;font-weight:800;color:var(--text-primary);
+  white-space:nowrap;letter-spacing:-0.3px;
+  display:flex;align-items:center;gap:6px;
+}
+#fno-logo span{color:var(--accent)}
+#fno-search-wrap{flex:1;position:relative;max-width:360px}
+#fno-search-input{
+  width:100%;padding:6px 10px 6px 28px;
+  background:var(--bg-elevated);border:1px solid var(--border-hi);
+  border-radius:var(--r-sm);color:var(--text-primary);
+  font-family:var(--font-mono);font-size:11px;outline:none;
+}
+#fno-search-input:focus{border-color:var(--accent-dim)}
+#fno-search-icon{position:absolute;left:9px;top:50%;transform:translateY(-50%);font-size:11px;opacity:.4;pointer-events:none}
+#fno-search-dropdown{
+  position:absolute;left:0;right:0;top:calc(100% + 4px);
+  background:var(--bg-card);border:1px solid var(--border-hi);
+  border-radius:var(--r-md);box-shadow:0 8px 32px rgba(0,0,0,.7);
+  z-index:500;max-height:240px;overflow-y:auto;
+}
+.fno-sr-row{
+  display:flex;justify-content:space-between;align-items:center;
+  padding:8px 12px;cursor:pointer;border-bottom:1px solid var(--border);
+  font-family:var(--font-mono);font-size:11px;
+}
+.fno-sr-row:hover{background:var(--bg-elevated)}
+.fno-sr-sym{font-weight:700;color:var(--text-primary)}
+.fno-sr-meta{color:var(--text-muted);font-size:10px}
+.tb-spacer{flex:1}
+#fno-status{display:flex;align-items:center;gap:8px;font-size:10px;color:var(--text-muted)}
+#fno-ws-dot{width:6px;height:6px;border-radius:50%;background:var(--trade-green);box-shadow:0 0 4px var(--trade-green)}
+#fno-ws-dot.off{background:var(--put-red);box-shadow:0 0 4px var(--put-red)}
+#fno-time{font-family:var(--font-mono)}
+
+/* ── INDEX BAR ── */
+#index-bar{
+  display:flex;align-items:center;gap:6px;
+  padding:0 14px;height:38px;flex-shrink:0;
+  background:var(--bg);border-bottom:1px solid var(--border);
+  overflow-x:auto;
+}
+#index-bar::-webkit-scrollbar{display:none}
+.idx-chip{
+  display:flex;align-items:center;gap:5px;
+  padding:4px 10px;border-radius:20px;
+  border:1px solid var(--border-hi);background:var(--bg-card);
+  cursor:pointer;white-space:nowrap;transition:border-color .15s;
+}
+.idx-chip:hover,.idx-chip.active{border-color:var(--accent-dim)}
+.idx-sym{font-size:10px;font-weight:700;color:var(--text-secondary)}
+.idx-spot{font-family:var(--font-mono);font-size:11px;font-weight:700;color:var(--text-primary)}
+.idx-dir{font-size:9px}.idx-dir.up{color:var(--trade-green)}.idx-dir.dn{color:var(--put-red)}
+.idx-bar-spacer{flex:1}
+#prev-sess-badge{
+  font-size:9px;color:var(--wait-gold);
+  background:#1a1200;border:1px solid #4d3000;
+  border-radius:20px;padding:3px 8px;white-space:nowrap;
+}
+
+/* ── SYMBOL TABS ── */
+#symbol-tabs{
+  display:flex;align-items:center;gap:0;
+  height:36px;flex-shrink:0;
+  background:var(--bg-card);border-bottom:1px solid var(--border);
+  overflow-x:auto;
+}
+#symbol-tabs::-webkit-scrollbar{display:none}
+.sym-tab{
+  display:flex;align-items:center;gap:6px;
+  padding:0 14px;height:100%;cursor:pointer;
+  font-size:11px;font-weight:600;color:var(--text-muted);
+  border-right:1px solid var(--border);white-space:nowrap;
+  border-bottom:2px solid transparent;transition:all .15s;position:relative;
+}
+.sym-tab:hover{color:var(--text-secondary);background:var(--bg-elevated)}
+.sym-tab.active{color:var(--accent);border-bottom-color:var(--accent);background:var(--bg)}
+.sym-tab-badge{
+  font-size:9px;font-weight:700;padding:1px 5px;
+  border-radius:10px;background:var(--bg-elevated);
+}
+.sym-tab-badge.TRADE{background:#071a12;color:var(--trade-green)}
+.sym-tab-badge.WAIT{background:#1a1000;color:var(--wait-gold)}
+.sym-tab-badge.AVOID{background:#1a0a00;color:var(--avoid-amber)}
+.sym-tab-badge.BLOCKED{background:#1a0505;color:var(--put-red)}
+.sym-tab-badge.MARKET_CLOSED{background:var(--bg-elevated);color:var(--text-muted)}
+.sym-tab-close{font-size:10px;color:var(--text-muted);margin-left:2px;opacity:.5}
+.sym-tab-close:hover{opacity:1;color:var(--put-red)}
+
+/* ── MAIN GRID ── */
+#main-grid{
+  flex:1;display:grid;
+  grid-template-columns:270px 1fr 250px;
+  overflow:hidden;min-height:0;
+}
+.g-col{
+  overflow-y:auto;border-right:1px solid var(--border);
+  padding:10px 12px;
+}
+.g-col:last-child{border-right:none}
+.g-col::-webkit-scrollbar{width:3px}
+.g-col::-webkit-scrollbar-thumb{background:var(--border-hi);border-radius:2px}
+
+/* ── SECTION HEADERS ── */
+.sec-hdr{
+  font-size:9px;color:var(--text-muted);text-transform:uppercase;
+  letter-spacing:.9px;margin-bottom:6px;padding-bottom:4px;
+  border-bottom:1px solid var(--border);
+}
+
+/* ── STATE BADGE ── */
+#state-badge{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:8px 10px;border-radius:var(--r-md);border:1px solid var(--border-hi);
+  margin-bottom:8px;
+}
+.state-label{font-size:18px;font-weight:800;font-family:var(--font-ui)}
+.state-label.TRADE{color:var(--trade-green)}.state-label.WAIT{color:var(--wait-gold)}
+.state-label.AVOID{color:var(--avoid-amber)}.state-label.BLOCKED{color:var(--put-red)}
+.state-label.MARKET_CLOSED{color:var(--text-muted)}
+.state-meta{text-align:right;font-size:10px;color:var(--text-secondary)}
+
+/* ── DATA ROWS ── */
+.dr{display:flex;justify-content:space-between;align-items:center;padding:4px 0;border-bottom:1px solid var(--border);font-size:11px}
+.dr:last-child{border-bottom:none}
+.dl{color:var(--text-secondary)}
+.dv{font-family:var(--font-mono);font-weight:600;color:var(--text-primary)}
+.dv.g{color:var(--trade-green)}.dv.r{color:var(--put-red)}.dv.y{color:var(--wait-gold)}.dv.a{color:var(--accent)}
+
+/* ── WHY BOX ── */
+.why-box{
+  font-size:10px;color:var(--text-secondary);line-height:1.65;
+  background:var(--bg-elevated);border-radius:var(--r-sm);
+  padding:7px 9px;margin:6px 0;
+}
+
+/* ── PCR GAUGES ── */
+.pcr-wrap{display:flex;gap:8px;margin:6px 0}
+.pcr-g{flex:1}
+.pcr-lbl{font-size:9px;color:var(--text-muted);margin-bottom:3px;text-transform:uppercase}
+.pcr-track{height:6px;background:var(--bg-elevated);border-radius:3px;overflow:hidden;margin-bottom:2px}
+.pcr-fill{height:100%;border-radius:3px;transition:width .4s}
+.pcr-val{font-family:var(--font-mono);font-size:11px;font-weight:700}
+.pcr-b{color:var(--trade-green)}.pcr-bear{color:var(--put-red)}
+
+/* ── OI HEATMAP ── */
+.oi-hm{width:100%}
+.oi-r{display:flex;align-items:center;gap:4px;padding:2px 0;border-bottom:1px solid var(--border)}
+.oi-stk{font-family:var(--font-mono);font-size:9px;color:var(--text-muted);width:52px;flex-shrink:0;text-align:right}
+.oi-bars{flex:1;display:flex;flex-direction:column;gap:1px}
+.oi-b{height:7px;border-radius:2px;transition:width .3s;min-width:2px}
+.oi-b.ce{background:var(--put-red);opacity:.8}
+.oi-b.pe{background:var(--trade-green);opacity:.8}
+.oi-b.hot{opacity:1;box-shadow:0 0 4px currentColor}
+.oi-labels{display:flex;gap:12px;margin-bottom:4px;font-size:9px}
+.oi-ce-lbl{color:var(--put-red)}.oi-pe-lbl{color:var(--trade-green)}
+.maxpain-line{font-size:9px;color:var(--accent);margin-top:4px;font-family:var(--font-mono)}
+
+/* ── OI SUMMARY PANEL ── */
+.oi-top-grid{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:6px}
+.oi-top-card{background:var(--bg-elevated);border-radius:var(--r-sm);padding:6px 8px}
+.oi-sum-row{display:flex;justify-content:space-between;align-items:center;padding:2px 0;border-bottom:1px solid var(--border);font-size:10px}
+.oi-sum-row:last-child{border-bottom:none}
+.oi-sum-lbl{color:var(--text-secondary);font-size:9px}
+.oi-sum-val{font-family:var(--font-mono);font-weight:700;color:var(--text-primary);font-size:10px}
+.oi-sum-val.g{color:var(--trade-green)}.oi-sum-val.r{color:var(--put-red)}.oi-sum-val.a{color:var(--accent)}
+.oi-sum-badge{font-size:8px;padding:1px 4px;border-radius:3px;background:var(--bg);color:var(--wait-gold);margin-left:3px;vertical-align:middle}
+.oi-mp-arrow{font-size:9px;margin-right:2px}
+.oi-mp-arrow.up{color:var(--trade-green)}.oi-mp-arrow.dn{color:var(--put-red)}
+
+/* ── PIVOT S&R PANEL ── */
+.pvt-row{display:flex;justify-content:space-between;align-items:center;padding:2px 0;border-bottom:1px solid var(--border);font-size:10px}
+.pvt-row:last-child{border-bottom:none}
+.pvt-row.pivot-p{font-weight:700;background:rgba(99,179,237,.07);padding:2px 4px;border-radius:3px;margin:1px 0}
+.pvt-lbl{color:var(--text-secondary);font-size:9px}
+.pvt-val{font-family:var(--font-mono);font-weight:600;font-size:10px}
+.pvt-val.r{color:var(--put-red)}.pvt-val.g{color:var(--trade-green)}.pvt-val.a{color:var(--accent)}
+
+/* ── CE/PE WRITING TABLES ── */
+.write-grid{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:4px}
+.write-col{background:var(--bg-elevated);border-radius:var(--r-sm);padding:6px;overflow:hidden}
+.write-col-hdr{font-size:8px;font-weight:700;text-transform:uppercase;letter-spacing:.7px;margin-bottom:4px;display:flex;align-items:center;gap:4px}
+.write-col-hdr.ce{color:var(--put-red)}.write-col-hdr.pe{color:var(--trade-green)}
+.write-row{display:grid;grid-template-columns:48px 1fr 30px 40px;gap:2px;align-items:center;padding:2px 0;border-bottom:1px solid var(--border);font-size:9px}
+.write-row:last-child{border-bottom:none}
+.write-row-hdr{font-size:8px;color:var(--text-muted);text-transform:uppercase;padding-bottom:2px;border-bottom:1px solid var(--border-hi)}
+.wr-strike{font-family:var(--font-mono);font-weight:700;color:var(--text-primary)}
+.wr-oi{font-family:var(--font-mono);color:var(--text-secondary)}
+.wr-pcr{font-family:var(--font-mono);font-size:8px;color:var(--accent)}
+.wr-trap{font-size:7px;padding:1px 3px;border-radius:3px;white-space:nowrap}
+.wr-trap.call{background:rgba(239,68,68,.15);color:var(--put-red)}
+.wr-trap.put{background:rgba(34,197,94,.12);color:var(--trade-green)}
+.wr-trap.build{background:rgba(99,179,237,.1);color:var(--accent)}
+.oi-chg-dot{font-size:8px}
+.oi-chg-dot.up{color:var(--trade-green)}.oi-chg-dot.dn{color:var(--put-red)}.oi-chg-dot.nc{color:var(--text-muted)}
+
+/* ── FULL OI CHAIN TABLE ── */
+.chain-wrap{margin-top:6px;overflow-x:auto}
+.chain-tbl{width:100%;border-collapse:collapse;font-size:9px;font-family:var(--font-mono)}
+.chain-tbl th{font-size:8px;color:var(--text-muted);text-transform:uppercase;padding:3px 5px;border-bottom:1px solid var(--border-hi);white-space:nowrap;position:sticky;top:0;background:var(--bg-card);z-index:1}
+.chain-tbl td{padding:2px 5px;border-bottom:1px solid var(--border);color:var(--text-secondary);white-space:nowrap}
+.chain-tbl tr.atm-row td{background:rgba(239,68,68,.1);font-weight:700}
+.chain-tbl tr.atm-row .chain-strike{color:var(--put-red)}
+.chain-tbl tr.mp-row td{background:rgba(250,204,21,.07)}
+.chain-tbl tr.mp-row .chain-strike{color:var(--wait-gold)}
+.chain-strike{font-weight:800;color:var(--text-primary);text-align:center;font-size:10px}
+.chain-ce{text-align:right;color:var(--put-red)}.chain-pe{text-align:left;color:var(--trade-green)}
+.chain-ltp{color:var(--text-secondary)}
+.chain-hdr-ce{color:var(--put-red)!important}.chain-hdr-pe{color:var(--trade-green)!important}
+
+/* ── ACTION BUTTON ── */
+.btn-action{
+  width:100%;padding:10px;margin-top:8px;border:none;border-radius:var(--r-md);
+  font-family:var(--font-ui);font-size:12px;font-weight:800;cursor:pointer;
+  transition:opacity .15s;
+}
+.btn-action:hover{opacity:.85}
+.btn-action.call{background:var(--trade-green);color:#000}
+.btn-action.put{background:var(--put-red);color:#fff}
+.btn-action.disabled{background:var(--bg-elevated);color:var(--text-muted);cursor:default}
+
+/* ── POSITION BTN ── */
+.btn-pos{
+  width:100%;padding:7px;margin-top:4px;
+  background:var(--bg-elevated);border:1px solid var(--border-hi);
+  border-radius:var(--r-sm);color:var(--text-secondary);
+  font-family:var(--font-mono);font-size:10px;cursor:pointer;
+}
+
+/* ── CONFIDENCE BAND ── */
+.conf-Strong{color:var(--trade-green)}.conf-Good{color:var(--wait-gold)}.conf-Weak{color:var(--text-muted)}
+
+/* ── CONDITION LOG ── */
+.cond-item{font-size:9px;color:var(--text-secondary);padding:2px 0;display:flex;gap:5px}
+.cond-bkt{font-size:8px;padding:1px 4px;border-radius:3px;background:var(--bg-elevated);color:var(--accent);flex-shrink:0}
+
+/* ── MODALS (keep from old) ── */
+#glossary-modal,#position-modal{position:fixed;inset:0;background:rgba(0,0,0,.85);z-index:800;display:flex;align-items:flex-end}
+#glossary-modal.hidden,#position-modal.hidden{display:none}
+.modal-sheet{background:var(--bg-card);border-top:1px solid var(--border-hi);border-radius:14px 14px 0 0;width:100%;max-height:80vh;overflow-y:auto;padding:0 0 30px}
+.modal-pip{width:36px;height:4px;background:var(--border-hi);border-radius:2px;margin:12px auto}
+.modal-hdr{display:flex;align-items:center;justify-content:space-between;padding:0 16px 12px;border-bottom:1px solid var(--border)}
+.modal-title{font-size:14px;font-weight:800}
+.btn-close-modal{background:var(--bg-elevated);border:1px solid var(--border-hi);border-radius:var(--r-sm);color:var(--text-secondary);font-size:11px;padding:5px 10px;cursor:pointer;min-height:36px}
+.glossary-search{margin:12px 16px;padding:7px 10px;background:var(--bg-elevated);border:1px solid var(--border-hi);border-radius:var(--r-sm);color:var(--text-primary);font-family:var(--font-mono);font-size:11px;width:calc(100% - 32px);outline:none}
+.glossary-list{padding:0 16px}
+.glossary-item{padding:10px 0;border-bottom:1px solid var(--border)}
+.glossary-term{font-size:12px;font-weight:700;color:var(--accent);margin-bottom:3px}
+.glossary-def{font-size:10px;color:var(--text-secondary);line-height:1.7}
+.field-row{margin-bottom:10px;padding:0 16px}
+.field-label{font-size:9px;color:var(--text-secondary);margin-bottom:3px;text-transform:uppercase;letter-spacing:.8px}
+.field-input{width:100%;padding:9px 10px;background:var(--bg-elevated);border:1px solid var(--border-hi);border-radius:var(--r-sm);color:var(--text-primary);font-family:var(--font-mono);font-size:12px;outline:none;min-height:40px}
+.pos-actions{display:flex;gap:8px;padding:0 16px;margin-top:12px}
+.btn-confirm-pos{flex:2;min-height:48px;background:var(--trade-green);color:#000;border:none;border-radius:var(--r-md);font-family:var(--font-ui);font-weight:800;font-size:12px;cursor:pointer}
+.btn-cancel-pos{flex:1;min-height:48px;background:var(--bg-elevated);border:1px solid var(--border-hi);border-radius:var(--r-md);color:var(--text-secondary);font-family:var(--font-mono);font-size:11px;cursor:pointer}
+
+/* ── TOOLTIP ── */
+#tooltip{position:fixed;background:var(--bg-card);border:1px solid var(--border-hi);border-radius:var(--r-md);padding:10px 12px;max-width:240px;z-index:900;display:none;box-shadow:0 8px 24px rgba(0,0,0,.6)}
+#tooltip.visible{display:block}
+.tt-term{font-size:11px;font-weight:700;color:var(--accent);margin-bottom:5px}
+.tt-body{font-size:10px;color:var(--text-secondary);line-height:1.65}
+
+/* ── SKELETON ── */
+@keyframes shimmer{0%{opacity:.3}50%{opacity:.7}100%{opacity:.3}}
+.skel{background:var(--bg-elevated);border-radius:4px;animation:shimmer 1.4s ease infinite}
+.skel-h{height:32px;margin-bottom:6px}.skel-row{height:16px;margin-bottom:5px}
+.skel-row.w3q{width:75%}.skel-row.whalf{width:50%}
+
+.hidden{display:none!important}
+</style>
+</head>
+<body>
+<!-- GLOSSARY MODAL -->
+<div id="glossary-modal" class="hidden">
+  <div class="modal-sheet">
+    <div class="modal-pip"></div>
+    <div class="modal-hdr">
+      <span class="modal-title">? Glossary</span>
+      <button class="btn-close-modal" onclick="closeGlossary()">Close ✕</button>
+    </div>
+    <input class="glossary-search" id="glossary-search" placeholder="Search term…" oninput="filterGlossary(this.value)">
+    <div class="glossary-list" id="glossary-list"></div>
+  </div>
+</div>
+
+<!-- POSITION MODAL -->
+<div id="position-modal" class="hidden">
+  <div class="modal-sheet" style="padding-bottom:30px">
+    <div class="modal-pip"></div>
+    <div class="modal-hdr"><span class="modal-title">Log Position Entry</span></div>
+    <div style="padding:0 16px 10px;font-size:10px;color:var(--text-secondary)" id="pos-prefill-info">Pre-filled from card.</div>
+    <div class="field-row"><div class="field-label">Fill Price (₹)</div><input class="field-input" id="fill-price-input" type="number"></div>
+    <div class="field-row"><div class="field-label">Lots</div><input class="field-input" id="lots-input" type="number" value="1"></div>
+    <div class="field-row"><div class="field-label">Fill Time (IST)</div><input class="field-input" id="fill-time-input" type="time"></div>
+    <div class="pos-actions">
+      <button class="btn-cancel-pos" onclick="closePositionModal()">Cancel</button>
+      <button class="btn-confirm-pos" onclick="confirmPosition()">✓ Confirm Entry</button>
+    </div>
+  </div>
+</div>
+
+<!-- TOOLTIP -->
+<div id="tooltip"><div class="tt-term" id="tt-term"></div><div class="tt-body" id="tt-body"></div></div>
+
+<!-- APP -->
+<div id="app">
+
+  <!-- HEADER -->
+  <div id="fno-header">
+    <div id="fno-logo">📡 <span>FNO</span> Trap Detector</div>
+    <div id="fno-search-wrap">
+      <span id="fno-search-icon">🔍</span>
+      <input id="fno-search-input" type="text" autocomplete="off"
+        placeholder="Search symbol… RELIANCE, SENSEX, BANKNIFTY…"
+        oninput="onSymSearchInput(this.value)"
+        onkeydown="onSymSearchKey(event)"
+        onfocus="showSearchDropdown()"
+        onblur="hideSearchDropdownDelayed()">
+      <div id="fno-search-dropdown" class="hidden"></div>
+    </div>
+    <div class="tb-spacer"></div>
+    <div id="fno-status">
+      <span id="fno-phase">MARKET CLOSED</span>
+      <span id="fno-time">—</span>
+      <div id="fno-ws-dot" class="off"></div>
+    </div>
+  </div>
+
+  <!-- INDEX BAR: always-visible key index chips -->
+  <div id="index-bar">
+    <div class="idx-chip" id="idx-NIFTY" onclick="selectSymbol('NIFTY')">
+      <span class="idx-sym">NIFTY</span>
+      <span class="idx-spot" id="idx-spot-NIFTY">—</span>
+      <span class="idx-dir" id="idx-dir-NIFTY">▲</span>
+    </div>
+    <div class="idx-chip" id="idx-BANKNIFTY" onclick="selectSymbol('BANKNIFTY')">
+      <span class="idx-sym">BANK</span>
+      <span class="idx-spot" id="idx-spot-BANKNIFTY">—</span>
+      <span class="idx-dir" id="idx-dir-BANKNIFTY">▲</span>
+    </div>
+    <div class="idx-chip" id="idx-FINNIFTY" onclick="selectSymbol('FINNIFTY')">
+      <span class="idx-sym">FIN</span>
+      <span class="idx-spot" id="idx-spot-FINNIFTY">—</span>
+      <span class="idx-dir" id="idx-dir-FINNIFTY">▲</span>
+    </div>
+    <div class="idx-chip" id="idx-MIDCPNIFTY" onclick="selectSymbol('MIDCPNIFTY')">
+      <span class="idx-sym">MID</span>
+      <span class="idx-spot" id="idx-spot-MIDCPNIFTY">—</span>
+      <span class="idx-dir" id="idx-dir-MIDCPNIFTY">▲</span>
+    </div>
+    <div class="idx-bar-spacer"></div>
+    <div id="prev-sess-badge" class="hidden">🕐 Previous session</div>
+  </div>
+
+  <!-- SYMBOL TABS -->
+  <div id="symbol-tabs"></div>
+
+  <!-- MAIN 3-COLUMN GRID -->
+  <div id="main-grid">
+    <!-- COL 1: Signal card -->
+    <div class="g-col" id="col-signal"></div>
+    <!-- COL 2: OI Heatmap + PCR -->
+    <div class="g-col" id="col-oi"></div>
+    <!-- COL 3: Levels + System -->
+    <div class="g-col" id="col-levels"></div>
+  </div>
+
+</div><!-- /app -->
+
+<script>
+
+/* ═════════════════════════════════════════════════════════════
+   CANONICAL VOCABULARY — GAP-R34
+═════════════════════════════════════════════════════════════ */
+const VOCAB = {
+  stateIcon:     { TRADE:'▶', WAIT:'⏳', AVOID:'⛔', BLOCKED:'🚫', MARKET_CLOSED:'—' },
+  stateSubtitle: { WAIT:'Setup forming', AVOID:'No edge now' },
+  exitBtn: {
+    STRENGTHENING: ['Trail & Hold',   'btn-trail-hold',    false],
+    HOLDING:       ['Prepare Exit ↗', 'btn-prepare-exit',  false],
+    WEAKENING:     ['Prepare Exit ↗', 'btn-prepare-exit',  false],
+    EXIT_WARNING:  ['Prepare Exit ↗', 'btn-prepare-exit',  false],
+    EXIT_NOW:      ['EXIT NOW ↗',     'btn-exit-now',      true],
+    CONFLICT:      ['EXIT NOW ↗',     'btn-exit-now',      true],
+  },
+  confBand: (p) => p>=85 ? {l:'Strong',c:'conf-Strong'} : p>=70 ? {l:'Good',c:'conf-Good'} : {l:'Weak',c:'conf-Weak'},
+  dataTooltip: {
+    green: { term:'Data: Live',    body:'Data is live and current. Signals are reliable.' },
+    amber: { term:'Data: Delayed', body:'Data is delayed — signals may lag market conditions by a few minutes.' },
+    red:   { term:'Data: Stale',   body:'Data is stale — do not trade on this signal. Wait for live data.' },
+  },
+  warningTooltips: {
+    'w-iv-crush':    { term:'Why option prices drop',      body:'When a big move doesn\'t happen, option prices drop sharply regardless of direction.' },
+    'w-gamma':       { term:'Why resistance near level',   body:'Large participants automatically hedge near this price, which can slow or stall moves.' },
+    'w-pcr-div':     { term:'Why watch price carefully',   body:'Put/call volumes are sending a different signal than price. Let price confirm before trusting.' },
+    'w-rollover':    { term:'Why OI less reliable',        body:'Near expiry, traders move positions to the next month, which distorts the usual signals.' },
+    'w-basis':       { term:'Why use limit order',         body:'The futures price is trading away from its normal relationship with spot. Market orders may get worse fills.' },
+    'w-absorption':  { term:'Why wait for second push',    body:'A strong move got absorbed by sellers or buyers. A second attempt confirms real momentum.' },
+    'w-deadzone':    { term:'Why lower reliability now',   body:'The 11:30–1:30 PM window has historically lower directional follow-through due to low institutional participation.' },
+    'w-spread':      { term:'Why use limit orders',        body:'The bid-ask spread is unusually wide. Market orders will cost you more than usual.' },
+    'w-correlated':  { term:'Why correlated risk matters', body:'Multiple open positions in related symbols multiply your exposure to a single market move.' },
+  },
+};
+
+/* ═════════════════════════════════════════════════════════════
+   LIVE DATA LAYER
+   ─────────────────────────────────────────────────────────────
+   API contract (Flask backend must implement):
+
+   GET  /api/watchlist
+        → { symbols: ["NIFTY","BANKNIFTY",...] }
+
+   GET  /api/card?symbol=NIFTY
+        → { card_state, trap_dir, action, strike, expiry,
+            lots, lot_cost, premium, stop, spot_inval,
+            exit_time, why, spot_t1, spot_t2,
+            spot, spot_dir, phase, dte, data_conf,
+            snapshot_time, confidence,
+            wait_reason, wait_mins, wait_total_mins,
+            avoid_reason, block_reason,
+            warnings: [{text, bucket, key}],
+            has_position, position_state,
+            pos_strike, pos_wap, pos_now, pos_lots,
+            survivability_snaps, trail,
+            trap_score, pcr_oi, pcr_vol,
+            max_pain, vwap, pivot_r1, pivot_s1,
+            oi_data: [{strike,ce,pe,hot_ce,hot_pe}],
+            regime, vix, exec_gate, psi, crowding,
+            conditions: [{bucket,text}],
+            ws_bandwidth, oi_age, pipeline,
+            cooldown_active, cooldown_expiry,
+            has_event, event_text,
+            nifty_spot, nifty_dir }
+
+   POST /api/position/log
+        body: { symbol, strike, option_type, lots,
+                fill_price, fill_time }
+        → { ok: true, position_id }
+
+   POST /api/position/exit
+        body: { symbol, exit_price, exit_time }
+        → { ok: true }
+
+   WS   ws://host/ws/cards
+        server pushes same shape as GET /api/card
+        field: symbol identifies which symbol updated
+═════════════════════════════════════════════════════════════ */
+
+// Live cache — keyed by symbol, populated from API
+const SYMBOLS_DATA = {};
+
+// Watchlist — populated from /api/watchlist on boot
+let WATCHLIST = [];
+
+/* ── API helpers ── */
+/* ── API base — all FNO Trap routes are prefixed under /fno-trap ── */
+const API_BASE = '/fno-trap';
+
+async function apiFetch(path, opts = {}) {
+  const url = path.startsWith('http') ? path : API_BASE + path;
+  try {
+    const r = await fetch(url, {
+      headers: { 'Content-Type': 'application/json' },
+      ...opts,
+    });
+    if (!r.ok) throw new Error(`HTTP ${r.status}`);
+    return await r.json();
+  } catch (e) {
+    console.warn('[FNO-Trap API]', url, e.message);
+    return null;
+  }
+}
+
+/* Normalise snake_case API response → camelCase used by render layer */
+function normalise(raw) {
+  if (!raw) return null;
+  return {
+    // card core
+    cardState:    raw.card_state   || 'MARKET_CLOSED',
+    trapDir:      raw.trap_dir     || null,
+    action:       raw.action       || null,
+    strike:       raw.strike       || null,
+    expiry:       raw.expiry       || null,
+    lots:         raw.lots         ?? null,
+    lotCost:      raw.lot_cost     ?? null,
+    premium:      raw.premium      ?? null,
+    stop:         raw.stop         ?? null,
+    spotInval:    raw.spot_inval   || null,
+    exitTime:     raw.exit_time    || null,
+    why:          raw.why          || null,
+    spotT1:       raw.spot_t1      || null,
+    spotT2:       raw.spot_t2      || null,
+    // top bar
+    spot:         raw.spot         ?? 0,
+    spotDir:      raw.spot_dir     || 'up',
+    phase:        raw.phase        || 'ACTIVE',
+    dte:          raw.dte          ?? '—',
+    dataConf:     raw.data_conf    || 'amber',
+    snapshotTime: raw.snapshot_time|| '—',
+    confidence:   raw.confidence   ?? 0,
+    niftySpot:    raw.nifty_spot   ?? null,
+    niftyDir:     raw.nifty_dir    || 'up',
+    // wait/avoid/blocked
+    waitReason:      raw.wait_reason      || null,
+    waitMins:        raw.wait_mins        ?? 0,
+    waitTotalMins:   raw.wait_total_mins  ?? 15,
+    avoidReason:     raw.avoid_reason     || null,
+    blockReason:     raw.block_reason     || null,
+    // warnings
+    warnings:     Array.isArray(raw.warnings) ? raw.warnings : [],
+    // position
+    hasPosition:       raw.has_position       || false,
+    positionState:     raw.position_state     || null,
+    posStrike:         raw.pos_strike         || null,
+    posWAP:            raw.pos_wap            ?? null,
+    posNow:            raw.pos_now            ?? null,
+    posLots:           raw.pos_lots           ?? null,
+    survivabilitySnaps:raw.survivability_snaps?? 99,
+    trail:             raw.trail              || null,
+    // details
+    trapScore:  raw.trap_score  ?? null,
+    pcr_oi:     raw.pcr_oi      ?? null,
+    pcr_vol:    raw.pcr_vol     ?? null,
+    maxPain:    raw.max_pain    ?? null,
+    vwap:       raw.vwap        ?? null,
+    pivotR1:    raw.pivot_r1    ?? null,
+    pivotS1:    raw.pivot_s1    ?? null,
+    oi_data:    Array.isArray(raw.oi_data) ? raw.oi_data.map(r => ({
+                  strike: r.strike, ce: r.ce, pe: r.pe,
+                  hotCE: r.hot_ce || false, hotPE: r.hot_pe || false,
+                })) : [],
+    regime:     raw.regime      || null,
+    vix:        raw.vix         ?? null,
+    execGate:   raw.exec_gate   || null,
+    psi:        raw.psi         || null,
+    crowding:   raw.crowding    ?? null,
+    conditions: Array.isArray(raw.conditions) ? raw.conditions : [],
+    wsBandwidth:raw.ws_bandwidth|| '—',
+    oiAge:      raw.oi_age      || '—',
+    pipeline:   raw.pipeline    || '—',
+    // overlays
+    cooldownActive:  raw.cooldown_active  || false,
+    cooldownExpiry:  raw.cooldown_expiry  || null,
+    hasEvent:        raw.has_event        || false,
+    eventText:       raw.event_text       || null,
+    prevSessionLabel: raw.prev_session_label || null,
+  };
+}
+
+/* ── Fetch single symbol card ── */
+async function fetchCard(sym) {
+  showCardLoading();
+  const raw = await apiFetch(`/api/card?symbol=${encodeURIComponent(sym)}`);
+  if (!raw) {
+    showCardError(sym);
+    return;
+  }
+  const prev = SYMBOLS_DATA[sym];
+  SYMBOLS_DATA[sym] = normalise(raw);
+  // Preserve locally-tracked position overrides (logged but not yet on server)
+  if (prev && prev._localPosition) {
+    SYMBOLS_DATA[sym]._localPosition = prev._localPosition;
+    SYMBOLS_DATA[sym].hasPosition    = true;
+    SYMBOLS_DATA[sym].positionState  = prev.positionState;
+    SYMBOLS_DATA[sym].posStrike      = prev.posStrike;
+    SYMBOLS_DATA[sym].posWAP         = prev.posWAP;
+    SYMBOLS_DATA[sym].posNow         = prev.posNow;
+    SYMBOLS_DATA[sym].posLots        = prev.posLots;
+  }
+  if (sym === currentSymbol) {
+    activePosition = SYMBOLS_DATA[sym].hasPosition;
+    renderAll();
+    handleOverlays(SYMBOLS_DATA[sym]);
+  } else {
+    renderAll(); // update chip state only
+  }
+}
+
+/* ── Fetch all watchlist chips in parallel ── */
+async function fetchAllCards() {
+  await Promise.all(WATCHLIST.map(s => fetchCard(s)));
+}
+
+/* ── Polling fallback (runs when WS is not connected) ── */
+let pollInterval = null;
+const POLL_MS = 5000; // 5 s snapshot cycle
+
+let _oiPollTick = 0;
+function startPolling() {
+  if (pollInterval) return;
+  pollInterval = setInterval(async () => {
+    if (!wsConnected) {
+      await fetchCard(currentSymbol);              // current symbol — full render
+      // background-refresh other chips every 3 cycles
+      if (Date.now() % (POLL_MS * 3) < POLL_MS) {
+        const others = WATCHLIST.filter(s => s !== currentSymbol);
+        await Promise.all(others.map(fetchCard));
+      }
+    }
+    // Refresh OI chain for current symbol every ~60 s (12 ticks × 5 s)
+    _oiPollTick++;
+    if (_oiPollTick % 12 === 0) {
+      delete OI_CHAIN_CACHE[currentSymbol];   // invalidate so fetchOIChain re-fetches
+      _oiChainFetching[currentSymbol] = false;
+      fetchOIChain(currentSymbol);
+    }
+  }, POLL_MS);
+}
+
+/* ── WebSocket ── */
+let ws = null;
+let wsConnected = false;
+let wsReconnectTimer = null;
+
+function connectWS() {
+  const proto = location.protocol === 'https:' ? 'wss' : 'ws';
+  const url   = `${proto}://${location.host}/fno-trap/ws/cards`;
+  try {
+    ws = new WebSocket(url);
+  } catch (e) {
+    markWS(false);
+    return;
+  }
+
+  ws.onopen = () => {
+    markWS(true);
+    clearTimeout(wsReconnectTimer);
+    // Subscribe to full watchlist
+    ws.send(JSON.stringify({ action: 'subscribe', symbols: WATCHLIST }));
+  };
+
+  ws.onmessage = (evt) => {
+    let msg;
+    try { msg = JSON.parse(evt.data); } catch { return; }
+    if (!msg.symbol) return;
+    const sym = msg.symbol;
+    const prev = SYMBOLS_DATA[sym] || {};
+    const next  = normalise(msg);
+    // GAP-R28 debounce — only when card_state changes
+    if (prev.cardState && next.cardState !== prev.cardState && sym === currentSymbol) {
+      clearTimeout(cardDebounceTimer);
+      cardDebounceTimer = setTimeout(() => {
+        SYMBOLS_DATA[sym] = next;
+        if (sym === currentSymbol) { activePosition = next.hasPosition; renderAll(); handleOverlays(next); }
+        else renderAll();
+      }, 1000);
+    } else {
+      SYMBOLS_DATA[sym] = next;
+      if (sym === currentSymbol) { renderAll(); }
+      else renderAll();
+    }
+  };
+
+  ws.onerror = () => markWS(false);
+
+  ws.onclose = () => {
+    markWS(false);
+    wsReconnectTimer = setTimeout(connectWS, 8000);
+  };
+}
+
+
+/* ── Loading / error states ── */
+
+
+/* ── Overlay logic (event banner + cooldown) ── */
+
+/* ═════════════════════════════════════════════════════════════
+   SYMBOL SEARCH — NFO stocks + NSE indices + BSE SENSEX/BANKEX
+═════════════════════════════════════════════════════════════ */
+let _searchTimer   = null;
+let _searchResults = [];
+let _searchCursor  = -1;
+let _hideTimer     = null;
+
+// Symbols loaded via search but not in watchlist (temporary tabs)
+const _tempSymbols = new Set();
+
+function onSymSearchInput(val) {
+  clearTimeout(_searchTimer);
+  const q = val.trim();
+  if (q.length < 2) { hideSearchDropdown(); return; }
+  _searchTimer = setTimeout(() => _doSearch(q), 220);
+}
+
+async function _doSearch(q) {
+  const data = await apiFetch(`/api/search?q=${encodeURIComponent(q)}&limit=15`);
+  _searchResults = (data && data.results) ? data.results : [];
+  _searchCursor = -1;
+  _renderDropdown();
+}
+
+function _renderDropdown() {
+  const dd = document.getElementById('fno-search-dropdown');
+  if (!_searchResults.length) { dd.classList.add('hidden'); return; }
+  dd.innerHTML = _searchResults.map((r, i) => `
+    <div class="search-result-row ${i === _searchCursor ? 'active' : ''}"
+         style="padding:9px 14px;display:flex;align-items:center;justify-content:space-between;
+           cursor:pointer;border-bottom:1px solid var(--border);font-family:var(--font-mono);
+           background:${i === _searchCursor ? 'var(--bg-elevated)' : 'transparent'};"
+         onmousedown="pickSearchResult('${r.symbol}','${r.lot_size || 50}')"
+         onmouseenter="this.style.background='var(--bg-elevated)'"
+         onmouseleave="this.style.background='${i===_searchCursor?'var(--bg-elevated)':'transparent'}'">
+      <div>
+        <span style="font-size:13px;color:var(--text-primary);font-weight:700;">${r.symbol}</span>
+        <span style="font-size:10px;color:var(--text-muted);margin-left:8px;">${r.type}</span>
+      </div>
+      <div style="text-align:right;">
+        <span style="font-size:10px;color:var(--text-secondary);">${r.exchange}</span>
+        <span style="font-size:10px;color:var(--text-muted);margin-left:6px;">Lot ${r.lot_size || '?'}</span>
+      </div>
+    </div>`).join('');
+  dd.classList.remove('hidden');
+}
+
+function onSymSearchKey(e) {
+  if (!_searchResults.length) return;
+  if (e.key === 'ArrowDown') {
+    e.preventDefault();
+    _searchCursor = Math.min(_searchCursor + 1, _searchResults.length - 1);
+    _renderDropdown();
+  } else if (e.key === 'ArrowUp') {
+    e.preventDefault();
+    _searchCursor = Math.max(_searchCursor - 1, 0);
+    _renderDropdown();
+  } else if (e.key === 'Enter' && _searchCursor >= 0) {
+    const r = _searchResults[_searchCursor];
+    pickSearchResult(r.symbol, r.lot_size || 50);
+  } else if (e.key === 'Escape') {
+    hideSearchDropdown();
+    document.getElementById('fno-search-input').blur();
+  }
+}
+
+function pickSearchResult(sym, lotSize) {
+  document.getElementById('fno-search-input').value = '';
+  hideSearchDropdown();
+
+  // Add to temp symbols if not already in watchlist
+  if (!WATCHLIST.includes(sym)) {
+    _tempSymbols.add(sym);
+    WATCHLIST.push(sym);
+    // Seed placeholder
+    SYMBOLS_DATA[sym] = SYMBOLS_DATA[sym] || {
+      cardState:'MARKET_CLOSED', spot:0, spotDir:'up',
+      phase:'ACTIVE', dte:'—', dataConf:'amber', warnings:[], oi_data:[],
+      conditions:[], hasPosition:false,
+    };
+    renderAll();
+  }
+  selectSymbol(sym);
+  fetchCard(sym);
+}
+
+function showSearchDropdown() {
+  clearTimeout(_hideTimer);
+  if (_searchResults.length) {
+    document.getElementById('fno-search-dropdown').classList.remove('hidden');
+  }
+}
+
+function hideSearchDropdownDelayed() {
+  _hideTimer = setTimeout(hideSearchDropdown, 200);
+}
+
+function hideSearchDropdown() {
+  document.getElementById('fno-search-dropdown').classList.add('hidden');
+  _searchResults = [];
+  _searchCursor = -1;
+}
+
+/* ── Prev-session banner ── */
+function updatePrevSessionBanner(d) {
+  const banner = document.getElementById('prev-session-banner');
+  const text   = document.getElementById('prev-session-text');
+  if (!banner) return;
+  const label = d && d.prevSessionLabel;
+  if (label) {
+    text.textContent = `🕐 ${label} — analysis from closing OI. Do not trade on stale data.`;
+    banner.classList.remove('hidden');
+    banner.style.display = 'flex';
+  } else {
+    banner.classList.add('hidden');
+    banner.style.display = 'none';
+  }
+}
+
+/* ── Boot: fetch watchlist → init cards → connect WS ── */
+async function boot() {
+  // 1. Get watchlist
+  const wl = await apiFetch('/api/watchlist');
+  WATCHLIST = (wl && Array.isArray(wl.symbols) && wl.symbols.length)
+    ? wl.symbols
+    : ['NIFTY','BANKNIFTY','FINNIFTY']; // safe default if endpoint not ready
+
+  // Set first symbol as current
+  currentSymbol = WATCHLIST[0];
+
+  // 2. Seed empty placeholders so strip renders immediately
+  WATCHLIST.forEach(s => {
+    SYMBOLS_DATA[s] = { cardState:'MARKET_CLOSED', spot:0, spotDir:'up',
+      phase:'ACTIVE', dte:'—', dataConf:'amber', warnings:[], oi_data:[],
+      conditions:[], hasPosition:false };
+  });
+  renderAll();
+  showCardLoading();
+
+  // 3. Fetch all cards
+  await fetchAllCards();
+
+  // 3b. Fetch rich OI chain for initial symbol (non-blocking)
+  fetchOIChain(currentSymbol);
+
+  // 4. WebSocket
+  connectWS();
+
+  // 5. Polling fallback
+  startPolling();
+}
+
+/* ── Position log POST to backend ── */
+async function postPositionLog(sym, payload) {
+  const res = await apiFetch('/api/position/log', {
+    method: 'POST',
+    body: JSON.stringify({ symbol: sym, ...payload }),
+  });
+  return res && res.ok;
+}
+
+async function postPositionExit(sym, payload) {
+  const res = await apiFetch('/api/position/exit', {
+    method: 'POST',
+    body: JSON.stringify({ symbol: sym, ...payload }),
+  });
+  return res && res.ok;
+}
+
+/* ═════════════════════════════════════════════════════════════
+   STATE
+═════════════════════════════════════════════════════════════ */
+let currentSymbol = 'NIFTY';
+let activePosition = false;
+let positionModalOpen = false;
+let currentPreset = localStorage.getItem('fno_preset') || 'beginner';
+let learningMode = localStorage.getItem('fno_learning') === '1';
+let exitDisclaimerShown = false;
+let cardDebounceTimer = null;
+let currentCardState = null;
+
+const BEGINNER_TABS = ['Signal','OI','System'];
+const ADVANCED_TABS = ['Signal','OI','Levels','Flow','Regime','Execution','System'];
+
+// Onboarding removed — desktop layout has no overlay
+
+
+/* ═════════════════════════════════════════════════════════════
+   SYMBOL STRIP — GAP-R26
+═════════════════════════════════════════════════════════════ */
+
+
+/* ═════════════════════════════════════════════════════════════
+   TOP BAR RENDER
+═════════════════════════════════════════════════════════════ */
+
+/* ═════════════════════════════════════════════════════════════
+   CARD RENDER — §19.2, all GAP-R fixes
+═════════════════════════════════════════════════════════════ */
+
+
+
+
+
+
+function renderClosedBody(d, body) {
+  const hasPrevData = d.pipeline === 'prev_session'
+    && (d.trapScore > 0 || d.pcr_oi > 0 || d.maxPain > 0);
+
+  if (!hasPrevData) {
+    // No historical data yet (pipeline = no_data or genuinely empty)
+    body.innerHTML = `
+      <div class="noncard-state-text" style="color:var(--text-secondary)">MARKET CLOSED</div>
+      <div class="noncard-reason" style="margin-bottom:12px;">
+        No previous session data available yet.<br>
+        <span style="font-size:10px;opacity:0.7;">Connect Kite and load once during market hours to see last-session analysis here.</span>
+      </div>
+      <div class="warnings" id="warning-zone"></div>
+    `;
+    return;
+  }
+
+  // ── Rich prev-session card ──────────────────────────────
+  const tscore = d.trapScore || 0;
+  const tscoreCol = tscore >= 70 ? 'var(--trade-green)' : tscore >= 50 ? 'var(--wait-gold)' : 'var(--text-secondary)';
+  const tdir = d.trapDir || null;
+  const tdirLabel = tdir === 'PUT_BUYER_TRAP'
+    ? '⬆ Put Writer Trap — Bullish bias'
+    : tdir === 'CALL_BUYER_TRAP'
+    ? '⬇ Call Writer Trap — Bearish bias'
+    : '— No dominant trap';
+  const tdirColor = tdir === 'PUT_BUYER_TRAP' ? 'var(--trade-green)'
+    : tdir === 'CALL_BUYER_TRAP' ? 'var(--put-red)'
+    : 'var(--text-muted)';
+
+  const pcr = (d.pcr_oi || 0).toFixed(2);
+  const pcrColor = d.pcr_oi > 1.2 ? 'var(--trade-green)'
+    : d.pcr_oi < 0.8 ? 'var(--put-red)' : 'var(--wait-gold)';
+  const pcrLabel = d.pcr_oi > 1.2 ? 'Put-heavy (bullish OI)'
+    : d.pcr_oi < 0.8 ? 'Call-heavy (bearish OI)' : 'Balanced';
+
+  const maxPain = d.maxPain > 0
+    ? '₹' + Number(d.maxPain).toLocaleString('en-IN') : '—';
+  const spot = d.spot > 0
+    ? Number(d.spot).toLocaleString('en-IN') : '—';
+  const why = d.why ? d.why.replace('⏸ ', '') : null;
+
+  body.innerHTML = `
+    <div style="padding:2px 0 10px;">
+      <!-- Trap Score row -->
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
+        <div>
+          <div style="font-size:10px;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.8px;margin-bottom:2px;">Trap Score</div>
+          <div style="font-size:26px;font-family:var(--font-ui);font-weight:800;color:${tscoreCol};line-height:1;">${tscore}<span style="font-size:12px;color:var(--text-muted)">/100</span></div>
+        </div>
+        <div style="text-align:right;">
+          <div style="font-size:10px;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.8px;margin-bottom:4px;">Direction</div>
+          <div style="font-size:11px;font-weight:700;color:${tdirColor};">${tdirLabel}</div>
+        </div>
+      </div>
+
+      <!-- PCR + Max Pain row -->
+      <div style="display:flex;gap:8px;margin-bottom:10px;">
+        <div style="flex:1;background:var(--bg-elevated);border-radius:var(--r-sm);padding:8px 10px;">
+          <div style="font-size:9px;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.8px;margin-bottom:3px;">OI-PCR</div>
+          <div style="font-size:16px;font-weight:800;font-family:var(--font-ui);color:${pcrColor};">${pcr}</div>
+          <div style="font-size:9px;color:var(--text-muted);margin-top:2px;">${pcrLabel}</div>
+        </div>
+        <div style="flex:1;background:var(--bg-elevated);border-radius:var(--r-sm);padding:8px 10px;">
+          <div style="font-size:9px;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.8px;margin-bottom:3px;">Max Pain</div>
+          <div style="font-size:16px;font-weight:800;font-family:var(--font-ui);color:var(--accent);">${maxPain}</div>
+          <div style="font-size:9px;color:var(--text-muted);margin-top:2px;">Spot ${spot}</div>
+        </div>
+      </div>
+
+      ${why ? `<div style="font-size:11px;color:var(--text-secondary);line-height:1.6;padding:8px 10px;background:var(--bg-elevated);border-radius:var(--r-sm);margin-bottom:8px;">${why}</div>` : ''}
+
+      <div style="font-size:9px;color:var(--text-muted);text-align:center;margin-top:4px;">
+        Expand the <strong>OI Heatmap</strong> section below for full strike-by-strike view
+      </div>
+    </div>
+    <div class="warnings" id="warning-zone"></div>
+  `;
+}
+
+/* ═════════════════════════════════════════════════════════════
+   WARNING LINES — GAP-R20
+═════════════════════════════════════════════════════════════ */
+
+
+/* ═════════════════════════════════════════════════════════════
+   ACTION BUTTONS — GAP-R31
+═════════════════════════════════════════════════════════════ */
+
+
+/* ═════════════════════════════════════════════════════════════
+   DETAILS ACCORDION — §19.6, GAP-R24, GAP-R25
+═════════════════════════════════════════════════════════════ */
+let activeTab = localStorage.getItem('fno_tab') || 'Signal';
+
+/* ═════════════════════════════════════════════════════════════
+   ANALYSIS PANEL — always-visible, no tabs, no accordion
+   All sections rendered flat in one scroll
+═════════════════════════════════════════════════════════════ */
+
+/* ── Stubs kept for backward-compat (onboarding/cooldown refs) ── */
+function toggleDetails() {}  // no-op — panel is always open
+function buildTabs() {}      // no-op
+function switchTab() {}      // no-op
+function setPreset() {}      // no-op
+function renderTabContent() {} // no-op
+
+
+
+/* ═════════════════════════════════════════════════════════════
+   POSITION MODAL — GAP-R9
+═════════════════════════════════════════════════════════════ */
+
+
+
+
+/* ═════════════════════════════════════════════════════════════
+   EXIT HANDLING — GAP-R16
+═════════════════════════════════════════════════════════════ */
+function handleExitTap() {
+  if (!exitDisclaimerShown) {
+    document.getElementById('exit-disclaimer').classList.add('visible');
+    exitDisclaimerShown = true;
+  } else {
+    doExit();
+  }
+}
+
+function dismissExitDisclaimer() {
+  document.getElementById('exit-disclaimer').classList.remove('visible');
+  doExit();
+}
+
+async function doExit() {
+  const d = SYMBOLS_DATA[currentSymbol];
+  activePosition = false;
+  if (d) {
+    await postPositionExit(currentSymbol, {
+      exit_price: d.posNow || null,
+      exit_time:  new Date().toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit'}),
+    });
+    d.hasPosition    = false;
+    d._localPosition = false;
+    d.positionState  = null;
+  }
+  renderAll();
+}
+
+/* ═════════════════════════════════════════════════════════════
+   ALERT PROMPT — GAP-R10
+═════════════════════════════════════════════════════════════ */
+
+/* ═════════════════════════════════════════════════════════════
+   TOOLTIP ENGINE — GAP-R20, GAP-R21
+═════════════════════════════════════════════════════════════ */
+let tooltipTimer = null;
+
+document.addEventListener('click', (e) => {
+  if (!e.target.closest('#tooltip') && !e.target.closest('.warning-line') && !e.target.closest('.tb-data-dot'))
+    document.getElementById('tooltip').classList.remove('visible');
+});
+
+/* ═════════════════════════════════════════════════════════════
+   GLOSSARY — GAP-R33
+═════════════════════════════════════════════════════════════ */
+const GLOSSARY_TERMS = [
+  { term:'CE (Call option)',       def:'A contract that profits when the market goes UP. You buy a CE when you think the index will rise.' },
+  { term:'PE (Put option)',        def:'A contract that profits when the market goes DOWN. You buy a PE when you think the index will fall.' },
+  { term:'Lot',                    def:'The minimum number of units in one F&O contract. For Nifty, 1 lot = 75 units. The dashboard shows total cost per lot.' },
+  { term:'Strike',                 def:'The index level at which your option is anchored. Example: 24,900 CE profits most when Nifty rises above 24,900.' },
+  { term:'Premium',                def:'The price you pay to buy the option. Your maximum loss is limited to this amount.' },
+  { term:'Stop (Premium)',         def:'If the option price falls to this level, exit immediately. You pre-decide your loss limit.' },
+  { term:'Spot invalidation',      def:'If the Nifty index falls below (or rises above) this level, the trade setup is no longer valid — exit even if the stop hasn\'t hit.' },
+  { term:'Spot T1 / Spot T2',      def:'Nifty index levels where you take partial or full profit. Not option premium targets — these are index levels.' },
+  { term:'DTE',                    def:'Days To Expiry. Fewer days means faster time decay on option value. The dashboard avoids signals on expiry day (DTE=0).' },
+  { term:'VWAP',                   def:'Volume-Weighted Average Price. The average price at which the most trading has happened today. Acts as a key support/resistance.' },
+  { term:'OI (Open Interest)',     def:'The number of active contracts. Rising OI = new money entering. Falling OI = positions closing.' },
+  { term:'PCR (Put-Call Ratio)',   def:'Ratio of puts to calls traded. Above 1.2 = more puts = bearish lean. Below 0.8 = more calls = bullish lean.' },
+  { term:'Trap',                   def:'A market condition where one group of option traders is forced to cut losses, driving price in the opposite direction.' },
+  { term:'Theta',                  def:'The daily cost of holding an option due to time passing. Theta increases as expiry approaches.' },
+  { term:'Max Pain',               def:'The index level where the most option sellers profit at expiry. Acts as a price magnet near expiry.' },
+];
+
+function renderGlossaryList(terms) {
+  document.getElementById('glossary-list').innerHTML = terms.map(t=>`
+    <div class="glossary-item">
+      <div class="glossary-term">${t.term}</div>
+      <div class="glossary-def">${t.def}</div>
+    </div>
+  `).join('');
+}
+
+/* ═════════════════════════════════════════════════════════════
+   LEARNING MODE — GAP-R35
+═════════════════════════════════════════════════════════════ */
+if (learningMode) document.body.classList.add('learning-mode');
+
+/* ── WebSocket debounce timer declared above in state section ── */
+
+/* ── WebSocket + polling handle all live updates above ── */
+
+/* ═════════════════════════════════════════════════════════════
+   MASTER RENDER
+═════════════════════════════════════════════════════════════ */
+/* ── render helpers ── */
+const dr=(l,v,c='')=>`<div class="dr"><span class="dl">${l}</span><span class="dv ${c}">${v}</span></div>`;
+const secHdr=t=>`<div class="sec-hdr">${t}</div>`;
+
+
+function renderIndexBar(){
+  const IDX=['NIFTY','BANKNIFTY','FINNIFTY','MIDCPNIFTY'];
+  IDX.forEach(s=>{
+    const d=SYMBOLS_DATA[s];
+    const sp=document.getElementById('idx-spot-'+s);
+    const dir=document.getElementById('idx-dir-'+s);
+    const chip=document.getElementById('idx-'+s);
+    if(!d||!sp)return;
+    if(d.spot>0)sp.textContent=Number(d.spot).toLocaleString('en-IN');
+    const up=d.spotDir!=='down';
+    dir.textContent=up?'▲':'▼';
+    dir.className='idx-dir '+(up?'up':'dn');
+    if(chip)chip.classList.toggle('active',s===currentSymbol);
+  });
+}
+
+function renderSymbolTabs(){
+  const tabs=document.getElementById('symbol-tabs');
+  const IDX=['NIFTY','BANKNIFTY','FINNIFTY','MIDCPNIFTY'];
+  tabs.innerHTML=WATCHLIST.map(s=>{
+    const d=SYMBOLS_DATA[s]||{};
+    const st=d.cardState||'MARKET_CLOSED';
+    const isTemp=_tempSymbols&&_tempSymbols.has(s);
+    const isIdx=IDX.includes(s);
+    return `<div class="sym-tab${s===currentSymbol?' active':''}" onclick="selectSymbol('${s}')">
+      ${s}
+      <span class="sym-tab-badge ${st}">${st==='MARKET_CLOSED'?'—':st}</span>
+      ${isTemp?`<span class="sym-tab-close" onclick="event.stopPropagation();removeTabSymbol('${s}')">✕</span>`:''}
+    </div>`;
+  }).join('');
+}
+
+function removeTabSymbol(sym){
+  if(_tempSymbols)_tempSymbols.delete(sym);
+  WATCHLIST=WATCHLIST.filter(s=>s!==sym);
+  delete SYMBOLS_DATA[sym];
+  delete OI_CHAIN_CACHE[sym];
+  if(currentSymbol===sym)selectSymbol(WATCHLIST[0]||'NIFTY');
+  else renderAll();
+}
+
+function renderColSignal(d){
+  const col=document.getElementById('col-signal');
+  const st=d.cardState||'MARKET_CLOSED';
+  const conf=VOCAB.confBand(d.confidence||0);
+  const tdir=d.trapDir==='PUT_BUYER_TRAP'?'▲ Bullish (Put Trap)':d.trapDir==='CALL_BUYER_TRAP'?'▼ Bearish (Call Trap)':'— Neutral';
+  const tdirC=d.trapDir==='PUT_BUYER_TRAP'?'g':d.trapDir==='CALL_BUYER_TRAP'?'r':'';
+  const ts=d.trapScore??0;
+  const tsC=ts>=70?'g':ts>=50?'y':'';
+  const hasTrade=st==='TRADE';
+  const isCall=d.trapDir==='PUT_BUYER_TRAP';
+
+  // Prev-session badge
+  const badge=document.getElementById('prev-sess-badge');
+  if(badge){
+    if(d.prevSessionLabel){badge.textContent='🕐 '+d.prevSessionLabel;badge.classList.remove('hidden');}
+    else badge.classList.add('hidden');
+  }
+
+  col.innerHTML=`
+    ${secHdr('Signal')}
+    <div id="state-badge" style="background:var(--bg-elevated);border:1px solid var(--border-hi);border-radius:var(--r-md);padding:8px 10px;margin-bottom:8px;display:flex;align-items:center;justify-content:space-between;">
+      <span class="state-label ${st}">${VOCAB.stateIcon[st]||'—'} ${st.replace('_',' ')}</span>
+      <span style="font-size:10px;color:var(--text-muted)">${d.snapshotTime||'—'}</span>
+    </div>
+    ${hasTrade&&!activePosition?`
+      <div style="background:var(--bg-elevated);border-radius:var(--r-md);padding:8px 10px;margin-bottom:8px;font-size:11px;">
+        <div style="font-size:14px;font-weight:800;color:${isCall?'var(--trade-green)':'var(--put-red)'}">
+          ${d.action} ${d.strike} ${d.expiry}
+        </div>
+        <div style="color:var(--text-secondary);margin-top:3px">
+          ${d.lots} lot · ₹${d.premium} · Stop ₹${d.stop} · Exit ${d.exitTime}
+        </div>
+      </div>`:''
+    }
+    ${(()=>{
+      if(!d.spot) return dr('LTP','—');
+      const oc = OI_CHAIN_CACHE[currentSymbol];
+      const isDown = d.spotDir==='down';
+      const clr = isDown ? 'var(--put-red)' : 'var(--trade-green)';
+      const arrow = isDown ? '▼' : '▲';
+      const ltpHtml = `<span style="font-size:13px;font-weight:800;color:${clr}">₹${Number(d.spot).toLocaleString('en-IN')}</span>`;
+      let chgHtml = '';
+      if(oc && (oc.spot_chg !== undefined)) {
+        const chg = oc.spot_chg;
+        const pct = oc.spot_chg_pct;
+        const cc  = chg < 0 ? 'var(--put-red)' : 'var(--trade-green)';
+        chgHtml = `<span style="font-size:10px;color:${cc};margin-left:5px;font-family:var(--font-mono)">${chg>=0?'+':''}${chg.toFixed(2)} (${Math.abs(pct).toFixed(2)}%) ${arrow}</span>`;
+      }
+      return dr('LTP', ltpHtml + chgHtml);
+    })()}
+    ${dr('Trap Score',`${ts}/100`,tsC)}
+    ${dr('Strength',`<span class="conf-${conf.l}">${conf.l}</span>`)}
+    ${dr('Direction',tdir,tdirC)}
+    ${dr('Phase',(d.phase||'').replace(/_/g,' '))}
+    ${dr('DTE',d.dte??'—')}
+    ${d.why?`<div class="why-box">${d.why}</div>`:''}
+    ${(d.conditions||[]).length?`
+      <div class="sec-hdr" style="margin-top:8px">Conditions</div>
+      ${d.conditions.map(c=>`<div class="cond-item"><span class="cond-bkt">${c.bucket}</span>${c.text}</div>`).join('')}
+    `:''}
+    ${(d.warnings||[]).length?`
+      <div class="sec-hdr" style="margin-top:8px">Warnings</div>
+      ${d.warnings.map(w=>`<div style="font-size:9px;color:var(--avoid-amber);padding:2px 0">${w.text}</div>`).join('')}
+    `:''}
+    ${activePosition?renderPositionBlock(d):''}
+    ${hasTrade&&!activePosition?`
+      <button class="btn-action ${isCall?'call':'put'}" onclick="openPositionModal()">
+        ${isCall?'▲ BUY CALL':'▼ BUY PUT'} — Log Entry
+      </button>`:
+      `<button class="btn-action disabled">—</button>`
+    }
+    <button class="btn-pos" onclick="togglePositionModal()">Position ▼</button>
+    <button class="btn-pos" style="margin-top:2px" onclick="openGlossary()">? Glossary</button>
+  `;
+}
+
+function renderPositionBlock(d){
+  if(!d.hasPosition)return'';
+  const pnl=(d.posNow&&d.posWAP)?(d.posNow-d.posWAP).toFixed(1):null;
+  const pnlC=pnl>0?'g':pnl<0?'r':'';
+  return`
+    <div class="sec-hdr" style="margin-top:8px">Open Position</div>
+    ${dr('Strike',d.posStrike||'—')}
+    ${dr('WAP',d.posWAP?'₹'+d.posWAP:'—')}
+    ${dr('Now',d.posNow?'₹'+d.posNow:'—')}
+    ${pnl!==null?dr('P&L',`${pnl>0?'+':''}${pnl}`,pnlC):''}
+    <button class="btn-action put" style="margin-top:6px" onclick="openPositionModal()">Exit Position</button>
+  `;
+}
+
+// OI chain data cache keyed by symbol
+const OI_CHAIN_CACHE = {};
+let _oiChainFetching = {};
+
+async function fetchOIChain(sym) {
+  if (_oiChainFetching[sym]) return;
+  _oiChainFetching[sym] = true;
+  try {
+    const data = await apiFetch(`/api/oi-chain?symbol=${encodeURIComponent(sym)}`);
+    if (data && !data.error) {
+      OI_CHAIN_CACHE[sym] = data;
+      if (sym === currentSymbol) renderColOI(SYMBOLS_DATA[sym] || {});
+    }
+  } catch(e) { /* silent */ }
+  finally { _oiChainFetching[sym] = false; }
+}
+
+function _chgDot(v) {
+  if (v > 0)  return '<span class="oi-chg-dot up">▲+</span>';
+  if (v < 0)  return '<span class="oi-chg-dot dn">▼-</span>';
+  return '<span class="oi-chg-dot nc">→</span>';
+}
+function _fmtNum(v) {
+  if (!v) return '—';
+  return Number(v).toLocaleString('en-IN');
+}
+
+function renderColOI(d) {
+  const col = document.getElementById('col-oi');
+  const sym = currentSymbol;
+  const oc  = OI_CHAIN_CACHE[sym];
+
+  if (!oc) {
+    fetchOIChain(sym);
+    const pcr = d.pcr_oi ?? 0;
+    const pcrC = pcr > 1.2 ? 'g' : pcr < 0.8 ? 'r' : 'y';
+    col.innerHTML = `${secHdr('OI & Max Pain')}${dr('OI-PCR',pcr.toFixed(2),pcrC)}${dr('Max Pain',d.maxPain>0?'₹'+Number(d.maxPain).toLocaleString('en-IN'):'—','a')}<div style="font-size:10px;color:var(--text-muted);text-align:center;padding:16px 0">⟳ Loading full OI chain…</div>`;
+    return;
+  }
+
+  const pvt    = oc.pivots || {};
+  const mpUp   = (oc.max_pain_vs_ltp || '').includes('Above');
+  const mpArrow= mpUp ? '<span class="oi-mp-arrow up">▲</span>' : '<span class="oi-mp-arrow dn">▼</span>';
+  const pcrVal = oc.overall_pcr || 0;
+  const pcrC   = pcrVal > 1.2 ? 'g' : pcrVal < 0.8 ? 'r' : 'y';
+  const n      = v => v ? Number(v).toLocaleString('en-IN') : '—';
+
+  // CE/PE writing rows
+  const mkRow = (r, type) => `<div class="write-row">
+    <span class="wr-strike">${n(r.strike)}</span>
+    <span class="wr-oi">${r.oi_fmt||'—'}${_chgDot(r.oi_chg)}</span>
+    <span class="wr-pcr">${r.strike_pcr??'—'}</span>
+    <span>${r.trap?`<span class="wr-trap ${type}">${r.trap}</span>`:r.buildup?`<span class="wr-trap build">${r.buildup}</span>`:'<span style="color:var(--text-muted);font-size:8px">—</span>'}</span>
+  </div>`;
+  const ceRows = (oc.ce_writing||[]).map(r=>mkRow(r,'call')).join('');
+  const peRows = (oc.pe_writing||[]).map(r=>mkRow(r,'put')).join('');
+
+  // Chain table rows
+  const chainRows = (oc.chain||[]).map(r => {
+    const cls = r.is_atm ? 'atm-row' : r.is_max_pain ? 'mp-row' : '';
+    const stk = r.is_atm
+      ? `<span class="chain-strike" style="color:var(--put-red)">ATM ${n(r.strike)}</span>`
+      : r.is_max_pain
+      ? `<span class="chain-strike" style="color:var(--wait-gold)">⭐${n(r.strike)}</span>`
+      : `<span class="chain-strike">${n(r.strike)}</span>`;
+    return `<tr class="${cls}">
+      <td class="chain-pe">${r.pe_oi_fmt||'—'}</td>
+      <td class="chain-pe">${_chgDot(r.pe_oi_chg)}</td>
+      <td class="chain-ltp chain-pe">₹${r.pe_ltp||'—'}</td>
+      <td style="text-align:center">${stk}</td>
+      <td class="chain-ltp chain-ce">₹${r.ce_ltp||'—'}</td>
+      <td class="chain-ce">${_chgDot(r.ce_oi_chg)}</td>
+      <td class="chain-ce">${r.ce_oi_fmt||'—'}</td>
+    </tr>`;
+  }).join('');
+
+  col.innerHTML = `
+    <div class="oi-top-grid">
+      <div class="oi-top-card">
+        <div style="font-size:8px;font-weight:700;text-transform:uppercase;letter-spacing:.7px;color:var(--accent);margin-bottom:4px">📊 OI & Max Pain</div>
+        <div class="oi-sum-row"><span class="oi-sum-lbl">Max Pain</span><span class="oi-sum-val a">₹${n(oc.max_pain)}</span></div>
+        <div class="oi-sum-row"><span class="oi-sum-lbl">vs LTP</span><span class="oi-sum-val">${mpArrow}${oc.max_pain_vs_ltp||'—'}</span></div>
+        <div class="oi-sum-row"><span class="oi-sum-lbl">CE Wall</span><span class="oi-sum-val r">₹${n(oc.ce_wall)}</span></div>
+        <div class="oi-sum-row"><span class="oi-sum-lbl">PE Wall</span><span class="oi-sum-val g">₹${n(oc.pe_wall)}</span></div>
+        <div class="oi-sum-row"><span class="oi-sum-lbl">PCR</span><span class="oi-sum-val ${pcrC}">${pcrVal.toFixed(3)}<span class="oi-sum-badge">${oc.pcr_label||''}</span></span></div>
+        <div class="oi-sum-row"><span class="oi-sum-lbl">Fut OI</span><span class="oi-sum-val">${oc.futures_oi_curr||'—'}/${oc.futures_oi_prev||'—'}</span></div>
+        <div class="oi-sum-row"><span class="oi-sum-lbl">Expiry</span><span class="oi-sum-val">${oc.expiry||'—'}</span></div>
+        <div class="oi-sum-row"><span class="oi-sum-lbl">Straddle</span><span class="oi-sum-val">₹${oc.straddle||'—'}</span></div>
+        <div class="oi-sum-row"><span class="oi-sum-lbl">Spot</span><span class="oi-sum-val">${oc.spot?Number(oc.spot).toLocaleString('en-IN'):'—'}</span></div>
+      </div>
+      <div class="oi-top-card">
+        <div style="font-size:8px;font-weight:700;text-transform:uppercase;letter-spacing:.7px;color:var(--accent);margin-bottom:4px">🎯 Pivot S&amp;R</div>
+        ${pvt.R3 ? `
+        <div class="pvt-row"><span class="pvt-lbl">R3</span><span class="pvt-val r">${n(pvt.R3)}</span></div>
+        <div class="pvt-row"><span class="pvt-lbl">R2</span><span class="pvt-val r">${n(pvt.R2)}</span></div>
+        <div class="pvt-row"><span class="pvt-lbl">R1</span><span class="pvt-val r">${n(pvt.R1)}</span></div>
+        <div class="pvt-row pivot-p"><span class="pvt-lbl">Pivot</span><span class="pvt-val a">${n(pvt.P)}</span></div>
+        <div class="pvt-row"><span class="pvt-lbl">S1</span><span class="pvt-val g">${n(pvt.S1)}</span></div>
+        <div class="pvt-row"><span class="pvt-lbl">S2</span><span class="pvt-val g">${n(pvt.S2)}</span></div>
+        <div class="pvt-row"><span class="pvt-lbl">S3</span><span class="pvt-val g">${n(pvt.S3)}</span></div>
+        ` : '<div style="font-size:9px;color:var(--text-muted)">Pivot loading…</div>'}
+      </div>
+    </div>
+    ${secHdr('📈 Max CE & PE Writing Zones')}
+    <div class="write-grid">
+      <div class="write-col">
+        <div class="write-col-hdr ce">📞 CE — Resistance</div>
+        <div class="write-row write-row-hdr"><span>Strike</span><span>OI</span><span>PCR</span><span>Tag</span></div>
+        ${ceRows||'<div style="font-size:9px;color:var(--text-muted);padding:4px 0">No data</div>'}
+      </div>
+      <div class="write-col">
+        <div class="write-col-hdr pe">📉 PE — Support</div>
+        <div class="write-row write-row-hdr"><span>Strike</span><span>OI</span><span>PCR</span><span>Tag</span></div>
+        ${peRows||'<div style="font-size:9px;color:var(--text-muted);padding:4px 0">No data</div>'}
+      </div>
+    </div>
+    ${chainRows ? `
+    ${secHdr('🔥 OI Chain · '+oc.expiry+' · PCR '+pcrVal.toFixed(2))}
+    <div class="chain-wrap">
+      <table class="chain-tbl">
+        <thead><tr>
+          <th class="chain-hdr-pe" style="text-align:left">PE OI</th>
+          <th class="chain-hdr-pe">ΔOOI</th>
+          <th class="chain-hdr-pe">PE LTP</th>
+          <th style="text-align:center">STRIKE</th>
+          <th class="chain-hdr-ce">CE LTP</th>
+          <th class="chain-hdr-ce">ΔOOI</th>
+          <th class="chain-hdr-ce" style="text-align:right">CE OI</th>
+        </tr></thead>
+        <tbody>${chainRows}</tbody>
+      </table>
+    </div>` : ''}
+  `;
+}
+
+
+function renderColLevels(d){
+  const col=document.getElementById('col-levels');
+  const regC=(d.regime||'').includes('TREND')?'g':'y';
+  col.innerHTML=`
+    ${secHdr('Key Levels')}
+    ${dr('VWAP',d.vwap>0?'₹'+Number(d.vwap).toLocaleString('en-IN'):'—','a')}
+    ${dr('Pivot R1',d.pivotR1>0?'₹'+Number(d.pivotR1).toLocaleString('en-IN'):'—','g')}
+    ${dr('Pivot S1',d.pivotS1>0?'₹'+Number(d.pivotS1).toLocaleString('en-IN'):'—','r')}
+    ${d.spotT1?dr('Target T1','₹'+d.spotT1,'g'):''}
+    ${d.spotT2?dr('Target T2','₹'+d.spotT2,'g'):''}
+    ${d.spotInval?dr('Invalidation','₹'+d.spotInval,'r'):''}
+
+    ${secHdr('Execution')}
+    ${d.execGate?dr('Exec Gate',d.execGate,d.execGate==='GOOD'?'g':d.execGate==='FAIR'?'y':'r'):''}
+    ${d.psi?dr('PSI',d.psi,d.psi==='NORMAL'?'g':'y'):''}
+    ${d.crowding!=null?dr('Crowding',d.crowding+'%',d.crowding<50?'g':d.crowding<70?'y':'r'):''}
+    ${dr('Regime',(d.regime||'—').replace(/_/g,' '),regC)}
+    ${d.vix!=null?dr('VIX',d.vix,d.vix<14?'g':d.vix<18?'y':'r'):''}
+
+    ${secHdr('System')}
+    ${dr('Pipeline',d.pipeline||'—',d.pipeline==='prev_session'?'y':d.pipeline==='HEALTHY'?'g':'')}
+    ${dr('Data',(d.dataConf||'').toUpperCase(),d.dataConf==='green'?'g':d.dataConf==='amber'?'y':'r')}
+    ${dr('OI Age',d.oiAge!=null?d.oiAge+' min':'—')}
+    ${dr('Snapshot',d.snapshotTime||'—')}
+    <div style="margin-top:8px;text-align:center">
+      <span style="font-size:8px;color:var(--text-muted)">Probabilistic signals — not guaranteed outcomes</span>
+    </div>
+  `;
+}
+
+function updateHeaderStatus(d){
+  const ph=document.getElementById('fno-phase');
+  const tm=document.getElementById('fno-time');
+  if(ph)ph.textContent=(d.phase||'').replace(/_/g,' ');
+  if(tm)tm.textContent=d.snapshotTime||'—';
+}
+
+
+
+
+function togglePositionModal(){
+  const d=SYMBOLS_DATA[currentSymbol];
+  if(d&&d.hasPosition)openPositionModal();else openPositionModal();
+}
+
+
+
+
+
+
+document.addEventListener('click',e=>{
+  if(!e.target.closest('#tooltip'))document.getElementById('tooltip').classList.remove('visible');
+});
+
+
+
+
+/* ═════════════════════════════════════════════════════════════
+   SYMBOL SELECTION
+═══════════════════════════════════════════════════════════════ */
+function selectSymbol(sym) {
+  if (!sym) return;
+  currentSymbol = sym;
+  activePosition = !!(SYMBOLS_DATA[sym] && SYMBOLS_DATA[sym].hasPosition);
+  renderAll();
+  // Fetch fresh data for newly selected symbol
+  fetchCard(sym);
+  // Fetch rich OI chain for the new symbol
+  fetchOIChain(sym);
+}
+
+/* ═════════════════════════════════════════════════════════════
+   MASTER RENDER — calls all sub-renderers
+═══════════════════════════════════════════════════════════════ */
+function renderAll() {
+  const d = SYMBOLS_DATA[currentSymbol] || {
+    cardState: 'MARKET_CLOSED', spot: 0, spotDir: 'up',
+    phase: 'ACTIVE', dte: '—', dataConf: 'amber',
+    warnings: [], oi_data: [], conditions: [], hasPosition: false,
+  };
+  renderIndexBar();
+  renderSymbolTabs();
+  renderColSignal(d);
+  renderColOI(d);
+  renderColLevels(d);
+  updateHeaderStatus(d);
+}
+
+/* ═════════════════════════════════════════════════════════════
+   OI HEATMAP BUILDER
+═══════════════════════════════════════════════════════════════ */
+function buildOIHeatmap(d) {
+  const rows = (d.oi_data || []).slice(0, 12);
+  if (!rows.length) return '<div style="font-size:10px;color:var(--text-muted);text-align:center;padding:10px 0">No OI data</div>';
+  const maxOI = Math.max(...rows.map(r => Math.max(r.ce || 0, r.pe || 0)), 1);
+  return `<div class="oi-hm">${rows.map(r => {
+    const cePct = Math.round((r.ce || 0) / maxOI * 100);
+    const pePct = Math.round((r.pe || 0) / maxOI * 100);
+    const isHot = r.hotCE || r.hotPE;
+    return `<div class="oi-r">
+      <span class="oi-stk">${r.strike}</span>
+      <div class="oi-bars">
+        <div class="oi-b ce${r.hotCE ? ' hot' : ''}" style="width:${cePct}%"></div>
+        <div class="oi-b pe${r.hotPE ? ' hot' : ''}" style="width:${pePct}%"></div>
+      </div>
+    </div>`;
+  }).join('')}</div>`;
+}
+
+/* ═════════════════════════════════════════════════════════════
+   CARD LOADING / ERROR STATES
+═══════════════════════════════════════════════════════════════ */
+function showCardLoading() {
+  const cols = ['col-signal', 'col-oi', 'col-levels'];
+  cols.forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.innerHTML = `<div class="skel skel-h"></div><div class="skel skel-row"></div><div class="skel skel-row w3q"></div><div class="skel skel-row whalf"></div>`;
+  });
+}
+
+function showCardError(sym) {
+  const el = document.getElementById('col-signal');
+  if (el) el.innerHTML = `<div style="font-size:11px;color:var(--put-red);padding:12px 0">Failed to load ${sym}. Check connection.</div>`;
+}
+
+/* ═════════════════════════════════════════════════════════════
+   OVERLAY HANDLER (event banner + cooldown)
+═══════════════════════════════════════════════════════════════ */
+function handleOverlays(d) {
+  // no-op — overlays are rendered inline in renderColSignal
+}
+
+/* ═════════════════════════════════════════════════════════════
+   WEBSOCKET STATUS DOT
+═══════════════════════════════════════════════════════════════ */
+function markWS(connected) {
+  wsConnected = connected;
+  const dot = document.getElementById('fno-ws-dot');
+  if (!dot) return;
+  dot.className = connected ? 'on' : 'off';
+}
+
+/* ═════════════════════════════════════════════════════════════
+   GLOSSARY MODAL
+═══════════════════════════════════════════════════════════════ */
+function openGlossary() {
+  renderGlossaryList(GLOSSARY_TERMS);
+  document.getElementById('glossary-modal').classList.remove('hidden');
+}
+function closeGlossary() {
+  document.getElementById('glossary-modal').classList.add('hidden');
+}
+function filterGlossary(q) {
+  const filtered = q
+    ? GLOSSARY_TERMS.filter(t => t.term.toLowerCase().includes(q.toLowerCase()) || t.def.toLowerCase().includes(q.toLowerCase()))
+    : GLOSSARY_TERMS;
+  renderGlossaryList(filtered);
+}
+
+/* ═════════════════════════════════════════════════════════════
+   POSITION MODAL
+═══════════════════════════════════════════════════════════════ */
+let _posModalSym = null;
+
+function openPositionModal() {
+  _posModalSym = currentSymbol;
+  const d = SYMBOLS_DATA[currentSymbol] || {};
+  // Pre-fill info
+  const info = document.getElementById('pos-prefill-info');
+  if (info) info.textContent = `${currentSymbol} · ${d.action || ''} ${d.strike || ''} ${d.expiry || ''}`.trim();
+  // Pre-fill time
+  const tInput = document.getElementById('fill-time-input');
+  if (tInput) {
+    const now = new Date();
+    tInput.value = now.toTimeString().slice(0, 5);
+  }
+  // Pre-fill price
+  const pInput = document.getElementById('fill-price-input');
+  if (pInput && d.premium) pInput.value = d.premium;
+  document.getElementById('position-modal').classList.remove('hidden');
+  positionModalOpen = true;
+}
+
+function closePositionModal() {
+  document.getElementById('position-modal').classList.add('hidden');
+  positionModalOpen = false;
+}
+
+async function confirmPosition() {
+  const sym  = _posModalSym || currentSymbol;
+  const d    = SYMBOLS_DATA[sym] || {};
+  const price = parseFloat(document.getElementById('fill-price-input').value);
+  const lots  = parseInt(document.getElementById('lots-input').value) || 1;
+  const time  = document.getElementById('fill-time-input').value || '—';
+
+  if (!price || isNaN(price)) { alert('Enter a valid fill price.'); return; }
+
+  const payload = {
+    strike:      d.strike      || null,
+    option_type: d.trapDir === 'PUT_BUYER_TRAP' ? 'CE' : 'PE',
+    lots,
+    fill_price:  price,
+    fill_time:   time,
+  };
+
+  // Optimistic local update
+  SYMBOLS_DATA[sym]._localPosition = true;
+  SYMBOLS_DATA[sym].hasPosition    = true;
+  SYMBOLS_DATA[sym].positionState  = 'HOLDING';
+  SYMBOLS_DATA[sym].posStrike      = d.strike;
+  SYMBOLS_DATA[sym].posWAP         = price;
+  SYMBOLS_DATA[sym].posNow         = price;
+  SYMBOLS_DATA[sym].posLots        = lots;
+  if (sym === currentSymbol) { activePosition = true; renderAll(); }
+
+  closePositionModal();
+  await postPositionLog(sym, payload);
+}
+
+// Boot
+window.addEventListener('DOMContentLoaded', boot);
+
+</script>
+</body>
+</html>

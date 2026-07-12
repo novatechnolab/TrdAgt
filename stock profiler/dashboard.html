@@ -1,0 +1,609 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Market Profiler — Live</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600&family=Bebas+Neue&display=swap');
+
+:root{
+  --bg:#07090f; --surface:#0f1420; --card:#131b28; --border:#1c2840;
+  --bull:#00e5a0; --bear:#ff4060; --warn:#f5a623; --blue:#4a9df5;
+  --text:#c9d3e8; --muted:#4a5870;
+  --bull-bg:rgba(0,229,160,.08); --bear-bg:rgba(255,64,96,.08);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--bg);color:var(--text);font-family:'IBM Plex Mono',monospace;font-size:13px;min-height:100vh}
+
+/* ── HEADER ── */
+.topbar{display:flex;align-items:center;justify-content:space-between;
+  padding:12px 20px;background:var(--surface);border-bottom:1px solid var(--border);
+  position:sticky;top:0;z-index:100}
+.logo{font-family:'Bebas Neue',sans-serif;font-size:1.4rem;letter-spacing:3px;color:var(--bull)}
+.live-pill{display:flex;align-items:center;gap:6px;font-size:11px;color:var(--muted)}
+.dot{width:7px;height:7px;border-radius:50%;background:var(--bear)}
+.dot.on{background:var(--bull);animation:blink 1.2s ease-in-out infinite}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:.25}}
+
+/* ── ADD BAR ── */
+.addbar{display:flex;gap:8px;padding:10px 20px;background:var(--surface);
+  border-bottom:1px solid var(--border);flex-wrap:wrap;align-items:center}
+.addbar input{background:var(--bg);border:1px solid var(--border);color:var(--text);
+  padding:7px 10px;font-family:'IBM Plex Mono',monospace;font-size:12px;border-radius:4px}
+.addbar input:focus{outline:none;border-color:var(--bull)}
+.addbar input::placeholder{color:var(--muted)}
+.btn{padding:7px 14px;border:none;border-radius:4px;font-family:'IBM Plex Mono',monospace;
+  font-size:11px;font-weight:600;cursor:pointer;letter-spacing:1px;transition:opacity .15s}
+.btn:hover{opacity:.75}
+.btn-add{background:var(--bull);color:#000}
+.btn-sm{background:var(--border);color:var(--text);padding:4px 8px;font-size:10px}
+.btn-danger{background:var(--bear);color:#fff;padding:4px 8px;font-size:10px}
+
+/* ── CARDS GRID ── */
+#grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(620px,1fr));gap:16px;padding:16px 20px}
+
+/* ── CARD ── */
+.card{background:var(--card);border:1px solid var(--border);border-radius:8px;overflow:hidden}
+.card-top{display:flex;justify-content:space-between;align-items:center;
+  padding:10px 14px;border-bottom:1px solid var(--border)}
+.sym{font-family:'Bebas Neue',sans-serif;font-size:1.1rem;letter-spacing:2px}
+.price-lbl{font-size:12px;color:var(--muted)}
+.card-actions{display:flex;gap:6px;align-items:center}
+
+/* overall signal pill */
+.overall{display:inline-block;padding:3px 10px;border-radius:3px;font-size:10px;font-weight:600;letter-spacing:1.5px}
+.STRONG_BULL{background:var(--bull-bg);color:var(--bull);border:1px solid var(--bull)}
+.STRONG_BEAR{background:var(--bear-bg);color:var(--bear);border:1px solid var(--bear)}
+.MILD_BULL{background:var(--bull-bg);color:var(--bull)}
+.MILD_BEAR{background:var(--bear-bg);color:var(--bear)}
+.NEUTRAL{background:rgba(74,157,245,.08);color:var(--blue)}
+
+/* ── 4-panel grid inside card ── */
+.panels{display:grid;grid-template-columns:1fr 1fr;gap:0;border-bottom:1px solid var(--border)}
+.panel{padding:10px 14px;border-right:1px solid var(--border);border-bottom:1px solid var(--border)}
+.panel:nth-child(2n){border-right:none}
+.panel:nth-child(3),.panel:nth-child(4){border-bottom:none}
+.panel-title{font-size:9px;letter-spacing:2px;color:var(--muted);text-transform:uppercase;margin-bottom:6px}
+
+/* mini stats */
+.mini-stats{display:flex;gap:12px;flex-wrap:wrap;margin-bottom:6px}
+.ms{display:flex;flex-direction:column;gap:2px}
+.ms-label{font-size:9px;color:var(--muted);letter-spacing:1px}
+.ms-val{font-size:13px;font-weight:600}
+
+/* badge */
+.badge{display:inline-block;padding:2px 7px;border-radius:3px;font-size:9px;font-weight:700;letter-spacing:1px;margin-top:4px}
+.b-bull{background:var(--bull-bg);color:var(--bull)}
+.b-bear{background:var(--bear-bg);color:var(--bear)}
+.b-neutral{background:rgba(74,157,245,.1);color:var(--blue)}
+.b-warn{background:rgba(245,166,35,.1);color:var(--warn)}
+
+/* order book */
+.book-grid{display:grid;grid-template-columns:1fr auto 1fr;gap:0;font-size:10px}
+.book-grid > span{padding:2px 4px;border-bottom:1px solid rgba(28,40,64,.6);white-space:nowrap;overflow:hidden;line-height:1.6}
+.bh{font-size:8px;color:var(--muted);letter-spacing:1px;padding-bottom:3px;border-bottom:1px solid var(--border) !important}
+.bq{color:var(--bull)}.aq{color:var(--bear)}
+.lvl-cluster-bid{background:rgba(0,229,160,.14)}
+.lvl-cluster-ask{background:rgba(255,64,96,.14)}
+.lvl-wall-bid{background:rgba(0,229,160,.30);font-weight:700}
+.lvl-wall-ask{background:rgba(255,64,96,.30);font-weight:700}
+.lvl-absorbed{background:rgba(245,166,35,.18);color:var(--warn);font-style:italic}
+.wall-tag{font-size:8px;color:var(--warn);margin-left:3px;letter-spacing:1px}
+.vol-bar-wrap{position:relative;width:50px;height:8px;background:var(--border);border-radius:2px;display:inline-block;vertical-align:middle;margin:0 3px}
+.vol-bar{position:absolute;top:0;height:100%;border-radius:2px}
+.vol-bar-bid{right:0;background:rgba(0,229,160,.55)}
+.vol-bar-ask{left:0;background:rgba(255,64,96,.55)}
+.book-scroll{max-height:200px;overflow-y:auto;scrollbar-width:thin;scrollbar-color:var(--border) transparent}
+.book-scroll::-webkit-scrollbar{width:4px}
+.book-scroll::-webkit-scrollbar-thumb{background:var(--border);border-radius:2px}
+
+/* charts — 3 charts per card */
+.chart-row{display:grid;grid-template-columns:1fr 1fr 1fr;gap:0}
+.chart-wrap{padding:10px 14px;border-right:1px solid var(--border)}
+.chart-wrap:last-child{border-right:none}
+.chart-lbl{font-size:9px;color:var(--muted);letter-spacing:2px;margin-bottom:4px}
+.chart-wrap canvas{max-height:110px}
+
+/* empty state */
+#empty{grid-column:1/-1;text-align:center;padding:60px 20px;color:var(--muted)}
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <span class="logo">◈ MARKET PROFILER</span>
+  <div style="display:flex;align-items:center;gap:20px">
+    <div class="live-pill"><div class="dot" id="dot"></div><span id="live-lbl">CONNECTING</span></div>
+    <span style="font-size:10px;color:var(--muted)" id="updated"></span>
+  </div>
+</div>
+
+<div class="addbar">
+  <input id="i-sym"   placeholder="Symbol  e.g. NIFTY 50"       style="width:170px">
+  <input id="i-tok"   placeholder="Spot token  e.g. 256265"      style="width:175px" type="number">
+  <input id="i-fotok" placeholder="F&O token (optional for OI)"  style="width:200px" type="number">
+  <button class="btn btn-add" onclick="addSym()">＋ ADD</button>
+  <span style="font-size:10px;color:var(--muted);margin-left:8px">Press Enter in token field to add</span>
+</div>
+
+<div id="grid">
+  <div id="empty">
+    <div style="font-size:2rem;margin-bottom:8px">📊</div>
+    Add a symbol above to start live profiling.<br>
+    <span style="font-size:11px">CVD · VWAP · Order Book (20L) · OI/Volume — all in one view</span>
+  </div>
+</div>
+
+<script>
+const POLL   = 1000;
+let   timer  = null;
+const charts = {};   // sym → {cvd, vwap, oi}
+
+// FIX: Enter key submits add form
+document.getElementById("i-fotok").addEventListener("keydown", e => { if(e.key==="Enter") addSym(); });
+document.getElementById("i-tok").addEventListener("keydown",   e => { if(e.key==="Enter") addSym(); });
+document.getElementById("i-sym").addEventListener("keydown",   e => { if(e.key==="Enter") addSym(); });
+
+// ── Chart factory ─────────────────────────────────────────────────────────────
+function mkChart(id, datasets, yColor) {
+  const ctx = document.getElementById(id)?.getContext("2d");
+  if (!ctx) return null;
+  return new Chart(ctx, {
+    type: "line",
+    data: { labels: [], datasets },
+    options: {
+      animation: false, responsive: true, maintainAspectRatio: false,
+      plugins: { legend: { display: false } },
+      scales: {
+        x : { ticks:{ color:"#4a5870", maxTicksLimit:5, font:{size:8} }, grid:{color:"#1c2840"} },
+        y : { ticks:{ color: yColor, font:{size:8} }, grid:{color:"#1c2840"} },
+        yP: { position:"right", ticks:{color:"#f5a623",font:{size:8}}, grid:{display:false},
+              display: datasets.length > 1 },
+      },
+    }
+  });
+}
+
+// ── Card factory ──────────────────────────────────────────────────────────────
+function createCard(sym, token) {
+  const id = sym.replace(/\s+/g,"_");
+  document.getElementById("empty")?.remove();
+
+  const div = document.createElement("div");
+  div.className = "card";
+  div.id        = "card-" + id;
+  div.innerHTML = `
+  <div class="card-top">
+    <div style="display:flex;align-items:center;gap:12px">
+      <span class="sym">${sym}</span>
+      <span class="overall NEUTRAL" id="overall-${id}">NEUTRAL</span>
+    </div>
+    <div class="card-actions">
+      <span class="price-lbl" id="ltp-${id}">—</span>
+      <button class="btn btn-sm" onclick="resetSym('${sym}')">RESET</button>
+      <button class="btn btn-danger" onclick="removeSym('${sym}',${token})">✕</button>
+    </div>
+  </div>
+
+  <div class="panels">
+
+    <!-- ① CVD -->
+    <div class="panel">
+      <div class="panel-title">① CVD — Cumulative Volume Delta</div>
+      <div class="mini-stats">
+        <div class="ms"><span class="ms-label">CVD</span>
+          <span class="ms-val" id="cvd-${id}">—</span></div>
+        <div class="ms"><span class="ms-label">BUY VOL</span>
+          <span class="ms-val" style="color:var(--bull)" id="bvol-${id}">—</span></div>
+        <div class="ms"><span class="ms-label">SELL VOL</span>
+          <span class="ms-val" style="color:var(--bear)" id="svol-${id}">—</span></div>
+        <div class="ms"><span class="ms-label">TICKS</span>
+          <span class="ms-val" style="color:var(--muted);font-size:11px" id="ticks-${id}">—</span></div>
+      </div>
+      <span class="badge b-neutral" id="cvd-sig-${id}">WAITING</span>
+      <span class="badge b-neutral" id="div-sig-${id}" style="margin-left:4px"></span>
+    </div>
+
+    <!-- ② VWAP -->
+    <div class="panel">
+      <div class="panel-title">② VWAP + Volume</div>
+      <div class="mini-stats">
+        <div class="ms"><span class="ms-label">VWAP</span>
+          <span class="ms-val" id="vwap-${id}">—</span></div>
+        <div class="ms"><span class="ms-label">+1σ</span>
+          <span class="ms-val" style="color:var(--bull)" id="vup-${id}">—</span></div>
+        <div class="ms"><span class="ms-label">−1σ</span>
+          <span class="ms-val" style="color:var(--bear)" id="vdn-${id}">—</span></div>
+        <div class="ms"><span class="ms-label">VOL TREND</span>
+          <span class="ms-val" id="vtrd-${id}">—</span></div>
+      </div>
+      <span class="badge b-neutral" id="vwap-sig-${id}">WAITING</span>
+    </div>
+
+    <!-- ③ Order Book -->
+    <div class="panel">
+      <div class="panel-title">③ Order Book — 20 Level Depth</div>
+      <div class="mini-stats">
+        <div class="ms"><span class="ms-label">TOP5 IMB</span>
+          <span class="ms-val" id="imb5-${id}">—</span></div>
+        <div class="ms"><span class="ms-label">FULL IMB</span>
+          <span class="ms-val" id="imb-${id}">—</span></div>
+        <div class="ms"><span class="ms-label">BID QTY</span>
+          <span class="ms-val" style="color:var(--bull)" id="bq-${id}">—</span></div>
+        <div class="ms"><span class="ms-label">ASK QTY</span>
+          <span class="ms-val" style="color:var(--bear)" id="aq-${id}">—</span></div>
+      </div>
+      <!-- FIX: imbalance bar initialised as neutral 50/50, updated on first poll -->
+      <div style="display:flex;align-items:center;gap:6px;margin:6px 0">
+        <span style="font-size:9px;color:var(--bull);width:28px;text-align:right" id="bid-pct-${id}">—</span>
+        <div style="flex:1;height:6px;background:var(--border);border-radius:3px;overflow:hidden">
+          <div id="imb-bar-${id}" style="height:100%;width:0%;transition:width .3s"></div>
+        </div>
+        <span style="font-size:9px;color:var(--bear);width:28px" id="ask-pct-${id}">—</span>
+      </div>
+      <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap">
+        <span class="badge b-neutral" id="book-sig-${id}">WAITING</span>
+        <span id="absorption-alert-${id}" style="display:none" class="badge b-warn">⚡ WALL ABSORBED</span>
+      </div>
+      <div class="book-scroll" style="margin-top:8px">
+        <div class="book-grid" id="book-${id}">
+          <span class="bh" style="text-align:right">BID QTY</span>
+          <span class="bh" style="text-align:center">PRICE</span>
+          <span class="bh">ASK QTY</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- ④ OI + Volume -->
+    <div class="panel">
+      <div class="panel-title">④ OI + Volume (F&amp;O)</div>
+      <div class="mini-stats">
+        <div class="ms"><span class="ms-label">OI</span>
+          <span class="ms-val" id="oi-${id}">—</span></div>
+        <div class="ms"><span class="ms-label">OI CHG</span>
+          <span class="ms-val" id="oichg-${id}">—</span></div>
+        <div class="ms"><span class="ms-label">VOLUME</span>
+          <span class="ms-val" id="oivol-${id}">—</span></div>
+      </div>
+      <span class="badge b-neutral" id="oi-sig-${id}">WAITING</span>
+      <div style="font-size:10px;color:var(--muted);margin-top:4px" id="oi-desc-${id}"></div>
+    </div>
+  </div>
+
+  <!-- FIX: 3 charts — CVD vs Price, VWAP vs Price, OI vs Volume -->
+  <div class="chart-row">
+    <div class="chart-wrap">
+      <div class="chart-lbl">CVD vs PRICE</div>
+      <canvas id="ch-cvd-${id}" style="height:110px"></canvas>
+    </div>
+    <div class="chart-wrap">
+      <div class="chart-lbl">VWAP vs PRICE</div>
+      <canvas id="ch-vwap-${id}" style="height:110px"></canvas>
+    </div>
+    <div class="chart-wrap">
+      <div class="chart-lbl">OI vs VOLUME</div>
+      <canvas id="ch-oi-${id}" style="height:110px"></canvas>
+    </div>
+  </div>
+  `;
+
+  document.getElementById("grid").appendChild(div);
+
+  setTimeout(() => {
+    charts[sym] = {
+      cvd: mkChart("ch-cvd-" + id, [
+        { label:"CVD",   data:[], borderColor:"#00e5a0", borderWidth:1.5, pointRadius:0, tension:.3,
+          yAxisID:"y", fill:{target:{value:0}, above:"rgba(0,229,160,.05)", below:"rgba(255,64,96,.05)"} },
+        { label:"Price", data:[], borderColor:"#f5a623", borderWidth:1, borderDash:[3,3],
+          pointRadius:0, tension:.3, yAxisID:"yP" },
+      ], "#00e5a0"),
+
+      vwap: mkChart("ch-vwap-" + id, [
+        { label:"VWAP",  data:[], borderColor:"#4a9df5", borderWidth:1.5, pointRadius:0, tension:.3, yAxisID:"y" },
+        { label:"Price", data:[], borderColor:"#f5a623", borderWidth:1, borderDash:[3,3],
+          pointRadius:0, tension:.3, yAxisID:"yP" },
+        { label:"+1σ",   data:[], borderColor:"rgba(0,229,160,.3)", borderWidth:1,
+          pointRadius:0, tension:.3, yAxisID:"yP", borderDash:[2,4] },
+        { label:"−1σ",   data:[], borderColor:"rgba(255,64,96,.3)", borderWidth:1,
+          pointRadius:0, tension:.3, yAxisID:"yP", borderDash:[2,4] },
+      ], "#4a9df5"),
+
+      oi: mkChart("ch-oi-" + id, [
+        { label:"OI",     data:[], borderColor:"#4a9df5", borderWidth:1.5, pointRadius:0, tension:.3, yAxisID:"y" },
+        { label:"Volume", data:[], borderColor:"#f5a623", borderWidth:1, borderDash:[3,3],
+          pointRadius:0, tension:.3, yAxisID:"yP" },
+      ], "#4a9df5"),
+    };
+  }, 60);
+}
+
+// ── Update card ───────────────────────────────────────────────────────────────
+function updateCard(snap) {
+  const sym = snap.symbol;
+  const id  = sym.replace(/\s+/g,"_");
+  if (!document.getElementById("card-"+id)) return;
+
+  // LTP
+  if (snap.last_price != null)
+    el("ltp-"+id).textContent = "₹" + fmt(snap.last_price);
+
+  // Overall signal
+  const ov   = snap.overall || "NEUTRAL";
+  const ovEl = el("overall-"+id);
+  ovEl.textContent = ov.replace(/_/g," ");
+  ovEl.className   = "overall " + ov;
+
+  // ① CVD
+  const cvd = snap.cvd;
+  if (cvd) {
+    const cvdNum = cvd.cvd;
+    el("cvd-"+id).textContent  = fmtSigned(cvdNum);
+    el("cvd-"+id).style.color  = cvdNum > 0 ? "var(--bull)" : cvdNum < 0 ? "var(--bear)" : "var(--text)";
+    el("bvol-"+id).textContent = fmtK(cvd.buy_vol);
+    el("svol-"+id).textContent = fmtK(cvd.sell_vol);
+    el("ticks-"+id).textContent = (cvd.tick_count||0).toLocaleString("en-IN");
+    setBadge("cvd-sig-"+id, cvd.bias);
+    setBadge("div-sig-"+id, cvd.divergence === "NONE" ? "" : cvd.divergence);
+
+    const ch = charts[sym]?.cvd;
+    if (ch && cvd.history?.length) {
+      ch.data.labels           = cvd.history.map(h=>h.ts);
+      ch.data.datasets[0].data = cvd.history.map(h=>h.cvd);
+      ch.data.datasets[1].data = cvd.history.map(h=>h.price);
+      ch.update("none");
+    }
+  }
+
+  // ② VWAP
+  const vw = snap.vwap;
+  if (vw && vw.vwap != null) {
+    el("vwap-"+id).textContent = fmt(vw.vwap);
+    el("vup-"+id).textContent  = fmt(vw.upper_band);
+    el("vdn-"+id).textContent  = fmt(vw.lower_band);
+    el("vtrd-"+id).textContent = vw.vol_trend || "—";
+    el("vtrd-"+id).style.color = vw.vol_trend==="RISING" ? "var(--bull)" :
+                                  vw.vol_trend==="FALLING"? "var(--bear)" : "var(--text)";
+    setBadge("vwap-sig-"+id, vw.signal);
+
+    const ch = charts[sym]?.vwap;
+    if (ch && vw.history?.length) {
+      ch.data.labels           = vw.history.map(h=>h.ts);
+      ch.data.datasets[0].data = vw.history.map(h=>h.vwap);
+      ch.data.datasets[1].data = vw.history.map(h=>h.price);
+      ch.data.datasets[2].data = vw.history.map(h=>h.upper_band);
+      ch.data.datasets[3].data = vw.history.map(h=>h.lower_band);
+      ch.update("none");
+    }
+  }
+
+  // ③ Order Book
+  const bk = snap.order_book;
+  if (bk && (bk.bids?.length || bk.asks?.length)) {
+    const t5imb = bk.top5_imbalance;
+    const fimb  = bk.imbalance;
+
+    el("imb5-"+id).textContent = t5imb != null ? t5imb.toFixed(2) : "—";
+    el("imb5-"+id).style.color = t5imb > 1.2 ? "var(--bull)" : t5imb < 0.8 ? "var(--bear)" : "var(--text)";
+    el("imb-"+id).textContent  = fimb  != null ? fimb.toFixed(2) : "—";
+    el("bq-"+id).textContent   = fmtK(bk.total_bid_qty);
+    el("aq-"+id).textContent   = fmtK(bk.total_ask_qty);
+
+    // FIX: imbalance bar — correctly reflects bid% vs ask%
+    const total = (bk.total_bid_qty||0) + (bk.total_ask_qty||0);
+    if (total > 0) {
+      const bidPct = Math.round((bk.total_bid_qty / total) * 100);
+      el("bid-pct-"+id).textContent = bidPct + "%";
+      el("ask-pct-"+id).textContent = (100-bidPct) + "%";
+      const bar = el("imb-bar-"+id);
+      bar.style.width      = bidPct + "%";
+      bar.style.background = bidPct >= 50
+        ? `linear-gradient(90deg, var(--bull) 0%, rgba(0,229,160,.3) 100%)`
+        : `linear-gradient(90deg, rgba(255,64,96,.3) 0%, var(--bear) 100%)`;
+    }
+
+    const absorbed = (bk.absorbed_bid_walls?.length||0) + (bk.absorbed_ask_walls?.length||0);
+    const absEl    = el("absorption-alert-"+id);
+    if (absorbed > 0) {
+      absEl.style.display = "inline-block";
+      absEl.textContent   = `⚡ WALL ABSORBED (${absorbed})`;
+    } else {
+      absEl.style.display = "none";
+    }
+
+    setBadge("book-sig-"+id, bk.signal);
+    renderBook("book-"+id, bk);
+  }
+
+  // ④ OI + Volume
+  const oi = snap.oi_volume;
+  if (oi && oi.oi != null) {
+    el("oi-"+id).textContent     = fmtK(oi.oi);
+    el("oichg-"+id).textContent  = fmtSigned(oi.oi_chg);
+    el("oivol-"+id).textContent  = fmtK(oi.volume);
+    el("oi-desc-"+id).textContent = oi.description || "";
+    setBadge("oi-sig-"+id, oi.signal);
+
+    const ch = charts[sym]?.oi;
+    if (ch && oi.history?.length) {
+      ch.data.labels           = oi.history.map(h=>h.ts);
+      ch.data.datasets[0].data = oi.history.map(h=>h.oi);
+      ch.data.datasets[1].data = oi.history.map(h=>h.volume);
+      ch.update("none");
+    }
+  }
+}
+
+// ── Order book renderer ───────────────────────────────────────────────────────
+function renderBook(elId, bk) {
+  const el2 = document.getElementById(elId);
+  if (!el2) return;
+
+  const bids = bk.bids || [];
+  const asks = bk.asks || [];
+  const rows = Math.max(bids.length, asks.length);
+
+  const bidWallPrices    = new Set((bk.bid_walls    ||[]).map(b=>b.price));
+  const askWallPrices    = new Set((bk.ask_walls    ||[]).map(a=>a.price));
+  const bidClusterPrices = new Set((bk.bid_clusters ||[]).map(b=>b.price));
+  const askClusterPrices = new Set((bk.ask_clusters ||[]).map(a=>a.price));
+  const absorbedBid      = new Set(bk.absorbed_bid_walls || []);
+  const absorbedAsk      = new Set(bk.absorbed_ask_walls || []);
+
+  const allQtys = [...bids, ...asks].map(x=>x.quantity||0);
+  const maxQty  = allQtys.length ? Math.max(...allQtys) : 1;
+
+  let html = `
+    <span class="bh" style="text-align:right">BID QTY</span>
+    <span class="bh" style="text-align:center">PRICE</span>
+    <span class="bh">ASK QTY</span>`;
+
+  for (let i = 0; i < rows; i++) {
+    const b = bids[i] || {};
+    const a = asks[i] || {};
+
+    let bCls="", bTag="";
+    if      (bidWallPrices.has(b.price))    { bCls="lvl-wall-bid";    bTag=`<span class="wall-tag">WALL</span>`; }
+    else if (absorbedBid.has(b.price))      { bCls="lvl-absorbed";    bTag=`<span class="wall-tag">ABS</span>`;  }
+    else if (bidClusterPrices.has(b.price)) { bCls="lvl-cluster-bid"; }
+
+    let aCls="", aTag="";
+    if      (askWallPrices.has(a.price))    { aCls="lvl-wall-ask";    aTag=`<span class="wall-tag">WALL</span>`; }
+    else if (absorbedAsk.has(a.price))      { aCls="lvl-absorbed";    aTag=`<span class="wall-tag">ABS</span>`;  }
+    else if (askClusterPrices.has(a.price)) { aCls="lvl-cluster-ask"; }
+
+    const bW = b.quantity ? Math.round((b.quantity/maxQty)*100) : 0;
+    const aW = a.quantity ? Math.round((a.quantity/maxQty)*100) : 0;
+    const px = b.price || a.price || "—";
+
+    html += `
+      <span class="bq ${bCls}" style="text-align:right;padding:1px 4px">
+        <span class="vol-bar-wrap"><span class="vol-bar vol-bar-bid" style="width:${bW}%"></span></span>
+        ${b.quantity!=null?fmtK(b.quantity):""}${bTag}
+      </span>
+      <span style="text-align:center;color:var(--muted);font-size:10px;padding:1px 2px">${fmt(px)}</span>
+      <span class="aq ${aCls}" style="padding:1px 4px">
+        ${aTag}${a.quantity!=null?fmtK(a.quantity):""}
+        <span class="vol-bar-wrap"><span class="vol-bar vol-bar-ask" style="width:${aW}%"></span></span>
+      </span>`;
+  }
+  el2.innerHTML = html;
+}
+
+// ── Badge ─────────────────────────────────────────────────────────────────────
+const BADGE_MAP = {
+  BULLISH:"b-bull", STRONG_BULL:"b-bull", MILD_BULL:"b-bull",
+  ABOVE_VWAP:"b-bull", FRESH_POSITIONS:"b-bull",
+  BUY_PRESSURE:"b-bull", STRONG_BUY_PRESSURE:"b-bull",
+  BULLISH_DIVERGENCE:"b-bull", ASK_WALL_ABSORBED:"b-bull",
+  BEARISH:"b-bear", STRONG_BEAR:"b-bear", MILD_BEAR:"b-bear",
+  BELOW_VWAP:"b-bear", UNWINDING:"b-bear",
+  SELL_PRESSURE:"b-bear", STRONG_SELL_PRESSURE:"b-bear",
+  BEARISH_DIVERGENCE:"b-bear", BID_WALL_ABSORBED:"b-bear",
+  WEAK_TREND:"b-warn", INDECISION:"b-warn",
+  AT_VWAP:"b-neutral", BALANCED:"b-neutral",
+  NEUTRAL:"b-neutral", WAITING:"b-neutral",
+};
+
+function setBadge(elId, signal) {
+  const e2 = document.getElementById(elId);
+  if (!e2 || !signal) { if(e2) e2.textContent=""; return; }
+  e2.textContent = signal.replace(/_/g," ");
+  e2.className   = "badge " + (BADGE_MAP[signal] || "b-neutral");
+}
+
+// ── Poll ──────────────────────────────────────────────────────────────────────
+let isLive = false;
+async function poll() {
+  try {
+    const r    = await fetch("/market/api/all");
+    const list = await r.json();
+    list.forEach(s => updateCard(s));
+    if (!isLive && list.some(s => s.cvd?.tick_count > 0)) {
+      isLive = true;
+      el("dot").className        = "dot on";
+      el("live-lbl").textContent = "LIVE";
+    }
+    el("updated").textContent = "upd " + new Date().toLocaleTimeString("en-IN");
+  } catch(e) {
+    el("dot").className        = "dot";
+    el("live-lbl").textContent = "ERROR";
+  }
+}
+
+// ── Symbol management ─────────────────────────────────────────────────────────
+async function addSym() {
+  const sym   = el("i-sym").value.trim().toUpperCase();
+  const token = parseInt(el("i-tok").value.trim());
+  const foTok = el("i-fotok").value.trim();
+
+  if (!sym || isNaN(token)) { alert("Symbol and spot token are required."); return; }
+
+  const body = { symbol: sym, token };
+  if (foTok) body.fo_token = parseInt(foTok);
+
+  const r = await fetch("/market/api/subscribe", {
+    method:"POST", headers:{"Content-Type":"application/json"},
+    body: JSON.stringify(body),
+  });
+  const d = await r.json();
+  if (d.error) { alert(d.error); return; }
+
+  createCard(sym, token);
+  el("i-sym").value = el("i-tok").value = el("i-fotok").value = "";
+  if (!timer) { poll(); timer = setInterval(poll, POLL); }
+}
+
+async function removeSym(sym, token) {
+  await fetch("/market/api/unsubscribe", {
+    method:"POST", headers:{"Content-Type":"application/json"},
+    body: JSON.stringify({token}),
+  });
+  const id = sym.replace(/\s+/g,"_");
+  document.getElementById("card-"+id)?.remove();
+  if (charts[sym]) {
+    charts[sym].cvd?.destroy();
+    charts[sym].vwap?.destroy();
+    charts[sym].oi?.destroy();
+    delete charts[sym];
+  }
+}
+
+async function resetSym(sym) {
+  await fetch("/market/api/reset/" + encodeURIComponent(sym), { method:"POST" });
+}
+
+// ── Utils ─────────────────────────────────────────────────────────────────────
+function el(id) { return document.getElementById(id); }
+function fmt(n) {
+  if (n == null || n === "") return "—";
+  return Number(n).toLocaleString("en-IN", {maximumFractionDigits:2});
+}
+function fmtK(n) {
+  if (n == null) return "—";
+  const abs = Math.abs(n), sign = n < 0 ? "-" : "";
+  if (abs >= 1e7) return sign+(abs/1e7).toFixed(2)+"Cr";
+  if (abs >= 1e5) return sign+(abs/1e5).toFixed(2)+"L";
+  if (abs >= 1e3) return sign+(abs/1e3).toFixed(1)+"K";
+  return sign + abs.toFixed(0);
+}
+function fmtSigned(n) {
+  if (n == null) return "—";
+  return (n > 0 ? "+" : "") + fmtK(n);
+}
+
+// ── Boot ──────────────────────────────────────────────────────────────────────
+(async () => {
+  const r    = await fetch("/market/api/symbols");
+  const syms = await r.json();
+  if (syms.length) {
+    document.getElementById("empty")?.remove();
+    syms.forEach(s => createCard(s.symbol, s.token));
+    poll();
+    timer = setInterval(poll, POLL);
+  }
+})();
+</script>
+</body>
+</html>

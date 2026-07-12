@@ -1,0 +1,823 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>OI Spurt Scanner — TradeSignal</title>
+<meta name="description" content="Live OI Spurt Scanner for NSE F&O universe. Powered by Kite API via TradeSignal backend.">
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;600;700&family=Syne:wght@400;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg:#070b0f; --surface:#0d1318; --card:#111820; --border:#1e2d3d;
+  --border2:#243344; --accent:#00d4ff; --accent2:#0099cc;
+  --bull:#00e676; --bear:#ff3d71; --warn:#ffb300;
+  --text:#e2eaf2; --muted:#5a7a94; --dim:#2a3f52;
+  --glow-bull:rgba(0,230,118,.15); --glow-bear:rgba(255,61,113,.15);
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+body{background:var(--bg);color:var(--text);font-family:'JetBrains Mono',monospace;min-height:100vh;overflow-x:hidden;}
+body::before{content:'';position:fixed;inset:0;background:repeating-linear-gradient(0deg,transparent,transparent 2px,rgba(0,212,255,.012) 2px,rgba(0,212,255,.012) 4px);pointer-events:none;z-index:1000;}
+
+/* HEADER */
+.header{display:flex;align-items:center;justify-content:space-between;padding:13px 24px;border-bottom:1px solid var(--border);background:linear-gradient(90deg,rgba(0,212,255,.04),transparent);position:sticky;top:0;z-index:100;backdrop-filter:blur(12px);}
+.logo{display:flex;align-items:center;gap:12px;}
+.logo-icon{width:32px;height:32px;background:linear-gradient(135deg,var(--accent),#0066aa);border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:15px;box-shadow:0 0 14px rgba(0,212,255,.3);}
+.logo-text{font-family:'Syne',sans-serif;font-size:14px;font-weight:700;letter-spacing:.5px;}
+.logo-sub{font-size:9px;color:var(--muted);letter-spacing:2px;text-transform:uppercase;margin-top:1px;}
+.header-center{display:flex;align-items:center;gap:18px;}
+.market-pill{display:flex;align-items:center;gap:8px;background:var(--surface);border:1px solid var(--border);border-radius:20px;padding:5px 14px;font-size:11px;}
+.pulse-dot{width:7px;height:7px;border-radius:50%;background:var(--bull);box-shadow:0 0 8px var(--bull);animation:pulse 1.5s infinite;}
+@keyframes pulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.5;transform:scale(.8)}}
+.clock{font-size:13px;color:var(--accent);letter-spacing:1px;}
+.header-right{display:flex;align-items:center;gap:10px;}
+.conn-badge{display:flex;align-items:center;gap:6px;font-size:10px;padding:5px 12px;border-radius:20px;border:1px solid var(--border);}
+.conn-badge.connected{border-color:rgba(0,230,118,.3);color:var(--bull);background:rgba(0,230,118,.05);}
+.conn-badge.disconnected{border-color:rgba(255,61,113,.3);color:var(--bear);background:rgba(255,61,113,.05);}
+.conn-badge.demo{border-color:rgba(255,179,0,.3);color:var(--warn);background:rgba(255,179,0,.05);}
+.back-link{font-size:10px;color:var(--muted);text-decoration:none;border:1px solid var(--border2);padding:4px 10px;border-radius:4px;letter-spacing:.5px;transition:all .2s;}
+.back-link:hover{color:var(--accent);border-color:var(--accent);}
+
+/* STATUS BAR */
+.status-bar{background:var(--surface);border-bottom:1px solid var(--border);padding:9px 24px;display:flex;align-items:center;gap:10px;flex-wrap:wrap;}
+.status-label{font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:1.5px;}
+.btn{padding:6px 14px;border-radius:6px;border:none;font-family:'JetBrains Mono',monospace;font-size:10px;font-weight:600;cursor:pointer;letter-spacing:.5px;transition:all .2s;white-space:nowrap;}
+.btn-primary{background:linear-gradient(135deg,var(--accent),var(--accent2));color:#000;box-shadow:0 0 10px rgba(0,212,255,.2);}
+.btn-primary:hover{box-shadow:0 0 18px rgba(0,212,255,.4);transform:translateY(-1px);}
+.btn-ghost{background:transparent;border:1px solid var(--border2);color:var(--muted);}
+.btn-ghost:hover{border-color:var(--accent);color:var(--accent);}
+.btn-demo{background:rgba(255,179,0,.1);border:1px solid rgba(255,179,0,.3);color:var(--warn);}
+.btn-demo:hover{background:rgba(255,179,0,.2);}
+.btn-danger{background:rgba(255,61,113,.08);border:1px solid rgba(255,61,113,.3);color:var(--bear);}
+.refresh-input{background:var(--card);border:1px solid var(--border2);color:var(--text);font-family:'JetBrains Mono',monospace;font-size:10px;padding:5px 8px;border-radius:5px;width:60px;outline:none;}
+.refresh-input:focus{border-color:var(--accent);}
+
+/* FILTER BAR */
+.filter-bar{padding:10px 24px;background:var(--surface);border-bottom:1px solid var(--border);display:flex;align-items:center;gap:14px;flex-wrap:wrap;}
+.filter-label{font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:1.5px;}
+.filter-input{background:var(--card);border:1px solid var(--border2);color:var(--text);font-family:'JetBrains Mono',monospace;font-size:10px;padding:4px 8px;border-radius:5px;width:65px;outline:none;}
+.filter-input:focus{border-color:var(--accent);}
+.toggle-grp{display:flex;gap:3px;}
+.tog-btn{padding:4px 11px;border-radius:4px;border:1px solid var(--border2);background:transparent;color:var(--muted);font-family:'JetBrains Mono',monospace;font-size:9px;cursor:pointer;transition:all .15s;}
+.tog-btn.active-all{background:rgba(0,212,255,.1);border-color:rgba(0,212,255,.35);color:var(--accent);}
+.tog-btn.active-bull{background:rgba(0,230,118,.1);border-color:rgba(0,230,118,.35);color:var(--bull);}
+.tog-btn.active-bear{background:rgba(255,61,113,.1);border-color:rgba(255,61,113,.35);color:var(--bear);}
+.sep{width:1px;height:22px;background:var(--border);}
+
+/* STATS BAR */
+.stats-bar{display:grid;grid-template-columns:repeat(5,1fr);gap:1px;background:var(--border);border-bottom:1px solid var(--border);}
+.stat-card{background:var(--surface);padding:11px 20px;display:flex;flex-direction:column;gap:3px;}
+.stat-lbl{font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:1.5px;}
+.stat-val{font-family:'Syne',sans-serif;font-size:20px;font-weight:700;line-height:1;}
+.stat-val.bull{color:var(--bull);} .stat-val.bear{color:var(--bear);} .stat-val.accent{color:var(--accent);} .stat-val.warn{color:var(--warn);}
+.stat-sub{font-size:9px;color:var(--dim);}
+
+/* MAIN */
+.main{padding:18px 24px;display:flex;flex-direction:column;gap:18px;}
+.section-title{font-family:'Syne',sans-serif;font-size:10px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:var(--muted);display:flex;align-items:center;gap:10px;margin-bottom:10px;}
+.section-title::after{content:'';flex:1;height:1px;background:var(--border);}
+.section-badge{font-size:9px;padding:2px 8px;border-radius:10px;background:var(--border);color:var(--muted);}
+
+/* ALERT LOG */
+.alert-log{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:14px;max-height:140px;overflow-y:auto;}
+.alert-log::-webkit-scrollbar{width:3px;}
+.alert-log::-webkit-scrollbar-thumb{background:var(--accent2);border-radius:2px;}
+.alert-item{display:flex;align-items:center;gap:10px;padding:4px 0;border-bottom:1px solid var(--border);font-size:10px;animation:slideIn .3s ease;}
+@keyframes slideIn{from{opacity:0;transform:translateX(-8px)}to{opacity:1;transform:translateX(0)}}
+.alert-item:last-child{border-bottom:none;}
+.alert-time{color:var(--muted);min-width:46px;}
+.alert-sym{font-weight:700;min-width:80px;}
+.alert-msg{color:var(--muted);flex:1;}
+.alert-empty{color:var(--dim);font-size:10px;text-align:center;padding:10px;}
+
+/* TABLE */
+.table-wrap{background:var(--card);border:1px solid var(--border);border-radius:10px;overflow:hidden;}
+.table-toolbar{display:flex;align-items:center;justify-content:space-between;padding:10px 14px;border-bottom:1px solid var(--border);background:var(--surface);}
+.search-input{background:var(--card);border:1px solid var(--border2);color:var(--text);font-family:'JetBrains Mono',monospace;font-size:10px;padding:5px 10px;border-radius:5px;width:170px;outline:none;}
+.search-input:focus{border-color:var(--accent);}
+.table-scroll{overflow-x:auto;}
+.scanner-table{width:100%;border-collapse:collapse;font-size:11px;}
+.scanner-table thead tr{background:var(--surface);border-bottom:2px solid var(--border2);}
+.scanner-table th{padding:9px 13px;text-align:left;font-size:9px;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted);font-weight:500;white-space:nowrap;}
+.scanner-table th.r{text-align:right;}
+.scanner-table tbody tr{border-bottom:1px solid var(--border);transition:background .15s;cursor:pointer;}
+.scanner-table tbody tr:hover{background:rgba(0,212,255,.03);}
+.scanner-table td{padding:10px 13px;white-space:nowrap;}
+.scanner-table td.r{text-align:right;}
+.sym-cell{display:flex;align-items:center;gap:9px;}
+.sym-icon{width:28px;height:28px;border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:700;flex-shrink:0;}
+.sym-icon.bull-icon{background:rgba(0,230,118,.1);color:var(--bull);border:1px solid rgba(0,230,118,.2);}
+.sym-icon.bear-icon{background:rgba(255,61,113,.1);color:var(--bear);border:1px solid rgba(255,61,113,.2);}
+.sym-name{font-weight:600;font-size:12px;}
+.sym-sec{font-size:9px;color:var(--muted);margin-top:1px;}
+.chg-badge{display:inline-flex;align-items:center;gap:3px;padding:3px 7px;border-radius:4px;font-size:10px;font-weight:600;}
+.chg-badge.up{background:rgba(0,230,118,.1);color:var(--bull);}
+.chg-badge.dn{background:rgba(255,61,113,.1);color:var(--bear);}
+.oi-bar-wrap{display:flex;align-items:center;gap:7px;}
+.oi-bar-bg{width:60px;height:4px;background:var(--border2);border-radius:2px;overflow:hidden;}
+.oi-bar-fill{height:100%;border-radius:2px;transition:width .5s ease;}
+.oi-bar-fill.bull{background:var(--bull);box-shadow:0 0 5px rgba(0,230,118,.5);}
+.oi-bar-fill.bear{background:var(--bear);box-shadow:0 0 5px rgba(255,61,113,.5);}
+.oi-val{font-size:10px;font-weight:600;min-width:46px;text-align:right;}
+.sig-badge{display:inline-flex;align-items:center;gap:5px;padding:4px 10px;border-radius:5px;font-size:10px;font-weight:700;letter-spacing:1px;border:1px solid;}
+.sig-badge.call{background:rgba(0,230,118,.08);color:var(--bull);border-color:rgba(0,230,118,.25);}
+.sig-badge.put{background:rgba(255,61,113,.08);color:var(--bear);border-color:rgba(255,61,113,.25);}
+.sig-badge.neutral{background:rgba(90,122,148,.08);color:var(--muted);border-color:var(--border2);}
+.conf-dots{display:flex;gap:3px;}
+.conf-dot{width:7px;height:7px;border-radius:50%;background:var(--border2);transition:background .3s;}
+.conf-dot.fb{background:var(--bull);box-shadow:0 0 4px rgba(0,230,118,.5);}
+.conf-dot.fd{background:var(--bear);box-shadow:0 0 4px rgba(255,61,113,.5);}
+.conf-dot.fw{background:var(--warn);}
+.trigger-tags{display:flex;gap:3px;flex-wrap:wrap;}
+.tag{font-size:8px;padding:2px 5px;border-radius:3px;border:1px solid var(--border2);color:var(--muted);}
+.tag.oi-tag{border-color:rgba(0,212,255,.3);color:var(--accent);background:rgba(0,212,255,.05);}
+.tag.px-tag{border-color:rgba(255,179,0,.3);color:var(--warn);background:rgba(255,179,0,.05);}
+.tag.vol-tag{border-color:rgba(0,230,118,.25);color:var(--bull);background:rgba(0,230,118,.05);}
+.empty-state{padding:50px 20px;text-align:center;color:var(--muted);}
+.empty-icon{font-size:32px;margin-bottom:10px;opacity:.4;}
+.empty-msg{font-size:11px;}
+@keyframes rowFlash{0%{background:rgba(0,212,255,.1)}100%{background:transparent}}
+.row-new{animation:rowFlash 1.5s ease;}
+
+/* FOOTER */
+.status-footer{padding:7px 24px;background:var(--surface);border-top:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;font-size:9px;color:var(--muted);position:sticky;bottom:0;}
+.spin{width:9px;height:9px;border:1.5px solid var(--border2);border-top-color:var(--accent);border-radius:50%;animation:spin .8s linear infinite;display:none;}
+@keyframes spin{to{transform:rotate(360deg)}}
+.spin.on{display:inline-block;}
+
+/* MODAL */
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:500;display:none;align-items:center;justify-content:center;backdrop-filter:blur(4px);}
+.modal-overlay.open{display:flex;}
+.modal{background:var(--card);border:1px solid var(--border2);border-radius:12px;padding:26px;width:440px;max-width:95vw;}
+.modal-title{font-family:'Syne',sans-serif;font-size:15px;font-weight:700;margin-bottom:18px;}
+.modal-field{margin-bottom:14px;}
+.modal-field label{display:block;font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:1.5px;margin-bottom:5px;}
+.modal-field input,.modal-field select{width:100%;background:var(--surface);border:1px solid var(--border2);color:var(--text);font-family:'JetBrains Mono',monospace;font-size:11px;padding:7px 10px;border-radius:5px;outline:none;}
+.modal-field input:focus,.modal-field select:focus{border-color:var(--accent);}
+.modal-field select option{background:var(--card);}
+.modal-hint{font-size:9px;color:var(--dim);margin-top:3px;line-height:1.5;}
+.modal-actions{display:flex;gap:8px;margin-top:20px;justify-content:flex-end;}
+.thresh-row{display:flex;align-items:center;gap:10px;}
+.thresh-val{font-size:18px;font-weight:700;color:var(--accent);font-family:'Syne',sans-serif;min-width:46px;}
+input[type=range]{flex:1;accent-color:var(--accent);}
+</style>
+</head>
+<body>
+
+<!-- HEADER -->
+<div class="header">
+  <div class="logo">
+    <div class="logo-icon">⚡</div>
+    <div>
+      <div class="logo-text">OI SPURT SCANNER</div>
+      <div class="logo-sub">NSE F&amp;O Universe · Live via TradeSignal</div>
+    </div>
+  </div>
+  <div class="header-center">
+    <div class="market-pill">
+      <div class="pulse-dot" id="marketDot"></div>
+      <span id="marketLabel">CHECKING...</span>
+    </div>
+    <div class="clock" id="clock">--:--:--</div>
+  </div>
+  <div class="header-right">
+    <div class="conn-badge disconnected" id="connBadge">⬤ DISCONNECTED</div>
+    <a class="back-link" href="javascript:history.back()">← APEX</a>
+  </div>
+</div>
+
+<!-- STATUS / ACTION BAR -->
+<div class="status-bar">
+  <span class="status-label">Refresh:</span>
+  <input type="number" class="refresh-input" id="refreshSec" value="30" min="10" max="300"> <span class="status-label">sec</span>
+  <button class="btn btn-primary" id="connectBtn" onclick="connectLive()">▶ CONNECT LIVE</button>
+  <button class="btn btn-demo" onclick="startDemo()">◈ DEMO MODE</button>
+  <button class="btn btn-ghost" onclick="manualRefresh()" title="Refresh now">↺ REFRESH</button>
+  <button class="btn btn-ghost" onclick="openSettings()">⚙ THRESHOLDS</button>
+  <button class="btn btn-ghost" onclick="exportCSV()">↓ CSV</button>
+  <button class="btn btn-danger" id="stopBtn" onclick="stopScan()" style="display:none">■ STOP</button>
+  <button class="btn btn-ghost" id="resetBtn" onclick="resetBaseline()" style="display:none" title="Re-capture OI baseline now">⟳ RESET BASELINE</button>
+  <span id="statusMsg" style="font-size:10px;color:var(--muted);margin-left:6px;"></span>
+</div>
+
+<!-- AUTH PANEL (shown when Kite not connected) -->
+<div id="authPanel" style="display:none;background:rgba(255,179,0,.04);border-bottom:1px solid rgba(255,179,0,.2);padding:9px 24px;display:none;align-items:center;gap:10px;flex-wrap:wrap;">
+  <span style="font-size:9px;color:var(--warn);text-transform:uppercase;letter-spacing:1.5px;">⚠ Kite Auth Required</span>
+  <input id="authApiKey" type="password" placeholder="API Key" style="background:var(--card);border:1px solid var(--border2);color:var(--text);font-family:'JetBrains Mono',monospace;font-size:10px;padding:5px 10px;border-radius:5px;width:180px;outline:none;">
+  <input id="authToken" type="password" placeholder="Access Token" style="background:var(--card);border:1px solid var(--border2);color:var(--text);font-family:'JetBrains Mono',monospace;font-size:10px;padding:5px 10px;border-radius:5px;width:260px;outline:none;">
+  <button class="btn btn-primary" onclick="authAndConnect()">▶ AUTHENTICATE</button>
+  <span style="font-size:9px;color:var(--muted);">Run <code style="color:var(--accent)">python daily_token.py</code> to get token</span>
+</div>
+
+<!-- FILTER BAR -->
+<div class="filter-bar">
+  <span class="filter-label">Signal</span>
+  <div class="toggle-grp">
+    <button class="tog-btn" id="filterAll" onclick="setFilter('ALL',this)">ALL</button>
+    <button class="tog-btn" id="filterCall" onclick="setFilter('CALL',this)">CALL</button>
+    <button class="tog-btn" id="filterPut" onclick="setFilter('PUT',this)">PUT</button>
+  </div>
+  <div class="sep"></div>
+  <span class="filter-label">OI Chg &gt;</span>
+  <input type="number" class="filter-input" id="fOI" value="0" min="0" max="100" onchange="applyFilters()">%
+  <div class="sep"></div>
+  <span class="filter-label">Px Chg &gt;</span>
+  <input type="number" class="filter-input" id="fPx" value="0" min="0" max="20" onchange="applyFilters()">%
+  <div class="sep"></div>
+  <span class="filter-label">Conf &ge;</span>
+  <div class="toggle-grp">
+    <button class="tog-btn" onclick="setConf(1,this)">1+</button>
+    <button class="tog-btn" onclick="setConf(3,this)">3+</button>
+    <button class="tog-btn active-all" onclick="setConf(0,this)">ALL</button>
+  </div>
+</div>
+
+<!-- STATS BAR -->
+<div class="stats-bar">
+  <div class="stat-card"><div class="stat-lbl">Total Signals</div><div class="stat-val accent" id="statTotal">0</div><div class="stat-sub">F&amp;O stocks</div></div>
+  <div class="stat-card"><div class="stat-lbl">CALL Bias</div><div class="stat-val bull" id="statCall">0</div><div class="stat-sub">Long buildup</div></div>
+  <div class="stat-card"><div class="stat-lbl">PUT Bias</div><div class="stat-val bear" id="statPut">0</div><div class="stat-sub">Short buildup</div></div>
+  <div class="stat-card"><div class="stat-lbl">Avg OI Chg</div><div class="stat-val warn" id="statAvgOI">0%</div><div class="stat-sub">Current candle</div></div>
+  <div class="stat-card"><div class="stat-lbl">Top Signal</div><div class="stat-val accent" id="statTop">—</div><div class="stat-sub">Highest OI spurt</div></div>
+</div>
+
+<!-- MAIN CONTENT -->
+<div class="main">
+  <!-- ALERT LOG -->
+  <div>
+    <div class="section-title">Live Alert Log <span class="section-badge" id="alertCount">0 alerts</span></div>
+    <div class="alert-log" id="alertLog">
+      <div class="alert-empty">Connect live or start Demo Mode to see alerts</div>
+    </div>
+  </div>
+
+  <!-- SCANNER TABLE -->
+  <div>
+    <div class="section-title">OI Spurt Signals <span class="section-badge" id="rowCount">0 stocks</span></div>
+    <div class="table-wrap">
+      <div class="table-toolbar">
+        <input class="search-input" id="searchBox" placeholder="🔍 Filter symbol..." oninput="renderTable()">
+        <div style="display:flex;gap:6px;align-items:center;">
+          <span style="font-size:9px;color:var(--muted);">SORT BY</span>
+          <select id="sortBy" onchange="renderTable()" style="background:var(--card);border:1px solid var(--border2);color:var(--text);font-family:'JetBrains Mono',monospace;font-size:9px;padding:4px 6px;border-radius:4px;outline:none;">
+            <option value="oi">OI Change</option>
+            <option value="px">Price Change</option>
+            <option value="conf">Confidence</option>
+          </select>
+        </div>
+      </div>
+      <div class="table-scroll">
+        <table class="scanner-table" id="scanTable">
+          <thead><tr>
+            <th>SYMBOL</th>
+            <th class="r">LTP</th>
+            <th class="r">CHG%</th>
+            <th class="r">OI CHG%</th>
+            <th>OI BAR</th>
+            <th class="r">VOL RATIO</th>
+            <th>SIGNAL</th>
+            <th>CONF</th>
+            <th>TRIGGERS</th>
+            <th class="r">TIME</th>
+          </tr></thead>
+          <tbody id="tableBody">
+            <tr><td colspan="10"><div class="empty-state"><div class="empty-icon">📡</div><div class="empty-msg">Click CONNECT LIVE to fetch from TradeSignal backend, or DEMO MODE to preview</div></div></td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- FOOTER -->
+<div class="status-footer">
+  <div style="display:flex;align-items:center;gap:8px;">
+    <div class="spin" id="spinner"></div>
+    <span id="footerMsg">Ready — Backend at localhost:5000</span>
+  </div>
+  <span id="lastRefresh">—</span>
+</div>
+
+<!-- SETTINGS MODAL -->
+<div class="modal-overlay" id="settingsModal">
+  <div class="modal">
+    <div class="modal-title">⚙ OI Spurt Thresholds</div>
+    <div class="modal-field">
+      <label>OI Change Threshold</label>
+      <div class="thresh-row">
+        <span class="thresh-val" id="oiThreshVal">15%</span>
+        <input type="range" id="oiThreshSlider" min="5" max="50" value="15" oninput="updateThresh()">
+      </div>
+      <div class="modal-hint">OI change % in the current candle vs previous. 15% = moderate, 25%+ = aggressive buildup.</div>
+    </div>
+    <div class="modal-field">
+      <label>Price Change Threshold</label>
+      <input type="number" id="priceThreshInput" value="7" min="1" max="20">
+      <div class="modal-hint">Stock price change % from previous close. Above +7% → CALL bias. Below -7% → PUT bias.</div>
+    </div>
+    <div class="modal-field">
+      <label>Volume Multiplier</label>
+      <input type="number" id="volMultInput" value="1.5" min="1" max="5" step="0.1">
+      <div class="modal-hint">Volume vs 20-day avg. 1.5x = 50% above average. Adds confirmation to signal.</div>
+    </div>
+    <div class="modal-field">
+      <label>Signal Logic</label>
+      <select id="signalLogicSel">
+        <option value="price_oi">Price direction + OI buildup (Recommended)</option>
+        <option value="price_only">Price direction only</option>
+        <option value="oi_only">OI direction only</option>
+      </select>
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-ghost" onclick="closeSettings()">CANCEL</button>
+      <button class="btn btn-primary" onclick="saveSettings()">SAVE &amp; APPLY</button>
+    </div>
+  </div>
+</div>
+
+<script>
+'use strict';
+// ── Config ────────────────────────────────────────────────────────────────────
+const PROXY = 'http://localhost:5000';
+
+// ── State ─────────────────────────────────────────────────────────────────────
+const state = {
+  mode: 'idle', rows: [], filter: 'ALL', minConf: 0,
+  refreshTimer: null, demoInterval: null,
+  backendType: null, // 'tradesignal' | 'standalone'
+  settings: { oiThresh: 15, priceThresh: 7, volMult: 1.5, signalLogic: 'price_oi', confLogic: 'combined' }
+};
+
+// ── Demo base prices ──────────────────────────────────────────────────────────
+const DEMO_STOCKS = [
+  {sym:'RELIANCE',sec:'Energy'},{sym:'TCS',sec:'IT'},{sym:'INFY',sec:'IT'},
+  {sym:'HDFCBANK',sec:'Banking'},{sym:'ICICIBANK',sec:'Banking'},{sym:'SBIN',sec:'Banking'},
+  {sym:'AXISBANK',sec:'Banking'},{sym:'BAJFINANCE',sec:'NBFC'},{sym:'WIPRO',sec:'IT'},
+  {sym:'HCLTECH',sec:'IT'},{sym:'TATAMOTORS',sec:'Auto'},{sym:'MARUTI',sec:'Auto'},
+  {sym:'HINDUNILVR',sec:'FMCG'},{sym:'ITC',sec:'FMCG'},{sym:'SUNPHARMA',sec:'Pharma'},
+  {sym:'TATASTEEL',sec:'Metals'},{sym:'BHARTIARTL',sec:'Telecom'},{sym:'LT',sec:'Infra'},
+  {sym:'NTPC',sec:'Utilities'},{sym:'ONGC',sec:'Energy'},{sym:'ADANIPORTS',sec:'Infra'},
+  {sym:'JSWSTEEL',sec:'Metals'},{sym:'HINDALCO',sec:'Metals'},{sym:'COALINDIA',sec:'Commodities'},
+  {sym:'NIFTY',sec:'Index'},{sym:'BANKNIFTY',sec:'Index'},{sym:'FINNIFTY',sec:'Index'}
+];
+const basePrices = {};
+DEMO_STOCKS.forEach(s => { basePrices[s.sym] = Math.floor(Math.random() * 3000) + 300; });
+
+// ── Clock ─────────────────────────────────────────────────────────────────────
+function updateClock() {
+  const now = new Date();
+  document.getElementById('clock').textContent = now.toLocaleTimeString('en-IN', { hour12: false });
+  const ist = new Date(now.toLocaleString('en-US', { timeZone: 'Asia/Kolkata' }));
+  const h = ist.getHours(), m = ist.getMinutes();
+  const open = (h > 9 || (h === 9 && m >= 15)) && (h < 15 || (h === 15 && m <= 30));
+  const dot = document.getElementById('marketDot');
+  dot.style.background = open ? 'var(--bull)' : 'var(--warn)';
+  dot.style.boxShadow  = open ? '0 0 8px var(--bull)' : '0 0 8px var(--warn)';
+  document.getElementById('marketLabel').textContent = open ? 'MARKET OPEN' : 'MARKET CLOSED';
+}
+setInterval(updateClock, 1000); updateClock();
+
+// ── Connect Live — tries TradeSignal backend first, then standalone ───────────
+async function connectLive() {
+  showSpinner(true);
+  setMsg('Probing backend...');
+  hideAuthPanel();
+
+  try {
+    // 1) Try TradeSignal integrated backend (/api/oi/health)
+    let health = null;
+    try {
+      const r = await fetch(`${PROXY}/api/oi/health`, { signal: AbortSignal.timeout(3000) });
+      if (r.ok) health = await r.json();
+    } catch (_) {}
+
+    if (health && health.kite_connected) {
+      state.backendType = 'tradesignal';
+      setMsg('TradeSignal session OK — running scanner...');
+      await runScanner();
+      onConnected();
+      return;
+    }
+
+    // 2) Try standalone OI Spurt server (/health)
+    let h2 = null;
+    try {
+      const r2 = await fetch(`${PROXY}/health`, { signal: AbortSignal.timeout(3000) });
+      if (r2.ok) h2 = await r2.json();
+    } catch (_) {}
+
+    if (h2 && h2.connected) {
+      state.backendType = 'standalone';
+      setMsg('Standalone OI server connected — running scanner...');
+      await runScanner();
+      onConnected();
+      return;
+    }
+
+    // 3) Not connected — show auth panel
+    if (h2 && !h2.connected) {
+      setMsg('⚠ Kite not authenticated — enter API Key + Access Token below.');
+      showAuthPanel();
+      setConnBadge('disconnected');
+    } else {
+      setMsg('⚠ No backend found at localhost:5000 — start TradeSignal or OI Spurt server.');
+      setConnBadge('disconnected');
+    }
+  } catch (e) {
+    setMsg('⚠ Error: ' + e.message);
+    setConnBadge('disconnected');
+  }
+  showSpinner(false);
+}
+
+// ── Authenticate and connect (manual key entry) ───────────────────────────────
+async function authAndConnect() {
+  const apiKey = document.getElementById('authApiKey').value.trim();
+  const token  = document.getElementById('authToken').value.trim();
+  if (!apiKey || !token) { setMsg('⚠ Enter both API Key and Access Token.'); return; }
+  showSpinner(true);
+  setMsg('Authenticating...');
+  try {
+    const r = await fetch(`${PROXY}/kite/auth`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ apiKey, accessToken: token })
+    });
+    const d = await r.json();
+    if (!r.ok || d.error) throw new Error(d.error || 'Auth failed');
+    hideAuthPanel();
+    state.backendType = 'standalone';
+    setMsg('Authenticated — running scanner...');
+    await runScanner();
+    onConnected();
+  } catch (e) {
+    setMsg('⚠ Auth failed: ' + e.message);
+    setConnBadge('disconnected');
+  }
+  showSpinner(false);
+}
+
+// ── Main scanner fetch — calls /kite/scanner with all params ─────────────────
+async function runScanner() {
+  showSpinner(true);
+  const s = state.settings;
+  // TradeSignal uses /kite/scanner (same endpoint structure, registered in server.py)
+  const url = `${PROXY}/api/oi/scanner?oiThresh=${s.oiThresh}&priceThresh=${s.priceThresh}&minOI=100&volMult=${s.volMult}&signalLogic=${s.signalLogic}`;
+  try {
+    const r = await fetch(url);
+    if (!r.ok) throw new Error('HTTP ' + r.status);
+    const data = await r.json();
+    if (data.error) throw new Error(data.error);
+    processScannerData(data);
+    document.getElementById('lastRefresh').textContent =
+      'Live · ' + new Date().toLocaleTimeString('en-IN', { hour12: false }) +
+      ` · ${data.count} signals`;
+    setMsg(`▶ Live — ${data.count} signals · ${data.call_count} CALL · ${data.put_count} PUT`);
+    setConnBadge('connected');
+  } catch (e) {
+    setMsg('⚠ Scanner error: ' + e.message);
+    setConnBadge('disconnected');
+    throw e;
+  } finally {
+    showSpinner(false);
+  }
+}
+
+// ── Map backend response to table rows ────────────────────────────────────────
+function processScannerData(data) {
+  const timeStr = new Date().toLocaleTimeString('en-IN', { hour12: false });
+  const alerts  = data.alerts || [];
+
+  state.rows = alerts.map(a => ({
+    sym:            a.symbol,
+    sec:            a.sector || sectorOf(a.symbol),
+    ltp:            a.ltp,
+    priceChange:    a.price_change_pct,
+    oiChange:       a.oi_spurt_pct,
+    oiLots:         a.oi,
+    oiBaseline:     a.oi_baseline,
+    volRatio:       a.vol_ratio,
+    signal:         a.signal,
+    confidence:     a.confidence,
+    suggestedStrike: a.suggested_strike,
+    expiry:         a.expiry,
+    triggeredByOI:  a.triggered_by?.oi,
+    triggeredByPx:  a.triggered_by?.price,
+    time:           timeStr
+  }));
+
+  // Fire alerts for new rows
+  state.rows.forEach(r => addAlert(r.time, r.sym, r.priceChange, r.oiChange, r.signal));
+  renderTable();
+  updateStats(data);
+}
+
+// ── Sector lookup fallback ────────────────────────────────────────────────────
+const SECTOR_MAP = {
+  RELIANCE:'Energy',TCS:'IT',INFY:'IT',HDFCBANK:'Banking',ICICIBANK:'Banking',
+  SBIN:'Banking',AXISBANK:'Banking',KOTAKBANK:'Banking',BAJFINANCE:'NBFC',
+  WIPRO:'IT',HCLTECH:'IT',TATAMOTORS:'Auto',MARUTI:'Auto',HINDUNILVR:'FMCG',
+  ITC:'FMCG',SUNPHARMA:'Pharma',TATASTEEL:'Metals',JSWSTEEL:'Metals',
+  BHARTIARTL:'Telecom',LT:'Infra',NTPC:'Utilities',ONGC:'Energy',
+  NIFTY:'Index',BANKNIFTY:'Index',FINNIFTY:'Index',MIDCPNIFTY:'Index'
+};
+function sectorOf(sym) { return SECTOR_MAP[sym] || 'F&O'; }
+
+// ── Reset OI Baseline ─────────────────────────────────────────────────────────
+async function resetBaseline() {
+  showSpinner(true);
+  setMsg('Resetting OI baseline...');
+  try {
+    const r = await fetch(`${PROXY}/api/oi/scanner/reset`, { method: 'POST' });
+    const d = await r.json();
+    setMsg(`✓ Baseline reset — ${d.symbols || ''} symbols captured at 9:30 AM reference`);
+    await runScanner();
+  } catch (e) {
+    setMsg('⚠ Reset failed: ' + e.message);
+  }
+  showSpinner(false);
+}
+
+// ── onConnected helper ────────────────────────────────────────────────────────
+function onConnected() {
+  setConnBadge('connected');
+  document.getElementById('stopBtn').style.display = '';
+  document.getElementById('resetBtn').style.display = '';
+  document.getElementById('connectBtn').textContent = '↺ RECONNECT';
+  const sec = parseInt(document.getElementById('refreshSec').value) * 1000;
+  if (state.refreshTimer) clearInterval(state.refreshTimer);
+  state.refreshTimer = setInterval(runScanner, sec);
+  state.mode = 'live';
+  stopDemo();
+  showSpinner(false);
+}
+
+// ── Demo Mode ─────────────────────────────────────────────────────────────────
+function startDemo() {
+  stopScan();
+  state.mode = 'demo';
+  setConnBadge('demo');
+  setMsg('◈ Demo mode — synthetic data with realistic OI spurt logic');
+  document.getElementById('stopBtn').style.display = '';
+  generateDemoData();
+  state.demoInterval = setInterval(generateDemoData, 10000);
+}
+
+function generateDemoData() {
+  const timeStr = new Date().toLocaleTimeString('en-IN', { hour12: false });
+  const s = state.settings;
+  const shuffled = [...DEMO_STOCKS].sort(() => Math.random() - 0.5).slice(0, 20);
+  const rows = [];
+
+  shuffled.forEach(stock => {
+    basePrices[stock.sym] = basePrices[stock.sym] || (Math.random() * 2000 + 200);
+    const drift = (Math.random() - 0.48) * 0.018;
+    basePrices[stock.sym] = +(basePrices[stock.sym] * (1 + drift)).toFixed(2);
+    const ltp         = basePrices[stock.sym];
+    const priceChange = +((Math.random() - 0.45) * 20).toFixed(2);
+    const oiChange    = +((Math.random() - 0.38) * 45).toFixed(1);
+    const volRatio    = +(Math.random() * 3.5 + 0.5).toFixed(2);
+
+    const oiOk    = Math.abs(oiChange) >= s.oiThresh;
+    const priceOk = Math.abs(priceChange) >= s.priceThresh;
+    if (!oiOk && !priceOk) return;
+
+    // Mirror server-side signal logic
+    let signal = 'NEUTRAL';
+    if (s.signalLogic === 'price_oi') {
+      if (priceChange >= s.priceThresh && oiChange > 0)       signal = 'CALL';
+      else if (priceChange <= -s.priceThresh && oiChange > 0) signal = 'PUT';
+      else if (priceChange >= s.priceThresh)                  signal = 'CALL';
+      else if (priceChange <= -s.priceThresh)                 signal = 'PUT';
+    } else if (s.signalLogic === 'price_only') {
+      signal = priceChange >= s.priceThresh ? 'CALL' : priceChange <= -s.priceThresh ? 'PUT' : 'NEUTRAL';
+    } else {
+      signal = oiChange >= s.oiThresh ? 'CALL' : oiChange <= -s.oiThresh ? 'PUT' : 'NEUTRAL';
+    }
+
+    // Mirror server-side confidence
+    let conf = 0;
+    if (Math.abs(oiChange) >= s.oiThresh)        conf++;
+    if (Math.abs(oiChange) >= s.oiThresh * 1.5)  conf++;
+    if (Math.abs(priceChange) >= s.priceThresh)  conf++;
+    if (Math.abs(priceChange) >= s.priceThresh * 1.5) conf++;
+    if (volRatio >= s.volMult)                   conf++;
+    conf = Math.max(1, Math.min(5, conf));
+
+    const strike = Math.round(ltp / 50) * 50;
+    rows.push({
+      sym: stock.sym, sec: stock.sec, ltp, priceChange, oiChange,
+      oiLots: Math.floor(Math.random() * 50000),
+      oiBaseline: Math.floor(Math.random() * 40000),
+      volRatio, signal, confidence: conf,
+      suggestedStrike: signal === 'CALL' ? strike + 50 : strike - 50,
+      expiry: getNextExpiry(),
+      triggeredByOI: oiOk, triggeredByPx: priceOk,
+      time: timeStr
+    });
+  });
+
+  state.rows = rows.sort((a, b) => Math.abs(b.oiChange) - Math.abs(a.oiChange));
+  if (rows.length) addAlert(timeStr, rows[0].sym, rows[0].priceChange, rows[0].oiChange, rows[0].signal);
+  renderTable();
+  updateStats({ call_count: rows.filter(r=>r.signal==='CALL').length, put_count: rows.filter(r=>r.signal==='PUT').length });
+  document.getElementById('lastRefresh').textContent = 'Demo · ' + timeStr + ` · ${rows.length} signals`;
+}
+
+function getNextExpiry() {
+  const d = new Date();
+  d.setDate(d.getDate() + ((4 - d.getDay() + 7) % 7 || 7));
+  return `${d.getDate().toString().padStart(2,'0')}-${['JAN','FEB','MAR','APR','MAY','JUN','JUL','AUG','SEP','OCT','NOV','DEC'][d.getMonth()]}`;
+}
+
+function stopDemo() { if (state.demoInterval) { clearInterval(state.demoInterval); state.demoInterval = null; } }
+
+function stopScan() {
+  if (state.refreshTimer) { clearInterval(state.refreshTimer); state.refreshTimer = null; }
+  stopDemo();
+  state.mode = 'idle';
+  document.getElementById('stopBtn').style.display = 'none';
+  document.getElementById('resetBtn').style.display = 'none';
+  document.getElementById('connectBtn').textContent = '▶ CONNECT LIVE';
+  setConnBadge('disconnected');
+  setMsg('Stopped.');
+}
+
+function manualRefresh() {
+  if (state.mode === 'demo') generateDemoData();
+  else if (state.mode === 'live') runScanner();
+}
+
+// ── Alerts ────────────────────────────────────────────────────────────────────
+let alertCnt = 0;
+const seenAlerts = new Set();
+function addAlert(time, sym, px, oi, signal) {
+  const key = `${sym}-${Math.round(oi)}-${Math.round(px)}`;
+  if (seenAlerts.has(key)) return;
+  seenAlerts.add(key);
+  if (seenAlerts.size > 200) seenAlerts.clear();
+
+  const log = document.getElementById('alertLog');
+  const empty = log.querySelector('.alert-empty');
+  if (empty) empty.remove();
+  const cls = signal === 'CALL' ? 'var(--bull)' : signal === 'PUT' ? 'var(--bear)' : 'var(--muted)';
+  const el = document.createElement('div');
+  el.className = 'alert-item';
+  el.innerHTML = `<span class="alert-time">${time}</span>` +
+    `<span class="alert-sym" style="color:${cls}">${sym}</span>` +
+    `<span class="alert-msg">Px ${px>=0?'+':''}${px}% · OI Spurt ${oi>=0?'+':''}${oi}% · <b>${signal}</b></span>`;
+  log.insertBefore(el, log.firstChild);
+  while (log.children.length > 50) log.removeChild(log.lastChild);
+  alertCnt++;
+  document.getElementById('alertCount').textContent = alertCnt + ' alerts';
+}
+
+// ── Filters ───────────────────────────────────────────────────────────────────
+function setFilter(type, btn) {
+  state.filter = type;
+  ['filterAll','filterCall','filterPut'].forEach(id => {
+    const b = document.getElementById(id);
+    if (b) b.className = 'tog-btn';
+  });
+  btn.className = `tog-btn active-${type==='ALL'?'all':type==='CALL'?'bull':'bear'}`;
+  renderTable();
+}
+function setConf(n, btn) {
+  state.minConf = n;
+  document.querySelectorAll('.toggle-grp:last-of-type .tog-btn').forEach(b => b.className = 'tog-btn');
+  btn.className = 'tog-btn active-all';
+  renderTable();
+}
+function applyFilters() { renderTable(); }
+
+// ── Render Table ──────────────────────────────────────────────────────────────
+function renderTable() {
+  const body   = document.getElementById('tableBody');
+  const search = document.getElementById('searchBox').value.toLowerCase();
+  const fOI    = parseFloat(document.getElementById('fOI').value) || 0;
+  const fPx    = parseFloat(document.getElementById('fPx').value) || 0;
+  const sortBy = document.getElementById('sortBy').value;
+
+  let rows = state.rows.filter(r => {
+    if (search && !r.sym.toLowerCase().includes(search)) return false;
+    if (state.filter !== 'ALL' && r.signal !== state.filter) return false;
+    if (Math.abs(r.oiChange) < fOI)   return false;
+    if (Math.abs(r.priceChange) < fPx) return false;
+    if (r.confidence < state.minConf) return false;
+    return true;
+  });
+
+  if (sortBy === 'px')   rows.sort((a,b) => Math.abs(b.priceChange) - Math.abs(a.priceChange));
+  else if (sortBy === 'conf') rows.sort((a,b) => b.confidence - a.confidence);
+  else rows.sort((a,b) => Math.abs(b.oiChange) - Math.abs(a.oiChange));
+
+  document.getElementById('rowCount').textContent = rows.length + ' stocks';
+
+  if (!rows.length) {
+    const msg = state.rows.length ? 'No signals match current filters' : 'Click CONNECT LIVE or DEMO MODE to begin';
+    body.innerHTML = `<tr><td colspan="10"><div class="empty-state"><div class="empty-icon">${state.rows.length?'🔍':'📡'}</div><div class="empty-msg">${msg}</div></div></td></tr>`;
+    return;
+  }
+
+  const s = state.settings;
+  body.innerHTML = rows.map(r => {
+    const iconCls  = r.signal==='CALL' ? 'bull-icon' : r.signal==='PUT' ? 'bear-icon' : '';
+    const sigIcon  = r.signal==='CALL' ? '▲' : r.signal==='PUT' ? '▼' : '◆';
+    const pxCls    = r.priceChange >= 0 ? 'up' : 'dn';
+    const barPct   = Math.min(100, Math.abs(r.oiChange) * 2);
+    const barCls   = r.oiChange >= 0 ? 'bull' : 'bear';
+    const oiColor  = r.oiChange >= 0 ? 'var(--bull)' : 'var(--bear)';
+    const sigCls   = r.signal==='CALL' ? 'call' : r.signal==='PUT' ? 'put' : 'neutral';
+    const dots     = Array.from({length:5}, (_,i) =>
+      `<div class="conf-dot ${i<r.confidence?(r.signal==='CALL'?'fb':r.signal==='PUT'?'fd':'fw'):''}"></div>`
+    ).join('');
+    // Tags from backend triggered_by flags
+    const tags = [
+      r.triggeredByOI  ? `<span class="tag oi-tag">OI ${r.oiChange>=0?'+':''}${r.oiChange.toFixed(0)}%</span>` : '',
+      r.triggeredByPx  ? `<span class="tag px-tag">PX ${r.priceChange>=0?'+':''}${r.priceChange}%</span>` : '',
+      r.volRatio>=s.volMult ? `<span class="tag vol-tag">VOL ${r.volRatio}x</span>` : ''
+    ].filter(Boolean).join('');
+    const oiLots = r.oiLots ? Number(r.oiLots).toLocaleString('en-IN') : '—';
+    return `<tr class="row-new">
+      <td><div class="sym-cell"><div class="sym-icon ${iconCls}">${sigIcon}</div><div><div class="sym-name">${r.sym}</div><div class="sym-sec">${r.sec}</div></div></div></td>
+      <td class="r">${r.ltp ? r.ltp.toFixed(2) : '—'}</td>
+      <td class="r"><span class="chg-badge ${pxCls}">${r.priceChange>=0?'+':''}${r.priceChange}%</span></td>
+      <td class="r" style="color:${oiColor};font-weight:600">${r.oiChange>=0?'+':''}${r.oiChange}%</td>
+      <td><div class="oi-bar-wrap"><div class="oi-bar-bg"><div class="oi-bar-fill ${barCls}" style="width:${barPct}%"></div></div><span class="oi-val" style="color:${oiColor}">${Math.abs(r.oiChange).toFixed(0)}%</span></div></td>
+      <td class="r">${r.volRatio}x</td>
+      <td><span class="sig-badge ${sigCls}">${sigIcon} ${r.signal}</span></td>
+      <td><div class="conf-dots">${dots}</div></td>
+      <td><div class="trigger-tags">${tags||'<span class="tag">—</span>'}</div></td>
+      <td class="r" style="color:var(--muted)">${r.time}</td>
+    </tr>`;
+  }).join('');
+}
+
+// ── Stats ─────────────────────────────────────────────────────────────────────
+function updateStats(data) {
+  const rows  = state.rows;
+  const calls = data?.call_count ?? rows.filter(r=>r.signal==='CALL').length;
+  const puts  = data?.put_count  ?? rows.filter(r=>r.signal==='PUT').length;
+  const avgOI = rows.length ? (rows.reduce((s,r)=>s+Math.abs(r.oiChange),0)/rows.length).toFixed(1) : 0;
+  const top   = rows.length ? rows[0].sym : '—';
+  document.getElementById('statTotal').textContent = rows.length;
+  document.getElementById('statCall').textContent  = calls;
+  document.getElementById('statPut').textContent   = puts;
+  document.getElementById('statAvgOI').textContent = avgOI + '%';
+  document.getElementById('statTop').textContent   = top;
+}
+
+// ── Settings Modal ────────────────────────────────────────────────────────────
+function openSettings()  { document.getElementById('settingsModal').classList.add('open'); }
+function closeSettings() { document.getElementById('settingsModal').classList.remove('open'); }
+function updateThresh()  { document.getElementById('oiThreshVal').textContent = document.getElementById('oiThreshSlider').value + '%'; }
+function saveSettings() {
+  const s = state.settings;
+  s.oiThresh    = parseInt(document.getElementById('oiThreshSlider').value);
+  s.priceThresh = parseFloat(document.getElementById('priceThreshInput').value);
+  s.volMult     = parseFloat(document.getElementById('volMultInput').value);
+  s.signalLogic = document.getElementById('signalLogicSel').value;
+  closeSettings();
+  if (state.mode === 'live') runScanner(); else { renderTable(); updateStats({}); }
+}
+
+// ── CSV Export ────────────────────────────────────────────────────────────────
+function exportCSV() {
+  if (!state.rows.length) { alert('No data to export'); return; }
+  const hdr  = ['Symbol','Sector','LTP','Change%','OI Spurt%','OI Lots','OI Baseline','Vol Ratio','Signal','Confidence','Strike','Expiry','Time'];
+  const rows = state.rows.map(r => [r.sym,r.sec,r.ltp,r.priceChange,r.oiChange,r.oiLots,r.oiBaseline,r.volRatio,r.signal,r.confidence,r.suggestedStrike,r.expiry,r.time]);
+  const csv  = [hdr,...rows].map(r=>r.join(',')).join('\n');
+  const a    = document.createElement('a');
+  a.href     = URL.createObjectURL(new Blob([csv],{type:'text/csv'}));
+  a.download = `oi_spurt_${new Date().toISOString().slice(0,10)}.csv`;
+  a.click();
+}
+
+// ── Auth panel helpers ────────────────────────────────────────────────────────
+function showAuthPanel() {
+  const p = document.getElementById('authPanel');
+  p.style.display = 'flex';
+}
+function hideAuthPanel() {
+  const p = document.getElementById('authPanel');
+  if (p) p.style.display = 'none';
+}
+
+// ── Helpers ───────────────────────────────────────────────────────────────────
+function showSpinner(on) { document.getElementById('spinner').classList.toggle('on', on); }
+function setMsg(t) {
+  document.getElementById('statusMsg').textContent = t;
+  document.getElementById('footerMsg').textContent = t;
+}
+function setConnBadge(st) {
+  const el = document.getElementById('connBadge');
+  el.className  = `conn-badge ${st}`;
+  el.textContent = st==='connected' ? '⬤ LIVE' : st==='demo' ? '◈ DEMO' : '⬤ DISCONNECTED';
+}
+
+// ── Init ──────────────────────────────────────────────────────────────────────
+document.getElementById('filterAll').classList.add('active-all');
+// Auto-probe on load
+connectLive();
+</script>
+</body>
+</html>

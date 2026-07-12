@@ -1,0 +1,2630 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>F&amp;O Premium Gainers Board — TradeSignal</title>
+  <meta name="description"
+    content="Live F&O option premium gainers board — ranked by opening-to-current premium gain, updated every 5 minutes.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link
+    href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap"
+    rel="stylesheet">
+  <style>
+    *,
+    *::before,
+    *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    :root {
+      --bg: #0d1117;
+      --bg-card: #161b22;
+      --bg-card2: #1c2128;
+      --border: rgba(255, 255, 255, 0.07);
+      --border2: rgba(255, 255, 255, 0.12);
+      --text: #e6edf3;
+      --text-muted: #7d8590;
+      --green: #3fb950;
+      --amber: #d29922;
+      --orange: #db6d28;
+      --red: #f85149;
+      --blue: #388bfd;
+      --purple: #bc8cff;
+      --gold: #ffd700;
+      --star-color: #f0a500;
+      --run-color: #5b9bd5;
+      --radius: 10px;
+      --font: 'Inter', system-ui, sans-serif;
+      --mono: 'JetBrains Mono', monospace;
+    }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: var(--font);
+      font-size: 14px;
+      min-height: 100vh;
+      min-width: 1280px;
+    }
+
+    .header,
+    .controls,
+    #eod-banner {
+      min-width: 1280px;
+    }
+
+    /* ── Header ── */
+    .header {
+      background: var(--bg-card);
+      border-bottom: 1px solid var(--border);
+      padding: 14px 24px;
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      backdrop-filter: blur(12px);
+    }
+
+    .header-brand {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-weight: 700;
+      font-size: 1.05rem;
+      letter-spacing: -0.02em;
+    }
+
+    .header-brand span {
+      font-size: 1.4rem;
+    }
+
+    .header-sub {
+      font-size: 0.72rem;
+      color: var(--text-muted);
+      margin-left: 2px;
+    }
+
+    .header-right {
+      margin-left: auto;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    /* Live badge */
+    .live-badge {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      background: rgba(63, 185, 80, 0.12);
+      border: 1px solid rgba(63, 185, 80, 0.25);
+      border-radius: 20px;
+      padding: 4px 12px;
+      font-size: 0.72rem;
+      font-weight: 600;
+      color: var(--green);
+      letter-spacing: 0.04em;
+    }
+
+    .live-dot {
+      width: 7px;
+      height: 7px;
+      background: var(--green);
+      border-radius: 50%;
+      animation: pulse 1.5s infinite;
+    }
+
+    @keyframes pulse {
+
+      0%,
+      100% {
+        opacity: 1;
+        transform: scale(1);
+      }
+
+      50% {
+        opacity: 0.5;
+        transform: scale(0.8);
+      }
+    }
+
+    .refresh-btn {
+      background: rgba(255, 255, 255, 0.06);
+      border: 1px solid var(--border2);
+      color: var(--text);
+      padding: 6px 14px;
+      border-radius: 7px;
+      font-size: 0.78rem;
+      cursor: pointer;
+      font-family: var(--font);
+      font-weight: 500;
+      transition: all 0.2s;
+    }
+
+    .refresh-btn:hover {
+      background: rgba(255, 255, 255, 0.1);
+    }
+
+    /* ── Stats bar ── */
+    .stats-bar {
+      display: flex;
+      gap: 1px;
+      background: var(--border);
+      border-bottom: 1px solid var(--border);
+      overflow-x: auto;
+    }
+
+    .stat-item {
+      flex: 1;
+      min-width: 130px;
+      background: var(--bg-card);
+      padding: 12px 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 3px;
+    }
+
+    .stat-label {
+      font-size: 0.68rem;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: var(--text-muted);
+      font-weight: 600;
+    }
+
+    .stat-value {
+      font-size: 1.35rem;
+      font-weight: 700;
+      font-family: var(--mono);
+      color: var(--text);
+      line-height: 1;
+    }
+
+    .stat-sub {
+      font-size: 0.68rem;
+      color: var(--text-muted);
+    }
+
+    /* ── Controls ── */
+    .controls {
+      display: none;
+      padding: 14px 24px;
+      align-items: center;
+      gap: 10px;
+      flex-wrap: wrap;
+      border-bottom: 1px solid var(--border);
+      background: var(--bg);
+    }
+
+    .controls.expanded {
+      display: flex;
+    }
+
+    .controls-label {
+      font-size: 0.72rem;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      font-weight: 600;
+    }
+
+    .filter-group {
+      display: flex;
+      gap: 4px;
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 3px;
+    }
+
+    .filter-btn {
+      border: none;
+      background: transparent;
+      color: var(--text-muted);
+      padding: 5px 12px;
+      border-radius: 5px;
+      font-size: 0.76rem;
+      font-weight: 600;
+      cursor: pointer;
+      font-family: var(--font);
+      transition: all 0.15s;
+      white-space: nowrap;
+    }
+
+    .filter-btn:hover {
+      color: var(--text);
+      background: rgba(255, 255, 255, 0.06);
+    }
+
+    .filter-btn.active {
+      background: rgba(56, 139, 253, 0.2);
+      color: var(--blue);
+    }
+
+    .compact-stats {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      margin: 0 16px;
+    }
+
+    .compact-stat-item {
+      display: flex;
+      align-items: baseline;
+      gap: 5px;
+      background: rgba(255, 255, 255, 0.03);
+      padding: 4px 10px;
+      border-radius: 6px;
+      border: 1px solid var(--border);
+    }
+
+    .compact-stat-label {
+      font-size: 0.65rem;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: var(--text-muted);
+      font-weight: 600;
+    }
+
+    .compact-stat-value {
+      font-size: 0.82rem;
+      font-weight: 700;
+      color: var(--text);
+      font-family: var(--mono);
+    }
+
+    .filter-toggle-btn {
+      background: rgba(255, 255, 255, 0.06);
+      border: 1px solid var(--border2);
+      color: var(--text);
+      padding: 6px 14px;
+      border-radius: 7px;
+      font-size: 0.78rem;
+      cursor: pointer;
+      font-family: var(--font);
+      font-weight: 500;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      transition: all 0.2s;
+    }
+
+    .filter-toggle-btn:hover {
+      background: rgba(255, 255, 255, 0.1);
+    }
+
+    .filter-toggle-btn.active {
+      background: rgba(56, 139, 253, 0.15);
+      border-color: rgba(56, 139, 253, 0.4);
+      color: var(--blue);
+    }
+
+    .countdown-compact {
+      font-size: 0.72rem;
+      color: var(--text-muted);
+      font-family: var(--mono);
+      white-space: nowrap;
+    }
+
+    .countdown-compact b {
+      color: var(--text);
+    }
+
+    /* Removed max-width: 900px header query to keep header inline */
+
+    /* ── Main grid ── */
+    /* Unified Layout: Always 7 columns, side-by-side */
+    .board {
+      padding: 16px 20px;
+      display: grid;
+      grid-template-columns: repeat(7, minmax(0, 1fr));
+      align-items: stretch;
+      gap: 12px;
+      min-width: 1280px;
+    }
+
+    .stock-cards-grid {
+      grid-column: span 4;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      width: 100%;
+      min-width: 0;
+    }
+
+    .board-right-bar-container {
+      grid-column: span 3;
+      display: flex;
+      flex-direction: column;
+      align-self: stretch;
+    }
+
+    /* ── Stock card ── */
+    .stock-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      overflow: hidden;
+      transition: border-color 0.2s, transform 0.2s;
+    }
+
+    .stock-card:hover {
+      border-color: var(--border2);
+      transform: translateY(-1px);
+    }
+
+    .card-header {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      padding: 8px 10px;
+      border-bottom: 1px solid var(--border);
+      background: var(--bg-card2);
+    }
+
+    .card-rank {
+      font-size: 0.68rem;
+      color: var(--text-muted);
+      font-weight: 700;
+      font-family: var(--mono);
+      min-width: 20px;
+    }
+
+    .card-symbol {
+      font-size: 0.92rem;
+      font-weight: 700;
+      letter-spacing: -0.01em;
+      flex: 1;
+    }
+
+    .best-badge {
+      font-size: 0.75rem;
+      font-weight: 700;
+      font-family: var(--mono);
+      padding: 3px 9px;
+      border-radius: 20px;
+    }
+
+    .best-fire {
+      background: rgba(248, 81, 73, 0.15);
+      color: #ff7b72;
+      border: 1px solid rgba(248, 81, 73, 0.25);
+    }
+
+    .best-rocket {
+      background: rgba(210, 153, 34, 0.15);
+      color: #e3b341;
+      border: 1px solid rgba(210, 153, 34, 0.25);
+    }
+
+    .best-up {
+      background: rgba(63, 185, 80, 0.12);
+      color: var(--green);
+      border: 1px solid rgba(63, 185, 80, 0.22);
+    }
+
+    /* Contract rows */
+    .contract-row {
+      display: grid;
+      grid-template-columns: 16px 1fr;
+      align-items: center;
+      gap: 6px;
+      padding: 5px 10px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.03);
+      transition: background 0.15s;
+    }
+
+    .contract-row:last-child {
+      border-bottom: none;
+    }
+
+    .contract-row:hover {
+      background: rgba(255, 255, 255, 0.025);
+    }
+
+    .layer-tag {
+      font-size: 0.75rem;
+    }
+
+    .strike-info {
+      display: flex;
+      flex-direction: column;
+      gap: 1px;
+    }
+
+    .strike-label {
+      font-size: 0.78rem;
+      font-weight: 600;
+      font-family: var(--mono);
+      color: var(--text);
+    }
+
+    .strike-detail {
+      font-size: 0.65rem;
+      color: var(--text-muted);
+      font-family: var(--mono);
+    }
+
+    .opt-badge {
+      font-size: 0.62rem;
+      font-weight: 700;
+      padding: 1px 5px;
+      border-radius: 4px;
+    }
+
+    .opt-ce {
+      background: rgba(63, 185, 80, 0.15);
+      color: var(--green);
+    }
+
+    .opt-pe {
+      background: rgba(248, 81, 73, 0.15);
+      color: var(--red);
+    }
+
+    .gain-pct {
+      font-size: 0.72rem;
+      font-weight: 800;
+      font-family: var(--mono);
+      text-align: left;
+      min-width: 0;
+    }
+
+    .gain-fire {
+      color: #ff7b72;
+    }
+
+    .gain-rocket {
+      color: #e3b341;
+    }
+
+    .gain-up {
+      color: var(--green);
+    }
+
+    /* ── Confluence dots ── */
+    .conf-row {
+      display: flex;
+      gap: 3px;
+      align-items: center;
+      margin-top: 3px;
+    }
+
+    .conf-pill {
+      font-size: 0.58rem;
+      font-weight: 700;
+      padding: 1px 5px;
+      border-radius: 3px;
+      letter-spacing: 0.03em;
+      cursor: default;
+      transition: opacity 0.2s;
+    }
+
+    .conf-loading {
+      background: rgba(125, 133, 144, 0.08);
+      color: #7d8590;
+      border: 1px solid rgba(125, 133, 144, 0.15);
+    }
+
+    .conf-bullish {
+      background: rgba(63, 185, 80, 0.15);
+      color: #3fb950;
+      border: 1px solid rgba(63, 185, 80, 0.25);
+    }
+
+    .conf-bearish {
+      background: rgba(248, 81, 73, 0.15);
+      color: #ff7b72;
+      border: 1px solid rgba(248, 81, 73, 0.25);
+    }
+
+    .conf-neutral {
+      background: rgba(125, 133, 144, 0.15);
+      color: #8b949e;
+      border: 1px solid rgba(125, 133, 144, 0.2);
+    }
+
+    .card-title {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      gap: 0;
+      min-width: 0;
+    }
+
+    /* Gain bar (mini progress indicator) */
+    .gain-bar-wrap {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      height: 2px;
+      background: var(--border);
+    }
+
+    .gain-bar {
+      height: 100%;
+      background: linear-gradient(90deg, var(--green), var(--amber));
+      transition: width 0.4s ease;
+    }
+
+    /* ── Empty / Loading state ── */
+    .empty-state {
+      grid-column: 1 / -1;
+      text-align: center;
+      padding: 80px 20px;
+      color: var(--text-muted);
+    }
+
+    .empty-state .icon {
+      font-size: 3rem;
+      margin-bottom: 14px;
+    }
+
+    .empty-state h3 {
+      font-size: 1.1rem;
+      font-weight: 600;
+      margin-bottom: 8px;
+      color: var(--text);
+    }
+
+    .empty-state p {
+      font-size: 0.82rem;
+      line-height: 1.6;
+    }
+
+    /* ── Loading spinner ── */
+    .spinner {
+      width: 36px;
+      height: 36px;
+      border: 3px solid var(--border);
+      border-top-color: var(--blue);
+      border-radius: 50%;
+      animation: spin 0.7s linear infinite;
+      margin: 0 auto 16px;
+    }
+
+    @keyframes spin {
+      to {
+        transform: rotate(360deg);
+      }
+    }
+
+    /* ── Toast ── */
+    .toast {
+      position: fixed;
+      bottom: 24px;
+      right: 24px;
+      background: var(--bg-card2);
+      border: 1px solid var(--border2);
+      border-radius: 9px;
+      padding: 10px 16px;
+      font-size: 0.8rem;
+      color: var(--text);
+      opacity: 0;
+      transform: translateY(10px);
+      transition: all 0.3s;
+      z-index: 200;
+      pointer-events: none;
+    }
+
+    .toast.show {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    /* ── Scrollbar ── */
+    ::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+    }
+
+    ::-webkit-scrollbar-track {
+      background: transparent;
+    }
+
+    ::-webkit-scrollbar-thumb {
+      background: rgba(255, 255, 255, 0.1);
+      border-radius: 3px;
+    }
+
+    /* ── Responsive ── */
+    @media (max-width: 600px) {
+      .board {
+        padding: 12px;
+        gap: 10px;
+        grid-template-columns: 1fr;
+      }
+
+      .header {
+        padding: 10px 14px;
+      }
+
+      .controls {
+        padding: 10px 14px;
+      }
+
+      .stats-bar .stat-item {
+        padding: 10px 14px;
+      }
+    }
+
+    /* ── Right Bar Panel Layout ── */
+    .board-right-bar-container {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      align-self: stretch;
+      max-height: calc(100vh - 120px);
+    }
+
+    .crossover-columns-wrap {
+      display: flex;
+      flex-direction: row;
+      /* Three side-by-side columns: Bulls, Bears, Live Breakouts */
+      gap: 12px;
+      flex: 1;
+      min-height: 0;
+      overflow: hidden;
+    }
+
+    .board-right-bar {
+      display: flex;
+      flex-direction: column;
+      background: var(--bg-card);
+      border: 1px solid var(--border2);
+      border-radius: var(--radius);
+      overflow: hidden;
+      flex: 1;
+      /* Share horizontal space equally */
+      min-height: 200px;
+    }
+
+    /* ── Beautiful Live Breakouts Card ── */
+    .live-breakout-horizontal-bar {
+      display: flex;
+      flex-direction: column;
+      background: var(--bg-card);
+      border: 1px solid rgba(255, 215, 0, 0.22);
+      border-radius: var(--radius);
+      padding: 10px 14px;
+      flex: 0 0 196px;
+      /* Doubled height for plenty of space! */
+      overflow: hidden;
+      box-shadow: 0 0 10px rgba(255, 215, 0, 0.02);
+      gap: 8px;
+    }
+
+    .breakouts-horizontal-grid {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      flex: 1;
+      min-height: 0;
+    }
+
+    .breakout-horizontal-row {
+      display: flex;
+      flex-direction: column;
+      /* Stack headings and scroll pills vertically */
+      align-items: flex-start;
+      gap: 4px;
+      flex: 1;
+      min-height: 0;
+      width: 100%;
+    }
+
+    .breakout-row-label {
+      font-size: 0.58rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: var(--text-muted);
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      flex-shrink: 0;
+    }
+
+    .breakout-horizontal-scroll {
+      display: flex;
+      flex-direction: row;
+      gap: 8px;
+      overflow-x: auto;
+      white-space: nowrap;
+      padding: 4px 0;
+      /* Extra room for custom scrollbar */
+      align-items: center;
+      flex: 1;
+      min-width: 0;
+      width: 100%;
+    }
+
+    .breakout-horizontal-scroll::-webkit-scrollbar {
+      height: 4px;
+    }
+
+    .breakout-horizontal-scroll::-webkit-scrollbar-thumb {
+      background: rgba(255, 255, 255, 0.1);
+      border-radius: 2px;
+    }
+
+    .breakout-alert-pill {
+      display: flex;
+      flex-direction: column;
+      gap: 3px;
+      padding: 7px 10px;
+      border-radius: 8px;
+      margin-bottom: 5px;
+      border: 1px solid transparent;
+      font-size: 0.67rem;
+    }
+
+    .breakout-alert-pill.horizontal {
+      display: inline-flex;
+      flex-direction: row;
+      align-items: center;
+      gap: 5px;
+      padding: 3px 6px;
+      border-radius: 4px;
+      font-size: 0.60rem;
+      white-space: nowrap;
+      flex-shrink: 0;
+      margin-bottom: 0;
+    }
+
+    .squeeze-pill.horizontal {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      background: rgba(210, 153, 34, 0.08);
+      border: 1px solid rgba(210, 153, 34, 0.25);
+      color: #e3b341;
+      padding: 3px 6px;
+      border-radius: 4px;
+      font-size: 0.60rem;
+      white-space: nowrap;
+      flex-shrink: 0;
+    }
+
+    .breakout-alert-pill.grade-a {
+      background: rgba(255, 215, 0, 0.07);
+      border-color: rgba(255, 215, 0, 0.3);
+    }
+
+    .breakout-alert-pill.grade-b {
+      background: rgba(63, 185, 80, 0.06);
+      border-color: rgba(63, 185, 80, 0.2);
+    }
+
+    .breakout-alert-pill.bearish {
+      background: rgba(255, 123, 114, 0.07);
+      border-color: rgba(255, 123, 114, 0.25);
+    }
+
+    .squeeze-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 5px 10px;
+      border-bottom: 1px solid var(--border);
+      font-size: 0.66rem;
+      color: var(--text-muted);
+    }
+
+    .squeeze-row:last-child {
+      border-bottom: none;
+    }
+
+    .squeeze-sym {
+      font-weight: 700;
+      font-size: 0.72rem;
+      color: var(--text);
+      letter-spacing: 0.02em;
+    }
+
+    .squeeze-dur {
+      background: rgba(210, 153, 34, 0.12);
+      color: #e3b341;
+      border-radius: 4px;
+      padding: 1px 5px;
+      font-size: 0.6rem;
+      font-weight: 600;
+    }
+
+    .right-bar-header {
+      padding: 16px 20px;
+      border-bottom: 1px solid var(--border2);
+    }
+
+    .right-bar-title-wrap {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 4px;
+    }
+
+    .right-bar-title-wrap h3 {
+      font-size: 0.98rem;
+      font-weight: 600;
+      color: var(--text);
+      margin: 0;
+    }
+
+    .right-bar-header p {
+      font-size: 0.72rem;
+      color: var(--text-muted);
+      margin: 0;
+      line-height: 1.3;
+    }
+
+    .pulse-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--text-muted);
+      position: relative;
+    }
+
+    .pulse-dot.active {
+      background: #238636;
+    }
+
+    .pulse-dot.active::after {
+      content: '';
+      position: absolute;
+      width: 100%;
+      height: 100%;
+      border-radius: 50%;
+      background: #238636;
+      animation: pulse 1.8s infinite ease-in-out;
+    }
+
+    @keyframes pulse {
+      0% {
+        transform: scale(1);
+        opacity: 0.8;
+      }
+
+      100% {
+        transform: scale(2.8);
+        opacity: 0;
+      }
+    }
+
+    .right-bar-toolbar {
+      padding: 12px 20px;
+      background: rgba(22, 27, 34, 0.2);
+      border-bottom: 1px solid var(--border2);
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .search-input-wrap {
+      position: relative;
+      display: flex;
+      align-items: center;
+    }
+
+    .search-input-wrap input {
+      width: 100%;
+      background: rgba(13, 17, 23, 0.8);
+      border: 1px solid var(--border2);
+      border-radius: 6px;
+      padding: 6px 10px 6px 28px;
+      font-size: 0.75rem;
+      color: var(--text);
+      outline: none;
+      transition: border-color 0.2s;
+    }
+
+    .search-input-wrap input:focus {
+      border-color: #58a6ff;
+    }
+
+    .search-input-wrap .search-icon {
+      position: absolute;
+      left: 8px;
+      font-size: 0.75rem;
+      color: var(--text-muted);
+      pointer-events: none;
+    }
+
+    .crossover-filters {
+      display: flex;
+      gap: 6px;
+    }
+
+    .filter-btn {
+      flex: 1;
+      background: rgba(13, 17, 23, 0.5);
+      border: 1px solid var(--border2);
+      border-radius: 5px;
+      color: var(--text-muted);
+      font-size: 0.7rem;
+      padding: 4px 0;
+      cursor: pointer;
+      font-weight: 500;
+      transition: all 0.2s;
+    }
+
+    .filter-btn:hover {
+      color: var(--text);
+      background: rgba(255, 255, 255, 0.05);
+    }
+
+    .filter-btn.active {
+      color: #58a6ff;
+      border-color: #58a6ff;
+      background: rgba(88, 166, 255, 0.15);
+    }
+
+    .right-bar-list {
+      flex: 1;
+      overflow-y: auto;
+      padding: 6px 8px;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    .crossover-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 6px 8px;
+      background: rgba(22, 27, 34, 0.3);
+      border: 1px solid var(--border2);
+      border-radius: 5px;
+      transition: transform 0.15s, border-color 0.15s;
+    }
+
+    .crossover-item:hover {
+      transform: translateX(2px);
+      border-color: rgba(88, 166, 255, 0.3);
+    }
+
+    .crossover-left {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+
+    .crossover-left-sub {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .cross-time-sub {
+      font-size: 0.52rem;
+      color: var(--text-muted);
+      opacity: 0.85;
+      background: rgba(255, 255, 255, 0.03);
+      padding: 1px 3px;
+      border-radius: 3px;
+      border: 1px dashed rgba(255, 255, 255, 0.08);
+      white-space: nowrap;
+    }
+
+    .flag-badge {
+      background: linear-gradient(135deg, #f39c12, #e67e22);
+      color: #fff;
+      font-size: 0.52rem;
+      font-weight: bold;
+      padding: 1px 3px;
+      border-radius: 3px;
+      display: inline-flex;
+      align-items: center;
+      gap: 2px;
+      animation: flagPulse 2s infinite ease-in-out;
+      box-shadow: 0 0 6px rgba(243, 156, 18, 0.4);
+      white-space: nowrap;
+    }
+
+    @keyframes flagPulse {
+      0% {
+        transform: scale(1);
+        box-shadow: 0 0 4px rgba(243, 156, 18, 0.4);
+      }
+
+      50% {
+        transform: scale(1.05);
+        box-shadow: 0 0 10px rgba(243, 156, 18, 0.8);
+      }
+
+      100% {
+        transform: scale(1);
+        box-shadow: 0 0 4px rgba(243, 156, 18, 0.4);
+      }
+    }
+
+    .crossover-item.new-entry {
+      animation: highlightNew 3s ease;
+    }
+
+    @keyframes highlightNew {
+      0% {
+        background: rgba(243, 156, 18, 0.15);
+        border-color: rgba(243, 156, 18, 0.4);
+      }
+
+      50% {
+        background: rgba(243, 156, 18, 0.25);
+        border-color: rgba(243, 156, 18, 0.6);
+      }
+
+      100% {
+        background: rgba(22, 27, 34, 0.3);
+        border-color: var(--border2);
+      }
+    }
+
+    .crossover-symbol {
+      font-size: 0.68rem;
+      font-weight: 600;
+      color: var(--text);
+    }
+
+    .alignment-badge {
+      display: inline-block;
+      font-size: 0.52rem;
+      padding: 1px 4px;
+      border-radius: 3px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.3px;
+    }
+
+    .alignment-badge.aligned-bull {
+      background: rgba(35, 134, 54, 0.15);
+      color: #3fb950;
+      border: 1px solid rgba(63, 185, 80, 0.2);
+    }
+
+    .alignment-badge.aligned-bear {
+      background: rgba(248, 81, 73, 0.15);
+      color: #ff7b72;
+      border: 1px solid rgba(255, 123, 114, 0.2);
+    }
+
+    .alignment-badge.mixed {
+      background: rgba(255, 255, 255, 0.05);
+      color: var(--text-muted);
+      border: 1px solid var(--border2);
+    }
+
+    .crossover-right {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-end;
+      gap: 5px;
+    }
+
+    .timeframes-strip {
+      display: flex;
+      gap: 4px;
+    }
+
+    .tf-pill {
+      font-size: 0.44rem;
+      font-weight: 800;
+      padding: 0.5px 1.5px;
+      border-radius: 2px;
+      background: rgba(255, 255, 255, 0.04);
+      color: var(--text-muted);
+      border: 1px solid var(--border2);
+      cursor: help;
+      min-width: 14px;
+      text-align: center;
+      box-sizing: border-box;
+    }
+
+    .tf-pill.bullish {
+      background: rgba(46, 160, 67, 0.2);
+      color: #58d68d;
+      border-color: rgba(88, 214, 141, 0.3);
+    }
+
+    .tf-pill.bearish {
+      background: rgba(248, 81, 73, 0.2);
+      color: #f88379;
+      border-color: rgba(248, 131, 121, 0.3);
+    }
+
+    .cross-pill {
+      font-size: 0.46rem;
+      font-weight: 800;
+      padding: 0.5px 3.5px;
+      border-radius: 3px;
+      text-transform: uppercase;
+      animation: flash-badge 2s infinite ease-in-out;
+      white-space: nowrap;
+    }
+
+    .cross-pill.bullish {
+      background: #238636;
+      color: #fff;
+    }
+
+    .cross-pill.bearish {
+      background: #f85149;
+      color: #fff;
+    }
+
+    @keyframes flash-badge {
+      0% {
+        opacity: 1;
+      }
+
+      50% {
+        opacity: 0.6;
+      }
+
+      100% {
+        opacity: 1;
+      }
+    }
+
+    .right-bar-footer {
+      padding: 8px 16px;
+      background: rgba(22, 27, 34, 0.4);
+      border-top: 1px solid var(--border2);
+      display: flex;
+      justify-content: space-between;
+      font-size: 0.65rem;
+      color: var(--text-muted);
+    }
+
+    /* Collapsible stock row layout */
+    .stock-row-container {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      transition: border-color 0.2s;
+    }
+
+    .stock-row-container:hover {
+      border-color: var(--border2);
+    }
+
+    .stock-row-header {
+      display: grid;
+      grid-template-columns: 125px 70px 70px 75px 75px 80px 75px 70px 50px 55px 1fr;
+      gap: 12px;
+      align-items: center;
+      padding: 10px 16px;
+      cursor: pointer;
+      user-select: none;
+      background: var(--bg-card2);
+    }
+
+    .stock-row-header:hover {
+      background: rgba(255, 255, 255, 0.02);
+    }
+
+    .col-symbol {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .col-spot {
+      text-align: left;
+    }
+
+    .col-rvol {
+      text-align: left;
+    }
+
+    .col-linearity {
+      text-align: left;
+      font-size: 0.68rem;
+      font-weight: 700;
+      color: #58a6ff;
+    }
+
+    .col-points {
+      text-align: left;
+      font-size: 0.68rem;
+      font-weight: 700;
+    }
+
+    .col-highest {
+      text-align: left;
+    }
+
+    .col-gap {
+      text-align: left;
+    }
+
+    .col-inst {
+      text-align: left;
+    }
+
+    .col-e9h {
+      text-align: center;
+      font-family: var(--mono);
+      font-weight: 700;
+      font-size: 0.78rem;
+    }
+
+    .col-fhvol {
+      text-align: center;
+      font-family: var(--mono);
+      font-weight: 700;
+      font-size: 0.72rem;
+      line-height: 1.3;
+    }
+
+    .col-timeframes {
+      display: flex;
+      justify-content: flex-end;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .expand-arrow {
+      font-size: 0.65rem;
+      color: var(--text-muted);
+      transition: transform 0.2s ease;
+      display: inline-block;
+    }
+
+    .stock-row-container.expanded .expand-arrow {
+      transform: rotate(180deg);
+    }
+
+    .stock-row-details {
+      border-top: 1px solid var(--border);
+      background: rgba(0, 0, 0, 0.22);
+      padding: 4px 0;
+    }
+
+    /* Option Cards (Matches screenshot specs) */
+    .option-card {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 8px 20px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.03);
+    }
+
+    .option-card:last-child {
+      border-bottom: none;
+    }
+
+    .opt-left {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .opt-meta {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .strike-wrap {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .strike-price {
+      font-size: 0.9rem;
+      font-weight: 800;
+      font-family: var(--mono);
+      color: var(--text);
+    }
+
+    .opt-badge {
+      font-size: 0.52rem;
+      padding: 1.5px 4px;
+      font-weight: 800;
+      border-radius: 3px;
+      line-height: 1;
+    }
+
+    .opt-pe {
+      background: rgba(248, 81, 73, 0.15);
+      color: var(--red);
+    }
+
+    .opt-ce {
+      background: rgba(63, 185, 80, 0.15);
+      color: var(--green);
+    }
+
+    .premium-flow {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 0.72rem;
+      color: var(--text-muted);
+      font-family: var(--mono);
+    }
+
+    .prem-arrow {
+      font-size: 0.65rem;
+      opacity: 0.45;
+      margin: 0;
+    }
+
+    .opt-right {
+      text-align: right;
+    }
+
+    .stock-board-header {
+      display: grid;
+      grid-template-columns: 125px 70px 70px 75px 75px 80px 75px 70px 50px 55px 1fr;
+      gap: 12px;
+      align-items: center;
+      padding: 8px 16px;
+      margin-bottom: 4px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    }
+
+    .stock-board-header div {
+      color: var(--text-muted) !important;
+      font-size: 0.65rem !important;
+      font-weight: 700 !important;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    .stock-board-header div.sortable {
+      cursor: pointer;
+      user-select: none;
+    }
+
+    .stock-board-header div.sortable:hover {
+      color: var(--text) !important;
+    }
+
+    /* Keep all columns visible, no media query hiding col-linearity or col-points */
+  </style>
+</head>
+
+<body>
+
+  <!-- Header -->
+  <header class="header">
+    <div class="header-brand">
+      <span>📈</span>
+      <div>
+        F&amp;O Premium Gainers Board
+        <div class="header-sub">Opening ATM ± 2 OTM + Accumulated Running Strikes</div>
+      </div>
+    </div>
+
+    <!-- Compact stats in header -->
+    <div class="compact-stats">
+      <div class="compact-stat-item" title="Active contracts tracked on board">
+        <span class="compact-stat-label">Contracts:</span>
+        <span class="compact-stat-value" id="st-tracked">—</span>
+      </div>
+      <div class="compact-stat-item" title="Contracts with positive option gains vs open premium">
+        <span class="compact-stat-label">Positive:</span>
+        <span class="compact-stat-value" id="st-positive" style="color:var(--green)">—</span>
+      </div>
+      <div class="compact-stat-item" title="Stocks with positive option contracts">
+        <span class="compact-stat-label">Stocks:</span>
+        <span class="compact-stat-value" id="st-stocks">—</span>
+      </div>
+      <div class="compact-stat-item" title="Last updated time">
+        <span class="compact-stat-label">Updated:</span>
+        <span class="compact-stat-value" id="st-time">—</span>
+        <span class="compact-stat-sub" id="st-date" style="display:none;">—</span>
+      </div>
+    </div>
+
+    <div class="header-right">
+      <div class="live-badge" id="live-badge">
+        <div class="live-dot" id="live-dot"></div>
+        <span id="live-label">LIVE</span>
+      </div>
+
+      <div class="countdown-compact">
+        Refresh: <b id="countdown">30s</b>
+      </div>
+
+      <!-- Expandable Filters Button -->
+      <button class="filter-toggle-btn" id="filter-toggle-btn" onclick="toggleFilters()">
+        🎛️ Filters <span id="filter-toggle-arrow">▼</span>
+      </button>
+
+      <button class="refresh-btn" onclick="fetchBoard(true)">⟳ Refresh Now</button>
+    </div>
+  </header>
+
+  <!-- Controls (Expandable filter panel) -->
+  <div class="controls">
+    <span class="controls-label">Filter</span>
+    <div class="filter-group" id="type-filter">
+      <button class="filter-btn active" data-type="all">All</button>
+      <button class="filter-btn" data-type="CE">CE Only</button>
+      <button class="filter-btn" data-type="PE">PE Only</button>
+    </div>
+    <div class="filter-group" id="layer-filter">
+      <button class="filter-btn active" data-layer="all">⭐🏃 Both Layers</button>
+      <button class="filter-btn" data-layer="opening">⭐ Opening Only</button>
+      <button class="filter-btn" data-layer="running">🏃 Running Only</button>
+    </div>
+    <div class="filter-group" id="sort-filter">
+      <button class="filter-btn" id="sort-rvol-btn">📊 Sort by RVOL</button>
+    </div>
+  </div>
+
+  <!-- EOD snapshot banner -->
+  <div id="eod-banner"
+    style="display:none;background:rgba(210,153,34,0.1);border-bottom:1px solid rgba(210,153,34,0.25);padding:8px 24px;font-size:0.75rem;color:#e3b341;display:none;align-items:center;gap:8px;">
+    <span>📸</span>
+    <span id="eod-banner-text">Showing EOD snapshot — prices as of market close. Live data available 09:15–15:30
+      IST.</span>
+    <button onclick="fetchBoard(true)"
+      style="margin-left:auto;background:rgba(210,153,34,0.15);border:1px solid rgba(210,153,34,0.3);color:#e3b341;padding:3px 10px;border-radius:5px;font-size:0.72rem;cursor:pointer;">↻
+      Refresh</button>
+  </div>
+
+  <!-- Board grid -->
+  <div class="board" id="board">
+    <div class="empty-state">
+      <div class="spinner"></div>
+      <h3>Loading board data...</h3>
+      <p>Polling <code>/api/option-gainers-board</code></p>
+    </div>
+  </div>
+
+  <!-- Toast -->
+  <div class="toast" id="toast"></div>
+
+  <script>
+    const REFRESH_INTERVAL = 30; // seconds
+    let countdown = REFRESH_INTERVAL;
+    let timerHandle = null;
+    let activeTypeFilter = 'all';
+    let activeLayerFilter = 'all';
+    let currentSortColumn = 'gain';
+    let currentSortDirection = 'desc';
+    let lastData = null;
+    const expandedSymbols = new Set();
+
+    function toggleDetails(headerEl) {
+      const container = headerEl.parentElement;
+      const symbol = container.dataset.symbol;
+      const details = container.querySelector('.stock-row-details');
+      const isExpanded = container.classList.toggle('expanded');
+
+      if (isExpanded) {
+        details.style.display = 'block';
+        expandedSymbols.add(symbol);
+      } else {
+        details.style.display = 'none';
+        expandedSymbols.delete(symbol);
+      }
+    }
+
+    // ── Filters ──────────────────────────────────────────────────────────────
+    document.querySelectorAll('#type-filter .filter-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        document.querySelectorAll('#type-filter .filter-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        activeTypeFilter = btn.dataset.type;
+        if (lastData) renderBoard(lastData);
+      });
+    });
+    document.querySelectorAll('#layer-filter .filter-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        document.querySelectorAll('#layer-filter .filter-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        activeLayerFilter = btn.dataset.layer;
+        if (lastData) renderBoard(lastData);
+      });
+    });
+
+    const rvolBtn = document.getElementById('sort-rvol-btn');
+
+    if (rvolBtn) {
+      rvolBtn.addEventListener('click', () => {
+        if (currentSortColumn === 'rvol') {
+          currentSortColumn = 'gain';
+          currentSortDirection = 'desc';
+        } else {
+          currentSortColumn = 'rvol';
+          currentSortDirection = 'desc';
+        }
+        if (lastData) renderBoard(lastData);
+      });
+    }
+
+    function handleHeaderSort(col) {
+      if (currentSortColumn === col) {
+        currentSortDirection = currentSortDirection === 'desc' ? 'asc' : 'desc';
+      } else {
+        currentSortColumn = col;
+        currentSortDirection = 'desc';
+      }
+      if (lastData) renderBoard(lastData);
+    }
+
+    function getSortArrow(col) {
+      if (currentSortColumn === col) {
+        return currentSortDirection === 'desc' ? ' ▼' : ' ▲';
+      }
+      return ' ↕';
+    }
+
+    function toggleFilters() {
+      const controls = document.querySelector('.controls');
+      const btn = document.getElementById('filter-toggle-btn');
+      const arrow = document.getElementById('filter-toggle-arrow');
+
+      const isExpanded = controls.classList.toggle('expanded');
+      btn.classList.toggle('active', isExpanded);
+      if (arrow) {
+        arrow.textContent = isExpanded ? '▲' : '▼';
+      }
+    }
+
+    // ── Fetch ─────────────────────────────────────────────────────────────────
+    async function fetchBoard(manual = false) {
+      try {
+        const res = await fetch('/api/option-gainers-board');
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        const data = await res.json();
+
+        // Loading state: background fetch in progress
+        if (data.status === 'loading') {
+          const isEodLoading = data.message && (data.message.includes('EOD') || data.message.includes('snapshot'));
+          const title = isEodLoading ? 'Loading EOD Snapshot...' : 'Initializing Live Board...';
+          showBoard(`
+          <div class="empty-state">
+            <div class="spinner"></div>
+            <h3>${title}</h3>
+            <p>${data.message || 'Building board from today\'s OHLC data.'}<br>
+               Auto-refreshing in <b id="load-countdown">30s</b>.</p>
+          </div>`);
+          setLiveMode(false, true);
+          updateStats(data);
+          resetCountdown();
+          return;
+        }
+
+        lastData = data;
+
+        // Stale pre-close snapshot: backend returned is_eod_snapshot but 0 stocks
+        // (background rebuild triggered — show spinner instead of "No gainers data yet")
+        if (data.is_eod_snapshot && (!data.stocks || data.stocks.length === 0)) {
+          showBoard(`
+          <div class="empty-state">
+            <div class="spinner"></div>
+            <h3>📸 Rebuilding EOD Snapshot…</h3>
+            <p>Today's pre-market snapshot was incomplete.<br>
+               Fetching final end-of-day data — auto-refreshing in 30s.</p>
+          </div>`);
+          setLiveMode(false, false, true);
+          showEodBanner(true, data.date);
+          updateStats(data);
+          resetCountdown();
+          return;
+        }
+
+        renderBoard(data);
+        fetchEmaCrossovers();
+        updateStats(data);
+
+        const isSnapshot = !!data.is_eod_snapshot;
+        setLiveMode(!isSnapshot, false, isSnapshot);
+        showEodBanner(isSnapshot, data.date);
+
+        resetCountdown();
+
+        if (manual) showToast(isSnapshot ? '📸 EOD snapshot loaded ✓' : 'Board refreshed ✓');
+      } catch (e) {
+        showBoard('<div class="empty-state"><div class="icon">⚠️</div><h3>Could not reach server</h3><p>' + e.message + '</p></div>');
+        resetCountdown();
+      }
+    }  // end fetchBoard
+
+    function setLiveMode(isLive, isLoading, isSnapshot) {
+
+      const badge = document.getElementById('live-badge');
+      const dot = document.getElementById('live-dot');
+      const label = document.getElementById('live-label');
+      if (isLoading) {
+        badge.style.background = 'rgba(125,133,144,0.12)';
+        badge.style.borderColor = 'rgba(125,133,144,0.25)';
+        badge.style.color = 'var(--text-muted)';
+        dot.style.background = 'var(--text-muted)';
+        dot.style.animation = 'none';
+        label.textContent = 'LOADING';
+      } else if (isSnapshot) {
+        badge.style.background = 'rgba(210,153,34,0.12)';
+        badge.style.borderColor = 'rgba(210,153,34,0.25)';
+        badge.style.color = '#e3b341';
+        dot.style.background = '#e3b341';
+        dot.style.animation = 'pulse 1.5s infinite';
+        label.textContent = 'EOD SNAPSHOT';
+      } else {
+        badge.style.background = 'rgba(63,185,80,0.12)';
+        badge.style.borderColor = 'rgba(63,185,80,0.25)';
+        badge.style.color = 'var(--green)';
+        dot.style.background = 'var(--green)';
+        dot.style.animation = 'pulse 1.5s infinite';
+        label.textContent = 'LIVE';
+      }
+    }
+
+    function showEodBanner(show, date) {
+      const b = document.getElementById('eod-banner');
+      if (show) {
+        b.style.display = 'flex';
+        document.getElementById('eod-banner-text').textContent =
+          `📸 Showing EOD snapshot${date ? ' for ' + date : ''} — prices as of market close. Live updates resume at 09:15 AM IST.`;
+      } else {
+        b.style.display = 'none';
+      }
+    }
+
+    // ── Render ────────────────────────────────────────────────────────────────
+    function renderBoard(data) {
+      if (!data || !data.stocks || data.stocks.length === 0) {
+        showBoard(`
+        <div class="empty-state">
+          <div class="icon">📭</div>
+          <h3>No gainers data yet</h3>
+          <p>The background scanner runs from 09:15 AM.<br>
+             Data populates at the first 5-minute poll.<br>
+             Board: <b>${data.total_tracked || 0}</b> contracts tracked.</p>
+        </div>`);
+        return;
+      }
+
+      const stocks = data.stocks.filter(s => {
+        // Apply filters to contracts, keep stock if any contract passes
+        const filtered = filterContracts(s.contracts);
+        return filtered.length > 0;
+      });
+
+      if (stocks.length === 0) {
+        showBoard('<div class="empty-state"><div class="icon">🔍</div><h3>No results for current filter</h3><p>Try changing the filter options above.</p></div>');
+        return;
+      }
+
+      // Synchronize the RVOL active button state
+      const rvolBtn = document.getElementById('sort-rvol-btn');
+      if (rvolBtn) {
+        rvolBtn.classList.toggle('active', currentSortColumn === 'rvol');
+      }
+
+      // Sort by selected column
+      if (currentSortColumn) {
+        stocks.sort((a, b) => {
+          let valA = 0;
+          let valB = 0;
+          if (currentSortColumn === 'rvol') {
+            valA = a.rvol_ratio != null ? a.rvol_ratio : 0;
+            valB = b.rvol_ratio != null ? b.rvol_ratio : 0;
+          } else if (currentSortColumn === 'linearity') {
+            valA = a.linearity_score != null ? a.linearity_score : 0;
+            valB = b.linearity_score != null ? b.linearity_score : 0;
+          } else if (currentSortColumn === 'gain') {
+            const filtA = filterContracts(a.contracts);
+            const filtB = filterContracts(b.contracts);
+            valA = filtA.length > 0 ? Math.max(...filtA.map(c => c.gain_pct)) : a.best_gain;
+            valB = filtB.length > 0 ? Math.max(...filtB.map(c => c.gain_pct)) : b.best_gain;
+          } else if (currentSortColumn === 'gap') {
+            valA = a.gap_pct != null ? a.gap_pct : 0;
+            valB = b.gap_pct != null ? b.gap_pct : 0;
+          } else if (currentSortColumn === 'inst') {
+            valA = a.inst_holding != null ? a.inst_holding : 0;
+            valB = b.inst_holding != null ? b.inst_holding : 0;
+          } else if (currentSortColumn === 'e9h') {
+            // Sort: Y before N, then by hold time desc. No data sorts last.
+            const e9hScore = (s) => {
+              if (s.ema9_hold === 'Y') return 1000 + (s.ema9_hold_minutes || 0);
+              if (s.ema9_hold === 'N') return -(s.ema9_hold_minutes || 0);
+              return -9999;
+            };
+            valA = e9hScore(a);
+            valB = e9hScore(b);
+          } else if (currentSortColumn === 'fhvol') {
+            valA = a.fh_cumulative_ratio != null ? a.fh_cumulative_ratio : 0;
+            valB = b.fh_cumulative_ratio != null ? b.fh_cumulative_ratio : 0;
+          }
+
+          if (valA !== valB) {
+            return currentSortDirection === 'desc' ? valB - valA : valA - valB;
+          }
+          return b.best_gain - a.best_gain;
+        });
+      } else {
+        stocks.sort((a, b) => b.best_gain - a.best_gain);
+      }
+
+      // Max gain across all visible stocks for bar scaling
+      const maxGain = Math.max(...stocks.map(s => s.best_gain), 1);
+
+      const cardsHtml = stocks.map((s, idx) => {
+        const filtered = filterContracts(s.contracts);
+        const bestGain = Math.max(...filtered.map(c => c.gain_pct));
+        const badgeClass = bestGain >= 100 ? 'best-fire' : bestGain >= 50 ? 'best-rocket' : 'best-up';
+        const badgeEmoji = bestGain >= 100 ? '🔥' : bestGain >= 50 ? '🚀' : '📈';
+
+        const scp = s.spot_change_pct;
+        const spotBadge = scp != null
+          ? `<span style="font-size:0.75rem;font-weight:700;color:${scp >= 0 ? 'var(--green)' : 'var(--red)'};">${scp >= 0 ? '▲' : '▼'} ${scp >= 0 ? '+' : ''}${scp.toFixed(2)}%</span>`
+          : '';
+
+        const rvol = s.rvol_ratio;
+        let rvolBadge = '';
+        if (rvol != null) {
+          const rvolColor = rvol >= 3 ? '#ff7b72' : rvol >= 2 ? '#3fb950' : rvol >= 1 ? '#e3b341' : '#8b949e';
+          const rvolPrefix = rvol >= 3 ? '🔥' : rvol >= 2 ? '⚡' : rvol >= 1 ? '▲' : '▽';
+          rvolBadge = `<span style="font-size:0.7rem;font-weight:700;color:${rvolColor};" title="Relative Volume vs 20-day avg">${rvolPrefix} ${rvol}x</span>`;
+        } else {
+          rvolBadge = `<span style="font-size:0.7rem;font-weight:700;color:#8b949e;opacity:0.6;" title="RVOL calculations warming up...">⏳ Loading</span>`;
+        }
+
+        const instVal = s.inst_holding != null ? s.inst_holding : 0;
+        const instBadge = instVal > 0
+          ? `<span style="font-family: var(--mono); font-weight: 700; font-size: 0.82rem; color: ${instVal >= 50.0 ? 'var(--blue)' : 'var(--text)'};">${instVal.toFixed(1)}%</span>`
+          : `<span style="color: var(--text-muted); font-size: 0.82rem;">—</span>`;
+
+        // EMA9 Hold badge
+        const e9hState = s.ema9_hold;
+        const e9hMins  = s.ema9_hold_minutes || 0;
+        let e9hBadge = '<span style="color:var(--text-muted);">—</span>';
+        if (e9hState === 'Y') {
+          const e9hColor = e9hMins >= 30 ? '#3fb950' : 'rgba(63,185,80,0.75)';
+          e9hBadge = `<span style="color:${e9hColor};" title="Price holding above EMA9 for ${e9hMins} min">Y${e9hMins}</span>`;
+        } else if (e9hState === 'N') {
+          const e9hColor = e9hMins >= 30 ? '#ff7b72' : 'rgba(255,123,114,0.75)';
+          e9hBadge = `<span style="color:${e9hColor};" title="Price below EMA9 for ${e9hMins} min">N${e9hMins}</span>`;
+        }
+
+        // First-Hour Volume Spurt badge (combined: spurt / cumulative)
+        const fhSpurt = s.fh_spurt_ratio;
+        const fhCumul = s.fh_cumulative_ratio;
+        const fhTag   = s.fh_spurt_tag;
+        let fhBadge = '<span style="color:var(--text-muted);font-size:0.7rem;">—</span>';
+        if (fhSpurt != null && fhCumul != null) {
+          let fhColor = '#8b949e'; // Normal
+          let fhGlow = '';
+          if (fhTag === 'Abnormal') {
+            fhColor = '#3fb950';
+            fhGlow = 'text-shadow: 0 0 6px rgba(63,185,80,0.6);';
+          } else if (fhTag === 'Elevated') {
+            fhColor = '#e3b341';
+          } else if (fhTag === 'Weak') {
+            fhColor = '#ff7b72';
+          }
+          fhBadge = `<span style="color:${fhColor};${fhGlow}" title="Slot: ${fhSpurt}x vs baseline | 1H Pace: ${fhCumul}x">${fhSpurt}x<br><span style='font-size:0.62rem;opacity:0.7;'>${fhCumul}x</span></span>`;
+        }
+
+        // Expanded Option Premium Cards (Matches the layout in user's screenshot)
+        const contractRows = filtered.map(c => {
+          const gainClass = c.gain_pct >= 100 ? 'gain-fire' : c.gain_pct >= 50 ? 'gain-rocket' : 'gain-up';
+          const emoji = c.gain_pct >= 100 ? '🔥' : c.gain_pct >= 50 ? '🚀' : '📈';
+          const tag = c.is_opening ? '⭐' : '🏃';
+          const optClass = c.opt_type === 'CE' ? 'opt-ce' : 'opt-pe';
+          return `
+          <div class="option-card">
+            <div class="opt-left">
+              <span class="layer-tag" title="${c.is_opening ? 'Opening strike (locked at 09:15)' : 'Running strike (accumulated)'}" style="font-size:0.85rem; color:${c.is_opening ? 'var(--gold)' : 'var(--run-color)'};">${tag}</span>
+              <div class="opt-meta">
+                <div class="strike-wrap">
+                  <span class="strike-price">₹${c.strike.toLocaleString('en-IN')}</span>
+                  <span class="opt-badge ${optClass}">${c.opt_type}</span>
+                </div>
+                <div class="premium-flow">
+                  <span>₹${c.open_prem.toFixed(1)}</span>
+                  <span class="prem-arrow">→</span>
+                  <span>₹${c.ltp.toFixed(1)}</span>
+                </div>
+              </div>
+            </div>
+            <div class="opt-right">
+              <span class="gain-pct ${gainClass}">${emoji} +${c.gain_pct.toFixed(1)}%</span>
+            </div>
+          </div>`;
+        }).join('');
+
+        // Remember expansion state
+        const isExpanded = expandedSymbols.has(s.symbol);
+        const displayStyle = isExpanded ? 'block' : 'none';
+        const containerClass = isExpanded ? 'stock-row-container expanded' : 'stock-row-container';
+
+        return `
+        <div class="${containerClass}" data-symbol="${s.symbol}">
+          <!-- Collapsed Header Row -->
+          <div class="stock-row-header" onclick="toggleDetails(this)">
+            
+            <!-- Column 1: Symbol & Rank -->
+            <div class="col-symbol">
+              <span class="row-rank">#${idx + 1}</span>
+              <span class="row-symbol">${s.symbol}</span>
+            </div>
+            
+            <!-- Column 2: Spot % change -->
+            <div class="col-spot">
+              ${spotBadge}
+            </div>
+            
+            <!-- Column 3: RVOL -->
+            <div class="col-rvol">
+              ${rvolBadge}
+            </div>
+            
+            <!-- Column 4: Linearity % -->
+            <div class="col-linearity">
+              📏 ${s.linearity_score != null ? s.linearity_score : 100}%
+            </div>
+            
+            <!-- Column 5: Up/Down Points -->
+            <div class="col-points" style="color:${(s.net_movement != null ? s.net_movement : 0) >= 0 ? 'var(--green)' : 'var(--red)'};">
+              Δ ${(s.net_movement != null ? s.net_movement : 0) >= 0 ? '+' : ''}${(s.net_movement != null ? s.net_movement : 0).toFixed(1)} pts
+            </div>
+            
+            <!-- Column 6: Highest Option Gain % -->
+            <div class="col-highest">
+              <span class="best-badge ${badgeClass}">${badgeEmoji} +${bestGain.toFixed(0)}%</span>
+            </div>
+            
+            <!-- Column 7: GAP % -->
+            <div class="col-gap" style="color:${s.gap_pct >= 0 ? 'var(--green)' : 'var(--red)'}; font-family: var(--mono); font-weight: 700; font-size: 0.82rem;">
+              ${s.gap_pct >= 0 ? '+' : ''}${s.gap_pct.toFixed(2)}%
+            </div>
+            
+            <!-- Column 8: Inst Hold % -->
+            <div class="col-inst">
+              ${instBadge}
+            </div>
+            
+            <!-- Column 9: E9H (EMA9 Hold) -->
+            <div class="col-e9h">
+              ${e9hBadge}
+            </div>
+            
+            <!-- Column 10: FH Volume Spurt -->
+            <div class="col-fhvol">
+              ${fhBadge}
+            </div>
+            
+            <!-- Column 11: Confluence Badges & Expand Arrow -->
+            <div class="col-timeframes">
+              <div class="conf-row" id="conf-${s.symbol}">
+                <span class="conf-pill conf-loading">D</span>
+                <span class="conf-pill conf-loading">1H</span>
+                <span class="conf-pill conf-loading">15M</span>
+              </div>
+              <span class="expand-arrow">▼</span>
+            </div>
+          </div>
+
+          <!-- Collapsible Premium Details Section -->
+          <div class="stock-row-details" style="display:${displayStyle};">
+            ${contractRows}
+          </div>
+        </div>`;
+      }).join('');
+
+      const html = `
+      <div class="stock-cards-grid">
+        <div class="stock-board-header">
+          <div class="col-symbol">Symbol</div>
+          <div class="col-spot">% ▲/▼</div>
+          <div class="col-rvol sortable" onclick="handleHeaderSort('rvol')">RVOL${getSortArrow('rvol')}</div>
+          <div class="col-linearity sortable" onclick="handleHeaderSort('linearity')">Linearity${getSortArrow('linearity')}</div>
+          <div class="col-points">Points</div>
+          <div class="col-highest sortable" onclick="handleHeaderSort('gain')">Gain${getSortArrow('gain')}</div>
+          <div class="col-gap sortable" onclick="handleHeaderSort('gap')">GAP${getSortArrow('gap')}</div>
+          <div class="col-inst sortable" onclick="handleHeaderSort('inst')">Inst Hold${getSortArrow('inst')}</div>
+          <div class="col-e9h sortable" onclick="handleHeaderSort('e9h')">E9H${getSortArrow('e9h')}</div>
+          <div class="col-fhvol sortable" onclick="handleHeaderSort('fhvol')">FH Vol${getSortArrow('fhvol')}</div>
+          <div class="col-timeframes" style="padding-right: 24px;">Confluence</div>
+        </div>
+        ${cardsHtml}
+      </div>
+      <div class="board-right-bar-container" id="right-bar">
+        <div class="crossover-columns-wrap">
+          <!-- Bulls Column -->
+          <div class="board-right-bar bulls-card">
+            <div class="right-bar-header" style="padding: 10px 14px; border-bottom: 1px solid var(--border2);">
+              <div class="right-bar-title-wrap" style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 6px;">
+                <h3 style="color:#3fb950; font-size:0.85rem; margin:0; display:flex; align-items:center; gap:6px;">🟢 Bulls <span class="badge" id="crossover-count-bulls" style="background:rgba(63,185,80,0.15); color:#3fb950; font-size:0.68rem; padding:1px 5px; border-radius:10px; font-weight:600;">0</span></h3>
+                <span class="pulse-dot active" id="crossover-pulse-bulls"></span>
+              </div>
+              <div class="crossover-filters" style="display:flex; gap:3px;">
+                <button class="filter-btn compact" id="crossover-filter-all-bulls" onclick="setCrossoverFilterBulls('all')" style="font-size:0.6rem; padding:2px 6px;">All</button>
+                <button class="filter-btn compact" id="crossover-filter-aligned-bulls" onclick="setCrossoverFilterBulls('aligned')" style="font-size:0.6rem; padding:2px 6px;">Aligned</button>
+                <button class="filter-btn compact" id="crossover-filter-cross-bulls" onclick="setCrossoverFilterBulls('cross')" style="font-size:0.6rem; padding:2px 6px;">Cross</button>
+              </div>
+            </div>
+            <div class="right-bar-list" id="crossover-list-bulls" style="flex:1; overflow-y:auto;">
+              <div class="empty-state" style="padding: 15px 0;">
+                <div class="spinner" style="width: 16px; height: 16px;"></div>
+              </div>
+            </div>
+            <div class="right-bar-footer" style="padding: 6px 10px; font-size: 0.62rem; display:flex; justify-content:space-between; border-top:1px solid var(--border2); color:var(--text-muted);">
+              <span>Updated: <span id="crossover-time-bulls">—</span></span>
+            </div>
+          </div>
+
+          <!-- Bears Column -->
+          <div class="board-right-bar bears-card">
+            <div class="right-bar-header" style="padding: 10px 14px; border-bottom: 1px solid var(--border2);">
+              <div class="right-bar-title-wrap" style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 6px;">
+                <h3 style="color:#ff7b72; font-size:0.85rem; margin:0; display:flex; align-items:center; gap:6px;">🔴 Bears <span class="badge" id="crossover-count-bears" style="background:rgba(255,123,114,0.15); color:#ff7b72; font-size:0.68rem; padding:1px 5px; border-radius:10px; font-weight:600;">0</span></h3>
+                <span class="pulse-dot active" id="crossover-pulse-bears"></span>
+              </div>
+              <div class="crossover-filters" style="display:flex; gap:3px;">
+                <button class="filter-btn compact" id="crossover-filter-all-bears" onclick="setCrossoverFilterBears('all')" style="font-size:0.6rem; padding:2px 6px;">All</button>
+                <button class="filter-btn compact" id="crossover-filter-aligned-bears" onclick="setCrossoverFilterBears('aligned')" style="font-size:0.6rem; padding:2px 6px;">Aligned</button>
+                <button class="filter-btn compact" id="crossover-filter-cross-bears" onclick="setCrossoverFilterBears('cross')" style="font-size:0.6rem; padding:2px 6px;">Cross</button>
+              </div>
+            </div>
+            <div class="right-bar-list" id="crossover-list-bears" style="flex:1; overflow-y:auto;">
+              <div class="empty-state" style="padding: 15px 0;">
+                <div class="spinner" style="width: 16px; height: 16px;"></div>
+              </div>
+            </div>
+            <div class="right-bar-footer" style="padding: 6px 10px; font-size: 0.62rem; display:flex; justify-content:space-between; border-top:1px solid var(--border2); color:var(--text-muted);">
+              <span>Updated: <span id="crossover-time-bears">—</span></span>
+            </div>
+          </div>
+
+          <!-- Live Breakouts Column (Vertical!) -->
+          <div class="board-right-bar live-breakouts-card" style="border: 1px solid rgba(255, 215, 0, 0.25); box-shadow: 0 0 10px rgba(255, 215, 0, 0.02);">
+            <div class="right-bar-header" style="padding: 10px 14px; border-bottom: 1px solid rgba(255,255,255,0.06); display:flex; justify-content:space-between; align-items:center; min-height:46px;">
+              <div style="display:flex; flex-direction:column; gap:2px;">
+                <h3 style="color:#ffd700; font-size:0.85rem; margin:0; display:flex; align-items:center; gap:6px; font-weight:700;">
+                  ⚡ Live Breakouts 
+                  <span class="badge" id="live-total-count" style="background:rgba(255,215,0,0.12); color:#ffd700; font-size:0.65rem; padding:1px 5px; border-radius:10px; font-weight:600; line-height:1;">0</span>
+                </h3>
+                <div id="live-squeeze-watchlist-subtitle" style="font-size:0.58rem; color:var(--text-muted); font-weight:500;">
+                  Squeeze watchlist: 0 stocks being monitored
+                </div>
+              </div>
+              <span class="pulse-dot active" style="background:#ffd700; box-shadow:0 0 8px rgba(255,215,0,0.6); width:7px; height:7px;"></span>
+            </div>
+
+            <!-- Split list vertically with equal space for Alerts and Squeezes -->
+            <div style="flex:1; display:flex; flex-direction:column; min-height:0; overflow:hidden; padding:10px 12px; gap:12px;">
+              <!-- Section 1: Alerts -->
+              <div style="flex:1; display:flex; flex-direction:column; min-height:0;">
+                <div class="breakout-row-label" style="font-size:0.65rem; font-weight:700; color:var(--text-muted); display:flex; align-items:center; gap:5px; margin-bottom:6px; flex-shrink:0;">
+                  <span>🔔 ALERTS TODAY</span>
+                  <span class="badge" id="live-alert-count" style="background:rgba(255,215,0,0.12); color:#ffd700; font-size:0.55rem; padding:0px 4px; border-radius:10px; font-weight:700; line-height:1.2;">0</span>
+                </div>
+                <div id="live-alert-list" style="flex:1; overflow-y:auto; display:flex; flex-direction:column; gap:6px; padding-right:2px;">
+                  <div style="font-size:0.58rem; color:var(--text-muted);">⏳ Waiting for breakouts…</div>
+                </div>
+              </div>
+
+              <div style="border-bottom:1px solid rgba(255,255,255,0.05); margin:2px 0; flex-shrink:0;"></div>
+
+              <!-- Section 2: Squeezes -->
+              <div style="flex:1; display:flex; flex-direction:column; min-height:0;">
+                <div class="breakout-row-label" style="font-size:0.65rem; font-weight:700; color:var(--text-muted); display:flex; align-items:center; gap:5px; margin-bottom:6px; flex-shrink:0;">
+                  <span>📡 SQUEEZE WATCHLIST</span>
+                  <span class="badge" id="live-squeeze-count" style="background:rgba(210,153,34,0.15); color:#e3b341; font-size:0.55rem; padding:0px 4px; border-radius:10px; font-weight:700; line-height:1.2;">0</span>
+                </div>
+                <div id="live-squeeze-list" style="flex:1; overflow-y:auto; display:flex; flex-direction:column; gap:6px; padding-right:2px;">
+                  <div style="font-size:0.58rem; color:var(--text-muted);">No active squeezes</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>`;
+
+      // Save scroll focus/value
+      const listBullsEl = document.getElementById('crossover-list-bulls');
+      const savedScrollBulls = listBullsEl ? listBullsEl.scrollTop : 0;
+
+      const listBearsEl = document.getElementById('crossover-list-bears');
+      const savedScrollBears = listBearsEl ? listBearsEl.scrollTop : 0;
+
+      const listAlertsEl = document.getElementById('live-alert-list');
+      const savedScrollAlerts = listAlertsEl ? listAlertsEl.scrollTop : 0;
+
+      const listSqueezesEl = document.getElementById('live-squeeze-list');
+      const savedScrollSqueezes = listSqueezesEl ? listSqueezesEl.scrollTop : 0;
+
+      showBoard(html);
+
+      // Update filters active buttons
+      document.querySelectorAll('.bulls-card .filter-btn').forEach(btn => btn.classList.remove('active'));
+      const activeBullsBtn = document.getElementById(`crossover-filter-${crossoverFilterBulls}-bulls`);
+      if (activeBullsBtn) activeBullsBtn.classList.add('active');
+
+      document.querySelectorAll('.bears-card .filter-btn').forEach(btn => btn.classList.remove('active'));
+      const activeBearsBtn = document.getElementById(`crossover-filter-${crossoverFilterBears}-bears`);
+      if (activeBearsBtn) activeBearsBtn.classList.add('active');
+
+      // Populate crossovers lists
+      renderCrossovers();
+
+      // Re-populate live breakouts and squeezes (since innerHTML was overwritten)
+      renderLiveBreakouts();
+
+      // Restore scroll tops
+      const newListBullsEl = document.getElementById('crossover-list-bulls');
+      if (newListBullsEl) {
+        newListBullsEl.scrollTop = savedScrollBulls;
+      }
+      const newListBearsEl = document.getElementById('crossover-list-bears');
+      if (newListBearsEl) {
+        newListBearsEl.scrollTop = savedScrollBears;
+      }
+      const newListAlertsEl = document.getElementById('live-alert-list');
+      if (newListAlertsEl) {
+        newListAlertsEl.scrollTop = savedScrollAlerts;
+      }
+      const newListSqueezesEl = document.getElementById('live-squeeze-list');
+      if (newListSqueezesEl) {
+        newListSqueezesEl.scrollTop = savedScrollSqueezes;
+      }
+
+      // Fetch confluence for all visible symbols (async, non-blocking)
+      fetchConfluence(stocks.map(s => s.symbol));
+    }
+
+    function filterContracts(contracts) {
+      return contracts.filter(c => {
+        if (activeTypeFilter !== 'all' && c.opt_type !== activeTypeFilter) return false;
+        if (activeLayerFilter === 'opening' && !c.is_opening) return false;
+        if (activeLayerFilter === 'running' && c.is_opening) return false;
+        return true;
+      });
+    }
+
+    function updateStats(data) {
+      document.getElementById('st-tracked').textContent = (data.total_tracked || 0).toLocaleString('en-IN');
+      document.getElementById('st-positive').textContent = (data.total_positive || 0).toLocaleString('en-IN');
+      document.getElementById('st-stocks').textContent = (data.n_stocks || 0).toLocaleString('en-IN');
+      if (data.last_updated) {
+        const t = new Date(data.last_updated);
+        document.getElementById('st-time').textContent =
+          t.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' });
+        document.getElementById('st-date').textContent = data.date || '';
+      } else {
+        document.getElementById('st-time').textContent = 'Waiting…';
+        document.getElementById('st-date').textContent = 'Scanner not yet active';
+      }
+    }
+
+    function showBoard(html) {
+      document.getElementById('board').innerHTML = html;
+    }
+
+    // ── Confluence ────────────────────────────────────────────────────
+    async function fetchConfluence(symbols) {
+      if (!symbols || !symbols.length) return;
+      try {
+        const res = await fetch('/api/confluence?symbols=' + symbols.join(','));
+        if (!res.ok) return;
+        const data = await res.json();
+        const TF_ORDER = [
+          { label: 'D', key: 'day', name: 'Daily' },
+          { label: '1H', key: '1h', name: '1 Hour' },
+          { label: '15M', key: '15m', name: '15 Min' },
+        ];
+        for (const [symbol, tfs] of Object.entries(data)) {
+          const row = document.getElementById('conf-' + symbol);
+          if (!row) continue;
+          row.innerHTML = TF_ORDER.map(({ label, key, name }) => {
+            const sig = tfs[key] || {};
+            const overall = sig.overall || 'neutral';
+            const tip = `${name}: RSI ${sig.rsi ?? '—'} · MACD ${sig.macd || '—'} · EMA ${sig.ema || '—'}`;
+            return `<span class="conf-pill conf-${overall}" title="${tip}">${label}</span>`;
+          }).join('');
+        }
+      } catch (e) {
+        // Confluence is non-critical — fail silently
+      }
+    }
+
+    // ── EMA Crossovers ────────────────────────────────────────────────────────
+    // ── EMA Crossovers ────────────────────────────────────────────────────────
+    let crossoverData = null;
+    let crossoverFilterBulls = 'all';
+    let crossoverFilterBears = 'all';
+
+    let _emaPollTimer = null;
+
+    async function fetchEmaCrossovers() {
+      try {
+        const res = await fetch('/api/ema-crossovers');
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        const data = await res.json();
+        crossoverData = data;
+        renderCrossovers();
+
+        // Fast-poll every 3s while backend is actively scanning
+        if (_emaPollTimer) clearTimeout(_emaPollTimer);
+        if (data.status === 'scanning') {
+          _emaPollTimer = setTimeout(fetchEmaCrossovers, 3000);
+        } else {
+          // Outside market hours with no EOD data yet — poll slowly to keep
+          // client heartbeat alive so the backend EOD scan can complete (~2 min).
+          const _istPoll = new Date(new Date().toLocaleString('en-US', { timeZone: 'Asia/Kolkata' }));
+          const _hPoll = _istPoll.getHours(), _mPoll = _istPoll.getMinutes();
+          const _inMktPoll = (_hPoll === 9 && _mPoll >= 15) || (_hPoll >= 10 && _hPoll < 15) || (_hPoll === 15 && _mPoll <= 30);
+          const hasEodData = data.crossovers && Object.keys(data.crossovers).length > 0;
+          if (!_inMktPoll && !hasEodData) {
+            _emaPollTimer = setTimeout(fetchEmaCrossovers, 15000); // keep heartbeat until EOD scan done
+          }
+          // hasEodData or in market hours → no further auto-poll needed
+        }
+      } catch (e) {
+        console.error('Error fetching crossovers:', e);
+      }
+    }
+
+    function setCrossoverFilterBulls(filter) {
+      crossoverFilterBulls = filter;
+      document.querySelectorAll('.bulls-card .filter-btn').forEach(btn => btn.classList.remove('active'));
+      const activeBtn = document.getElementById(`crossover-filter-${filter}-bulls`);
+      if (activeBtn) activeBtn.classList.add('active');
+      renderCrossovers();
+    }
+
+    function setCrossoverFilterBears(filter) {
+      crossoverFilterBears = filter;
+      document.querySelectorAll('.bears-card .filter-btn').forEach(btn => btn.classList.remove('active'));
+      const activeBtn = document.getElementById(`crossover-filter-${filter}-bears`);
+      if (activeBtn) activeBtn.classList.add('active');
+      renderCrossovers();
+    }
+
+    function renderCrossovers() {
+      const listBulls = document.getElementById('crossover-list-bulls');
+      const listBears = document.getElementById('crossover-list-bears');
+      const timeBulls = document.getElementById('crossover-time-bulls');
+      const timeBears = document.getElementById('crossover-time-bears');
+      const pulseBulls = document.getElementById('crossover-pulse-bulls');
+      const pulseBears = document.getElementById('crossover-pulse-bears');
+      const countBulls = document.getElementById('crossover-count-bulls');
+      const countBears = document.getElementById('crossover-count-bears');
+
+      if (!crossoverData) return;
+
+      const _istNow = new Date(new Date().toLocaleString('en-US', { timeZone: 'Asia/Kolkata' }));
+      const _hNow = _istNow.getHours(), _mNow = _istNow.getMinutes();
+      const _inMktNow = (_hNow === 9 && _mNow >= 15) || (_hNow >= 10 && _hNow < 15) || (_hNow === 15 && _mNow <= 30);
+
+      let timeText = '—';
+      if (crossoverData.last_update) {
+        const parts = crossoverData.last_update.split(' '); // ["2026-05-26", "15:28:45"]
+        if (!_inMktNow && parts.length >= 2) {
+          // Outside market hours — show full EOD label: "📸 EOD · 26-May 15:28"
+          const timePart = parts[1].substring(0, 5);
+          const [yr, mo, dy] = parts[0].split('-');
+          const monName = new Date(+yr, +mo - 1).toLocaleString('en-US', { month: 'short' });
+          timeText = `📸 EOD &nbsp;·&nbsp; ${dy}-${monName} ${timePart}`;
+        } else {
+          timeText = parts[1] || crossoverData.last_update; // time only during live hours
+        }
+      }
+      if (timeBulls) timeBulls.innerHTML = timeText;
+      if (timeBears) timeBears.innerHTML = timeText;
+
+      const updatePulse = (pulseEl) => {
+        if (!pulseEl) return;
+        if (crossoverData.status === 'scanning') {
+          pulseEl.style.background = '#d29922';
+          pulseEl.classList.add('active');
+        } else if (crossoverData.status === 'completed') {
+          pulseEl.style.background = '#238636';
+          pulseEl.classList.add('active');
+        } else {
+          pulseEl.classList.remove('active');
+        }
+      };
+      updatePulse(pulseBulls);
+      updatePulse(pulseBears);
+
+      const crossovers = crossoverData.crossovers || {};
+      const allKeys = Object.keys(crossovers);
+
+      // Separate into Bulls and Bears
+      let bullKeys = [];
+      let bearKeys = [];
+
+      allKeys.forEach(k => {
+        const item = crossovers[k];
+        const states = [item.state_5m, item.state_15m, item.state_1h, item.state_day];
+        const bullCount = states.filter(s => s === 'bullish').length;
+        const bearCount = states.filter(s => s === 'bearish').length;
+
+        const hasBullCross = item.cross_5m === 'bullish' || item.cross_15m === 'bullish' || item.cross_1h === 'bullish' || item.cross_day === 'bullish';
+        const hasBearCross = item.cross_5m === 'bearish' || item.cross_15m === 'bearish' || item.cross_1h === 'bearish' || item.cross_day === 'bearish';
+
+        let isBull = false;
+        if (item.alignment === 'bullish' || hasBullCross) {
+          isBull = true;
+        } else if (item.alignment === 'bearish' || hasBearCross) {
+          isBull = false;
+        } else {
+          isBull = bullCount > bearCount;
+        }
+
+        if (isBull) {
+          bullKeys.push(k);
+        } else {
+          bearKeys.push(k);
+        }
+      });
+
+      // Apply Button Filters to Bulls
+      if (crossoverFilterBulls === 'aligned') {
+        bullKeys = bullKeys.filter(k => crossovers[k].alignment === 'bullish');
+      } else if (crossoverFilterBulls === 'cross') {
+        bullKeys = bullKeys.filter(k => crossovers[k].cross_5m === 'bullish' || crossovers[k].cross_15m === 'bullish' || crossovers[k].cross_1h === 'bullish' || crossovers[k].cross_day === 'bullish');
+      }
+
+      // Apply Button Filters to Bears
+      if (crossoverFilterBears === 'aligned') {
+        bearKeys = bearKeys.filter(k => crossovers[k].alignment === 'bearish');
+      } else if (crossoverFilterBears === 'cross') {
+        bearKeys = bearKeys.filter(k => crossovers[k].cross_5m === 'bearish' || crossovers[k].cross_15m === 'bearish' || crossovers[k].cross_1h === 'bearish' || crossovers[k].cross_day === 'bearish');
+      }
+
+      const sortKeys = (keysList) => {
+        keysList.sort((a, b) => {
+          const cA = crossovers[a];
+          const cB = crossovers[b];
+
+          // Helper to get timeframe group priority and candle size
+          const getTimeframeGroup = (item) => {
+            if (item.cross_5m === 'bullish' || item.cross_5m === 'bearish') {
+              return { rank: 4, size: item.cross_candle_size_5m || 0 };
+            }
+            if (item.cross_15m === 'bullish' || item.cross_15m === 'bearish') {
+              return { rank: 3, size: item.cross_candle_size_15m || 0 };
+            }
+            if (item.cross_1h === 'bullish' || item.cross_1h === 'bearish') {
+              return { rank: 2, size: item.cross_candle_size_1h || 0 };
+            }
+            if (item.cross_day === 'bullish' || item.cross_day === 'bearish') {
+              return { rank: 1, size: item.cross_candle_size_day || 0 };
+            }
+            return { rank: 0, size: 0 };
+          };
+
+          const gA = getTimeframeGroup(cA);
+          const gB = getTimeframeGroup(cB);
+
+          // Tier 1: Group by timeframe priority (5M first, then 15M, then 1H, then Daily)
+          if (gA.rank !== gB.rank) {
+            return gB.rank - gA.rank;
+          }
+
+          // Tier 2: Within the same timeframe group, sort by candle strength (largest first)
+          if (gA.rank > 0) {
+            if (Math.abs(gA.size - gB.size) > 0.01) {
+              return gB.size - gA.size;
+            }
+          }
+
+          // Tier 3: Fallback to existing order (most recent epoch timestamp first)
+          const epochA = Math.max(cA.cross_epoch_5m || 0, cA.cross_epoch_15m || 0, cA.cross_epoch_1h || 0, cA.cross_epoch_day || 0);
+          const epochB = Math.max(cB.cross_epoch_5m || 0, cB.cross_epoch_15m || 0, cB.cross_epoch_1h || 0, cB.cross_epoch_day || 0);
+          if (epochA !== epochB) return epochB - epochA;
+
+          return a.localeCompare(b);
+        });
+      };
+      sortKeys(bullKeys);
+      sortKeys(bearKeys);
+
+      if (countBulls) countBulls.textContent = bullKeys.length;
+      if (countBears) countBears.textContent = bearKeys.length;
+
+      const nowSecs = Math.floor(Date.now() / 1000);
+
+      const renderList = (keysList, container) => {
+        if (!container) return;
+
+        // Build a tiny, elegant progress bar to display at the top while scanning
+        let progressHtml = '';
+        if (crossoverData && crossoverData.status === 'scanning') {
+          const cur = crossoverData.scan_current || 0;
+          const tot = crossoverData.scan_total || 214;
+          const pct = tot > 0 ? Math.round((cur / tot) * 100) : 0;
+          progressHtml = `
+            <div style="padding: 6px 10px; border-bottom: 1px solid var(--border2); background: rgba(210,153,34,0.03); margin-bottom: 6px;">
+              <div style="font-size: 0.58rem; color: var(--text-muted); margin-bottom: 3px; display: flex; justify-content: space-between; align-items: center;">
+                <span>Scanning FNO symbols…</span>
+                <span style="font-weight: 600; color: #e3b341;">${cur}/${tot}</span>
+              </div>
+              <div style="height: 2px; background: rgba(255,255,255,0.07); border-radius: 1px; overflow: hidden;">
+                <div style="height: 100%; width: ${pct}%; background: linear-gradient(90deg, #d29922, #e3b341); border-radius: 1px; transition: width 0.4s ease;"></div>
+              </div>
+            </div>`;
+        }
+
+        if (keysList.length === 0) {
+          if (crossoverData && crossoverData.status === 'scanning') {
+            container.innerHTML = progressHtml;
+          } else {
+            // Market-hours-aware empty state
+            const _ist = new Date(new Date().toLocaleString('en-US', { timeZone: 'Asia/Kolkata' }));
+            const _h = _ist.getHours(), _m = _ist.getMinutes();
+            const _inMkt = (_h === 9 && _m >= 15) || (_h >= 10 && _h < 15) || (_h === 15 && _m <= 30);
+            let _msg;
+            if (!_inMkt) {
+              _msg = '🌙 No EOD data yet &nbsp;·&nbsp; Will populate after first live scan';
+            } else if (crossoverData.status === 'initializing') {
+              _msg = '⏳ Waiting for first scan…';
+            } else {
+              _msg = 'No symbols found';
+            }
+            container.innerHTML = `<div style="text-align:center;padding:15px;font-size:0.68rem;color:var(--text-muted);">${_msg}</div>`;
+          }
+          return;
+        }
+
+        container.innerHTML = progressHtml + keysList.map(k => {
+          const item = crossovers[k];
+          let alignmentClass = 'mixed';
+          let alignmentText = 'Mixed';
+          if (item.alignment === 'bullish') {
+            alignmentClass = 'aligned-bull';
+            alignmentText = '🔥 Bullish';
+          } else if (item.alignment === 'bearish') {
+            alignmentClass = 'aligned-bear';
+            alignmentText = '❄️ Bearish';
+          }
+
+          // Dynamic Fresh Crossover Badge & New live flag
+          let crossBadge = '';
+          let activeCrossTime = '';
+          if (item.cross_5m === 'bullish') {
+            crossBadge = '<span class="cross-pill bullish">▲ 5M Cross</span>';
+            activeCrossTime = item.cross_time_5m;
+          } else if (item.cross_15m === 'bullish') {
+            crossBadge = '<span class="cross-pill bullish">▲ 15M Cross</span>';
+            activeCrossTime = item.cross_time_15m;
+          } else if (item.cross_1h === 'bullish') {
+            crossBadge = '<span class="cross-pill bullish">▲ 1H Cross</span>';
+            activeCrossTime = item.cross_time_1h;
+          } else if (item.cross_day === 'bullish') {
+            crossBadge = '<span class="cross-pill bullish">▲ Daily Cross</span>';
+            activeCrossTime = item.cross_time_day;
+          } else if (item.cross_5m === 'bearish') {
+            crossBadge = '<span class="cross-pill bearish">▼ 5M Cross</span>';
+            activeCrossTime = item.cross_time_5m;
+          } else if (item.cross_15m === 'bearish') {
+            crossBadge = '<span class="cross-pill bearish">▼ 15M Cross</span>';
+            activeCrossTime = item.cross_time_15m;
+          } else if (item.cross_1h === 'bearish') {
+            crossBadge = '<span class="cross-pill bearish">▼ 1H Cross</span>';
+            activeCrossTime = item.cross_time_1h;
+          } else if (item.cross_day === 'bearish') {
+            crossBadge = '<span class="cross-pill bearish">▼ Daily Cross</span>';
+            activeCrossTime = item.cross_time_day;
+          }
+
+          // Crossover occurred in the last 5 minutes (300 seconds)
+          const itemEpoch = Math.max(item.cross_epoch_5m || 0, item.cross_epoch_15m || 0, item.cross_epoch_1h || 0, item.cross_epoch_day || 0);
+          const diffSecs = nowSecs - itemEpoch;
+          // A fresh 5M cross on the current candle = always flagged NEW (intraday entry signal)
+          const has5mFreshCross = item.cross_5m === 'bullish' || item.cross_5m === 'bearish';
+          const isNewCrossover = has5mFreshCross || (itemEpoch > 0 && diffSecs >= 0 && diffSecs <= 300);
+          const flagMarkup = isNewCrossover ? '<span class="flag-badge">🚩 NEW</span>' : '';
+          const itemClass = isNewCrossover ? 'crossover-item new-entry' : 'crossover-item';
+
+          // Find the crossover timeframe that is the most recent (has the largest epoch timestamp)
+          const crossoverEpochs = [
+            { time: item.cross_time_5m, epoch: item.cross_epoch_5m || 0 },
+            { time: item.cross_time_15m, epoch: item.cross_epoch_15m || 0 },
+            { time: item.cross_time_1h, epoch: item.cross_epoch_1h || 0 },
+            { time: item.cross_time_day, epoch: item.cross_epoch_day || 0 }
+          ];
+          crossoverEpochs.sort((a, b) => b.epoch - a.epoch);
+
+          let cross_desc = '';
+          if (crossoverEpochs[0].epoch > 0) {
+            cross_desc = crossoverEpochs[0].time;
+          } else {
+            cross_desc = item.cross_time_5m || item.cross_time_15m || item.cross_time_1h || item.cross_time_day || '';
+          }
+          const sub_desc = cross_desc ? `<span class="cross-time-sub" title="Crossover Time">${cross_desc}</span>` : '';
+
+          const pill_5m = item.state_5m === 'bullish' ? 'bullish' : (item.state_5m === 'bearish' ? 'bearish' : '');
+          const pill_15m = item.state_15m === 'bullish' ? 'bullish' : (item.state_15m === 'bearish' ? 'bearish' : '');
+          const pill_1h = item.state_1h === 'bullish' ? 'bullish' : (item.state_1h === 'bearish' ? 'bearish' : '');
+          const pill_day = item.state_day === 'bullish' ? 'bullish' : (item.state_day === 'bearish' ? 'bearish' : '');
+
+          const time_5m = item.cross_time_5m ? ` · Cross: ${item.cross_time_5m}` : '';
+          const time_15m = item.cross_time_15m ? ` · Cross: ${item.cross_time_15m}` : '';
+          const time_1h = item.cross_time_1h ? ` · Cross: ${item.cross_time_1h}` : '';
+          const time_day = item.cross_time_day ? ` · Cross: ${item.cross_time_day}` : '';
+
+          const title_5m = `5M Trend: ${item.state_5m || 'none'}${time_5m}`;
+          const title_15m = `15M Trend: ${item.state_15m || 'none'}${time_15m}`;
+          const title_1h = `1H Trend: ${item.state_1h || 'none'}${time_1h}`;
+          const title_day = `Daily Trend: ${item.state_day || 'none'}${time_day}`;
+
+          return `
+          <div class="${itemClass}" style="padding: 4px 6px; border-bottom: 1px solid var(--border2); display: flex; justify-content: space-between; align-items: center; gap: 3px; min-width: 0;">
+            <div class="crossover-left" style="display: flex; flex-direction: column; gap: 1px; min-width: 0; flex: 1;">
+              <span class="crossover-symbol" style="font-size: 0.65rem; font-weight: 700; display: inline-flex; align-items: center; gap: 2px; flex-wrap: wrap;">
+                <span>${k}</span>
+                ${flagMarkup ? `<span class="flag-badge" style="font-size: 0.44rem; padding: 0.5px 2px; border-radius: 2px; line-height: 1;">🚩 NEW</span>` : ''}
+                ${(() => { const scp = item.spot_change_pct; return scp != null ? `<span style="font-size:0.48rem;font-weight:700;color:${scp >= 0 ? '#3fb950' : '#ff7b72'}">${scp >= 0 ? '▲' : '▼'}${scp >= 0 ? '+' : ''}${scp.toFixed(2)}%</span>` : ''; })()}
+              </span>
+              <div class="crossover-left-sub" style="display: flex; align-items: center; gap: 2px; margin-top: 1px; flex-wrap: wrap;">
+                <span class="alignment-badge ${alignmentClass}" style="font-size: 0.46rem; padding: 0.5px 2.5px; border-radius: 2px;">${alignmentText}</span>
+                ${sub_desc}
+              </div>
+            </div>
+            <div class="crossover-right" style="display: flex; flex-direction: column; align-items: flex-end; gap: 2px; flex-shrink: 0;">
+              <div class="timeframes-strip" style="display: flex; gap: 2px;">
+                <span class="tf-pill ${pill_5m}"  title="${title_5m}">5M</span>
+                <span class="tf-pill ${pill_15m}" title="${title_15m}">15M</span>
+                <span class="tf-pill ${pill_1h}"  title="${title_1h}">1H</span>
+                <span class="tf-pill ${pill_day}" title="${title_day}">D</span>
+              </div>
+              ${crossBadge}
+            </div>
+          </div>`;
+        }).join('');
+      };
+
+      renderList(bullKeys, listBulls);
+      renderList(bearKeys, listBears);
+    }
+
+    // ── Countdown ─────────────────────────────────────────────────────────────
+    function resetCountdown() {
+      countdown = REFRESH_INTERVAL;
+      if (timerHandle) clearInterval(timerHandle);
+      timerHandle = setInterval(() => {
+        countdown--;
+        document.getElementById('countdown').textContent = countdown + 's';
+        if (countdown <= 0) {
+          clearInterval(timerHandle);
+          fetchBoard();
+        }
+      }, 1000);
+    }
+
+    // ── Toast ─────────────────────────────────────────────────────────────────
+    function showToast(msg) {
+      const t = document.getElementById('toast');
+      t.textContent = msg;
+      t.classList.add('show');
+      setTimeout(() => t.classList.remove('show'), 2500);
+    }
+
+    // ── Live Breakout Polling ─────────────────────────────────────────────────
+    let _liveBreakoutData = null;
+
+    async function fetchLiveBreakouts() {
+      try {
+        const res = await fetch('/api/live-breakouts');
+        if (!res.ok) return;
+        _liveBreakoutData = await res.json();
+        renderLiveBreakouts();
+      } catch (e) {
+        // Fail silently — non-critical feature
+      }
+    }
+
+    function renderLiveBreakouts() {
+      const data = _liveBreakoutData;
+      if (!data) return;
+
+      const alertList = document.getElementById('live-alert-list');
+      const squeezeList = document.getElementById('live-squeeze-list');
+      const alertCount = document.getElementById('live-alert-count');
+      const squeezeCount = document.getElementById('live-squeeze-count');
+
+      if (!alertList || !squeezeList) return;
+
+      const alerts = data.triggered_alerts || [];
+      const watches = data.squeeze_watchlist || [];
+
+      // Update counts
+      if (alertCount) alertCount.textContent = alerts.length;
+      if (squeezeCount) squeezeCount.textContent = watches.length;
+
+      const totalCount = document.getElementById('live-total-count');
+      if (totalCount) totalCount.textContent = alerts.length + watches.length;
+
+      const squeezeWatchlistSub = document.getElementById('live-squeeze-watchlist-subtitle');
+      if (squeezeWatchlistSub) {
+        squeezeWatchlistSub.textContent = `Squeeze watchlist: ${watches.length} stocks being monitored`;
+      }
+
+      // Render alert vertical cards
+      if (alerts.length === 0) {
+        alertList.innerHTML = `<div style="font-size:0.56rem; color:var(--text-muted); padding:3px 0;">⏳ Waiting for breakouts…</div>`;
+      } else {
+        alertList.innerHTML = [...alerts].reverse().map(a => {
+          const isBull = a.direction === 'bullish';
+          const isA = a.grade === 'Grade A';
+          const pillCls = isA ? (isBull ? 'grade-a' : 'grade-a bearish') : (isBull ? 'grade-b' : 'grade-b bearish');
+          const arrow = isBull ? '▲' : '▼';
+          const gradeStar = isA ? '★ ' : '';
+          return `
+            <div class="breakout-alert-pill horizontal ${pillCls}" style="display:flex; justify-content:space-between; width:100%; padding:6px 10px; border-radius:6px; margin:0; box-sizing:border-box;" title="LTP: ₹${a.ltp} · Vol: ×${a.vol_multiplier} · Time: ${a.time}">
+              <div style="display:flex; align-items:center; gap:5px;">
+                <span style="font-weight:800; color:${isBull ? '#3fb950' : '#ff7b72'}; font-size:0.65rem;">${arrow} ${a.symbol}</span>
+                <span style="opacity:0.85; font-size:0.52rem; background:rgba(255,255,255,0.06); padding:1px 3.5px; border-radius:3px; font-weight:700; color:${isBull ? '#3fb950' : '#ff7b72'};">${gradeStar}${a.grade}</span>
+              </div>
+              <div style="display:flex; align-items:center; gap:6px;">
+                <span style="font-family:var(--mono); font-weight:700; color:var(--text); font-size:0.62rem;">₹${a.ltp}</span>
+                <span style="opacity:0.65; font-size:0.52rem; color:var(--text-muted); font-weight:600;">×${a.vol_multiplier}</span>
+                <span style="opacity:0.5; font-size:0.52rem; color:var(--text-muted); font-family:var(--mono);">${a.time}</span>
+              </div>
+            </div>`;
+        }).join('');
+      }
+
+      // Render squeeze vertical cards
+      if (watches.length === 0) {
+        squeezeList.innerHTML = `<div style="font-size:0.56rem; color:var(--text-muted); padding:3px 0;">No active squeezes</div>`;
+      } else {
+        squeezeList.innerHTML = [...watches]
+          .sort((a, b) => b.squeeze_duration_mins - a.squeeze_duration_mins)
+          .map(w => {
+            const durLabel = w.squeeze_duration_mins >= 2 ? `${w.squeeze_duration_mins}m` : '<1m';
+            return `
+              <div class="squeeze-pill horizontal" style="display:flex; justify-content:space-between; width:100%; padding:6px 10px; border-radius:6px; margin:0; box-sizing:border-box;" title="Consolidation Range: ₹${w.consolidation_low}–₹${w.consolidation_high}">
+                <div style="display:flex; align-items:center; gap:5px;">
+                  <span style="font-weight:800; color:#ffd700; font-size:0.65rem;">◌ ${w.symbol}</span>
+                  <span style="opacity:0.85; font-size:0.52rem; background:rgba(255,255,255,0.06); padding:1px 3px; border-radius:3px; font-weight:600; color:#ffd700;">Squeeze</span>
+                </div>
+                <div style="display:flex; align-items:center; gap:6px;">
+                  <span style="font-family:var(--mono); font-weight:700; color:var(--text); font-size:0.62rem;">₹${w.last_ltp}</span>
+                  <span style="opacity:0.75; font-size:0.52rem; font-weight:600; background:rgba(210,153,34,0.15); border-radius:3px; padding:1px 3px; color:#e3b341; font-family:var(--mono);">⏳ ${durLabel}</span>
+                </div>
+              </div>`;
+          }).join('');
+      }
+    }
+
+    // ── Init ──────────────────────────────────────────────────────────────────
+    fetchBoard();
+    fetchEmaCrossovers();
+    fetchLiveBreakouts();
+
+    // Independent EMA crossover poll — survives EOD snapshot pause
+    // Only polls during market hours (09:15–15:30 IST, Mon–Fri); data is static after close
+    setInterval(() => {
+      const now = new Date(new Date().toLocaleString('en-US', { timeZone: 'Asia/Kolkata' }));
+      const h = now.getHours(), m = now.getMinutes(), d = now.getDay();
+      const inMarket = d >= 1 && d <= 5 &&
+        ((h === 9 && m >= 15) || (h >= 10 && h <= 14) || (h === 15 && m <= 30));
+      if (inMarket) fetchEmaCrossovers();
+    }, 30000);
+
+    // Live Breakout poll — every 15 seconds during market hours
+    setInterval(() => {
+      const now = new Date(new Date().toLocaleString('en-US', { timeZone: 'Asia/Kolkata' }));
+      const h = now.getHours(), m = now.getMinutes(), d = now.getDay();
+      const inMarket = d >= 1 && d <= 5 &&
+        ((h === 9 && m >= 15) || (h >= 10 && h <= 14) || (h === 15 && m <= 30));
+      if (inMarket) fetchLiveBreakouts();
+    }, 15000);
+  </script>
+</body>
+
+</html>

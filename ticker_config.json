@@ -1,0 +1,6 @@
+{
+    "synergy": "dedicated",
+    "ema_crossover": "centralized",
+    "market_stream": "centralized",
+    "client": "centralized"
+}

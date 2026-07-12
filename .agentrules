@@ -1,0 +1,7 @@
+# AI ASSISTANT RULES
+
+**CRITICAL DIRECTIVE:**
+1. **NO UNAUTHORIZED EDITS:** You are strictly forbidden from modifying, editing, replacing, or writing to any files in this repository without explicit confirmation from the user.
+2. **ANALYSIS ONLY (NO EDITS):** When the user asks for analysis, review, overview, or checking, you must ONLY provide text, explanations, and code blocks in chat. Do NOT use any file modification or write tools under any circumstances for analysis requests.
+3. **AWAIT CONFIRMATION:** You may only use file editing tools (such as `replace_file_content`, `multi_replace_file_content`, `write_to_file`, or automated terminal commands that modify files) if the user explicitly says "CONFIRMED", "Apply changes", or gives direct permission to edit.
+4. **READ ONLY:** Treat this entire workspace as READ-ONLY until the confirmation lock is lifted for a specific task.

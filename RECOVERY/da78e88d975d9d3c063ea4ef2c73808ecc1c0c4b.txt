@@ -1,0 +1,169 @@
+# flask_routes.py — FnO Accumulation Scanner Routes
+# Add to existing app.py:
+#   from flask_routes import register_accumulation_routes
+#   register_accumulation_routes(app, kite, get_vwap, get_ltp, india_vix, get_gift_nifty)
+
+import threading
+import logging
+import time
+from datetime import datetime
+from flask import Blueprint, jsonify, render_template, request, current_app
+
+from accumulation_scanner import run_scan, _last_scan_results, _last_scan_time
+from sector_map import load_fno_symbols, refresh_fno_symbols, check_symbol_list_freshness
+from event_calendar import fetch_events, get_calendar_status
+from error_handler import get_recent_errors
+from config import SCAN_INTERVAL_SEC, MARKET_OPEN, MARKET_CLOSE
+
+log = logging.getLogger("flask_routes")
+
+# ── Globals ───────────────────────────────────────────────────────────────────
+_scan_thread = None
+_gift_nifty_manual = {"value": None, "entered_at": None}
+_last_payload = {}
+
+
+def register_accumulation_routes(app, kite, get_vwap_fn, get_ltp_fn,
+                                   india_vix_fn, get_gift_nifty_fn=None):
+    """
+    Call this from your existing app.py to register all scanner routes.
+
+    Example in app.py:
+        from flask_routes import register_accumulation_routes
+        register_accumulation_routes(app, kite, get_vwap, get_ltp, india_vix, get_gift_nifty)
+    """
+
+    bp = Blueprint("accumulation", __name__)
+
+    # ── Background scan thread ─────────────────────────────────────────────
+
+    def _background_scanner():
+        global _last_payload
+        log.info("Background scanner thread started")
+        while True:
+            try:
+                now = datetime.now()
+                def t(s): return datetime.strptime(s, "%H:%M").time()
+                in_market = t(MARKET_OPEN) <= now.time() <= t(MARKET_CLOSE)
+
+                if now.weekday() < 5 and in_market:
+                    symbols = load_fno_symbols()
+
+                    # Gift Nifty: prefer auto-fetch, fall back to manual
+                    def gift_nifty_resolved():
+                        if get_gift_nifty_fn:
+                            try:
+                                v = get_gift_nifty_fn()
+                                if v:
+                                    return v
+                            except Exception:
+                                pass
+                        # Manual fallback
+                        mn = _gift_nifty_manual
+                        if mn["value"] and mn["entered_at"]:
+                            age_min = (datetime.now() - mn["entered_at"]).seconds // 60
+                            from config import GIFT_NIFTY_STALE_MIN
+                            if age_min <= GIFT_NIFTY_STALE_MIN:
+                                return mn["value"]
+                        return None
+
+                    payload = run_scan(
+                        kite, symbols,
+                        get_vwap_fn, get_ltp_fn,
+                        india_vix_fn, gift_nifty_resolved
+                    )
+                    _last_payload = payload
+                    log.info(f"Scan complete: {len(payload.get('results', []))} stocks found")
+
+            except Exception as e:
+                log.error(f"Background scanner error: {e}")
+
+            time.sleep(SCAN_INTERVAL_SEC)
+
+    # Start background thread
+    global _scan_thread
+    if _scan_thread is None or not _scan_thread.is_alive():
+        _scan_thread = threading.Thread(target=_background_scanner, daemon=True)
+        _scan_thread.start()
+
+    # ── Routes ─────────────────────────────────────────────────────────────
+
+    @bp.route("/accumulation")
+    def accumulation_dashboard():
+        """Render the scanner dashboard page."""
+        return render_template("accumulation.html")
+
+    @bp.route("/api/accumulation")
+    def api_accumulation():
+        """
+        Main API endpoint — returns full scan payload.
+        Clients poll this every 30 seconds.
+        """
+        if not _last_payload:
+            return jsonify({"error": "Scan not yet complete", "market_state": "LOADING"}), 202
+        return jsonify(_last_payload)
+
+    @bp.route("/api/accumulation/stock/<symbol>")
+    def api_stock_detail(symbol):
+        """Get expanded details for a specific stock."""
+        results = _last_payload.get("results", [])
+        stock = next((r for r in results if r["symbol"] == symbol.upper()), None)
+        if not stock:
+            return jsonify({"error": "Symbol not found in current scan"}), 404
+        return jsonify(stock)
+
+    @bp.route("/api/accumulation/sector")
+    def api_sector():
+        """Sector signals summary."""
+        return jsonify(_last_payload.get("sector_signals", {}))
+
+    @bp.route("/api/symbols/refresh", methods=["POST"])
+    def api_symbols_refresh():
+        """Manually trigger FnO symbol list refresh."""
+        result = refresh_fno_symbols(kite)
+        return jsonify(result)
+
+    @bp.route("/api/symbols/status")
+    def api_symbols_status():
+        """Check freshness of symbol list."""
+        return jsonify(check_symbol_list_freshness())
+
+    @bp.route("/api/gift-nifty", methods=["POST"])
+    def api_gift_nifty_manual():
+        """
+        Manual Gift Nifty input.
+        POST {"value": 22500.5}
+        """
+        data = request.get_json()
+        val = data.get("value")
+        if val is None:
+            return jsonify({"error": "value required"}), 400
+        _gift_nifty_manual["value"] = float(val)
+        _gift_nifty_manual["entered_at"] = datetime.now()
+        return jsonify({"ok": True, "value": float(val),
+                        "entered_at": datetime.now().isoformat()})
+
+    @bp.route("/api/errors")
+    def api_errors():
+        """Last 5 scanner errors — shown in dashboard footer."""
+        return jsonify(get_recent_errors())
+
+    @bp.route("/api/scan/trigger", methods=["POST"])
+    def api_scan_trigger():
+        """
+        Force an immediate scan (for testing / manual refresh).
+        Runs in current thread — may take up to 3 minutes.
+        """
+        try:
+            symbols = load_fno_symbols()
+            payload = run_scan(kite, symbols, get_vwap_fn, get_ltp_fn,
+                               india_vix_fn, get_gift_nifty_fn)
+            global _last_payload
+            _last_payload = payload
+            return jsonify({"ok": True, "stocks_found": len(payload.get("results", []))})
+        except Exception as e:
+            return jsonify({"error": str(e)}), 500
+
+    app.register_blueprint(bp)
+    log.info("Accumulation scanner routes registered")
+    return bp

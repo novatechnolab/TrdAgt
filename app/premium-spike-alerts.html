@@ -1,0 +1,735 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Premium Spike Alerts - TradeSignal</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;600;700&display=swap');
+
+    :root {
+      --bg: #0d1117;
+      --panel: #161b22;
+      --panel-2: #1c2128;
+      --row: #111820;
+      --border: rgba(255, 255, 255, .09);
+      --border-2: rgba(255, 255, 255, .14);
+      --text: #e6edf3;
+      --muted: #7d8590;
+      --green: #3fb950;
+      --red: #ff7b72;
+      --amber: #d29922;
+      --blue: #58a6ff;
+      --gold: #ffd700;
+      --run: #5b9bd5;
+      --mono: 'JetBrains Mono', monospace;
+      --font: 'Inter', system-ui, sans-serif;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      min-height: 100vh;
+      min-width: 1180px;
+      background: var(--bg);
+      color: var(--text);
+      font-family: var(--font);
+      font-size: 13px;
+    }
+
+    .header {
+      position: sticky;
+      top: 0;
+      z-index: 10;
+      display: flex;
+      align-items: center;
+      gap: 18px;
+      padding: 14px 22px;
+      background: var(--panel);
+      border-bottom: 1px solid var(--border);
+    }
+
+    .brand {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+      min-width: 280px;
+    }
+
+    .brand h1 {
+      font-size: 1rem;
+      letter-spacing: 0;
+      font-weight: 800;
+    }
+
+    .brand p {
+      color: var(--muted);
+      font-size: .72rem;
+    }
+
+    .stats {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex: 1;
+    }
+
+    .stat {
+      display: flex;
+      align-items: baseline;
+      gap: 6px;
+      padding: 5px 10px;
+      background: rgba(255, 255, 255, .035);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      white-space: nowrap;
+    }
+
+    .stat label {
+      color: var(--muted);
+      font-size: .64rem;
+      text-transform: uppercase;
+      letter-spacing: .06em;
+      font-weight: 700;
+    }
+
+    .stat span {
+      font-family: var(--mono);
+      font-weight: 800;
+    }
+
+    .live-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+      border: 1px solid rgba(63, 185, 80, .28);
+      background: rgba(63, 185, 80, .12);
+      color: var(--green);
+      border-radius: 999px;
+      padding: 5px 12px;
+      font-size: .72rem;
+      font-weight: 800;
+      letter-spacing: .06em;
+    }
+
+    .dot {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: currentColor;
+      animation: pulse 1.5s infinite;
+    }
+
+    @keyframes pulse {
+      50% {
+        opacity: .4;
+        transform: scale(.82);
+      }
+    }
+
+    .btn {
+      border: 1px solid var(--border-2);
+      background: rgba(255, 255, 255, .05);
+      color: var(--text);
+      border-radius: 6px;
+      padding: 6px 12px;
+      font-family: var(--font);
+      font-size: .76rem;
+      font-weight: 700;
+      cursor: pointer;
+    }
+
+    .btn:hover {
+      background: rgba(255, 255, 255, .09);
+    }
+
+    .btn-danger {
+      color: var(--red);
+      border-color: rgba(255, 123, 114, .32);
+    }
+
+    .controls {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 12px 22px;
+      border-bottom: 1px solid var(--border);
+      background: #0b1016;
+    }
+
+    .search {
+      width: 220px;
+      background: var(--panel);
+      border: 1px solid var(--border-2);
+      border-radius: 6px;
+      color: var(--text);
+      outline: none;
+      padding: 7px 10px;
+      font-family: var(--font);
+      font-size: .78rem;
+    }
+
+    .seg {
+      display: flex;
+      gap: 4px;
+      padding: 3px;
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+    }
+
+    .seg button {
+      border: 0;
+      background: transparent;
+      color: var(--muted);
+      border-radius: 5px;
+      padding: 5px 10px;
+      font-size: .72rem;
+      font-weight: 800;
+      cursor: pointer;
+    }
+
+    .seg button.active {
+      background: rgba(88, 166, 255, .16);
+      color: var(--blue);
+    }
+
+    .wrap {
+      padding: 16px 22px;
+    }
+
+    .banner {
+      display: none;
+      align-items: center;
+      gap: 8px;
+      padding: 9px 22px;
+      border-bottom: 1px solid rgba(210, 153, 34, .25);
+      background: rgba(210, 153, 34, .1);
+      color: #e3b341;
+      font-size: .75rem;
+      font-weight: 700;
+    }
+
+    .table-shell {
+      border: 1px solid var(--border);
+      background: var(--panel);
+      border-radius: 8px;
+      overflow: hidden;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      table-layout: fixed;
+    }
+
+    thead {
+      background: var(--panel-2);
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: .055em;
+      font-size: .64rem;
+    }
+
+    th,
+    td {
+      border-bottom: 1px solid rgba(255, 255, 255, .045);
+      padding: 8px 6px;
+      text-align: left;
+      vertical-align: middle;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    tbody tr {
+      background: var(--panel);
+    }
+
+    tbody tr:nth-child(even) {
+      background: rgba(255, 255, 255, .015);
+    }
+
+    tbody tr:hover {
+      background: rgba(88, 166, 255, .055);
+    }
+
+    .mono {
+      font-family: var(--mono);
+      font-size: 11.5px;
+    }
+
+    .sym {
+      font-weight: 800;
+    }
+
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-width: 34px;
+      border-radius: 4px;
+      padding: 2px 5px;
+      font-size: .62rem;
+      font-weight: 900;
+    }
+
+    .ce {
+      color: var(--green);
+      background: rgba(63, 185, 80, .13);
+    }
+
+    .pe {
+      color: var(--red);
+      background: rgba(255, 123, 114, .13);
+    }
+
+    .opening {
+      color: var(--gold);
+    }
+
+    .running {
+      color: var(--run);
+    }
+
+    .up {
+      color: var(--green);
+    }
+
+    .down {
+      color: var(--red);
+    }
+
+    .hot {
+      color: var(--red);
+      font-weight: 900;
+    }
+
+    .quiet {
+      color: var(--muted);
+    }
+
+    .empty {
+      padding: 70px 20px;
+      text-align: center;
+      color: var(--muted);
+    }
+
+    .empty h2 {
+      color: var(--text);
+      font-size: 1rem;
+      margin-bottom: 8px;
+    }
+
+    .spinner {
+      width: 32px;
+      height: 32px;
+      margin: 0 auto 16px;
+      border: 3px solid var(--border);
+      border-top-color: var(--blue);
+      border-radius: 50%;
+      animation: spin .75s linear infinite;
+    }
+
+    @keyframes spin {
+      to {
+        transform: rotate(360deg);
+      }
+    }
+
+    .toast {
+      position: fixed;
+      right: 22px;
+      bottom: 22px;
+      opacity: 0;
+      transform: translateY(8px);
+      transition: all .25s ease;
+      border: 1px solid rgba(63, 185, 80, .28);
+      background: var(--panel-2);
+      color: var(--text);
+      border-radius: 7px;
+      padding: 10px 14px;
+      pointer-events: none;
+    }
+
+    .toast.show {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    /* ── Real-time Flash Highlight Animation ── */
+    @keyframes flash-new-alert {
+      0% {
+        background-color: rgba(53, 166, 255, 0.28);
+      }
+
+      100% {
+        background-color: transparent;
+      }
+    }
+
+    .flash-row {
+      animation: flash-new-alert 3.5s ease-out forwards;
+    }
+
+    /* ── Collapsible Group Rows ── */
+    .master-row {
+      cursor: pointer;
+    }
+
+    .expand-btn {
+      display: inline-block;
+      margin-right: 6px;
+      width: 12px;
+      text-align: center;
+      color: var(--blue);
+      font-size: 10px;
+      transition: transform 0.2s ease;
+    }
+
+    .alert-count-pill {
+      font-size: 10px;
+      font-family: var(--mono);
+      background: rgba(88, 166, 255, 0.15);
+      color: var(--blue);
+      padding: 1px 6px;
+      border-radius: 99px;
+      margin-left: 8px;
+      font-weight: 700;
+    }
+
+    .detail-row td {
+      background: rgba(255, 255, 255, 0.01) !important;
+      color: #c9d1d9;
+    }
+  </style>
+</head>
+
+<body>
+  <header class="header">
+    <div class="brand">
+      <h1>Premium Spike Alerts</h1>
+      <p>Fresh detector for contracts currently tracked by F&amp;O Premium Gainers Board</p>
+    </div>
+    <div class="stats">
+      <div class="stat"><label>Alerts</label><span id="st-alerts">0</span></div>
+      <div class="stat"><label>Tracked</label><span id="st-tracked">-</span></div>
+      <div class="stat"><label>Sampled</label><span id="st-sampled">-</span></div>
+      <div class="stat"><label>Window</label><span id="st-window">-</span></div>
+      <div class="stat"><label>Updated</label><span id="st-updated">-</span></div>
+    </div>
+    <div class="live-pill" id="live-pill"><span class="dot"></span><span id="live-text">LIVE</span></div>
+    <button class="btn" onclick="loadAlerts(true)">Refresh</button>
+    <button class="btn btn-danger" onclick="clearAlerts()">Clear</button>
+  </header>
+
+  <section class="controls">
+    <input class="search" id="symbol-filter" placeholder="Filter symbol or option" oninput="renderTable()">
+    <div class="seg" id="type-filter">
+      <button class="active" data-type="all">All</button>
+      <button data-type="CE">CE</button>
+      <button data-type="PE">PE</button>
+    </div>
+    <div class="seg" id="layer-filter">
+      <button class="active" data-layer="all">Both Layers</button>
+      <button data-layer="opening">Opening</button>
+      <button data-layer="running">Running</button>
+    </div>
+    <div style="display:flex;align-items:center;gap:6px;margin-left:15px;">
+      <input type="checkbox" id="chk-group" style="cursor:pointer;width:15px;height:15px" onchange="renderTable()"
+        checked>
+      <label for="chk-group"
+        style="cursor:pointer;font-size:11px;color:var(--muted);user-select:none;font-weight:700;text-transform:uppercase;letter-spacing:.06em;">Group
+        by Symbol</label>
+    </div>
+  </section>
+  <div class="banner" id="eod-banner">Snapshot mode</div>
+
+  <main class="wrap">
+    <div class="table-shell">
+      <table>
+        <thead>
+          <tr>
+            <th style="width:60px">Time</th>
+            <th style="width:135px">Symbol</th>
+            <th style="width:100px">Contract</th>
+            <th style="width:42px">Side</th>
+            <th style="width:55px">Layer</th>
+            <th style="width:95px">Premium Move</th>
+            <th style="width:95px">Board Gain</th>
+            <th style="width:160px">Premium Flow</th>
+            <th style="width:85px">Spot Move</th>
+            <th style="width:195px">Spot Flow</th>
+            <th style="width:95px">Consistency</th>
+            <th>Trace</th>
+          </tr>
+        </thead>
+        <tbody id="alert-body"></tbody>
+      </table>
+      <div class="empty" id="empty-state">
+        <div class="spinner"></div>
+        <h2>Waiting for matching premium spikes</h2>
+        <p>The detector watches only contracts present in the Premium Gainers Board.</p>
+      </div>
+    </div>
+  </main>
+
+  <div class="toast" id="toast"></div>
+
+  <script>
+    let alerts = [];
+    let typeFilter = 'all';
+    let layerFilter = 'all';
+    let lastSeq = 0;
+    let isEodMode = false;
+    const expandedSymbols = new Set();
+
+    document.querySelectorAll('#type-filter button').forEach(btn => {
+      btn.addEventListener('click', () => {
+        document.querySelectorAll('#type-filter button').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        typeFilter = btn.dataset.type;
+        renderTable();
+      });
+    });
+
+    document.querySelectorAll('#layer-filter button').forEach(btn => {
+      btn.addEventListener('click', () => {
+        document.querySelectorAll('#layer-filter button').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        layerFilter = btn.dataset.layer;
+        renderTable();
+      });
+    });
+
+    async function loadAlerts(manual = false) {
+      try {
+        const res = await fetch('/api/option-gainers-alerts');
+        const data = await res.json();
+        if (data.status === 'loading') {
+          isEodMode = true;
+          alerts = [];
+          showEodBanner('Reconstructing Premium Spike EOD snapshot from historical candles...');
+          renderTable();
+          if (manual) showToast('EOD snapshot rebuilding');
+          return;
+        }
+        isEodMode = !!data.is_eod_snapshot;
+        alerts = data.alerts || [];
+        lastSeq = alerts.reduce((m, a) => Math.max(m, a.seq || 0), lastSeq);
+        if (isEodMode) {
+          showEodBanner(`EOD snapshot for ${data.trade_date || 'latest session'} · ${data.total_alerts || alerts.length} alerts`);
+        } else {
+          hideEodBanner();
+        }
+        renderTable();
+        if (manual) showToast('Alerts refreshed');
+      } catch (e) {
+        showToast('Alert API unavailable');
+      }
+    }
+
+    async function loadStatus() {
+      try {
+        const res = await fetch('/api/option-gainers-alerts/status');
+        const s = await res.json();
+        document.getElementById('st-alerts').textContent = s.alert_count || alerts.length || 0;
+        document.getElementById('st-tracked').textContent = s.tracked_contracts ?? '-';
+        document.getElementById('st-sampled').textContent = s.sampled_contracts ?? '-';
+        document.getElementById('st-window').textContent = `${s.window_secs || 0}s`;
+        document.getElementById('st-updated').textContent = s.last_scan ? fmtTime(s.last_scan) : '-';
+        const live = s.status === 'live';
+        document.getElementById('live-text').textContent = isEodMode ? 'EOD' : (live ? 'LIVE' : 'IDLE');
+        document.getElementById('live-pill').style.color = live ? 'var(--green)' : 'var(--amber)';
+        document.getElementById('live-pill').style.borderColor = live ? 'rgba(63,185,80,.28)' : 'rgba(210,153,34,.32)';
+        document.getElementById('live-pill').style.background = live ? 'rgba(63,185,80,.12)' : 'rgba(210,153,34,.12)';
+      } catch (e) { }
+    }
+
+    async function pollNewAlerts() {
+      if (isEodMode) return;
+      try {
+        const res = await fetch('/api/option-gainers-alerts?after=' + lastSeq);
+        const data = await res.json();
+        const fresh = data.alerts || [];
+        if (fresh.length) {
+          const now = Date.now();
+          fresh.forEach(a => {
+            if (!alerts.some(x => x.seq === a.seq)) {
+              a.received_at = now;
+              alerts.unshift(a);
+            }
+            lastSeq = Math.max(lastSeq, a.seq || 0);
+          });
+          alerts = alerts.slice(0, 500);
+          renderTable();
+          showToast(`${fresh.length} new premium alert${fresh.length > 1 ? 's' : ''}`);
+        }
+      } catch (e) { }
+    }
+
+    async function clearAlerts() {
+      try {
+        await fetch('/api/option-gainers-alerts/clear', { method: 'POST' });
+        alerts = [];
+        lastSeq = 0;
+        renderTable();
+        loadStatus();
+        showToast('Alerts cleared');
+      } catch (e) {
+        showToast('Could not clear alerts');
+      }
+    }
+
+    function renderTable() {
+      const q = document.getElementById('symbol-filter').value.trim().toLowerCase();
+      const doGroup = document.getElementById('chk-group').checked;
+      const filtered = alerts.filter(a => {
+        if (typeFilter !== 'all' && a.opt_type !== typeFilter) return false;
+        if (layerFilter !== 'all' && a.layer !== layerFilter) return false;
+        if (q && !(`${a.symbol} ${a.tradingsymbol}`.toLowerCase().includes(q))) return false;
+        return true;
+      });
+
+      document.getElementById('empty-state').style.display = filtered.length ? 'none' : 'block';
+
+      let html = '';
+      if (doGroup) {
+        // Group alerts by symbol
+        const groups = {};
+        filtered.forEach(a => {
+          if (!groups[a.symbol]) groups[a.symbol] = [];
+          groups[a.symbol].push(a);
+        });
+
+        // Map groups into sorted master objects
+        const masterRows = Object.keys(groups).map(sym => {
+          groups[sym].sort((a, b) => (b.time || '').localeCompare(a.time || ''));
+          return {
+            symbol: sym,
+            masterAlert: groups[sym][0],
+            allAlerts: groups[sym]
+          };
+        });
+
+        // Sort master groups by newest alert time
+        masterRows.sort((a, b) => (b.masterAlert.time || '').localeCompare(a.masterAlert.time || ''));
+
+        masterRows.forEach(row => {
+          const sym = row.symbol;
+          const isExpanded = expandedSymbols.has(sym);
+          const hasSubrows = row.allAlerts.length > 1;
+
+          html += buildRowHtml(row.masterAlert, true, hasSubrows, isExpanded, row.allAlerts.length);
+
+          if (isExpanded) {
+            row.allAlerts.forEach((alert, idx) => {
+              if (idx === 0) return;
+              html += buildRowHtml(alert, false);
+            });
+          }
+        });
+      } else {
+        // Flat List sorted descending by time
+        filtered.sort((a, b) => (b.time || '').localeCompare(a.time || ''));
+        html = filtered.map(a => buildRowHtml(a, true)).join('');
+      }
+
+      document.getElementById('alert-body').innerHTML = html;
+    }
+
+    window.toggleSymbolExpand = function (symbol, event) {
+      if (expandedSymbols.has(symbol)) {
+        expandedSymbols.delete(symbol);
+      } else {
+        expandedSymbols.add(symbol);
+      }
+      renderTable();
+    };
+
+    function buildRowHtml(a, isMaster = true, hasSubrows = false, isExpanded = false, subrowsCount = 0) {
+      const sideCls = a.opt_type === 'CE' ? 'ce' : 'pe';
+      const spotCls = a.spot_spike_pct >= 0 ? 'up' : 'down';
+      const layerCls = a.layer === 'opening' ? 'opening' : 'running';
+      const layerIcon = a.layer === 'opening' ? 'STAR' : 'RUN';
+
+      const isNew = a.received_at && (Date.now() - a.received_at < 3500);
+      const flashClass = isNew ? 'flash-row' : '';
+      const rowClass = isMaster ? `master-row ${flashClass}` : 'detail-row';
+
+      let symbolContent = '';
+      if (isMaster) {
+        const toggleIcon = hasSubrows ? `<span class="expand-btn">${isExpanded ? '▼' : '▶'}</span>` : '<span class="expand-btn" style="opacity:0">▶</span>';
+        const countBadge = hasSubrows ? `<span class="alert-count-pill">${subrowsCount}</span>` : '';
+        symbolContent = `<span style="display:flex;align-items:center">${toggleIcon}<span class="sym">${a.symbol}</span>${countBadge}</span>`;
+      } else {
+        symbolContent = `<span style="display:flex;align-items:center;padding-left:18px;color:var(--muted)">└─ ${a.symbol}</span>`;
+      }
+
+      const clickHandler = (isMaster && hasSubrows) ? `onclick="toggleSymbolExpand('${a.symbol}', event)"` : '';
+
+      return `
+        <tr class="${rowClass}" ${clickHandler}>
+          <td class="mono">${a.time || '-'}</td>
+          <td>${symbolContent}</td>
+          <td class="mono" title="${a.tradingsymbol || ''}">${a.strike || '-'} ${a.label || ''}</td>
+          <td><span class="badge ${sideCls}">${a.opt_type || '-'}</span></td>
+          <td class="${layerCls} mono">${layerIcon}</td>
+          <td class="mono hot">+${num(a.premium_spike_pct)}%</td>
+          <td class="mono up">+${num(a.board_gain_pct)}%</td>
+          <td class="mono">${money(a.old_ltp)} -> ${money(a.ltp)}</td>
+          <td class="mono ${spotCls}">${signed(a.spot_spike_pct)}%</td>
+          <td class="mono">${money(a.old_spot)} -> ${money(a.spot)}</td>
+          <td class="mono">${num(a.consistency)}%</td>
+          <td class="quiet" title="${a.reason || ''}">
+            ${a.direction || '-'} matched ${a.opt_type || '-'} premium velocity while board tracked this contract
+          </td>
+        </tr>`;
+    }
+
+    function num(v) {
+      const n = Number(v);
+      return Number.isFinite(n) ? n.toFixed(2) : '-';
+    }
+    function signed(v) {
+      const n = Number(v);
+      if (!Number.isFinite(n)) return '-';
+      return `${n >= 0 ? '+' : ''}${n.toFixed(2)}`;
+    }
+    function money(v) {
+      const n = Number(v);
+      return Number.isFinite(n) ? `₹${n.toFixed(2)}` : '-';
+    }
+    function fmtTime(value) {
+      const d = new Date(value);
+      if (Number.isNaN(d.getTime())) return value.split('T').pop()?.slice(0, 8) || value;
+      return d.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+    }
+    function showToast(msg) {
+      const t = document.getElementById('toast');
+      t.textContent = msg;
+      t.classList.add('show');
+      setTimeout(() => t.classList.remove('show'), 2200);
+    }
+    function showEodBanner(text) {
+      const b = document.getElementById('eod-banner');
+      b.textContent = text;
+      b.style.display = 'flex';
+    }
+    function hideEodBanner() {
+      document.getElementById('eod-banner').style.display = 'none';
+    }
+
+    loadAlerts();
+    loadStatus();
+    setInterval(pollNewAlerts, 5000);
+    setInterval(loadStatus, 5000);
+  </script>
+</body>
+
+</html>

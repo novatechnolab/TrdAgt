@@ -1,0 +1,83 @@
+# config.py — FnO Accumulation Scanner
+# All thresholds here. No hardcoded values in logic files.
+# Calibrate after 60-day data review. Log all changes to calibration_log.txt
+
+# ── Bollinger Band Squeeze ──────────────────────────────────────────────────
+BB_PERIOD               = 20
+BB_STD                  = 2.0
+BB_KC_MULT              = 1.5       # Keltner channel multiplier (LazyBear squeeze)
+KC_ATR_PERIOD           = 20
+
+# ── Accumulation Detection ──────────────────────────────────────────────────
+ACCUM_CANDLE_LOOKBACK   = 6         # Candles to evaluate range tightness + volume
+RANGE_TIGHTNESS_PCT     = 0.60      # Range < 60% of prior avg ATR
+VOLUME_DRYUP_PCT        = 0.60      # Volume < 60% of 20-period avg
+BODY_COMPRESSION_PCT    = 0.40      # Body < 40% of prior 20-candle avg body
+DISTRIBUTION_VOL_BIAS   = 0.20      # Down vol > up vol by >20% = distribution
+POST_MOVE_THRESHOLD_PCT = 1.5       # Prior 3-candle move > 1.5% = post-move flag
+
+# ── Grade Thresholds ────────────────────────────────────────────────────────
+GRADE_A_L1              = 10
+GRADE_A_L2              = 6
+GRADE_A_L3              = 6
+GRADE_B_L1              = 7
+GRADE_B_L2              = 4
+GRADE_B_L3              = 3
+GRADE_C_L1              = 5
+
+# ── OI / Options ────────────────────────────────────────────────────────────
+OI_WALL_PROXIMITY_PCT   = 1.0       # Wall within 1% of range boundary
+FRESH_WRITING_THRESHOLD = 0.10      # 10% OI increase since open = fresh writing
+OI_DEGRADED_THRESHOLD   = 0.20      # >20% stock OI failures = degraded mode
+ILLIQUID_OI_THRESHOLD   = 1000      # Total contracts below = suppress stock PCR
+LIQUIDITY_GOOD_SPREAD   = 0.005     # Bid-ask < 0.5% of premium = GOOD
+LIQUIDITY_WIDE_SPREAD   = 0.02      # 0.5–2% = WIDE SPREAD
+LIQUIDITY_MIN_OI        = 500       # OI < 500 = AVOID
+
+# ── Breakout Proximity ──────────────────────────────────────────────────────
+BREAKOUT_PROXIMITY_PCT  = 0.3       # Within 0.3% of range boundary
+WALL_CLEAR_PCT          = 1.5       # No wall within 1.5% = clear
+WALL_AHEAD_PCT          = 1.0       # Wall within 1% = wall ahead
+
+# ── IV Rank ─────────────────────────────────────────────────────────────────
+IV_LOW_PERCENTILE       = 30
+IV_HIGH_PERCENTILE      = 70
+IV_EXTREME_PERCENTILE   = 90
+
+# ── Market Regime ────────────────────────────────────────────────────────────
+REGIME_SIDEWAYS_RANGE   = 0.003     # Nifty oscillating within 0.3%
+REGIME_SIDEWAYS_CANDLES = 4
+REGIME_VOLATILE_VIX_RISE = 1.5     # VIX rise > 1.5 pts in 30 min
+REGIME_VOLATILE_MOVE    = 0.005     # Nifty > 0.5% in single 15-min candle
+REGIME_TREND_CANDLES    = 3
+
+# ── Scan Timing ──────────────────────────────────────────────────────────────
+SCAN_INTERVAL_SEC       = 300       # 5 minutes
+MARKET_OPEN             = "09:15"
+PRICE_DISCOVERY_END     = "09:45"
+EOD_MODE_START          = "15:00"
+MARKET_CLOSE            = "15:25"
+API_CALL_DELAY_SEC      = 0.3
+MAX_SCAN_DURATION_SEC   = 240       # 4 minutes — warn if exceeded
+
+# ── Stale Data ───────────────────────────────────────────────────────────────
+STALE_DATA_THRESHOLD_MIN = 15
+GIFT_NIFTY_STALE_MIN    = 30
+
+# ── Error Thresholds ─────────────────────────────────────────────────────────
+OHLCV_FAILURE_ABORT_PCT = 0.10
+OI_FAILURE_DEGRADE_PCT  = 0.20
+
+# ── Position Sizing ──────────────────────────────────────────────────────────
+DEFAULT_CAPITAL         = 100000
+MAX_RISK_PCT            = 0.02      # 2% per trade
+
+# ── Max Pain Timing ──────────────────────────────────────────────────────────
+MAX_PAIN_EARLY_WEIGHT   = 1         # Before 14:00
+MAX_PAIN_LATE_WEIGHT    = 2         # After 14:00
+MAX_PAIN_EXPIRY_WEIGHT  = 4         # On expiry day
+
+# ── FnO Symbol List ──────────────────────────────────────────────────────────
+FNO_SYMBOLS_REFRESH_DAY = "Sunday"
+FNO_SYMBOLS_JSON        = "fno_symbols.json"
+SYMBOL_RETAIN_DAYS      = 30        # Retain removed symbols for 30 days

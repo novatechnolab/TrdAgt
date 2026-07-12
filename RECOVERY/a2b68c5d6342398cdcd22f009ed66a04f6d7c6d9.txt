@@ -1,0 +1,326 @@
+# oi_engine.py — Options Market Intelligence
+# CE/PE walls, fresh call/put writing, max pain (index + stock), PCR, liquidity check
+import logging
+import time
+from datetime import datetime
+from config import (OI_WALL_PROXIMITY_PCT, FRESH_WRITING_THRESHOLD,
+                   ILLIQUID_OI_THRESHOLD, LIQUIDITY_GOOD_SPREAD,
+                   LIQUIDITY_WIDE_SPREAD, LIQUIDITY_MIN_OI,
+                   WALL_CLEAR_PCT, WALL_AHEAD_PCT, API_CALL_DELAY_SEC,
+                   MAX_PAIN_EARLY_WEIGHT, MAX_PAIN_LATE_WEIGHT, MAX_PAIN_EXPIRY_WEIGHT)
+
+log = logging.getLogger("oi_engine")
+
+# Session-open OI cache: {symbol: {strike: {CE: oi, PE: oi}}}
+_session_open_oi = {}
+_last_oi_fetch = {}   # symbol -> datetime
+
+
+def compute_max_pain(chain: list, spot: float) -> dict:
+    """
+    chain: list of {strike, ce_oi, pe_oi}
+    Returns max pain strike and distance from spot.
+    """
+    if not chain:
+        return {"strike": None, "distance_pct": None, "direction": "NEUTRAL"}
+
+    min_pain = float("inf")
+    max_pain_strike = None
+
+    for row in chain:
+        strike = row["strike"]
+        pain = sum(
+            row2["ce_oi"] * max(0, strike - row2["strike"]) +
+            row2["pe_oi"] * max(0, row2["strike"] - strike)
+            for row2 in chain
+        )
+        if pain < min_pain:
+            min_pain = pain
+            max_pain_strike = strike
+
+    if max_pain_strike is None or spot <= 0:
+        return {"strike": None, "distance_pct": None, "direction": "NEUTRAL"}
+
+    distance_pct = round((max_pain_strike - spot) / spot * 100, 2)
+    direction = "UP" if max_pain_strike > spot * 1.005 else ("DOWN" if max_pain_strike < spot * 0.995 else "NEUTRAL")
+
+    return {
+        "strike": max_pain_strike,
+        "distance_pct": distance_pct,
+        "direction": direction,
+    }
+
+
+def get_max_pain_weight(is_expiry_day: bool) -> int:
+    hour = datetime.now().hour
+    if is_expiry_day:
+        return MAX_PAIN_EXPIRY_WEIGHT
+    if hour >= 14:
+        return MAX_PAIN_LATE_WEIGHT
+    return MAX_PAIN_EARLY_WEIGHT
+
+
+def find_ce_pe_walls(chain: list) -> dict:
+    """
+    Find the strikes with highest absolute OI for CE (resistance) and PE (support).
+    Returns: {ce_wall_strike, ce_wall_oi, pe_wall_strike, pe_wall_oi}
+    """
+    if not chain:
+        return {}
+
+    ce_wall = max(chain, key=lambda x: x.get("ce_oi", 0), default=None)
+    pe_wall = max(chain, key=lambda x: x.get("pe_oi", 0), default=None)
+
+    return {
+        "ce_wall_strike": ce_wall["strike"] if ce_wall else None,
+        "ce_wall_oi": ce_wall.get("ce_oi", 0) if ce_wall else 0,
+        "pe_wall_strike": pe_wall["strike"] if pe_wall else None,
+        "pe_wall_oi": pe_wall.get("pe_oi", 0) if pe_wall else 0,
+    }
+
+
+def detect_fresh_writing(symbol: str, chain: list) -> dict:
+    """
+    Compare current OI vs session-open OI to detect fresh writing.
+    Returns which strikes have fresh CE or PE writing (>FRESH_WRITING_THRESHOLD increase).
+    """
+    fresh_ce = []
+    fresh_pe = []
+
+    open_oi = _session_open_oi.get(symbol, {})
+    for row in chain:
+        strike = row["strike"]
+        open_row = open_oi.get(strike, {"ce_oi": 0, "pe_oi": 0})
+
+        ce_change = row.get("ce_oi", 0) - open_row["ce_oi"]
+        pe_change = row.get("pe_oi", 0) - open_row["pe_oi"]
+
+        if open_row["ce_oi"] > 0 and ce_change / open_row["ce_oi"] >= FRESH_WRITING_THRESHOLD:
+            fresh_ce.append({"strike": strike, "delta_oi": int(ce_change)})
+        if open_row["pe_oi"] > 0 and pe_change / open_row["pe_oi"] >= FRESH_WRITING_THRESHOLD:
+            fresh_pe.append({"strike": strike, "delta_oi": int(pe_change)})
+
+    return {"fresh_ce": fresh_ce, "fresh_pe": fresh_pe}
+
+
+def compute_pcr(chain: list) -> dict:
+    """Put-Call Ratio from current expiry OI."""
+    total_ce = sum(r.get("ce_oi", 0) for r in chain)
+    total_pe = sum(r.get("pe_oi", 0) for r in chain)
+    total = total_ce + total_pe
+
+    if total_ce == 0:
+        return {"pcr": None, "signal": "NEUTRAL", "liquid": False}
+
+    pcr = round(total_pe / total_ce, 3)
+    liquid = total < ILLIQUID_OI_THRESHOLD
+
+    if pcr > 1.5:
+        signal = "EXTREME_BEARISH"
+    elif pcr > 1.2:
+        signal = "BEARISH"
+    elif pcr > 0.8:
+        signal = "NEUTRAL"
+    elif pcr > 0.5:
+        signal = "BULLISH"
+    else:
+        signal = "EXTREME_BULLISH"
+
+    return {"pcr": pcr, "signal": signal, "liquid": not liquid,
+            "total_ce_oi": total_ce, "total_pe_oi": total_pe}
+
+
+def check_wall_relationship(spot: float, range_high: float, range_low: float,
+                            ce_wall: float, pe_wall: float) -> dict:
+    """
+    Determine if walls are ahead, clear, or the stock is trapped.
+    Returns wall warning tags and score adjustments.
+    """
+    tags = []
+    score_adj = 0
+
+    # CE wall vs range high (bullish breakout direction)
+    if ce_wall:
+        ce_dist_pct = (ce_wall - range_high) / range_high * 100
+        if 0 <= ce_dist_pct <= WALL_AHEAD_PCT:
+            tags.append("CE_WALL_OVERHEAD")
+            score_adj -= 2
+        elif ce_dist_pct > WALL_CLEAR_PCT:
+            tags.append("CE_CLEAR")
+            score_adj += 1
+
+    # PE wall vs range low (bearish breakdown direction)
+    if pe_wall:
+        pe_dist_pct = (range_low - pe_wall) / range_low * 100
+        if 0 <= pe_dist_pct <= WALL_AHEAD_PCT:
+            tags.append("PE_WALL_BELOW")
+            score_adj += 1
+        elif pe_dist_pct > WALL_CLEAR_PCT:
+            tags.append("PE_CLEAR")
+
+    # Trapped?
+    if ce_wall and pe_wall:
+        ce_above = ce_wall > range_high
+        pe_below = pe_wall < range_low
+        if ce_above and pe_below:
+            ce_gap = (ce_wall - spot) / spot * 100
+            pe_gap = (spot - pe_wall) / spot * 100
+            if ce_gap < 2.0 and pe_gap < 2.0:
+                tags.append("TRAPPED_IN_WALLS")
+                score_adj -= 2
+
+    return {"wall_tags": tags, "score_adj": score_adj}
+
+
+def check_liquidity(options_chain: list, suggested_strike: float,
+                    option_type: str) -> dict:
+    """
+    Check liquidity of the suggested strike.
+    Returns: status (GOOD / WIDE_SPREAD / AVOID), note
+    """
+    for row in options_chain:
+        if row["strike"] != suggested_strike:
+            continue
+        field = "ce" if option_type == "CE" else "pe"
+        bid = row.get(f"{field}_bid", 0)
+        ask = row.get(f"{field}_ask", 0)
+        oi = row.get(f"{field}_oi", 0)
+        premium = (bid + ask) / 2 if bid and ask else 0
+
+        if oi < LIQUIDITY_MIN_OI:
+            return {"status": "AVOID", "note": "OI < 500 contracts"}
+
+        if premium > 0:
+            spread_pct = (ask - bid) / premium
+            if spread_pct <= LIQUIDITY_GOOD_SPREAD:
+                return {"status": "GOOD", "note": ""}
+            elif spread_pct <= LIQUIDITY_WIDE_SPREAD:
+                return {"status": "WIDE_SPREAD", "note": "Enter with limit order at midpoint"}
+            else:
+                return {"status": "AVOID", "note": "Wide bid-ask spread"}
+
+        return {"status": "AVOID", "note": "No price data"}
+
+    return {"status": "AVOID", "note": "Strike not found in chain"}
+
+
+def store_session_open_oi(symbol: str, chain: list):
+    """Call once at market open to capture session-open OI baseline."""
+    if symbol not in _session_open_oi:
+        _session_open_oi[symbol] = {
+            row["strike"]: {"ce_oi": row.get("ce_oi", 0), "pe_oi": row.get("pe_oi", 0)}
+            for row in chain
+        }
+
+
+def fetch_options_chain(kite, symbol: str, expiry_date=None) -> list:
+    """
+    Fetch options chain for `symbol` from Kite.
+    Returns list of {strike, ce_oi, ce_bid, ce_ask, pe_oi, pe_bid, pe_ask}.
+    Handles failures gracefully, returns [] on error.
+    """
+    try:
+        time.sleep(API_CALL_DELAY_SEC)
+        # Kite instruments for NFO gives all strikes
+        # We fetch quotes for the relevant strikes
+        instruments = kite.instruments("NFO")
+        sym_instruments = [
+            i for i in instruments
+            if i.get("name") == symbol and i.get("instrument_type") in ("CE", "PE")
+        ]
+
+        if expiry_date:
+            sym_instruments = [i for i in sym_instruments if str(i.get("expiry")) == str(expiry_date)]
+        else:
+            # Use nearest expiry
+            expiries = sorted(set(i["expiry"] for i in sym_instruments if i.get("expiry")))
+            if expiries:
+                nearest = expiries[0]
+                sym_instruments = [i for i in sym_instruments if i["expiry"] == nearest]
+
+        if not sym_instruments:
+            return []
+
+        # Build trading symbols for quote fetch
+        trading_syms = [f"NFO:{i['tradingsymbol']}" for i in sym_instruments]
+        # Fetch in batches of 200 (Kite limit)
+        quotes = {}
+        for i in range(0, len(trading_syms), 200):
+            batch = trading_syms[i:i+200]
+            try:
+                q = kite.quote(batch)
+                quotes.update(q)
+                time.sleep(API_CALL_DELAY_SEC)
+            except Exception as e:
+                log.warning(f"Quote batch failed for {symbol}: {e}")
+
+        # Build chain dict by strike
+        chain_map = {}
+        for inst in sym_instruments:
+            ts = f"NFO:{inst['tradingsymbol']}"
+            strike = inst["strike"]
+            opt_type = inst["instrument_type"]
+            q = quotes.get(ts, {})
+            depth = q.get("depth", {})
+            bid = depth.get("buy", [{}])[0].get("price", 0) if depth.get("buy") else 0
+            ask = depth.get("sell", [{}])[0].get("price", 0) if depth.get("sell") else 0
+            oi = q.get("oi", 0)
+
+            if strike not in chain_map:
+                chain_map[strike] = {"strike": strike,
+                                     "ce_oi": 0, "ce_bid": 0, "ce_ask": 0,
+                                     "pe_oi": 0, "pe_bid": 0, "pe_ask": 0}
+            if opt_type == "CE":
+                chain_map[strike].update({"ce_oi": oi, "ce_bid": bid, "ce_ask": ask})
+            else:
+                chain_map[strike].update({"pe_oi": oi, "pe_bid": bid, "pe_ask": ask})
+
+        _last_oi_fetch[symbol] = datetime.now()
+        return sorted(chain_map.values(), key=lambda x: x["strike"])
+
+    except Exception as e:
+        log.error(f"Options chain fetch failed for {symbol}: {e}")
+        return []
+
+
+def get_oi_timestamp(symbol: str) -> str:
+    ts = _last_oi_fetch.get(symbol)
+    if ts:
+        return ts.strftime("%H:%M")
+    return "N/A"
+
+
+def analyze_oi_for_stock(kite, symbol: str, spot: float,
+                          range_high: float, range_low: float,
+                          is_expiry_day: bool = False) -> dict:
+    """
+    Full OI analysis for one stock. Returns all OI intelligence fields.
+    """
+    chain = fetch_options_chain(kite, symbol)
+    if not chain:
+        return {"error": "No options data", "oi_timestamp": "N/A"}
+
+    # Store session open OI on first fetch
+    store_session_open_oi(symbol, chain)
+
+    walls = find_ce_pe_walls(chain)
+    max_pain = compute_max_pain(chain, spot)
+    fresh = detect_fresh_writing(symbol, chain)
+    pcr = compute_pcr(chain)
+    wall_rel = check_wall_relationship(
+        spot, range_high, range_low,
+        walls.get("ce_wall_strike"), walls.get("pe_wall_strike")
+    )
+    mp_weight = get_max_pain_weight(is_expiry_day)
+    max_pain["weight"] = mp_weight
+
+    return {
+        **walls,
+        "max_pain": max_pain,
+        "pcr": pcr,
+        "fresh_writing": fresh,
+        "wall_relationship": wall_rel,
+        "oi_timestamp": get_oi_timestamp(symbol),
+        "chain_length": len(chain),
+        "_chain": chain,  # kept for liquidity checks
+    }

@@ -1,0 +1,884 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Stock Scanner — Kite</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@300;400;500&family=Syne:wght@400;600;700;800&display=swap" rel="stylesheet">
+<style>
+  /* ── Variables ────────────────────────────────────────────────── */
+  :root {
+    --bg:        #09090f;
+    --surface:   #111118;
+    --card:      #16161f;
+    --border:    #1e1e2e;
+    --border2:   #2a2a3a;
+    --text:      #e8e8f0;
+    --muted:     #6a6a82;
+    --accent:    #7c6bff;
+    --bull:      #00e5a0;
+    --bull-dim:  #00e5a022;
+    --bear:      #ff4d6d;
+    --bear-dim:  #ff4d6d22;
+    --warn:      #ffb347;
+    --glow-bull: 0 0 20px #00e5a044;
+    --glow-bear: 0 0 20px #ff4d6d44;
+    --r:         8px;
+    --mono:      'DM Mono', monospace;
+    --sans:      'Syne', sans-serif;
+  }
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--sans);
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* ── Grid noise background ─────────────────────────────────── */
+  body::before {
+    content: '';
+    position: fixed; inset: 0;
+    background-image:
+      linear-gradient(rgba(124,107,255,.03) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(124,107,255,.03) 1px, transparent 1px);
+    background-size: 40px 40px;
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  /* ── Layout ─────────────────────────────────────────────────── */
+  .app { position: relative; z-index: 1; display: flex; flex-direction: column; min-height: 100vh; }
+
+  header {
+    padding: 18px 28px;
+    border-bottom: 1px solid var(--border);
+    background: var(--surface);
+    display: flex; align-items: center; justify-content: space-between;
+    gap: 16px; flex-wrap: wrap;
+  }
+
+  .logo {
+    font-family: var(--sans);
+    font-weight: 800;
+    font-size: 1.1rem;
+    letter-spacing: .04em;
+    display: flex; align-items: center; gap: 10px;
+  }
+  .logo-dot {
+    width: 10px; height: 10px; border-radius: 50%;
+    background: var(--accent);
+    box-shadow: 0 0 12px var(--accent);
+    animation: pulse 2s infinite;
+  }
+  @keyframes pulse { 0%,100%{opacity:1}50%{opacity:.4} }
+
+  .header-meta { font-family: var(--mono); font-size: .72rem; color: var(--muted); }
+
+  main {
+    flex: 1;
+    display: grid;
+    grid-template-columns: 340px 1fr;
+    grid-template-rows: 1fr;
+    gap: 0;
+    min-height: calc(100vh - 65px);
+  }
+
+  /* ── Sidebar ─────────────────────────────────────────────────── */
+  .sidebar {
+    background: var(--surface);
+    border-right: 1px solid var(--border);
+    overflow-y: auto;
+    padding: 20px;
+    display: flex; flex-direction: column; gap: 18px;
+  }
+
+  .section-title {
+    font-size: .65rem; font-weight: 700; letter-spacing: .12em;
+    text-transform: uppercase; color: var(--muted);
+    margin-bottom: 10px;
+  }
+
+  /* Mode toggle */
+  .mode-toggle {
+    display: grid; grid-template-columns: 1fr 1fr;
+    border: 1px solid var(--border2); border-radius: var(--r);
+    overflow: hidden;
+  }
+  .mode-btn {
+    padding: 10px 0; text-align: center;
+    font-family: var(--sans); font-weight: 700; font-size: .82rem;
+    cursor: pointer; border: none; background: transparent;
+    color: var(--muted); transition: all .2s; letter-spacing: .04em;
+  }
+  .mode-btn.active-bull { background: var(--bull-dim); color: var(--bull); }
+  .mode-btn.active-bear { background: var(--bear-dim); color: var(--bear); }
+
+  /* Filter card */
+  .filter-card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: var(--r);
+    padding: 14px;
+  }
+
+  .filter-row {
+    display: flex; align-items: center; gap: 8px;
+    padding: 6px 0;
+    border-bottom: 1px solid var(--border);
+  }
+  .filter-row:last-child { border-bottom: none; }
+
+  .filter-toggle {
+    width: 32px; height: 18px; border-radius: 9px;
+    background: var(--border2); position: relative; cursor: pointer;
+    flex-shrink: 0; transition: background .2s;
+    border: none; appearance: none;
+  }
+  .filter-toggle::after {
+    content: '';
+    position: absolute; top: 2px; left: 2px;
+    width: 14px; height: 14px; border-radius: 50%;
+    background: var(--muted); transition: all .2s;
+  }
+  .filter-toggle.on { background: var(--accent); }
+  .filter-toggle.on.bull { background: var(--bull); }
+  .filter-toggle.on.bear { background: var(--bear); }
+  .filter-toggle.on::after { left: 16px; background: #fff; }
+
+  .filter-label {
+    flex: 1; font-family: var(--mono); font-size: .74rem; color: var(--text);
+    line-height: 1.3;
+  }
+  .filter-label.disabled { color: var(--muted); text-decoration: line-through; }
+
+  .filter-input {
+    width: 80px; padding: 4px 8px;
+    background: var(--bg); border: 1px solid var(--border2);
+    border-radius: 4px; color: var(--text);
+    font-family: var(--mono); font-size: .75rem;
+    text-align: right; transition: border-color .2s;
+  }
+  .filter-input:focus { outline: none; border-color: var(--accent); }
+
+  /* Watchlist */
+  .watchlist-area {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: var(--r);
+    padding: 10px;
+  }
+  .watchlist-input {
+    width: 100%; padding: 8px 10px;
+    background: var(--bg); border: 1px solid var(--border2);
+    border-radius: 5px; color: var(--text);
+    font-family: var(--mono); font-size: .76rem;
+    resize: vertical; min-height: 90px;
+  }
+  .watchlist-input:focus { outline: none; border-color: var(--accent); }
+  .watchlist-hint { font-family: var(--mono); font-size: .68rem; color: var(--muted); margin-top: 6px; }
+
+  /* Scan button */
+  .scan-btn {
+    width: 100%; padding: 13px;
+    border: none; border-radius: var(--r);
+    font-family: var(--sans); font-weight: 700; font-size: .9rem;
+    letter-spacing: .06em; cursor: pointer;
+    transition: all .2s; position: relative; overflow: hidden;
+  }
+  .scan-btn.bull {
+    background: var(--bull); color: #000;
+    box-shadow: var(--glow-bull);
+  }
+  .scan-btn.bear {
+    background: var(--bear); color: #fff;
+    box-shadow: var(--glow-bear);
+  }
+  .scan-btn:hover { filter: brightness(1.12); transform: translateY(-1px); }
+  .scan-btn:active { transform: translateY(0); }
+  .scan-btn:disabled { opacity: .5; cursor: not-allowed; transform: none; }
+  .scan-btn .spinner {
+    display: none; width: 16px; height: 16px; border-radius: 50%;
+    border: 2px solid transparent;
+    border-top-color: currentColor;
+    animation: spin .7s linear infinite;
+    margin: 0 auto;
+  }
+  .scan-btn.loading .btn-text { display: none; }
+  .scan-btn.loading .spinner { display: block; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  /* API url */
+  .api-input {
+    width: 100%; padding: 7px 10px;
+    background: var(--card); border: 1px solid var(--border2);
+    border-radius: 5px; color: var(--muted);
+    font-family: var(--mono); font-size: .72rem;
+  }
+  .api-input:focus { outline: none; border-color: var(--accent); color: var(--text); }
+
+  /* ── Content ─────────────────────────────────────────────────── */
+  .content {
+    display: flex; flex-direction: column;
+    overflow: hidden;
+  }
+
+  .results-header {
+    padding: 16px 24px;
+    border-bottom: 1px solid var(--border);
+    display: flex; align-items: center; gap: 16px; flex-wrap: wrap;
+  }
+  .results-title {
+    font-weight: 700; font-size: .9rem; letter-spacing: .04em;
+  }
+  .stat-pill {
+    padding: 4px 10px; border-radius: 20px;
+    font-family: var(--mono); font-size: .72rem;
+    background: var(--card); border: 1px solid var(--border2);
+    color: var(--muted);
+  }
+  .stat-pill.bull { background: var(--bull-dim); border-color: #00e5a044; color: var(--bull); }
+  .stat-pill.bear { background: var(--bear-dim); border-color: #ff4d6d44; color: var(--bear); }
+
+  .sort-controls {
+    margin-left: auto; display: flex; gap: 8px; align-items: center;
+  }
+  .sort-select {
+    padding: 5px 10px;
+    background: var(--card); border: 1px solid var(--border2);
+    border-radius: 5px; color: var(--muted);
+    font-family: var(--mono); font-size: .72rem; cursor: pointer;
+  }
+  .sort-select:focus { outline: none; border-color: var(--accent); }
+
+  /* Table */
+  .table-wrap {
+    flex: 1; overflow: auto; padding: 0 24px 24px;
+  }
+
+  .results-table {
+    width: 100%; border-collapse: collapse; margin-top: 16px;
+  }
+  .results-table th {
+    padding: 10px 12px;
+    font-family: var(--mono); font-size: .67rem; font-weight: 500;
+    letter-spacing: .08em; text-transform: uppercase; color: var(--muted);
+    border-bottom: 1px solid var(--border);
+    text-align: right; cursor: pointer; white-space: nowrap;
+    user-select: none;
+  }
+  .results-table th:first-child { text-align: left; }
+  .results-table th:hover { color: var(--text); }
+  .results-table th.sorted { color: var(--accent); }
+
+  .results-table td {
+    padding: 11px 12px;
+    font-family: var(--mono); font-size: .78rem;
+    border-bottom: 1px solid var(--border);
+    text-align: right; white-space: nowrap;
+  }
+  .results-table td:first-child { text-align: left; }
+
+  .results-table tbody tr {
+    transition: background .15s;
+    cursor: pointer;
+  }
+  .results-table tbody tr:hover { background: var(--card); }
+
+  .sym-cell {
+    font-weight: 500; font-family: var(--sans);
+    font-size: .82rem; letter-spacing: .03em;
+  }
+
+  .change-pos { color: var(--bull); }
+  .change-neg { color: var(--bear); }
+  .muted { color: var(--muted); }
+
+  .vol-ratio-bar {
+    display: inline-flex; align-items: center; gap: 6px;
+  }
+  .mini-bar {
+    width: 40px; height: 4px; background: var(--border2);
+    border-radius: 2px; overflow: hidden;
+  }
+  .mini-bar-fill {
+    height: 100%; border-radius: 2px;
+    background: var(--accent); transition: width .3s;
+  }
+
+  /* Filter badge row */
+  .filter-badges {
+    display: flex; gap: 3px; flex-wrap: wrap; margin-top: 4px;
+  }
+  .badge {
+    width: 8px; height: 8px; border-radius: 50%;
+    display: inline-block;
+  }
+  .badge.pass { background: var(--bull); }
+  .badge.fail { background: var(--bear); }
+  .badge.skip { background: var(--border2); }
+
+  /* Detail panel */
+  .detail-panel {
+    position: fixed; right: 0; top: 0; bottom: 0; width: 380px;
+    background: var(--surface);
+    border-left: 1px solid var(--border);
+    padding: 24px;
+    transform: translateX(100%);
+    transition: transform .3s ease;
+    overflow-y: auto; z-index: 100;
+    display: flex; flex-direction: column; gap: 16px;
+  }
+  .detail-panel.open { transform: translateX(0); }
+
+  .detail-close {
+    position: absolute; top: 16px; right: 16px;
+    background: var(--card); border: 1px solid var(--border2);
+    color: var(--muted); border-radius: 6px;
+    padding: 5px 10px; cursor: pointer; font-size: .75rem;
+  }
+  .detail-close:hover { color: var(--text); }
+
+  .detail-sym { font-weight: 800; font-size: 1.4rem; letter-spacing: .04em; }
+  .detail-price { font-family: var(--mono); font-size: 1.1rem; margin-top: 2px; }
+
+  .kv-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  .kv {
+    background: var(--card); border: 1px solid var(--border);
+    border-radius: 6px; padding: 10px 12px;
+  }
+  .kv-key { font-family: var(--mono); font-size: .66rem; color: var(--muted); text-transform: uppercase; letter-spacing: .07em; }
+  .kv-val { font-family: var(--mono); font-size: .9rem; margin-top: 3px; font-weight: 500; }
+
+  .filter-detail-list { display: flex; flex-direction: column; gap: 6px; }
+  .filter-detail-item {
+    display: flex; align-items: center; gap: 10px;
+    padding: 8px 12px; border-radius: 6px;
+    background: var(--card); border: 1px solid var(--border);
+    font-family: var(--mono); font-size: .74rem;
+  }
+  .filter-detail-item.pass { border-color: #00e5a033; }
+  .filter-detail-item.fail { border-color: #ff4d6d33; }
+  .filter-icon { font-size: .8rem; flex-shrink: 0; }
+
+  /* Empty / error states */
+  .empty-state {
+    display: flex; flex-direction: column; align-items: center;
+    justify-content: center; height: 100%;
+    gap: 12px; color: var(--muted);
+    font-family: var(--mono); font-size: .82rem;
+    padding: 60px 20px; text-align: center;
+  }
+  .empty-icon { font-size: 2.5rem; opacity: .4; }
+
+  /* Error toast */
+  .toast {
+    position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%);
+    background: #2a0a10; border: 1px solid var(--bear);
+    color: var(--bear); padding: 10px 20px; border-radius: 8px;
+    font-family: var(--mono); font-size: .78rem;
+    opacity: 0; transition: opacity .3s; pointer-events: none; z-index: 200;
+  }
+  .toast.show { opacity: 1; }
+
+  /* Scrollbar */
+  ::-webkit-scrollbar { width: 5px; height: 5px; }
+  ::-webkit-scrollbar-track { background: var(--bg); }
+  ::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 3px; }
+
+  /* Responsive */
+  @media (max-width: 860px) {
+    main { grid-template-columns: 1fr; grid-template-rows: auto 1fr; }
+    .sidebar { max-height: 55vh; }
+    .detail-panel { width: 100%; }
+  }
+</style>
+</head>
+<body>
+<div class="app">
+
+<!-- ── Header ───────────────────────────────────────────────────── -->
+<header>
+  <div class="logo">
+    <div class="logo-dot"></div>
+    STOCK SCANNER
+  </div>
+  <div class="header-meta" id="lastScan">— not scanned yet —</div>
+</header>
+
+<main>
+<!-- ── Sidebar ──────────────────────────────────────────────────── -->
+<aside class="sidebar">
+
+  <!-- API URL -->
+  <div>
+    <div class="section-title">Backend URL</div>
+    <input class="api-input" id="apiBase" value="http://localhost:5000" placeholder="http://localhost:5000">
+  </div>
+
+  <!-- Mode -->
+  <div>
+    <div class="section-title">Scan Mode</div>
+    <div class="mode-toggle">
+      <button class="mode-btn active-bull" id="btnBull" onclick="setMode('bullish')">🟢 BULLISH</button>
+      <button class="mode-btn" id="btnBear" onclick="setMode('bearish')">🔴 BEARISH</button>
+    </div>
+  </div>
+
+  <!-- Bullish Filters -->
+  <div id="bullFilters">
+    <div class="section-title">Bullish Filters</div>
+    <div class="filter-card">
+
+      <div class="filter-row">
+        <button class="filter-toggle on bull" id="tog_close_gt_min" onclick="toggleFilter('close_gt_min')"></button>
+        <span class="filter-label" id="lbl_close_gt_min">Close &gt;</span>
+        <input class="filter-input" id="val_min_close" value="110" type="number" oninput="refreshLabels()">
+      </div>
+
+      <div class="filter-row">
+        <button class="filter-toggle on bull" id="tog_volume_gt_min" onclick="toggleFilter('volume_gt_min')"></button>
+        <span class="filter-label" id="lbl_volume_gt_min">Volume &gt;</span>
+        <input class="filter-input" id="val_min_volume" value="100000" type="number" oninput="refreshLabels()">
+      </div>
+
+      <div class="filter-row">
+        <button class="filter-toggle on bull" id="tog_close_gt_52w" onclick="toggleFilter('close_gt_52w')"></button>
+        <span class="filter-label">Close &gt; 52W High ×</span>
+        <input class="filter-input" id="val_pct_52w_high" value="0.6" type="number" step="0.05" oninput="refreshLabels()">
+      </div>
+
+      <div class="filter-row">
+        <button class="filter-toggle on bull" id="tog_volume_surge" onclick="toggleFilter('volume_surge')"></button>
+        <span class="filter-label">Volume &gt;</span>
+        <input class="filter-input" id="val_vol_mult_bull" value="2" type="number" step="0.5" oninput="refreshLabels()">
+        <span style="font-family:var(--mono);font-size:.72rem;color:var(--muted)">× prev</span>
+      </div>
+
+      <div class="filter-row">
+        <button class="filter-toggle on bull" id="tog_close_gt_prev" onclick="toggleFilter('close_gt_prev')"></button>
+        <span class="filter-label">Close &gt; Yesterday's Close</span>
+      </div>
+
+      <div class="filter-row">
+        <button class="filter-toggle on bull" id="tog_close_gt_ema20" onclick="toggleFilter('close_gt_ema20')"></button>
+        <span class="filter-label">Close &gt; 20 EMA</span>
+      </div>
+
+      <div class="filter-row">
+        <button class="filter-toggle on bull" id="tog_close_gt_prev_high" onclick="toggleFilter('close_gt_prev_high')"></button>
+        <span class="filter-label">Close &gt; Yesterday's High</span>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- Bearish Filters -->
+  <div id="bearFilters" style="display:none">
+    <div class="section-title">Bearish Filters</div>
+    <div class="filter-card">
+
+      <div class="filter-row">
+        <button class="filter-toggle on bear" id="tog_b_volume_gt_min" onclick="toggleFilter('b_volume_gt_min')"></button>
+        <span class="filter-label">Volume &gt;</span>
+        <input class="filter-input" id="val_b_min_volume" value="100000" type="number" oninput="refreshLabels()">
+      </div>
+
+      <div class="filter-row">
+        <button class="filter-toggle on bear" id="tog_b_close_lt_52w" onclick="toggleFilter('b_close_lt_52w')"></button>
+        <span class="filter-label">Close &lt; 52W Low ×</span>
+        <input class="filter-input" id="val_pct_52w_low" value="1.4" type="number" step="0.05" oninput="refreshLabels()">
+      </div>
+
+      <div class="filter-row">
+        <button class="filter-toggle on bear" id="tog_b_volume_surge" onclick="toggleFilter('b_volume_surge')"></button>
+        <span class="filter-label">Volume &gt;</span>
+        <input class="filter-input" id="val_vol_mult_bear" value="2" type="number" step="0.5" oninput="refreshLabels()">
+        <span style="font-family:var(--mono);font-size:.72rem;color:var(--muted)">× prev</span>
+      </div>
+
+      <div class="filter-row">
+        <button class="filter-toggle on bear" id="tog_b_close_lt_prev" onclick="toggleFilter('b_close_lt_prev')"></button>
+        <span class="filter-label">Close &lt; Yesterday's Close</span>
+      </div>
+
+      <div class="filter-row">
+        <button class="filter-toggle on bear" id="tog_b_close_lt_ema20" onclick="toggleFilter('b_close_lt_ema20')"></button>
+        <span class="filter-label">Close &lt; 20 EMA</span>
+      </div>
+
+      <div class="filter-row">
+        <button class="filter-toggle on bear" id="tog_b_close_lt_prev_low" onclick="toggleFilter('b_close_lt_prev_low')"></button>
+        <span class="filter-label">Close &lt; Yesterday's Low</span>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- Watchlist -->
+  <div>
+    <div class="section-title">Watchlist (NSE Symbols)</div>
+    <div class="watchlist-area">
+      <textarea class="watchlist-input" id="watchlist" placeholder="RELIANCE&#10;TCS&#10;INFY&#10;HDFCBANK&#10;ICICIBANK">RELIANCE
+TCS
+INFY
+HDFCBANK
+ICICIBANK
+WIPRO
+AXISBANK
+SBIN
+TATAMOTORS
+MARUTI</textarea>
+      <div class="watchlist-hint">One symbol per line · NSE equity symbols</div>
+    </div>
+  </div>
+
+  <!-- Scan Button -->
+  <button class="scan-btn bull" id="scanBtn" onclick="runScan()">
+    <span class="btn-text">▶ RUN SCAN</span>
+    <div class="spinner"></div>
+  </button>
+
+</aside>
+
+<!-- ── Results ─────────────────────────────────────────────────── -->
+<section class="content">
+  <div class="results-header">
+    <div class="results-title">RESULTS</div>
+    <div class="stat-pill" id="statScanned">—</div>
+    <div class="stat-pill" id="statMatched">—</div>
+    <div class="sort-controls">
+      <span style="font-family:var(--mono);font-size:.7rem;color:var(--muted)">Sort:</span>
+      <select class="sort-select" id="sortSelect" onchange="sortResults()">
+        <option value="change_pct_desc">% Change ↓</option>
+        <option value="change_pct_asc">% Change ↑</option>
+        <option value="volume_ratio_desc">Vol Ratio ↓</option>
+        <option value="close_desc">Close ↓</option>
+        <option value="close_asc">Close ↑</option>
+        <option value="symbol_asc">Symbol A-Z</option>
+      </select>
+    </div>
+  </div>
+
+  <div class="table-wrap">
+    <div class="empty-state" id="emptyState">
+      <div class="empty-icon">📡</div>
+      <div>Configure filters and hit <strong>Run Scan</strong></div>
+      <div style="color:var(--border2)">Results will appear here</div>
+    </div>
+
+    <table class="results-table" id="resultsTable" style="display:none">
+      <thead>
+        <tr>
+          <th onclick="sortBy('symbol')">Symbol</th>
+          <th onclick="sortBy('close')">Close</th>
+          <th onclick="sortBy('change_pct')">Chg%</th>
+          <th onclick="sortBy('volume')">Volume</th>
+          <th onclick="sortBy('volume_ratio')">Vol Ratio</th>
+          <th onclick="sortBy('ema20')">EMA 20</th>
+          <th>52W H/L</th>
+          <th>Filters</th>
+        </tr>
+      </thead>
+      <tbody id="resultsBody"></tbody>
+    </table>
+  </div>
+</section>
+</main>
+
+</div><!-- app -->
+
+<!-- Detail Panel -->
+<div class="detail-panel" id="detailPanel">
+  <button class="detail-close" onclick="closeDetail()">✕ Close</button>
+  <div id="detailContent"></div>
+</div>
+
+<!-- Toast -->
+<div class="toast" id="toast"></div>
+
+<script>
+// ── State ──────────────────────────────────────────────────────────
+let currentMode = 'bullish';
+let scanResults = [];
+let sortField = 'change_pct';
+let sortDir = 'desc';
+
+// Filter enabled states
+const filterStates = {
+  // bullish
+  close_gt_min: true, volume_gt_min: true, close_gt_52w: true,
+  volume_surge: true, close_gt_prev: true, close_gt_ema20: true, close_gt_prev_high: true,
+  // bearish
+  b_volume_gt_min: true, b_close_lt_52w: true, b_volume_surge: true,
+  b_close_lt_prev: true, b_close_lt_ema20: true, b_close_lt_prev_low: true,
+};
+
+// ── Mode ────────────────────────────────────────────────────────────
+function setMode(mode) {
+  currentMode = mode;
+  document.getElementById('bullFilters').style.display = mode === 'bullish' ? 'block' : 'none';
+  document.getElementById('bearFilters').style.display = mode === 'bearish' ? 'block' : 'none';
+  const scanBtn = document.getElementById('scanBtn');
+  const btnBull = document.getElementById('btnBull');
+  const btnBear = document.getElementById('btnBear');
+
+  if (mode === 'bullish') {
+    btnBull.className = 'mode-btn active-bull';
+    btnBear.className = 'mode-btn';
+    scanBtn.className = 'scan-btn bull';
+    scanBtn.querySelector('.btn-text').textContent = '▶ RUN BULLISH SCAN';
+  } else {
+    btnBear.className = 'mode-btn active-bear';
+    btnBull.className = 'mode-btn';
+    scanBtn.className = 'scan-btn bear';
+    scanBtn.querySelector('.btn-text').textContent = '▶ RUN BEARISH SCAN';
+  }
+}
+
+// ── Filter Toggles ─────────────────────────────────────────────────
+function toggleFilter(key) {
+  filterStates[key] = !filterStates[key];
+  const tog = document.getElementById(`tog_${key}`);
+  if (filterStates[key]) {
+    tog.className = `filter-toggle on ${currentMode === 'bullish' ? 'bull' : 'bear'}`;
+  } else {
+    tog.className = 'filter-toggle';
+  }
+}
+
+function refreshLabels() { /* labels are static, inputs handle themselves */ }
+
+// ── Collect Payload ────────────────────────────────────────────────
+function buildPayload() {
+  const symbols = document.getElementById('watchlist').value
+    .split('\n').map(s => s.trim().toUpperCase()).filter(Boolean);
+
+  const bullEnabled = {
+    close_gt_min: filterStates.close_gt_min,
+    volume_gt_min: filterStates.volume_gt_min,
+    close_gt_52w: filterStates.close_gt_52w,
+    volume_surge: filterStates.volume_surge,
+    close_gt_prev: filterStates.close_gt_prev,
+    close_gt_ema20: filterStates.close_gt_ema20,
+    close_gt_prev_high: filterStates.close_gt_prev_high,
+  };
+  const bearEnabled = {
+    volume_gt_min: filterStates.b_volume_gt_min,
+    close_lt_52w: filterStates.b_close_lt_52w,
+    volume_surge: filterStates.b_volume_surge,
+    close_lt_prev: filterStates.b_close_lt_prev,
+    close_lt_ema20: filterStates.b_close_lt_ema20,
+    close_lt_prev_low: filterStates.b_close_lt_prev_low,
+  };
+
+  return {
+    mode: currentMode,
+    symbols,
+    filters: {
+      bullish: {
+        min_close:        parseFloat(document.getElementById('val_min_close').value) || 110,
+        min_volume:       parseInt(document.getElementById('val_min_volume').value) || 100000,
+        pct_52w_high:     parseFloat(document.getElementById('val_pct_52w_high').value) || 0.6,
+        volume_multiplier:parseFloat(document.getElementById('val_vol_mult_bull').value) || 2,
+        enabled: bullEnabled,
+      },
+      bearish: {
+        min_volume:       parseInt(document.getElementById('val_b_min_volume').value) || 100000,
+        pct_52w_low:      parseFloat(document.getElementById('val_pct_52w_low').value) || 1.4,
+        volume_multiplier:parseFloat(document.getElementById('val_vol_mult_bear').value) || 2,
+        enabled: bearEnabled,
+      },
+    }
+  };
+}
+
+// ── Scan ──────────────────────────────────────────────────────────
+async function runScan() {
+  const btn = document.getElementById('scanBtn');
+  const apiBase = document.getElementById('apiBase').value.replace(/\/$/, '');
+  const payload = buildPayload();
+
+  if (!payload.symbols.length) { showToast('Add at least one symbol'); return; }
+
+  btn.disabled = true;
+  btn.classList.add('loading');
+
+  try {
+    const res = await fetch(`${apiBase}/api/scan`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload),
+    });
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    const data = await res.json();
+
+    if (data.status !== 'ok') throw new Error(data.message || 'Scan failed');
+
+    scanResults = data.results || [];
+    renderResults(data);
+
+    document.getElementById('lastScan').textContent =
+      `Last scan: ${new Date(data.timestamp).toLocaleTimeString()} · ${data.scanned} scanned · ${data.matched} matched`;
+
+  } catch (err) {
+    showToast('Error: ' + err.message);
+  } finally {
+    btn.disabled = false;
+    btn.classList.remove('loading');
+  }
+}
+
+// ── Render ─────────────────────────────────────────────────────────
+function renderResults(data) {
+  const tbody = document.getElementById('resultsBody');
+  const table = document.getElementById('resultsTable');
+  const empty = document.getElementById('emptyState');
+  const statScanned = document.getElementById('statScanned');
+  const statMatched = document.getElementById('statMatched');
+  const isBull = data.mode === 'bullish';
+
+  statScanned.textContent = `${data.scanned} scanned`;
+  statMatched.className = `stat-pill ${isBull ? 'bull' : 'bear'}`;
+  statMatched.textContent = `${data.matched} matched`;
+
+  if (!scanResults.length) {
+    table.style.display = 'none';
+    empty.innerHTML = `<div class="empty-icon">🔍</div><div>No stocks matched the filters</div>`;
+    empty.style.display = 'flex';
+    return;
+  }
+
+  empty.style.display = 'none';
+  table.style.display = 'table';
+
+  sortResults();
+}
+
+function sortResults() {
+  const val = document.getElementById('sortSelect').value;
+  const [field, dir] = val.split('_asc').length > 1
+    ? [val.replace('_asc', ''), 'asc']
+    : [val.replace('_desc', ''), 'desc'];
+
+  const sorted = [...scanResults].sort((a, b) => {
+    const av = a[field] ?? (typeof a[field] === 'string' ? '' : 0);
+    const bv = b[field] ?? (typeof b[field] === 'string' ? '' : 0);
+    if (typeof av === 'string') return dir === 'asc' ? av.localeCompare(bv) : bv.localeCompare(av);
+    return dir === 'asc' ? av - bv : bv - av;
+  });
+
+  const tbody = document.getElementById('resultsBody');
+  tbody.innerHTML = sorted.map(row => buildRow(row)).join('');
+}
+
+function sortBy(field) {
+  const sel = document.getElementById('sortSelect');
+  const curVal = sel.value;
+  const isDesc = curVal === `${field}_desc`;
+  sel.value = isDesc ? `${field}_asc` : `${field}_desc`;
+  sortResults();
+}
+
+function buildRow(r) {
+  const chgClass = r.change_pct >= 0 ? 'change-pos' : 'change-neg';
+  const chgSign  = r.change_pct >= 0 ? '+' : '';
+  const volRatio = Math.min(r.volume_ratio / 5, 1) * 100; // cap at 5×
+
+  // filter badges
+  const badges = Object.entries(r.filter_results || {}).map(([k, v]) => {
+    const cls = v.passed === null ? 'skip' : v.passed ? 'pass' : 'fail';
+    return `<span class="badge ${cls}" title="${v.label}"></span>`;
+  }).join('');
+
+  return `<tr onclick="openDetail(${JSON.stringify(r).replace(/"/g, '&quot;')})">
+    <td><div class="sym-cell">${r.symbol}</div></td>
+    <td>₹${r.close.toLocaleString('en-IN', {minimumFractionDigits:2})}</td>
+    <td class="${chgClass}">${chgSign}${r.change_pct.toFixed(2)}%</td>
+    <td class="muted">${(r.volume/100000).toFixed(1)}L</td>
+    <td>
+      <div class="vol-ratio-bar">
+        <span>${r.volume_ratio.toFixed(1)}×</span>
+        <div class="mini-bar"><div class="mini-bar-fill" style="width:${volRatio}%"></div></div>
+      </div>
+    </td>
+    <td class="muted">₹${r.ema20.toFixed(2)}</td>
+    <td style="font-size:.7rem;color:var(--muted)">
+      <span style="color:var(--bull)">₹${r['52w_high']}</span>
+      <span style="margin:0 3px">/</span>
+      <span style="color:var(--bear)">₹${r['52w_low']}</span>
+    </td>
+    <td><div class="filter-badges">${badges}</div></td>
+  </tr>`;
+}
+
+// ── Detail Panel ───────────────────────────────────────────────────
+function openDetail(r) {
+  const isBull = r.mode === 'bullish';
+  const chgClass = r.change_pct >= 0 ? 'change-pos' : 'change-neg';
+  const chgSign  = r.change_pct >= 0 ? '+' : '';
+
+  const filterItems = Object.entries(r.filter_results || {}).map(([k, v]) => {
+    if (v.passed === null) return '';
+    const icon = v.passed ? '✅' : '❌';
+    const cls  = v.passed ? 'pass' : 'fail';
+    return `<div class="filter-detail-item ${cls}">
+      <span class="filter-icon">${icon}</span>
+      <span>${v.label}</span>
+    </div>`;
+  }).join('');
+
+  document.getElementById('detailContent').innerHTML = `
+    <div class="detail-sym">${r.symbol}</div>
+    <div class="detail-price ${chgClass}">
+      ₹${r.close.toLocaleString('en-IN', {minimumFractionDigits:2})}
+      <span style="font-size:.8em"> ${chgSign}${r.change_pct.toFixed(2)}%</span>
+    </div>
+
+    <div class="kv-grid">
+      <div class="kv"><div class="kv-key">Open</div><div class="kv-val">₹${r.open}</div></div>
+      <div class="kv"><div class="kv-key">High</div><div class="kv-val">₹${r.high}</div></div>
+      <div class="kv"><div class="kv-key">Low</div><div class="kv-val">₹${r.low}</div></div>
+      <div class="kv"><div class="kv-key">Prev Close</div><div class="kv-val">₹${r.prev_close}</div></div>
+      <div class="kv"><div class="kv-key">Prev High</div><div class="kv-val">₹${r.prev_high}</div></div>
+      <div class="kv"><div class="kv-key">Prev Low</div><div class="kv-val">₹${r.prev_low}</div></div>
+      <div class="kv"><div class="kv-key">20 EMA</div><div class="kv-val">₹${r.ema20}</div></div>
+      <div class="kv"><div class="kv-key">Vol Ratio</div><div class="kv-val">${r.volume_ratio.toFixed(2)}×</div></div>
+      <div class="kv"><div class="kv-key">52W High</div><div class="kv-val" style="color:var(--bull)">₹${r['52w_high']}</div></div>
+      <div class="kv"><div class="kv-key">52W Low</div><div class="kv-val" style="color:var(--bear)">₹${r['52w_low']}</div></div>
+      <div class="kv"><div class="kv-key">Volume</div><div class="kv-val">${r.volume.toLocaleString()}</div></div>
+      <div class="kv"><div class="kv-key">Mode</div>
+        <div class="kv-val" style="color:${isBull?'var(--bull)':'var(--bear)'}">
+          ${isBull?'🟢 Bullish':'🔴 Bearish'}
+        </div>
+      </div>
+    </div>
+
+    <div class="section-title" style="margin-top:4px">Filter Breakdown</div>
+    <div class="filter-detail-list">${filterItems}</div>
+  `;
+
+  document.getElementById('detailPanel').classList.add('open');
+}
+
+function closeDetail() {
+  document.getElementById('detailPanel').classList.remove('open');
+}
+
+// ── Toast ──────────────────────────────────────────────────────────
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 3500);
+}
+
+// ── Init ───────────────────────────────────────────────────────────
+setMode('bullish');
+</script>
+</body>
+</html>

@@ -1,0 +1,1892 @@
+[
+    {
+        "symbol": "360ONE",
+        "quarter": "Mar 2026",
+        "promoters": 6.24,
+        "fii": 63.33,
+        "dii": 12.75,
+        "public": 17.67,
+        "total_institutional": 76.08
+    },
+    {
+        "symbol": "ABB",
+        "quarter": "Mar 2026",
+        "promoters": 75.0,
+        "fii": 8.19,
+        "dii": 9.28,
+        "public": 7.5,
+        "total_institutional": 17.47
+    },
+    {
+        "symbol": "ABCAPITAL",
+        "quarter": "Jun 2026",
+        "promoters": 68.81,
+        "fii": 7.76,
+        "dii": 13.56,
+        "public": 9.73,
+        "total_institutional": 21.32
+    },
+    {
+        "symbol": "ADANIENSOL",
+        "quarter": "Mar 2026",
+        "promoters": 72.72,
+        "fii": 12.23,
+        "dii": 10.24,
+        "public": 4.81,
+        "total_institutional": 22.47
+    },
+    {
+        "symbol": "ADANIENT",
+        "quarter": "Mar 2026",
+        "promoters": 74.67,
+        "fii": 10.8,
+        "dii": 6.7,
+        "public": 7.84,
+        "total_institutional": 17.5
+    },
+    {
+        "symbol": "ADANIGREEN",
+        "quarter": "Mar 2026",
+        "promoters": 62.44,
+        "fii": 11.1,
+        "dii": 4.56,
+        "public": 21.92,
+        "total_institutional": 15.66
+    },
+    {
+        "symbol": "ADANIPORTS",
+        "quarter": "Mar 2026",
+        "promoters": 68.02,
+        "fii": 13.25,
+        "dii": 13.86,
+        "public": 4.89,
+        "total_institutional": 27.11
+    },
+    {
+        "symbol": "ADANIPOWER",
+        "quarter": "Mar 2026",
+        "promoters": 74.96,
+        "fii": 11.73,
+        "dii": 3.69,
+        "public": 9.63,
+        "total_institutional": 15.42
+    },
+    {
+        "symbol": "ALKEM",
+        "quarter": "Mar 2026",
+        "promoters": 51.2,
+        "fii": 10.15,
+        "dii": 21.39,
+        "public": 17.25,
+        "total_institutional": 31.54
+    },
+    {
+        "symbol": "AMBER",
+        "quarter": "Mar 2026",
+        "promoters": 38.17,
+        "fii": 23.96,
+        "dii": 27.92,
+        "public": 9.96,
+        "total_institutional": 51.88
+    },
+    {
+        "symbol": "AMBUJACEM",
+        "quarter": "Apr 2026",
+        "promoters": 67.33,
+        "fii": 5.83,
+        "dii": 19.62,
+        "public": 7.0,
+        "total_institutional": 25.45
+    },
+    {
+        "symbol": "ANGELONE",
+        "quarter": "Mar 2026",
+        "promoters": 28.8,
+        "fii": 12.81,
+        "dii": 18.88,
+        "public": 39.52,
+        "total_institutional": 31.69
+    },
+    {
+        "symbol": "APLAPOLLO",
+        "quarter": "Mar 2026",
+        "promoters": 28.25,
+        "fii": 37.52,
+        "dii": 16.05,
+        "public": 18.18,
+        "total_institutional": 53.57
+    },
+    {
+        "symbol": "APOLLOHOSP",
+        "quarter": "Mar 2026",
+        "promoters": 28.02,
+        "fii": 42.62,
+        "dii": 22.76,
+        "public": 6.39,
+        "total_institutional": 65.38
+    },
+    {
+        "symbol": "ASHOKLEY",
+        "quarter": "Mar 2026",
+        "promoters": 51.51,
+        "fii": 24.57,
+        "dii": 13.06,
+        "public": 10.79,
+        "total_institutional": 37.63
+    },
+    {
+        "symbol": "ASIANPAINT",
+        "quarter": "Mar 2026",
+        "promoters": 52.63,
+        "fii": 12.11,
+        "dii": 21.74,
+        "public": 13.39,
+        "total_institutional": 33.85
+    },
+    {
+        "symbol": "ASTRAL",
+        "quarter": "Mar 2026",
+        "promoters": 54.22,
+        "fii": 14.5,
+        "dii": 20.92,
+        "public": 9.99,
+        "total_institutional": 35.42
+    },
+    {
+        "symbol": "AUBANK",
+        "quarter": "Mar 2026",
+        "promoters": 22.76,
+        "fii": 37.27,
+        "dii": 31.3,
+        "public": 8.67,
+        "total_institutional": 68.57
+    },
+    {
+        "symbol": "AUROPHARMA",
+        "quarter": "Mar 2026",
+        "promoters": 51.82,
+        "fii": 15.24,
+        "dii": 25.82,
+        "public": 7.08,
+        "total_institutional": 41.06
+    },
+    {
+        "symbol": "AXISBANK",
+        "quarter": "Mar 2026",
+        "promoters": 8.14,
+        "fii": 42.04,
+        "dii": 43.35,
+        "public": 6.44,
+        "total_institutional": 85.39
+    },
+    {
+        "symbol": "BAJAJ-AUTO",
+        "quarter": "Mar 2026",
+        "promoters": 55.01,
+        "fii": 8.82,
+        "dii": 14.35,
+        "public": 21.62,
+        "total_institutional": 23.17
+    },
+    {
+        "symbol": "BAJAJFINSV",
+        "quarter": "Mar 2026",
+        "promoters": 58.72,
+        "fii": 7.23,
+        "dii": 11.76,
+        "public": 22.16,
+        "total_institutional": 18.99
+    },
+    {
+        "symbol": "BAJAJHLDNG",
+        "quarter": "Mar 2026",
+        "promoters": 51.46,
+        "fii": 9.62,
+        "dii": 8.08,
+        "public": 30.85,
+        "total_institutional": 17.7
+    },
+    {
+        "symbol": "BAJFINANCE",
+        "quarter": "Mar 2026",
+        "promoters": 54.71,
+        "fii": 21.33,
+        "dii": 15.1,
+        "public": 8.73,
+        "total_institutional": 36.43
+    },
+    {
+        "symbol": "BANDHANBNK",
+        "quarter": "Mar 2026",
+        "promoters": 38.98,
+        "fii": 22.07,
+        "dii": 22.33,
+        "public": 16.55,
+        "total_institutional": 44.4
+    },
+    {
+        "symbol": "BANKBARODA",
+        "quarter": "Mar 2026",
+        "promoters": 63.97,
+        "fii": 9.69,
+        "dii": 18.92,
+        "public": 7.33,
+        "total_institutional": 28.61
+    },
+    {
+        "symbol": "BANKINDIA",
+        "quarter": "Mar 2026",
+        "promoters": 73.38,
+        "fii": 7.26,
+        "dii": 13.96,
+        "public": 5.4,
+        "total_institutional": 21.22
+    },
+    {
+        "symbol": "BDL",
+        "quarter": "Mar 2026",
+        "promoters": 74.93,
+        "fii": 2.02,
+        "dii": 10.97,
+        "public": 12.1,
+        "total_institutional": 12.99
+    },
+    {
+        "symbol": "BEL",
+        "quarter": "Mar 2026",
+        "promoters": 51.14,
+        "fii": 19.51,
+        "dii": 20.0,
+        "public": 9.37,
+        "total_institutional": 39.51
+    },
+    {
+        "symbol": "BHARATFORG",
+        "quarter": "Mar 2026",
+        "promoters": 44.07,
+        "fii": 14.15,
+        "dii": 32.62,
+        "public": 9.0,
+        "total_institutional": 46.77
+    },
+    {
+        "symbol": "BHARTIARTL",
+        "quarter": "Jun 2026",
+        "promoters": 50.07,
+        "fii": 26.51,
+        "dii": 20.64,
+        "public": 2.61,
+        "total_institutional": 47.15
+    },
+    {
+        "symbol": "BHEL",
+        "quarter": "Mar 2026",
+        "promoters": 58.17,
+        "fii": 7.23,
+        "dii": 23.93,
+        "public": 10.63,
+        "total_institutional": 31.16
+    },
+    {
+        "symbol": "BIOCON",
+        "quarter": "Mar 2026",
+        "promoters": 44.91,
+        "fii": 7.52,
+        "dii": 24.01,
+        "public": 23.4,
+        "total_institutional": 31.53
+    },
+    {
+        "symbol": "BLUESTARCO",
+        "quarter": "Mar 2026",
+        "promoters": 36.48,
+        "fii": 13.8,
+        "dii": 27.78,
+        "public": 21.92,
+        "total_institutional": 41.58
+    },
+    {
+        "symbol": "BOSCHLTD",
+        "quarter": "Mar 2026",
+        "promoters": 70.54,
+        "fii": 7.22,
+        "dii": 15.05,
+        "public": 7.18,
+        "total_institutional": 22.27
+    },
+    {
+        "symbol": "BPCL",
+        "quarter": "Mar 2026",
+        "promoters": 52.98,
+        "fii": 19.57,
+        "dii": 18.52,
+        "public": 8.48,
+        "total_institutional": 38.09
+    },
+    {
+        "symbol": "BRITANNIA",
+        "quarter": "Mar 2026",
+        "promoters": 50.55,
+        "fii": 15.63,
+        "dii": 18.82,
+        "public": 14.94,
+        "total_institutional": 34.45
+    },
+    {
+        "symbol": "BSE",
+        "quarter": "Mar 2026",
+        "promoters": 0.0,
+        "fii": 19.42,
+        "dii": 25.09,
+        "public": 55.4,
+        "total_institutional": 44.51
+    },
+    {
+        "symbol": "CAMS",
+        "quarter": "Mar 2026",
+        "promoters": 0.0,
+        "fii": 44.44,
+        "dii": 22.06,
+        "public": 33.5,
+        "total_institutional": 66.5
+    },
+    {
+        "symbol": "CANBK",
+        "quarter": "Mar 2026",
+        "promoters": 62.93,
+        "fii": 14.24,
+        "dii": 10.91,
+        "public": 11.93,
+        "total_institutional": 25.15
+    },
+    {
+        "symbol": "CDSL",
+        "quarter": "Mar 2026",
+        "promoters": 15.0,
+        "fii": 11.36,
+        "dii": 14.42,
+        "public": 59.22,
+        "total_institutional": 25.78
+    },
+    {
+        "symbol": "CGPOWER",
+        "quarter": "Mar 2026",
+        "promoters": 56.36,
+        "fii": 12.03,
+        "dii": 18.01,
+        "public": 13.53,
+        "total_institutional": 30.04
+    },
+    {
+        "symbol": "CHOLAFIN",
+        "quarter": "Mar 2026",
+        "promoters": 49.25,
+        "fii": 24.87,
+        "dii": 19.91,
+        "public": 5.95,
+        "total_institutional": 44.78
+    },
+    {
+        "symbol": "CIPLA",
+        "quarter": "Mar 2026",
+        "promoters": 29.22,
+        "fii": 22.55,
+        "dii": 31.71,
+        "public": 16.26,
+        "total_institutional": 54.26
+    },
+    {
+        "symbol": "COALINDIA",
+        "quarter": "Mar 2026",
+        "promoters": 63.13,
+        "fii": 8.38,
+        "dii": 22.76,
+        "public": 5.62,
+        "total_institutional": 31.14
+    },
+    {
+        "symbol": "COCHINSHIP",
+        "quarter": "Mar 2026",
+        "promoters": 67.91,
+        "fii": 3.1,
+        "dii": 6.05,
+        "public": 22.95,
+        "total_institutional": 9.15
+    },
+    {
+        "symbol": "COFORGE",
+        "quarter": "Jun 2026",
+        "promoters": 0.0,
+        "fii": 24.66,
+        "dii": 42.71,
+        "public": 32.64,
+        "total_institutional": 67.37
+    },
+    {
+        "symbol": "COLPAL",
+        "quarter": "Mar 2026",
+        "promoters": 51.0,
+        "fii": 13.6,
+        "dii": 15.25,
+        "public": 19.87,
+        "total_institutional": 28.85
+    },
+    {
+        "symbol": "CONCOR",
+        "quarter": "Mar 2026",
+        "promoters": 54.8,
+        "fii": 8.32,
+        "dii": 29.77,
+        "public": 7.1,
+        "total_institutional": 38.09
+    },
+    {
+        "symbol": "CROMPTON",
+        "quarter": "Mar 2026",
+        "promoters": 0.0,
+        "fii": 20.49,
+        "dii": 66.11,
+        "public": 13.37,
+        "total_institutional": 86.6
+    },
+    {
+        "symbol": "CUMMINSIND",
+        "quarter": "Mar 2026",
+        "promoters": 51.0,
+        "fii": 20.77,
+        "dii": 19.43,
+        "public": 8.68,
+        "total_institutional": 40.2
+    },
+    {
+        "symbol": "DABUR",
+        "quarter": "Mar 2026",
+        "promoters": 66.25,
+        "fii": 9.98,
+        "dii": 18.46,
+        "public": 5.2,
+        "total_institutional": 28.44
+    },
+    {
+        "symbol": "DALBHARAT",
+        "quarter": "Mar 2026",
+        "promoters": 55.84,
+        "fii": 7.15,
+        "dii": 20.25,
+        "public": 16.61,
+        "total_institutional": 27.4
+    },
+    {
+        "symbol": "DELHIVERY",
+        "quarter": "Mar 2026",
+        "promoters": 0.0,
+        "fii": 48.23,
+        "dii": 36.27,
+        "public": 15.51,
+        "total_institutional": 84.5
+    },
+    {
+        "symbol": "DIVISLAB",
+        "quarter": "Mar 2026",
+        "promoters": 51.88,
+        "fii": 20.29,
+        "dii": 19.13,
+        "public": 8.61,
+        "total_institutional": 39.42
+    },
+    {
+        "symbol": "DIXON",
+        "quarter": "Mar 2026",
+        "promoters": 28.69,
+        "fii": 18.3,
+        "dii": 28.14,
+        "public": 24.87,
+        "total_institutional": 46.44
+    },
+    {
+        "symbol": "DLF",
+        "quarter": "Mar 2026",
+        "promoters": 74.08,
+        "fii": 13.54,
+        "dii": 6.94,
+        "public": 5.43,
+        "total_institutional": 20.48
+    },
+    {
+        "symbol": "DMART",
+        "quarter": "Mar 2026",
+        "promoters": 74.51,
+        "fii": 9.0,
+        "dii": 8.77,
+        "public": 7.64,
+        "total_institutional": 17.77
+    },
+    {
+        "symbol": "DRREDDY",
+        "quarter": "Mar 2026",
+        "promoters": 26.63,
+        "fii": 21.14,
+        "dii": 30.72,
+        "public": 21.27,
+        "total_institutional": 51.86
+    },
+    {
+        "symbol": "EICHERMOT",
+        "quarter": "Mar 2026",
+        "promoters": 49.06,
+        "fii": 26.77,
+        "dii": 14.73,
+        "public": 9.35,
+        "total_institutional": 41.5
+    },
+    {
+        "symbol": "ETERNAL",
+        "quarter": "Mar 2026",
+        "promoters": 0.0,
+        "fii": 32.61,
+        "dii": 35.88,
+        "public": 26.68,
+        "total_institutional": 68.49
+    },
+    {
+        "symbol": "EXIDEIND",
+        "quarter": "Mar 2026",
+        "promoters": 45.99,
+        "fii": 10.3,
+        "dii": 19.12,
+        "public": 24.59,
+        "total_institutional": 29.42
+    },
+    {
+        "symbol": "FEDERALBNK",
+        "quarter": "Mar 2026",
+        "promoters": 0.0,
+        "fii": 26.05,
+        "dii": 50.39,
+        "public": 23.56,
+        "total_institutional": 76.44
+    },
+    {
+        "symbol": "FORCEMOT",
+        "quarter": "Mar 2026",
+        "promoters": 61.63,
+        "fii": 10.93,
+        "dii": 1.75,
+        "public": 25.69,
+        "total_institutional": 12.68
+    },
+    {
+        "symbol": "FORTIS",
+        "quarter": "Mar 2026",
+        "promoters": 31.17,
+        "fii": 25.98,
+        "dii": 31.35,
+        "public": 11.5,
+        "total_institutional": 57.33
+    },
+    {
+        "symbol": "GAIL",
+        "quarter": "Mar 2026",
+        "promoters": 51.88,
+        "fii": 13.04,
+        "dii": 20.5,
+        "public": 6.98,
+        "total_institutional": 33.54
+    },
+    {
+        "symbol": "GLENMARK",
+        "quarter": "Mar 2026",
+        "promoters": 46.65,
+        "fii": 20.35,
+        "dii": 19.28,
+        "public": 13.7,
+        "total_institutional": 39.63
+    },
+    {
+        "symbol": "GMRAIRPORT",
+        "quarter": "Mar 2026",
+        "promoters": 66.33,
+        "fii": 20.17,
+        "dii": 4.93,
+        "public": 8.56,
+        "total_institutional": 25.1
+    },
+    {
+        "symbol": "GODFRYPHLP",
+        "quarter": "Mar 2026",
+        "promoters": 72.58,
+        "fii": 7.91,
+        "dii": 3.28,
+        "public": 16.2,
+        "total_institutional": 11.19
+    },
+    {
+        "symbol": "GODREJCP",
+        "quarter": "Mar 2026",
+        "promoters": 53.06,
+        "fii": 13.94,
+        "dii": 18.0,
+        "public": 14.99,
+        "total_institutional": 31.94
+    },
+    {
+        "symbol": "GODREJPROP",
+        "quarter": "Mar 2026",
+        "promoters": 51.66,
+        "fii": 26.17,
+        "dii": 8.19,
+        "public": 13.98,
+        "total_institutional": 34.36
+    },
+    {
+        "symbol": "GRASIM",
+        "quarter": "Mar 2026",
+        "promoters": 43.73,
+        "fii": 14.91,
+        "dii": 16.28,
+        "public": 24.75,
+        "total_institutional": 31.19
+    },
+    {
+        "symbol": "GVT&D",
+        "quarter": "Mar 2026",
+        "promoters": 51.0,
+        "fii": 20.39,
+        "dii": 21.39,
+        "public": 7.22,
+        "total_institutional": 41.78
+    },
+    {
+        "symbol": "HAL",
+        "quarter": "Mar 2026",
+        "promoters": 71.64,
+        "fii": 10.21,
+        "dii": 10.43,
+        "public": 7.66,
+        "total_institutional": 20.64
+    },
+    {
+        "symbol": "HAVELLS",
+        "quarter": "Mar 2026",
+        "promoters": 59.38,
+        "fii": 16.93,
+        "dii": 17.5,
+        "public": 5.96,
+        "total_institutional": 34.43
+    },
+    {
+        "symbol": "HCLTECH",
+        "quarter": "Mar 2026",
+        "promoters": 60.86,
+        "fii": 15.51,
+        "dii": 18.95,
+        "public": 4.36,
+        "total_institutional": 34.46
+    },
+    {
+        "symbol": "HDFCAMC",
+        "quarter": "Mar 2026",
+        "promoters": 52.37,
+        "fii": 24.45,
+        "dii": 14.42,
+        "public": 8.75,
+        "total_institutional": 38.87
+    },
+    {
+        "symbol": "HDFCBANK",
+        "quarter": "Mar 2026",
+        "promoters": 0.0,
+        "fii": 44.05,
+        "dii": 40.14,
+        "public": 15.64,
+        "total_institutional": 84.19
+    },
+    {
+        "symbol": "HDFCLIFE",
+        "quarter": "Mar 2026",
+        "promoters": 50.21,
+        "fii": 22.52,
+        "dii": 17.25,
+        "public": 10.0,
+        "total_institutional": 39.77
+    },
+    {
+        "symbol": "HEROMOTOCO",
+        "quarter": "Mar 2026",
+        "promoters": 34.73,
+        "fii": 31.15,
+        "dii": 24.69,
+        "public": 9.34,
+        "total_institutional": 55.84
+    },
+    {
+        "symbol": "HINDALCO",
+        "quarter": "Mar 2026",
+        "promoters": 34.65,
+        "fii": 29.96,
+        "dii": 21.35,
+        "public": 13.21,
+        "total_institutional": 51.31
+    },
+    {
+        "symbol": "HINDPETRO",
+        "quarter": "Mar 2026",
+        "promoters": 54.9,
+        "fii": 17.26,
+        "dii": 19.58,
+        "public": 8.24,
+        "total_institutional": 36.84
+    },
+    {
+        "symbol": "HINDUNILVR",
+        "quarter": "Mar 2026",
+        "promoters": 61.9,
+        "fii": 10.1,
+        "dii": 16.33,
+        "public": 11.6,
+        "total_institutional": 26.43
+    },
+    {
+        "symbol": "HINDZINC",
+        "quarter": "Mar 2026",
+        "promoters": 60.71,
+        "fii": 2.39,
+        "dii": 4.84,
+        "public": 4.12,
+        "total_institutional": 7.23
+    },
+    {
+        "symbol": "HYUNDAI",
+        "quarter": "Mar 2026",
+        "promoters": 82.5,
+        "fii": 5.43,
+        "dii": 9.71,
+        "public": 2.37,
+        "total_institutional": 15.14
+    },
+    {
+        "symbol": "ICICIBANK",
+        "quarter": "Mar 2026",
+        "promoters": 0.0,
+        "fii": 34.48,
+        "dii": 39.94,
+        "public": 25.36,
+        "total_institutional": 74.42
+    },
+    {
+        "symbol": "ICICIGI",
+        "quarter": "Mar 2026",
+        "promoters": 51.28,
+        "fii": 22.29,
+        "dii": 19.41,
+        "public": 6.9,
+        "total_institutional": 41.7
+    },
+    {
+        "symbol": "ICICIPRULI",
+        "quarter": "Mar 2026",
+        "promoters": 72.8,
+        "fii": 10.89,
+        "dii": 11.05,
+        "public": 5.23,
+        "total_institutional": 21.94
+    },
+    {
+        "symbol": "IDEA",
+        "quarter": "Mar 2026",
+        "promoters": 25.64,
+        "fii": 5.56,
+        "dii": 6.19,
+        "public": 13.57,
+        "total_institutional": 11.75
+    },
+    {
+        "symbol": "IDFCFIRSTB",
+        "quarter": "Mar 2026",
+        "promoters": 0.0,
+        "fii": 36.52,
+        "dii": 22.73,
+        "public": 32.93,
+        "total_institutional": 59.25
+    },
+    {
+        "symbol": "IEX",
+        "quarter": "Mar 2026",
+        "promoters": 0.0,
+        "fii": 14.16,
+        "dii": 30.26,
+        "public": 55.31,
+        "total_institutional": 44.42
+    },
+    {
+        "symbol": "INDHOTEL",
+        "quarter": "Mar 2026",
+        "promoters": 38.12,
+        "fii": 23.23,
+        "dii": 22.58,
+        "public": 15.95,
+        "total_institutional": 45.81
+    },
+    {
+        "symbol": "INDIANB",
+        "quarter": "Mar 2026",
+        "promoters": 73.84,
+        "fii": 5.82,
+        "dii": 17.75,
+        "public": 2.58,
+        "total_institutional": 23.57
+    },
+    {
+        "symbol": "INDIGO",
+        "quarter": "Mar 2026",
+        "promoters": 41.57,
+        "fii": 21.64,
+        "dii": 31.14,
+        "public": 5.6,
+        "total_institutional": 52.78
+    },
+    {
+        "symbol": "INDUSINDBK",
+        "quarter": "Mar 2026",
+        "promoters": 15.82,
+        "fii": 28.57,
+        "dii": 40.13,
+        "public": 15.1,
+        "total_institutional": 68.7
+    },
+    {
+        "symbol": "INDUSTOWER",
+        "quarter": "Mar 2026",
+        "promoters": 51.26,
+        "fii": 25.1,
+        "dii": 19.68,
+        "public": 3.93,
+        "total_institutional": 44.78
+    },
+    {
+        "symbol": "INFY",
+        "quarter": "Mar 2026",
+        "promoters": 14.38,
+        "fii": 28.45,
+        "dii": 43.19,
+        "public": 13.54,
+        "total_institutional": 71.64
+    },
+    {
+        "symbol": "INOXWIND",
+        "quarter": "Mar 2026",
+        "promoters": 44.18,
+        "fii": 14.6,
+        "dii": 10.96,
+        "public": 30.25,
+        "total_institutional": 25.56
+    },
+    {
+        "symbol": "IOC",
+        "quarter": "Mar 2026",
+        "promoters": 51.5,
+        "fii": 9.84,
+        "dii": 9.1,
+        "public": 9.96,
+        "total_institutional": 18.94
+    },
+    {
+        "symbol": "IREDA",
+        "quarter": "Mar 2026",
+        "promoters": 71.76,
+        "fii": 2.14,
+        "dii": 2.44,
+        "public": 23.65,
+        "total_institutional": 4.58
+    },
+    {
+        "symbol": "IRFC",
+        "quarter": "Mar 2026",
+        "promoters": 84.65,
+        "fii": 1.16,
+        "dii": 2.89,
+        "public": 11.29,
+        "total_institutional": 4.05
+    },
+    {
+        "symbol": "ITC",
+        "quarter": "Mar 2026",
+        "promoters": 0.0,
+        "fii": 34.83,
+        "dii": 49.15,
+        "public": 15.96,
+        "total_institutional": 83.98
+    },
+    {
+        "symbol": "JINDALSTEL",
+        "quarter": "Mar 2026",
+        "promoters": 62.71,
+        "fii": 9.19,
+        "dii": 19.14,
+        "public": 8.73,
+        "total_institutional": 28.33
+    },
+    {
+        "symbol": "JIOFIN",
+        "quarter": "Apr 2026",
+        "promoters": 49.13,
+        "fii": 11.61,
+        "dii": 13.34,
+        "public": 25.75,
+        "total_institutional": 24.95
+    },
+    {
+        "symbol": "JSWENERGY",
+        "quarter": "May 2026",
+        "promoters": 66.53,
+        "fii": 11.31,
+        "dii": 16.15,
+        "public": 5.92,
+        "total_institutional": 27.46
+    },
+    {
+        "symbol": "JSWSTEEL",
+        "quarter": "Mar 2026",
+        "promoters": 45.31,
+        "fii": 25.38,
+        "dii": 11.16,
+        "public": 17.47,
+        "total_institutional": 36.54
+    },
+    {
+        "symbol": "JUBLFOOD",
+        "quarter": "Mar 2026",
+        "promoters": 40.27,
+        "fii": 17.29,
+        "dii": 36.38,
+        "public": 5.54,
+        "total_institutional": 53.67
+    },
+    {
+        "symbol": "KALYANKJIL",
+        "quarter": "Mar 2026",
+        "promoters": 62.86,
+        "fii": 14.55,
+        "dii": 14.13,
+        "public": 8.46,
+        "total_institutional": 28.68
+    },
+    {
+        "symbol": "KAYNES",
+        "quarter": "Mar 2026",
+        "promoters": 53.46,
+        "fii": 7.28,
+        "dii": 15.13,
+        "public": 24.12,
+        "total_institutional": 22.41
+    },
+    {
+        "symbol": "KEI",
+        "quarter": "Mar 2026",
+        "promoters": 35.0,
+        "fii": 27.27,
+        "dii": 25.83,
+        "public": 11.88,
+        "total_institutional": 53.1
+    },
+    {
+        "symbol": "KFINTECH",
+        "quarter": "Mar 2026",
+        "promoters": 22.86,
+        "fii": 26.26,
+        "dii": 25.22,
+        "public": 25.66,
+        "total_institutional": 51.48
+    },
+    {
+        "symbol": "KOTAKBANK",
+        "quarter": "Mar 2026",
+        "promoters": 25.87,
+        "fii": 26.4,
+        "dii": 36.19,
+        "public": 11.54,
+        "total_institutional": 62.59
+    },
+    {
+        "symbol": "KPITTECH",
+        "quarter": "Mar 2026",
+        "promoters": 39.41,
+        "fii": 13.25,
+        "dii": 24.65,
+        "public": 21.98,
+        "total_institutional": 37.9
+    },
+    {
+        "symbol": "LAURUSLABS",
+        "quarter": "Mar 2026",
+        "promoters": 27.49,
+        "fii": 25.82,
+        "dii": 13.96,
+        "public": 32.73,
+        "total_institutional": 39.78
+    },
+    {
+        "symbol": "LICHSGFIN",
+        "quarter": "Mar 2026",
+        "promoters": 45.24,
+        "fii": 21.39,
+        "dii": 20.89,
+        "public": 12.49,
+        "total_institutional": 42.28
+    },
+    {
+        "symbol": "LICI",
+        "quarter": "Jun 2026",
+        "promoters": 96.5,
+        "fii": 0.33,
+        "dii": 1.09,
+        "public": 2.1,
+        "total_institutional": 1.42
+    },
+    {
+        "symbol": "LODHA",
+        "quarter": "Mar 2026",
+        "promoters": 72.27,
+        "fii": 21.24,
+        "dii": 4.62,
+        "public": 1.85,
+        "total_institutional": 25.86
+    },
+    {
+        "symbol": "LT",
+        "quarter": "Mar 2026",
+        "promoters": 0.0,
+        "fii": 18.78,
+        "dii": 43.32,
+        "public": 37.64,
+        "total_institutional": 62.1
+    },
+    {
+        "symbol": "LTF",
+        "quarter": "Mar 2026",
+        "promoters": 65.99,
+        "fii": 7.64,
+        "dii": 14.91,
+        "public": 11.48,
+        "total_institutional": 22.55
+    },
+    {
+        "symbol": "LTM",
+        "quarter": "Mar 2026",
+        "promoters": 68.52,
+        "fii": 6.63,
+        "dii": 16.9,
+        "public": 7.82,
+        "total_institutional": 23.53
+    },
+    {
+        "symbol": "LUPIN",
+        "quarter": "Mar 2026",
+        "promoters": 46.85,
+        "fii": 21.7,
+        "dii": 25.32,
+        "public": 6.13,
+        "total_institutional": 47.02
+    },
+    {
+        "symbol": "M&M",
+        "quarter": "Mar 2026",
+        "promoters": 18.45,
+        "fii": 36.23,
+        "dii": 31.37,
+        "public": 10.25,
+        "total_institutional": 67.6
+    },
+    {
+        "symbol": "MANAPPURAM",
+        "quarter": "Mar 2026",
+        "promoters": 31.77,
+        "fii": 23.23,
+        "dii": 12.96,
+        "public": 32.03,
+        "total_institutional": 36.19
+    },
+    {
+        "symbol": "MANKIND",
+        "quarter": "Mar 2026",
+        "promoters": 72.66,
+        "fii": 10.24,
+        "dii": 14.46,
+        "public": 2.63,
+        "total_institutional": 24.7
+    },
+    {
+        "symbol": "MARICO",
+        "quarter": "Mar 2026",
+        "promoters": 58.93,
+        "fii": 24.08,
+        "dii": 12.17,
+        "public": 4.49,
+        "total_institutional": 36.25
+    },
+    {
+        "symbol": "MARUTI",
+        "quarter": "Mar 2026",
+        "promoters": 58.53,
+        "fii": 14.12,
+        "dii": 24.09,
+        "public": 3.18,
+        "total_institutional": 38.21
+    },
+    {
+        "symbol": "MAXHEALTH",
+        "quarter": "Mar 2026",
+        "promoters": 23.71,
+        "fii": 45.39,
+        "dii": 26.32,
+        "public": 4.58,
+        "total_institutional": 71.71
+    },
+    {
+        "symbol": "MAZDOCK",
+        "quarter": "Mar 2026",
+        "promoters": 81.22,
+        "fii": 1.73,
+        "dii": 5.09,
+        "public": 11.95,
+        "total_institutional": 6.82
+    },
+    {
+        "symbol": "MCX",
+        "quarter": "Mar 2026",
+        "promoters": 0.0,
+        "fii": 26.07,
+        "dii": 54.35,
+        "public": 19.38,
+        "total_institutional": 80.42
+    },
+    {
+        "symbol": "MFSL",
+        "quarter": "Mar 2026",
+        "promoters": 1.25,
+        "fii": 47.88,
+        "dii": 44.74,
+        "public": 6.11,
+        "total_institutional": 92.62
+    },
+    {
+        "symbol": "MOTHERSON",
+        "quarter": "Mar 2026",
+        "promoters": 48.6,
+        "fii": 12.45,
+        "dii": 21.08,
+        "public": 17.6,
+        "total_institutional": 33.53
+    },
+    {
+        "symbol": "MOTILALOFS",
+        "quarter": "Mar 2026",
+        "promoters": 67.54,
+        "fii": 7.03,
+        "dii": 6.02,
+        "public": 19.4,
+        "total_institutional": 13.05
+    },
+    {
+        "symbol": "MPHASIS",
+        "quarter": "Mar 2026",
+        "promoters": 30.55,
+        "fii": 19.51,
+        "dii": 45.65,
+        "public": 4.28,
+        "total_institutional": 65.16
+    },
+    {
+        "symbol": "MUTHOOTFIN",
+        "quarter": "Mar 2026",
+        "promoters": 73.35,
+        "fii": 12.31,
+        "dii": 10.43,
+        "public": 3.92,
+        "total_institutional": 22.74
+    },
+    {
+        "symbol": "NAM-INDIA",
+        "quarter": "Mar 2026",
+        "promoters": 71.93,
+        "fii": 7.35,
+        "dii": 14.77,
+        "public": 5.95,
+        "total_institutional": 22.12
+    },
+    {
+        "symbol": "NATIONALUM",
+        "quarter": "Mar 2026",
+        "promoters": 51.28,
+        "fii": 22.27,
+        "dii": 10.75,
+        "public": 15.69,
+        "total_institutional": 33.02
+    },
+    {
+        "symbol": "NAUKRI",
+        "quarter": "Mar 2026",
+        "promoters": 37.5,
+        "fii": 27.97,
+        "dii": 23.43,
+        "public": 10.34,
+        "total_institutional": 51.4
+    },
+    {
+        "symbol": "NBCC",
+        "quarter": "Mar 2026",
+        "promoters": 61.75,
+        "fii": 4.99,
+        "dii": 10.75,
+        "public": 22.5,
+        "total_institutional": 15.74
+    },
+    {
+        "symbol": "NESTLEIND",
+        "quarter": "Mar 2026",
+        "promoters": 62.76,
+        "fii": 9.74,
+        "dii": 12.4,
+        "public": 15.09,
+        "total_institutional": 22.14
+    },
+    {
+        "symbol": "NHPC",
+        "quarter": "Mar 2026",
+        "promoters": 67.4,
+        "fii": 10.34,
+        "dii": 10.78,
+        "public": 10.36,
+        "total_institutional": 21.12
+    },
+    {
+        "symbol": "NMDC",
+        "quarter": "Mar 2026",
+        "promoters": 60.79,
+        "fii": 13.6,
+        "dii": 13.76,
+        "public": 11.84,
+        "total_institutional": 27.36
+    },
+    {
+        "symbol": "NTPC",
+        "quarter": "Mar 2026",
+        "promoters": 51.1,
+        "fii": 16.54,
+        "dii": 29.13,
+        "public": 3.1,
+        "total_institutional": 45.67
+    },
+    {
+        "symbol": "NUVAMA",
+        "quarter": "Mar 2026",
+        "promoters": 54.13,
+        "fii": 16.94,
+        "dii": 8.3,
+        "public": 20.62,
+        "total_institutional": 25.24
+    },
+    {
+        "symbol": "NYKAA",
+        "quarter": "Mar 2026",
+        "promoters": 52.09,
+        "fii": 12.4,
+        "dii": 25.35,
+        "public": 10.15,
+        "total_institutional": 37.75
+    },
+    {
+        "symbol": "OBEROIRLTY",
+        "quarter": "Mar 2026",
+        "promoters": 67.71,
+        "fii": 15.42,
+        "dii": 14.58,
+        "public": 2.28,
+        "total_institutional": 30.0
+    },
+    {
+        "symbol": "OFSS",
+        "quarter": "Mar 2026",
+        "promoters": 72.44,
+        "fii": 8.04,
+        "dii": 9.12,
+        "public": 10.38,
+        "total_institutional": 17.16
+    },
+    {
+        "symbol": "OIL",
+        "quarter": "Mar 2026",
+        "promoters": 56.66,
+        "fii": 7.67,
+        "dii": 19.43,
+        "public": 6.36,
+        "total_institutional": 27.1
+    },
+    {
+        "symbol": "ONGC",
+        "quarter": "Mar 2026",
+        "promoters": 58.89,
+        "fii": 7.97,
+        "dii": 19.3,
+        "public": 3.54,
+        "total_institutional": 27.27
+    },
+    {
+        "symbol": "PAGEIND",
+        "quarter": "Mar 2026",
+        "promoters": 42.89,
+        "fii": 19.0,
+        "dii": 32.5,
+        "public": 4.9,
+        "total_institutional": 51.5
+    },
+    {
+        "symbol": "PATANJALI",
+        "quarter": "Mar 2026",
+        "promoters": 68.25,
+        "fii": 9.2,
+        "dii": 12.06,
+        "public": 10.49,
+        "total_institutional": 21.26
+    },
+    {
+        "symbol": "PAYTM",
+        "quarter": "Mar 2026",
+        "promoters": 0.0,
+        "fii": 49.4,
+        "dii": 23.08,
+        "public": 27.51,
+        "total_institutional": 72.48
+    },
+    {
+        "symbol": "PERSISTENT",
+        "quarter": "Mar 2026",
+        "promoters": 30.29,
+        "fii": 22.11,
+        "dii": 30.47,
+        "public": 16.14,
+        "total_institutional": 52.58
+    },
+    {
+        "symbol": "PETRONET",
+        "quarter": "Mar 2026",
+        "promoters": 50.0,
+        "fii": 27.13,
+        "dii": 12.94,
+        "public": 9.95,
+        "total_institutional": 40.07
+    },
+    {
+        "symbol": "PFC",
+        "quarter": "Mar 2026",
+        "promoters": 55.99,
+        "fii": 19.64,
+        "dii": 15.05,
+        "public": 9.32,
+        "total_institutional": 34.69
+    },
+    {
+        "symbol": "PGEL",
+        "quarter": "Mar 2026",
+        "promoters": 43.41,
+        "fii": 9.75,
+        "dii": 24.49,
+        "public": 22.35,
+        "total_institutional": 34.24
+    },
+    {
+        "symbol": "PHOENIXLTD",
+        "quarter": "Mar 2026",
+        "promoters": 47.25,
+        "fii": 32.97,
+        "dii": 16.14,
+        "public": 3.64,
+        "total_institutional": 49.11
+    },
+    {
+        "symbol": "PIDILITIND",
+        "quarter": "Mar 2026",
+        "promoters": 69.32,
+        "fii": 11.75,
+        "dii": 9.56,
+        "public": 9.29,
+        "total_institutional": 21.31
+    },
+    {
+        "symbol": "PIIND",
+        "quarter": "Mar 2026",
+        "promoters": 46.09,
+        "fii": 15.87,
+        "dii": 31.2,
+        "public": 6.69,
+        "total_institutional": 47.07
+    },
+    {
+        "symbol": "PNB",
+        "quarter": "Mar 2026",
+        "promoters": 70.08,
+        "fii": 6.39,
+        "dii": 16.05,
+        "public": 7.48,
+        "total_institutional": 22.44
+    },
+    {
+        "symbol": "PNBHOUSING",
+        "quarter": "Mar 2026",
+        "promoters": 28.04,
+        "fii": 16.6,
+        "dii": 44.07,
+        "public": 11.28,
+        "total_institutional": 60.67
+    },
+    {
+        "symbol": "POLICYBZR",
+        "quarter": "Mar 2026",
+        "promoters": 0.0,
+        "fii": 39.94,
+        "dii": 36.72,
+        "public": 23.19,
+        "total_institutional": 76.66
+    },
+    {
+        "symbol": "POLYCAB",
+        "quarter": "Mar 2026",
+        "promoters": 61.5,
+        "fii": 18.21,
+        "dii": 7.95,
+        "public": 12.33,
+        "total_institutional": 26.16
+    },
+    {
+        "symbol": "POWERGRID",
+        "quarter": "Mar 2026",
+        "promoters": 51.34,
+        "fii": 25.02,
+        "dii": 20.05,
+        "public": 3.51,
+        "total_institutional": 45.07
+    },
+    {
+        "symbol": "POWERINDIA",
+        "quarter": "Mar 2026",
+        "promoters": 71.31,
+        "fii": 11.68,
+        "dii": 6.95,
+        "public": 10.07,
+        "total_institutional": 18.63
+    },
+    {
+        "symbol": "PREMIERENE",
+        "quarter": "Mar 2026",
+        "promoters": 63.94,
+        "fii": 5.72,
+        "dii": 13.69,
+        "public": 16.28,
+        "total_institutional": 19.41
+    },
+    {
+        "symbol": "PRESTIGE",
+        "quarter": "Mar 2026",
+        "promoters": 60.95,
+        "fii": 14.2,
+        "dii": 22.6,
+        "public": 2.26,
+        "total_institutional": 36.8
+    },
+    {
+        "symbol": "RADICO",
+        "quarter": "Mar 2026",
+        "promoters": 40.2,
+        "fii": 17.63,
+        "dii": 27.35,
+        "public": 14.82,
+        "total_institutional": 44.98
+    },
+    {
+        "symbol": "RBLBANK",
+        "quarter": "Jun 2026",
+        "promoters": 60.0,
+        "fii": 7.88,
+        "dii": 17.69,
+        "public": 14.29,
+        "total_institutional": 25.57
+    },
+    {
+        "symbol": "RECLTD",
+        "quarter": "Mar 2026",
+        "promoters": 52.63,
+        "fii": 15.79,
+        "dii": 16.36,
+        "public": 15.17,
+        "total_institutional": 32.15
+    },
+    {
+        "symbol": "RELIANCE",
+        "quarter": "Mar 2026",
+        "promoters": 50.0,
+        "fii": 18.67,
+        "dii": 20.46,
+        "public": 10.7,
+        "total_institutional": 39.13
+    },
+    {
+        "symbol": "RVNL",
+        "quarter": "Mar 2026",
+        "promoters": 72.84,
+        "fii": 4.86,
+        "dii": 6.42,
+        "public": 15.87,
+        "total_institutional": 11.28
+    },
+    {
+        "symbol": "SAIL",
+        "quarter": "Mar 2026",
+        "promoters": 65.0,
+        "fii": 5.01,
+        "dii": 18.4,
+        "public": 11.58,
+        "total_institutional": 23.41
+    },
+    {
+        "symbol": "SBICARD",
+        "quarter": "Mar 2026",
+        "promoters": 68.92,
+        "fii": 9.54,
+        "dii": 18.12,
+        "public": 3.42,
+        "total_institutional": 27.66
+    },
+    {
+        "symbol": "SBILIFE",
+        "quarter": "Mar 2026",
+        "promoters": 55.33,
+        "fii": 21.51,
+        "dii": 19.13,
+        "public": 4.02,
+        "total_institutional": 40.64
+    },
+    {
+        "symbol": "SBIN",
+        "quarter": "Mar 2026",
+        "promoters": 55.52,
+        "fii": 11.41,
+        "dii": 26.11,
+        "public": 6.81,
+        "total_institutional": 37.52
+    },
+    {
+        "symbol": "SHREECEM",
+        "quarter": "Mar 2026",
+        "promoters": 62.56,
+        "fii": 8.94,
+        "dii": 15.79,
+        "public": 12.48,
+        "total_institutional": 24.73
+    },
+    {
+        "symbol": "SHRIRAMFIN",
+        "quarter": "Apr 2026",
+        "promoters": 20.3,
+        "fii": 56.14,
+        "dii": 18.62,
+        "public": 4.94,
+        "total_institutional": 74.76
+    },
+    {
+        "symbol": "SIEMENS",
+        "quarter": "Mar 2026",
+        "promoters": 75.0,
+        "fii": 6.8,
+        "dii": 8.59,
+        "public": 9.6,
+        "total_institutional": 15.39
+    },
+    {
+        "symbol": "SOLARINDS",
+        "quarter": "Mar 2026",
+        "promoters": 73.15,
+        "fii": 6.59,
+        "dii": 12.89,
+        "public": 7.35,
+        "total_institutional": 19.48
+    },
+    {
+        "symbol": "SONACOMS",
+        "quarter": "Mar 2026",
+        "promoters": 28.01,
+        "fii": 23.7,
+        "dii": 41.46,
+        "public": 6.82,
+        "total_institutional": 65.16
+    },
+    {
+        "symbol": "SRF",
+        "quarter": "Mar 2026",
+        "promoters": 50.26,
+        "fii": 16.67,
+        "dii": 21.17,
+        "public": 11.87,
+        "total_institutional": 37.84
+    },
+    {
+        "symbol": "SUNPHARMA",
+        "quarter": "Mar 2026",
+        "promoters": 54.48,
+        "fii": 15.94,
+        "dii": 21.0,
+        "public": 8.48,
+        "total_institutional": 36.94
+    },
+    {
+        "symbol": "SUPREMEIND",
+        "quarter": "Mar 2026",
+        "promoters": 48.96,
+        "fii": 17.12,
+        "dii": 19.14,
+        "public": 14.69,
+        "total_institutional": 36.26
+    },
+    {
+        "symbol": "SUZLON",
+        "quarter": "Mar 2026",
+        "promoters": 11.73,
+        "fii": 23.85,
+        "dii": 9.18,
+        "public": 55.23,
+        "total_institutional": 33.03
+    },
+    {
+        "symbol": "SWIGGY",
+        "quarter": "Mar 2026",
+        "promoters": 0.0,
+        "fii": 14.59,
+        "dii": 25.45,
+        "public": 54.39,
+        "total_institutional": 40.04
+    },
+    {
+        "symbol": "TATACONSUM",
+        "quarter": "Mar 2026",
+        "promoters": 33.83,
+        "fii": 20.79,
+        "dii": 24.18,
+        "public": 21.16,
+        "total_institutional": 44.97
+    },
+    {
+        "symbol": "TATAELXSI",
+        "quarter": "Mar 2026",
+        "promoters": 43.9,
+        "fii": 11.08,
+        "dii": 11.39,
+        "public": 33.62,
+        "total_institutional": 22.47
+    },
+    {
+        "symbol": "TATAPOWER",
+        "quarter": "Mar 2026",
+        "promoters": 46.86,
+        "fii": 10.04,
+        "dii": 17.98,
+        "public": 24.81,
+        "total_institutional": 28.02
+    },
+    {
+        "symbol": "TATASTEEL",
+        "quarter": "Mar 2026",
+        "promoters": 33.19,
+        "fii": 18.58,
+        "dii": 26.67,
+        "public": 21.36,
+        "total_institutional": 45.25
+    },
+    {
+        "symbol": "TCS",
+        "quarter": "Mar 2026",
+        "promoters": 71.77,
+        "fii": 9.66,
+        "dii": 13.34,
+        "public": 5.16,
+        "total_institutional": 23.0
+    },
+    {
+        "symbol": "TECHM",
+        "quarter": "Mar 2026",
+        "promoters": 34.97,
+        "fii": 18.59,
+        "dii": 37.34,
+        "public": 8.94,
+        "total_institutional": 55.93
+    },
+    {
+        "symbol": "TIINDIA",
+        "quarter": "Mar 2026",
+        "promoters": 44.05,
+        "fii": 21.42,
+        "dii": 21.75,
+        "public": 12.33,
+        "total_institutional": 43.17
+    },
+    {
+        "symbol": "TITAN",
+        "quarter": "Mar 2026",
+        "promoters": 52.9,
+        "fii": 15.65,
+        "dii": 14.84,
+        "public": 16.34,
+        "total_institutional": 30.49
+    },
+    {
+        "symbol": "TMPV",
+        "quarter": "Mar 2026",
+        "promoters": 42.56,
+        "fii": 17.29,
+        "dii": 16.79,
+        "public": 23.06,
+        "total_institutional": 34.08
+    },
+    {
+        "symbol": "TORNTPHARM",
+        "quarter": "Mar 2026",
+        "promoters": 68.31,
+        "fii": 16.18,
+        "dii": 8.96,
+        "public": 6.55,
+        "total_institutional": 25.14
+    },
+    {
+        "symbol": "TRENT",
+        "quarter": "Mar 2026",
+        "promoters": 37.01,
+        "fii": 15.59,
+        "dii": 22.19,
+        "public": 25.03,
+        "total_institutional": 37.78
+    },
+    {
+        "symbol": "TVSMOTOR",
+        "quarter": "Mar 2026",
+        "promoters": 50.27,
+        "fii": 22.56,
+        "dii": 18.84,
+        "public": 8.3,
+        "total_institutional": 41.4
+    },
+    {
+        "symbol": "ULTRACEMCO",
+        "quarter": "Mar 2026",
+        "promoters": 59.33,
+        "fii": 13.61,
+        "dii": 18.42,
+        "public": 8.41,
+        "total_institutional": 32.03
+    },
+    {
+        "symbol": "UNIONBANK",
+        "quarter": "Mar 2026",
+        "promoters": 74.76,
+        "fii": 9.37,
+        "dii": 11.51,
+        "public": 4.36,
+        "total_institutional": 20.88
+    },
+    {
+        "symbol": "UNITDSPR",
+        "quarter": "Mar 2026",
+        "promoters": 56.68,
+        "fii": 14.41,
+        "dii": 15.36,
+        "public": 13.54,
+        "total_institutional": 29.77
+    },
+    {
+        "symbol": "UNOMINDA",
+        "quarter": "Mar 2026",
+        "promoters": 68.36,
+        "fii": 8.96,
+        "dii": 16.89,
+        "public": 5.79,
+        "total_institutional": 25.85
+    },
+    {
+        "symbol": "UPL",
+        "quarter": "Mar 2026",
+        "promoters": 33.5,
+        "fii": 41.78,
+        "dii": 14.63,
+        "public": 10.05,
+        "total_institutional": 56.41
+    },
+    {
+        "symbol": "VBL",
+        "quarter": "Mar 2026",
+        "promoters": 59.43,
+        "fii": 19.51,
+        "dii": 14.35,
+        "public": 6.66,
+        "total_institutional": 33.86
+    },
+    {
+        "symbol": "VEDL",
+        "quarter": "Mar 2026",
+        "promoters": 56.38,
+        "fii": 13.93,
+        "dii": 13.43,
+        "public": 16.05,
+        "total_institutional": 27.36
+    },
+    {
+        "symbol": "VMM",
+        "quarter": "Mar 2026",
+        "promoters": 40.12,
+        "fii": 22.01,
+        "dii": 32.74,
+        "public": 5.13,
+        "total_institutional": 54.75
+    },
+    {
+        "symbol": "VOLTAS",
+        "quarter": "Mar 2026",
+        "promoters": 30.3,
+        "fii": 18.44,
+        "dii": 38.28,
+        "public": 12.86,
+        "total_institutional": 56.72
+    },
+    {
+        "symbol": "WAAREEENER",
+        "quarter": "Mar 2026",
+        "promoters": 64.19,
+        "fii": 7.06,
+        "dii": 4.32,
+        "public": 24.44,
+        "total_institutional": 11.38
+    },
+    {
+        "symbol": "WIPRO",
+        "quarter": "Mar 2026",
+        "promoters": 72.62,
+        "fii": 8.32,
+        "dii": 7.86,
+        "public": 11.08,
+        "total_institutional": 16.18
+    },
+    {
+        "symbol": "YESBANK",
+        "quarter": "Mar 2026",
+        "promoters": 0.0,
+        "fii": 46.42,
+        "dii": 21.81,
+        "public": 31.74,
+        "total_institutional": 68.23
+    },
+    {
+        "symbol": "ZYDUSLIFE",
+        "quarter": "Jun 2026",
+        "promoters": 75.02,
+        "fii": 6.89,
+        "dii": 11.18,
+        "public": 6.9,
+        "total_institutional": 18.07
+    }
+]

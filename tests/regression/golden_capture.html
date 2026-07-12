@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>TradeSignal — Golden Output Capture</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { background: #0f1117; color: #e0e0e0; font-family: 'Consolas', monospace; padding: 20px; }
+    h1 { color: #26A69A; margin-bottom: 6px; }
+    .subtitle { color: #888; font-size: 0.85rem; margin-bottom: 20px; }
+    .toolbar { display: flex; gap: 10px; margin-bottom: 20px; flex-wrap: wrap; }
+    button { padding: 8px 18px; border: none; border-radius: 6px; cursor: pointer; font-weight: 600; font-size: 0.85rem; }
+    #btn-run  { background: #26A69A; color: #fff; }
+    #btn-dl   { background: #1565C0; color: #fff; }
+    #btn-copy { background: #444; color: #fff; }
+    .scenario-grid { display: grid; gap: 12px; }
+    .card { background: #1a1d27; border-radius: 8px; border: 1px solid #2a2d3a; padding: 14px; }
+    .card-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
+    .card-id { font-weight: 700; color: #42A5F5; font-size: 0.9rem; }
+    .badge { padding: 2px 8px; border-radius: 4px; font-size: 0.75rem; font-weight: 700; }
+    .badge-run  { background: #333; color: #888; }
+    .badge-pass { background: #26A69A22; color: #26A69A; border: 1px solid #26A69A44; }
+    .badge-fail { background: #EF535022; color: #EF5350; border: 1px solid #EF535044; }
+    .badge-skip { background: #FF980022; color: #FF9800; }
+    .desc { color: #888; font-size: 0.78rem; margin-bottom: 8px; }
+    .result-summary { display: grid; grid-template-columns: repeat(5,1fr); gap: 6px; margin-bottom: 8px; }
+    .kv { background: #12141c; border-radius: 4px; padding: 4px 8px; }
+    .kv label { display: block; font-size: 0.6rem; color: #666; text-transform: uppercase; }
+    .kv span  { font-size: 0.8rem; font-weight: 600; }
+    .green { color: #26A69A; } .red { color: #EF5350; } .blue { color: #42A5F5; } .orange { color: #FF9800; }
+    details { margin-top: 8px; }
+    summary { font-size: 0.75rem; color: #555; cursor: pointer; }
+    pre { background: #12141c; padding: 10px; border-radius: 4px; font-size: 0.7rem;
+          overflow-x: auto; max-height: 250px; margin-top: 6px; color: #aaa; white-space: pre-wrap; }
+    #status-bar { position: sticky; top: 0; background: #0f1117; padding: 8px 0; margin-bottom: 12px;
+                  border-bottom: 1px solid #2a2d3a; font-size: 0.85rem; color: #888; }
+    #totals { color: #26A69A; font-weight: 700; }
+  </style>
+</head>
+<body>
+  <h1>🎯 Golden Output Capture</h1>
+  <p class="subtitle">Runs every regression scenario through the <strong>current JS EntryValidator</strong> and captures golden outputs.<br>
+     Download the JSON and commit it — this becomes the regression baseline for post-migration comparison.</p>
+
+  <div id="status-bar">Status: <span id="status">Ready. Press RUN ALL to capture golden outputs.</span> &nbsp;|&nbsp; <span id="totals"></span></div>
+
+  <div class="toolbar">
+    <button id="btn-run" onclick="runAll()">▶ RUN ALL SCENARIOS</button>
+    <button id="btn-dl" onclick="downloadGolden()">⬇ DOWNLOAD golden.json</button>
+    <button id="btn-copy" onclick="copyGolden()">📋 COPY JSON</button>
+  </div>
+
+  <div class="scenario-grid" id="grid"></div>
+
+  <!-- Load JS dependencies -->
+  <script src="../../app/js/technical-indicators.js"></script>
+  <script src="../../app/js/gap-analysis-engine.js"></script>
+  <script src="../../app/js/entry-validator.js"></script>
+  <script src="fixtures/ohlcv_factory.js"></script>
+
+  <script>
+    const goldenOutputs = {};
+    let passCount = 0, failCount = 0;
+
+    // ── Build cards ──────────────────────────────────────────────────────────
+    function buildGrid() {
+      const grid = document.getElementById('grid');
+      Object.values(OHLCVFactory.SCENARIOS).forEach(sc => {
+        const card = document.createElement('div');
+        card.className = 'card';
+        card.id = `card-${sc.id}`;
+        card.innerHTML = `
+          <div class="card-header">
+            <span class="card-id">${sc.id}</span>
+            <span class="badge badge-run" id="badge-${sc.id}">PENDING</span>
+          </div>
+          <div class="desc">${sc.description}</div>
+          <div class="result-summary" id="summary-${sc.id}"></div>
+          <details><summary>View captured JSON</summary>
+            <pre id="json-${sc.id}">—</pre>
+          </details>`;
+        grid.appendChild(card);
+      });
+    }
+
+    // ── Run single scenario ──────────────────────────────────────────────────
+    function runScenario(sc) {
+      const validator = new EntryValidator();
+      const result = validator.validate({
+        symbol:      sc.params.symbol,
+        direction:   sc.params.direction,
+        price:       sc.params.price,
+        ohlcv:       sc.ohlcv,
+        snapshot:    sc.params.snapshot || {},
+        optionsData: sc.params.optionsData || {},
+        targetDate:  sc.params.targetDate,
+        entryTime:   sc.params.entryTime,
+      });
+      return result;
+    }
+
+    // ── Render card result ───────────────────────────────────────────────────
+    function renderCard(sc, result) {
+      const badge = document.getElementById(`badge-${sc.id}`);
+      const summary = document.getElementById(`summary-${sc.id}`);
+      const jsonPre = document.getElementById(`json-${sc.id}`);
+
+      const validClass = result.isValid ? 'green' : 'red';
+      badge.textContent = result.isValid ? 'VALID' : 'INVALID';
+      badge.className = `badge ${result.isValid ? 'badge-pass' : 'badge-fail'}`;
+
+      summary.innerHTML = `
+        <div class="kv"><label>Confidence</label><span class="${validClass}">${result.confidence}</span></div>
+        <div class="kv"><label>Setup</label><span class="blue">${result.setupType}</span></div>
+        <div class="kv"><label>Risk</label><span class="orange">${result.riskLevel}</span></div>
+        <div class="kv"><label>Stop Loss</label><span>₹${result.stopLoss}</span></div>
+        <div class="kv"><label>Direction</label><span class="${result.direction==='CALL'?'green':'red'}">${result.direction||'—'}</span></div>`;
+
+      // Strip timestamp for stable comparison
+      const stable = JSON.parse(JSON.stringify(result));
+      stable.timestamp = '__TIMESTAMP__';
+      jsonPre.textContent = JSON.stringify(stable, null, 2);
+    }
+
+    // ── Run all ──────────────────────────────────────────────────────────────
+    async function runAll() {
+      passCount = 0; failCount = 0;
+      document.getElementById('status').textContent = 'Running...';
+      const scenarios = Object.values(OHLCVFactory.SCENARIOS);
+
+      for (let i = 0; i < scenarios.length; i++) {
+        const sc = scenarios[i];
+        document.getElementById('status').textContent =
+          `Running ${i+1}/${scenarios.length}: ${sc.id}`;
+
+        await new Promise(r => setTimeout(r, 10)); // let UI breathe
+
+        try {
+          const result = runScenario(sc);
+          const stable = JSON.parse(JSON.stringify(result));
+          stable.timestamp = '__TIMESTAMP__';
+          goldenOutputs[sc.id] = {
+            scenario: sc.id,
+            description: sc.description,
+            params: sc.params,
+            golden: stable,
+            captured_at: new Date().toISOString(),
+            validator_version: 'JS_FRONTEND',
+          };
+          renderCard(sc, result);
+          if (result.isValid) passCount++; else failCount++;
+        } catch(e) {
+          document.getElementById(`badge-${sc.id}`).textContent = 'ERROR';
+          document.getElementById(`badge-${sc.id}`).className = 'badge badge-fail';
+          document.getElementById(`json-${sc.id}`).textContent = `ERROR: ${e.message}`;
+          failCount++;
+        }
+      }
+
+      document.getElementById('status').textContent = '✅ All scenarios captured.';
+      document.getElementById('totals').textContent =
+        `${passCount} VALID | ${failCount} INVALID | ${scenarios.length} total`;
+    }
+
+    // ── Download golden.json ─────────────────────────────────────────────────
+    function downloadGolden() {
+      if (!Object.keys(goldenOutputs).length) {
+        alert('Run all scenarios first.'); return;
+      }
+      const blob = new Blob([JSON.stringify(goldenOutputs, null, 2)],
+                            { type: 'application/json' });
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = `golden_${new Date().toISOString().slice(0,10)}.json`;
+      a.click();
+    }
+
+    function copyGolden() {
+      navigator.clipboard.writeText(JSON.stringify(goldenOutputs, null, 2))
+        .then(() => alert('Copied to clipboard!'));
+    }
+
+    buildGrid();
+  </script>
+</body>
+</html>

@@ -1,0 +1,3010 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="description"
+    content="TradeSignal — NSE F&O Equity & Options Intelligence Platform. Real-time scoring, options chain analysis, and pre-market recommendations powered by Kite Connect API.">
+  <title>TradeSignal — NSE F&O Intelligence</title>
+  <link rel="stylesheet" href="styles/main.css?v=5">
+  <meta name="theme-color" content="#0d1117">
+
+</head>
+
+<body>
+  <div class="app-shell">
+    <!-- ═══ Sidebar ═══ -->
+    <aside class="sidebar">
+      <div class="sidebar-brand">
+        <div class="brand-icon">📈</div>
+        <div>
+          <h1>TradeSignal</h1>
+          <small>NSE F&O Intelligence</small>
+        </div>
+      </div>
+
+      <nav class="sidebar-nav">
+        <div class="nav-section">Main</div>
+        <div class="nav-item active" data-page="dashboard" id="nav-dashboard">
+          <span class="nav-icon">🏠</span>
+          <span>Dashboard</span>
+        </div>
+        <div class="nav-item" data-page="historical-analysis" id="nav-historical-analysis">
+          <span class="nav-icon">📈</span>
+          <span>Historical Analysis</span>
+        </div>
+        <div class="nav-item" data-page="multi-chart" id="nav-multi-chart">
+          <span class="nav-icon">🔲</span>
+          <span>Multi-Chart Tracking</span>
+        </div>
+        <div class="nav-item" data-page="screener" id="nav-screener">
+          <span class="nav-icon">🔍</span>
+          <span>Equity Screener</span>
+        </div>
+
+
+        <div class="nav-item" data-page="analysis" id="nav-analysis">
+          <span class="nav-icon">🔬</span>
+          <span>Stock Analysis</span>
+        </div>
+        <div class="nav-item" data-page="smc-dashboard" id="nav-smc-dashboard">
+          <span class="nav-icon">🎯</span>
+          <span>SMC Dashboard</span>
+        </div>
+        <div class="nav-item" data-page="apex-dashboard" id="nav-apex-dashboard">
+          <span class="nav-icon">⚡</span>
+          <span>APEX Intraday</span>
+        </div>
+        <a href="/fno-trap-dashboard.html" target="_blank" rel="noopener"
+          style="display:flex;align-items:center;gap:10px;padding:10px 16px;color:#ffffff;text-decoration:none;border-radius:8px;transition:all .2s;font-size:0.85rem;"
+          onmouseover="this.style.background='var(--bg-hover,rgba(255,255,255,.04))';this.style.color='#ffffff'"
+          onmouseout="this.style.background='';this.style.color='#ffffff'" id="nav-fno-trap">
+          <span class="nav-icon">🎯</span>
+          <span>FNO Trap Dashboard</span>
+          <span style="font-size:0.6rem;margin-left:auto;opacity:.5">↗</span>
+        </a>
+
+        <a href="/option-gainers-board.html" target="_blank" rel="noopener"
+          style="display:flex;align-items:center;gap:10px;padding:10px 16px;color:#ffffff;text-decoration:none;border-radius:8px;transition:all .2s;font-size:0.85rem;"
+          onmouseover="this.style.background='var(--bg-hover,rgba(255,255,255,.04))';this.style.color='#ffffff'"
+          onmouseout="this.style.background='';this.style.color='#ffffff'" id="nav-option-gainers-board">
+          <span class="nav-icon">🏆</span>
+          <span>Premium Gainers Board</span>
+          <span style="font-size:0.6rem;margin-left:auto;opacity:.5">↗</span>
+        </a>
+        <a href="/premium-spike-alerts.html" target="_blank" rel="noopener"
+          style="display:flex;align-items:center;gap:10px;padding:10px 16px;color:#ffffff;text-decoration:none;border-radius:8px;transition:all .2s;font-size:0.85rem;"
+          onmouseover="this.style.background='var(--bg-hover,rgba(255,255,255,.04))';this.style.color='#ffffff'"
+          onmouseout="this.style.background='';this.style.color='#ffffff'" id="nav-premium-spike-alerts">
+          <span class="nav-icon">🚨</span>
+          <span>Premium Spike Alerts</span>
+          <span style="font-size:0.6rem;margin-left:auto;opacity:.5">↗</span>
+        </a>
+        <a href="/oi-spurt-scanner.html" target="_blank" rel="noopener"
+          style="display:flex;align-items:center;gap:10px;padding:10px 16px;color:#ffffff;text-decoration:none;border-radius:8px;transition:all .2s;font-size:0.85rem;"
+          onmouseover="this.style.background='var(--bg-hover,rgba(255,255,255,.04))';this.style.color='#ffffff'"
+          onmouseout="this.style.background='';this.style.color='#ffffff'" id="nav-oi-spurt-scanner">
+          <span class="nav-icon">🔥</span>
+          <span>OI Spurt Scanner</span>
+          <span style="font-size:0.6rem;margin-left:auto;opacity:.5">↗</span>
+        </a>
+        <a href="/fno-synergy-scanner.html" target="_blank" rel="noopener"
+          style="display:flex;align-items:center;gap:10px;padding:10px 16px;color:#ffffff;text-decoration:none;border-radius:8px;transition:all .2s;font-size:0.85rem;"
+          onmouseover="this.style.background='var(--bg-hover,rgba(255,255,255,.04))';this.style.color='#ffffff'"
+          onmouseout="this.style.background='';this.style.color='#ffffff'" id="nav-fno-synergy-scanner">
+          <span class="nav-icon">⚡</span>
+          <span>F&amp;O Synergy Scanner</span>
+          <span style="font-size:0.6rem;margin-left:auto;opacity:.5">↗</span>
+        </a>
+
+        <a href="/market-profiler.html" target="_blank" rel="noopener"
+          style="display:flex;align-items:center;gap:10px;padding:10px 16px;color:#ffffff;text-decoration:none;border-radius:8px;transition:all .2s;font-size:0.85rem;"
+          onmouseover="this.style.background='var(--bg-hover,rgba(255,255,255,.04))';this.style.color='#ffffff'"
+          onmouseout="this.style.background='';this.style.color='#ffffff'" id="nav-market-profiler">
+          <span class="nav-icon">📊</span>
+          <span>Market Profiler</span>
+          <span style="font-size:0.6rem;margin-left:auto;opacity:.5">↗</span>
+        </a>
+        <div class="nav-item" data-page="watchlist" id="nav-watchlist">
+          <span class="nav-icon">⭐</span>
+          <span>Watchlist</span>
+          <span class="nav-badge" id="watchlist-count" style="display:none;">0</span>
+        </div>
+
+        <div class="nav-item" data-page="portfolio" id="nav-portfolio">
+          <span class="nav-icon">💼</span>
+          <span>Portfolio</span>
+        </div>
+        <div class="nav-item" data-page="live-movers" id="nav-live-movers">
+          <span class="nav-icon">🔥</span>
+          <span>Live Movers</span>
+        </div>
+        <div class="nav-item" data-page="index-movers" id="nav-index-movers">
+          <span class="nav-icon">📊</span>
+          <span>Index Movers</span>
+        </div>
+        <div class="nav-item" data-page="news" id="nav-news">
+          <span class="nav-icon">📰</span>
+          <span>News</span>
+        </div>
+
+        <div class="nav-section">Pro Tools</div>
+        <div class="nav-item" data-page="strategy" id="nav-strategy">
+          <span class="nav-icon">🏗</span>
+          <span>Strategy Builder</span>
+        </div>
+        <div class="nav-item" data-page="backtest" id="nav-backtest">
+          <span class="nav-icon">🧪</span>
+          <span>Backtester</span>
+        </div>
+        <div class="nav-item" data-page="journal" id="nav-journal">
+          <span class="nav-icon">📓</span>
+          <span>Journal</span>
+        </div>
+        <div class="nav-item" data-page="paper" id="nav-paper">
+          <span class="nav-icon">📝</span>
+          <span>Paper Trade</span>
+        </div>
+
+        <div class="nav-section">Analysis</div>
+        <div class="nav-item" data-page="recommendations" id="nav-recommendations">
+          <span class="nav-icon">🎯</span>
+          <span>Recommendations</span>
+          <span class="nav-badge" id="reco-count">0</span>
+        </div>
+        <div class="nav-item" data-page="reco-tracker" id="nav-reco-tracker">
+          <span class="nav-icon">📊</span>
+          <span>Reco Tracker</span>
+          <span class="nav-badge" id="reco-tracker-badge" style="display:none;">0</span>
+        </div>
+        <div class="nav-item" data-page="historical" id="nav-historical">
+          <span class="nav-icon">📉</span>
+          <span>Historical</span>
+        </div>
+        <div class="nav-item" data-page="notes" id="nav-notes">
+          <span class="nav-icon">📝</span>
+          <span>Notion Notes</span>
+        </div>
+        <div class="nav-item" data-page="alerts" id="nav-alerts">
+          <span class="nav-icon">🔔</span>
+          <span>Alerts</span>
+          <span class="nav-badge" id="alert-count">0</span>
+        </div>
+
+        <div class="nav-section">Trading</div>
+        <div class="nav-item" data-page="fno-session" id="nav-fno-session">
+          <span class="nav-icon">⏰</span>
+          <span>FNO Sessions</span>
+        </div>
+        <div class="nav-item" data-page="fno-trade-alerts" id="nav-fno-trade-alerts">
+          <span class="nav-icon">🚨</span>
+          <span>FNO Trade Alerts</span>
+        </div>
+
+        <div class="nav-section">System</div>
+        <div class="nav-item" data-page="settings" id="nav-settings">
+          <span class="nav-icon">⚙️</span>
+          <span>Settings</span>
+        </div>
+      </nav>
+
+      <div class="sidebar-footer">
+        <div class="connection-status" id="conn-status">
+          <span class="status-dot" id="status-dot"></span>
+          <span id="status-text">Disconnected</span>
+        </div>
+      </div>
+    </aside>
+
+    <!-- Sidebar overlay backdrop (mobile only) -->
+    <div class="sidebar-overlay" id="sidebar-overlay"></div>
+
+    <!-- ═══ Main Content ═══ -->
+    <div class="main-content">
+      <!-- Top Bar -->
+      <header class="top-bar">
+        <div class="top-bar-left">
+          <button class="mobile-menu-btn" id="mobile-menu-btn" title="Menu" aria-label="Open navigation menu">☰</button>
+          <h2 id="page-title">Dashboard</h2>
+          <div class="market-ticker" id="market-ticker">
+            <div class="ticker-item">
+              <span class="label">NIFTY</span>
+              <span class="value" id="nifty-ltp">—</span>
+              <span class="change" id="nifty-chg">—</span>
+            </div>
+            <div class="ticker-item">
+              <span class="label">BANKNIFTY</span>
+              <span class="value" id="bnf-ltp">—</span>
+              <span class="change" id="bnf-chg">—</span>
+            </div>
+            <div class="ticker-item" id="vix-ticker" title="India VIX — Market Volatility Index">
+              <span class="label">INDIA VIX</span>
+              <span class="value" id="vix-ltp">—</span>
+              <span class="change" id="vix-gauge"
+                style="font-size:0.6rem;padding:1px 5px;border-radius:8px;font-weight:700;"></span>
+            </div>
+          </div>
+        </div>
+        <div class="top-bar-right">
+          <div class="search-box">
+            <span>🔍</span>
+            <input type="text" id="global-search" placeholder="Search F&O stocks..." autocomplete="off">
+          </div>
+          <select class="form-select" id="ticker-config-select" onchange="updateTickerConfig(this.value)"
+            title="WebSocket Connection Type"
+            style="width: auto; height: 36px; padding: 2px 10px; margin-right: 8px; font-size: 0.78rem; font-weight: 600; border-radius: 6px; background: rgba(255,255,255,0.05); color: var(--text-primary); border: 1px solid var(--border); cursor: pointer; outline: none;">
+            <option value="centralized">WS: Centralized (Shared)</option>
+            <option value="dedicated">WS: Dedicated (Real-time)</option>
+          </select>
+          <button class="icon-btn" id="btn-refresh" title="Refresh Data">🔄</button>
+          <button class="icon-btn" id="btn-alerts-bell" title="Alerts">
+            🔔
+            <span class="badge-count" id="alerts-badge" style="display:none;">0</span>
+          </button>
+        </div>
+      </header>
+
+      <!-- Page Container -->
+      <div class="page-container">
+
+        <!-- ═══ PAGE: Dashboard ═══ -->
+        <div class="page active" id="page-dashboard">
+          <!-- Market Stats -->
+          <div class="grid-4 mb-16" id="dashboard-stats">
+            <div class="stat-card">
+              <span class="stat-label">F&O Stocks Tracked</span>
+              <span class="stat-value" id="stat-tracked">0</span>
+              <span class="stat-change up">NSE F&O Segment</span>
+            </div>
+            <div class="stat-card">
+              <span class="stat-label">Bullish Signals</span>
+              <span class="stat-value" id="stat-bullish">0</span>
+              <span class="stat-change up" id="stat-bullish-pct">+0%</span>
+            </div>
+            <div class="stat-card">
+              <span class="stat-label">Bearish Signals</span>
+              <span class="stat-value" id="stat-bearish">0</span>
+              <span class="stat-change down" id="stat-bearish-pct">-0%</span>
+            </div>
+            <div class="stat-card">
+              <span class="stat-label">Top Score</span>
+              <span class="stat-value" id="stat-top-score">—</span>
+              <span class="stat-change up" id="stat-top-stock">—</span>
+            </div>
+          </div>
+
+          <!-- Top Picks -->
+          <div class="card mb-16">
+            <div class="card-header">
+              <h3>🎯 Top Picks — Pre-Market Recommendations</h3>
+              <div class="card-actions">
+                <button class="btn btn-sm btn-secondary" id="btn-run-scoring">▶ Run Scoring Engine</button>
+              </div>
+            </div>
+            <div class="top-picks-grid" id="top-picks-grid">
+              <div class="empty-state">
+                <div class="empty-icon">📡</div>
+                <h4>Connect to Kite API</h4>
+                <p>Go to Settings → Enter API credentials → Click Connect</p>
+              </div>
+            </div>
+          </div>
+
+          <!-- Market Breadth -->
+          <div class="card mb-16" id="market-breadth-card">
+            <div class="card-header">
+              <h3>📊 Market Breadth</h3>
+              <div class="card-actions">
+                <button class="btn btn-sm btn-secondary" id="btn-refresh-breadth">🔄 Refresh</button>
+              </div>
+            </div>
+            <div id="breadth-content" style="padding:12px 16px;">
+              <div style="text-align:center;padding:20px;color:var(--text-muted);font-size:0.82rem;">Click Refresh or
+                run Scoring Engine to load breadth data</div>
+            </div>
+          </div>
+
+          <!-- Sector Performance -->
+          <div class="card mb-16">
+            <div class="card-header">
+              <h3>🏢 Sector Performance</h3>
+            </div>
+            <div style="overflow-x:auto;">
+              <table class="data-table" id="sector-table">
+                <thead>
+                  <tr>
+                    <th class="sortable" data-sort="name" style="cursor:pointer;" title="Sort by Sector">Sector ↕</th>
+                    <th class="sortable" data-sort="count" style="cursor:pointer;" title="Sort by Stocks Tracked">Stocks
+                      Tracked ↕</th>
+                    <th class="sortable" data-sort="weight" style="cursor:pointer;" title="Sort by Index Weightage">
+                      Index Weightage ↕</th>
+                    <th class="sortable" data-sort="avgScore" style="cursor:pointer;" title="Sort by Avg Score">Avg
+                      Score ↕</th>
+                    <th class="sortable" data-sort="bullish" style="cursor:pointer;" title="Sort by Bullish Signals">
+                      Bullish / Bearish ↕</th>
+                    <th class="sortable" data-sort="avgChange" style="cursor:pointer;" title="Sort by % Movement">%
+                      Movement ↕</th>
+                    <th>Momentum Rank</th>
+                  </tr>
+                </thead>
+                <tbody id="sector-body">
+                  <tr>
+                    <td colspan="7" class="text-muted" style="text-align:center;padding:30px;">No data — Run scoring
+                      engine or connect to Kite</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <!-- Leaderboard Table -->
+          <div class="card">
+            <div class="card-header">
+              <h3>📊 F&O Score Leaderboard</h3>
+              <div style="display:flex;align-items:center;gap:10px;">
+                <div class="tabs" id="leaderboard-tabs">
+                  <button class="tab-btn active" data-filter="all">All</button>
+                  <button class="tab-btn" data-filter="bullish">Bullish</button>
+                  <button class="tab-btn" data-filter="bearish">Bearish</button>
+                </div>
+                <button class="btn btn-sm btn-secondary" id="btn-leaderboard-csv" title="Download leaderboard as CSV"
+                  style="display:flex;align-items:center;gap:5px;font-size:0.75rem;padding:4px 10px;"
+                  onclick="app.downloadLeaderboardCSV()">
+                  ⬇ CSV
+                </button>
+              </div>
+            </div>
+            <div style="overflow-x:auto;">
+              <table class="data-table" id="leaderboard-table">
+                <thead>
+                  <tr>
+                    <th>#</th>
+                    <th>Stock</th>
+                    <th>LTP</th>
+                    <th>Chg%</th>
+                    <th>Score</th>
+                    <th>Signal</th>
+                    <th>Daily Trend</th>
+                    <th>Technical</th>
+                    <th>Price Action</th>
+                    <th>OI / Options</th>
+                    <th>Volatility</th>
+                    <th>Catalyst</th>
+                    <th>Watch</th>
+
+                  </tr>
+                </thead>
+                <tbody id="leaderboard-body">
+                  <tr>
+                    <td colspan="12" class="text-muted" style="text-align:center;padding:30px;">No data — Run scoring
+                      engine or connect to Kite</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <!-- Upcoming Earnings -->
+          <div class="card" id="earnings-card">
+            <div class="card-header">
+              <h3>📅 Upcoming Earnings</h3>
+              <div class="card-actions">
+                <span class="text-muted" style="font-size:0.72rem;" id="earnings-source"></span>
+              </div>
+            </div>
+            <div id="earnings-list" style="max-height:300px;overflow-y:auto;padding:4px 0;">
+              <div style="text-align:center;padding:20px;color:var(--text-muted);font-size:0.82rem;">Loading earnings
+                calendar...</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- ═══ PAGE: Historical Analysis ═══ -->
+        <div class="page" id="page-historical-analysis">
+          <!-- Filter Controls & Header -->
+          <div class="card mb-16"
+            style="background: var(--bg-glass); backdrop-filter: blur(12px); border: 1px solid var(--border); overflow:visible; position:relative; z-index:100;">
+            <div class="card-header"
+              style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:16px;">
+              <div>
+                <h3
+                  style="font-family:var(--font-display); font-weight:700; color:var(--primary-dark); display:flex; align-items:center; gap:8px;">
+                  <span>📈 Historical Predictive Analytics Engine</span>
+                  <span class="badge"
+                    style="background:var(--green-bg); color:var(--green); font-size:0.75rem; padding:4px 8px; border-radius:10px;">Backtest
+                    Mode</span>
+                </h3>
+                <p style="font-size:0.78rem; color:var(--text-secondary); margin-top:4px;">Retrieve multi-timeframe
+                  candles, dry-run scoring engine models, and compute predictive gap-fade & volatility coiling
+                  telemetry.</p>
+              </div>
+              <div class="flex gap-12" style="align-items:center; flex-wrap:wrap;">
+                <!-- Symbol Select -->
+                <!-- Searchable Stock Combobox -->
+                <div class="form-group mb-0" style="position:relative;">
+                  <!-- Hidden value holder — read by runScan() via getElementById('ha-symbol') -->
+                  <input type="hidden" id="ha-symbol" value="">
+                  <!-- Visible search input -->
+                  <div style="position:relative; min-width:220px;">
+                    <span
+                      style="position:absolute; left:10px; top:50%; transform:translateY(-50%); color:var(--text-muted); font-size:0.85rem; pointer-events:none;">🔍</span>
+                    <input type="text" id="ha-symbol-search" placeholder="Search stock or index..." autocomplete="off"
+                      style="width:100%; padding:8px 12px 8px 32px; border-radius:var(--radius-md); border:1px solid var(--border); background:rgba(255,255,255,0.07); color:var(--text-primary); font-size:0.85rem; font-weight:600; outline:none; box-sizing:border-box; cursor:pointer; min-width:220px; transition:border-color 0.15s;"
+                      onfocus="this.style.borderColor='var(--primary)'" onblur="this.style.borderColor=''">
+                  </div>
+                  <!-- Dropdown list -->
+                  <div id="ha-symbol-dropdown"
+                    style="display:none; position:absolute; top:calc(100% + 4px); left:0; right:0; min-width:220px; max-height:320px; overflow-y:auto; background:var(--bg-card, #1e2130); border:1px solid var(--border); border-radius:var(--radius-md); box-shadow:0 8px 32px rgba(0,0,0,0.4); z-index:9999; padding:4px 0;">
+                    <div id="ha-symbol-list"></div>
+                  </div>
+                </div>
+                <!-- Days Input -->
+                <div class="form-group mb-0 flex gap-8" style="align-items:center;">
+                  <label
+                    style="font-size:0.78rem; font-weight:600; color:var(--text-secondary); white-space:nowrap;">Days:</label>
+                  <select class="form-select" id="ha-days" style="width:100px; border-radius:var(--radius-md);">
+                    <option value="30">30 Days</option>
+                    <option value="60">60 Days</option>
+                    <option value="90" selected>90 Days</option>
+                    <option value="180">180 Days</option>
+                    <option value="365">365 Days</option>
+                  </select>
+                </div>
+                <button class="btn btn-primary flex gap-8" id="btn-ha-run-scan"
+                  style="padding:10px 20px; font-weight:700; border-radius:var(--radius-md); box-shadow:var(--shadow-md); background:linear-gradient(135deg, var(--primary), var(--primary-dark)); border:none;">
+                  <span>⚡ Scan Historical Telemetry</span>
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Bulk Historical Scan Panel -->
+          <div class="card"
+            style="background:var(--bg-glass); backdrop-filter:blur(8px); margin-bottom:16px; position:relative; z-index:1;">
+            <div class="card-header"
+              style="display:flex; justify-content:space-between; align-items:center; cursor:pointer;"
+              id="ha-bulk-toggle" onclick="window.haBulkToggle()">
+              <h3
+                style="font-family:var(--font-display); font-weight:700; color:var(--primary-dark); display:flex; align-items:center; gap:8px; margin:0;">
+                <span>📋 Bulk Historical Scan & CSV Export</span>
+                <span class="badge"
+                  style="background:rgba(30,136,229,0.1); color:#1E88E5; font-size:0.7rem; padding:3px 8px; border-radius:8px;">Multi-Stock</span>
+              </h3>
+              <span id="ha-bulk-toggle-icon" style="color:var(--text-secondary); font-size:0.8rem; font-weight:600;">▼
+                Expand</span>
+            </div>
+
+            <div id="ha-bulk-panel"
+              style="display:none; padding-top:12px; border-top:1px solid var(--border); margin-top:12px;">
+              <p style="font-size:0.78rem; color:var(--text-secondary); margin-bottom:12px;">
+                Enter up to 100 stock symbols (comma or newline separated). The engine will run full historical
+                analytics on each and produce a downloadable CSV report.
+              </p>
+              <div style="display:grid; grid-template-columns:1fr auto; gap:12px; align-items:flex-start;">
+                <div>
+                  <!-- Quick-fill cap buttons -->
+                  <div style="display:flex; gap:8px; margin-bottom:8px; flex-wrap:wrap;">
+                    <span
+                      style="font-size:0.75rem; font-weight:600; color:var(--text-secondary); align-self:center; white-space:nowrap;">Quick
+                      Fill:</span>
+                    <button onclick="window.haBulkFillCap('large')"
+                      style="padding:4px 12px; border-radius:20px; border:1.5px solid rgba(30,136,229,0.4); background:rgba(30,136,229,0.08); color:#1E88E5; font-size:0.72rem; font-weight:700; cursor:pointer; transition:all 0.15s;"
+                      onmouseover="this.style.background='rgba(30,136,229,0.18)'"
+                      onmouseout="this.style.background='rgba(30,136,229,0.08)'">
+                      🔵 Large Cap
+                    </button>
+                    <button onclick="window.haBulkFillCap('mid')"
+                      style="padding:4px 12px; border-radius:20px; border:1.5px solid rgba(255,167,38,0.4); background:rgba(255,167,38,0.08); color:#FFA726; font-size:0.72rem; font-weight:700; cursor:pointer; transition:all 0.15s;"
+                      onmouseover="this.style.background='rgba(255,167,38,0.18)'"
+                      onmouseout="this.style.background='rgba(255,167,38,0.08)'">
+                      🟠 Mid Cap
+                    </button>
+                    <button onclick="window.haBulkFillCap('small')"
+                      style="padding:4px 12px; border-radius:20px; border:1.5px solid rgba(38,166,154,0.4); background:rgba(38,166,154,0.08); color:#26A69A; font-size:0.72rem; font-weight:700; cursor:pointer; transition:all 0.15s;"
+                      onmouseover="this.style.background='rgba(38,166,154,0.18)'"
+                      onmouseout="this.style.background='rgba(38,166,154,0.08)'">
+                      🟢 Small Cap
+                    </button>
+                    <button onclick="document.getElementById('ha-bulk-symbols').value=''"
+                      style="padding:4px 10px; border-radius:20px; border:1px solid var(--border); background:transparent; color:var(--text-muted); font-size:0.72rem; cursor:pointer;"
+                      title="Clear symbols">✕ Clear</button>
+                  </div>
+                  <textarea id="ha-bulk-symbols"
+                    placeholder="e.g. RELIANCE, TCS, INFY, HDFCBANK, WIPRO  — or use quick-fill buttons above"
+                    style="width:100%; min-height:90px; border-radius:var(--radius-md); border:1px solid var(--border); background:rgba(255,255,255,0.05); color:var(--text-primary); padding:10px 12px; font-size:0.85rem; font-family:var(--font-mono, monospace); resize:vertical; box-sizing:border-box; outline:none;"></textarea>
+                  <div style="font-size:0.7rem; color:var(--text-muted); margin-top:4px;">
+                    💡 Quick-fill loads all F&amp;O stocks for that cap tier. You can edit the list freely before
+                    scanning.
+                  </div>
+                </div>
+                <div style="display:flex; flex-direction:column; gap:8px; min-width:160px;">
+                  <div class="form-group mb-0">
+                    <label style="font-size:0.75rem; font-weight:600; color:var(--text-secondary);">Analysis
+                      Window:</label>
+                    <select class="form-select" id="ha-bulk-days"
+                      style="border-radius:var(--radius-md); margin-top:4px;">
+                      <option value="30">30 Days</option>
+                      <option value="60">60 Days</option>
+                      <option value="90" selected>90 Days</option>
+                      <option value="180">180 Days</option>
+                      <option value="365">365 Days</option>
+                    </select>
+                  </div>
+                  <button class="btn btn-primary" id="btn-ha-bulk-run" onclick="window.haBulkRun()"
+                    style="padding:10px 16px; font-weight:700; border-radius:var(--radius-md); border:none; background:linear-gradient(135deg,#1E88E5,#1565C0); width:100%;">
+                    ⚡ Run Bulk Scan
+                  </button>
+                  <button class="btn" id="btn-ha-bulk-csv" onclick="window.haBulkDownloadCSV()" disabled
+                    style="padding:8px 16px; font-weight:600; border-radius:var(--radius-md); border:1px solid var(--border); background:rgba(38,166,154,0.1); color:var(--green); width:100%; cursor:not-allowed; opacity:0.5;">
+                    ⬇ Download CSV
+                  </button>
+                </div>
+              </div>
+
+              <!-- Progress Bar -->
+              <div id="ha-bulk-progress-wrap" style="display:none; margin-top:14px;">
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
+                  <span style="font-size:0.78rem; font-weight:600; color:var(--text-secondary);"
+                    id="ha-bulk-progress-label">Scanning…</span>
+                  <span style="font-size:0.72rem; color:var(--text-muted);" id="ha-bulk-progress-count"></span>
+                </div>
+                <div style="background:rgba(255,255,255,0.08); border-radius:20px; height:6px; overflow:hidden;">
+                  <div id="ha-bulk-progress-bar"
+                    style="height:100%; background:linear-gradient(90deg,#26A69A,#1E88E5); border-radius:20px; width:0%; transition:width 0.3s ease;">
+                  </div>
+                </div>
+              </div>
+
+              <!-- Results Table -->
+              <div id="ha-bulk-results" style="display:none; margin-top:16px;">
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+                  <span style="font-size:0.82rem; font-weight:700; color:var(--text-primary);"
+                    id="ha-bulk-results-count"></span>
+                  <span style="font-size:0.7rem; color:var(--text-muted);" id="ha-bulk-results-ts"></span>
+                </div>
+                <div style="overflow-x:auto; border-radius:var(--radius-md); border:1px solid var(--border);">
+                  <table class="table" style="width:100%; font-size:0.75rem; white-space:nowrap;">
+                    <thead>
+                      <tr style="background:rgba(255,255,255,0.06); border-bottom:1.5px solid var(--border);">
+                        <th style="padding:8px 12px; text-align:left; color:var(--text-secondary);">Symbol</th>
+                        <th style="padding:8px 10px; text-align:center; color:var(--text-secondary);">Score</th>
+                        <th style="padding:8px 10px; text-align:center; color:var(--text-secondary);">Direction</th>
+                        <th style="padding:8px 10px; text-align:center; color:var(--text-secondary);">Upcoming Bias</th>
+                        <th style="padding:8px 10px; text-align:right; color:var(--text-secondary);">LTP</th>
+                        <th style="padding:8px 10px; text-align:center; color:var(--text-secondary);">RSI</th>
+                        <th style="padding:8px 10px; text-align:center; color:var(--text-secondary);">MACD</th>
+                        <th style="padding:8px 10px; text-align:center; color:var(--text-secondary);">CHOP</th>
+                        <th style="padding:8px 10px; text-align:center; color:var(--text-secondary);">EMA Cross</th>
+                        <th style="padding:8px 10px; text-align:center; color:var(--text-secondary);">EMA Str.</th>
+                        <th style="padding:8px 10px; text-align:center; color:var(--text-secondary);">Gap↑ Fade</th>
+                        <th style="padding:8px 10px; text-align:center; color:var(--text-secondary);">Gap↓ Fade</th>
+                        <th style="padding:8px 10px; text-align:center; color:var(--text-secondary);">Bull WR%</th>
+                        <th style="padding:8px 10px; text-align:center; color:var(--text-secondary);">Bear WR%</th>
+                        <th style="padding:8px 10px; text-align:center; color:var(--text-secondary);">Streak</th>
+                        <th style="padding:8px 10px; text-align:center; color:var(--text-secondary);">Daily Trend</th>
+                        <th style="padding:8px 10px; text-align:center; color:var(--text-secondary);">Hourly Trend</th>
+                        <th style="padding:8px 10px; text-align:center; color:var(--text-secondary);">15m Trend</th>
+                        <th style="padding:8px 10px; text-align:center; color:var(--text-secondary);">Status</th>
+                      </tr>
+                    </thead>
+                    <tbody id="ha-bulk-rows"></tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- First-Hour Pattern Continuation/Reversal Analyzer Card -->
+          <div class="card"
+            style="background:var(--bg-glass); backdrop-filter:blur(8px); margin-bottom:16px; position:relative; z-index:1;">
+            <div class="card-header"
+              style="display:flex; justify-content:space-between; align-items:center; cursor:pointer;"
+              id="ha-fh-toggle" onclick="window.haFHToggle()">
+              <h3
+                style="font-family:var(--font-display); font-weight:700; color:var(--primary-dark); display:flex; align-items:center; gap:8px; margin:0;">
+                <span>⏱️ First-Hour Pattern Continuation/Reversal Analyzer</span>
+                <span class="badge"
+                  style="background:rgba(156,39,176,0.1); color:#9C27B0; font-size:0.7rem; padding:3px 8px; border-radius:8px;">OR Patterns</span>
+              </h3>
+              <span id="ha-fh-toggle-icon" style="color:var(--text-secondary); font-size:0.8rem; font-weight:600;">▼ Expand</span>
+            </div>
+
+            <div id="ha-fh-panel"
+              style="display:none; padding-top:12px; border-top:1px solid var(--border); margin-top:12px;">
+              <p style="font-size:0.78rem; color:var(--text-secondary); margin-bottom:12px;">
+                Enter symbols to classify opening behavior (gap type, move direction, speed) and check historical continuation/reversal probabilities.
+              </p>
+              
+              <div style="display:grid; grid-template-columns:1fr auto; gap:12px; align-items:flex-start;">
+                <div>
+                  <div style="display:flex; gap:8px; margin-bottom:8px; flex-wrap:wrap;">
+                    <span style="font-size:0.75rem; font-weight:600; color:var(--text-secondary); align-self:center; white-space:nowrap;">Quick Fill:</span>
+                    <button onclick="window.haFHFillCap('large')"
+                      style="padding:4px 12px; border-radius:20px; border:1.5px solid rgba(30,136,229,0.4); background:rgba(30,136,229,0.08); color:#1E88E5; font-size:0.72rem; font-weight:700; cursor:pointer; transition:all 0.15s;">
+                      🔵 Large Cap
+                    </button>
+                    <button onclick="window.haFHFillCap('mid')"
+                      style="padding:4px 12px; border-radius:20px; border:1.5px solid rgba(255,167,38,0.4); background:rgba(255,167,38,0.08); color:#FFA726; font-size:0.72rem; font-weight:700; cursor:pointer; transition:all 0.15s;">
+                      🟠 Mid Cap
+                    </button>
+                    <button onclick="window.haFHFillCap('small')"
+                      style="padding:4px 12px; border-radius:20px; border:1.5px solid rgba(38,166,154,0.4); background:rgba(38,166,154,0.08); color:#26A69A; font-size:0.72rem; font-weight:700; cursor:pointer; transition:all 0.15s;">
+                      🟢 Small Cap
+                    </button>
+                    <button onclick="document.getElementById('ha-fh-symbols').value=''"
+                      style="padding:4px 10px; border-radius:20px; border:1px solid var(--border); background:transparent; color:var(--text-muted); font-size:0.72rem; cursor:pointer;">✕ Clear</button>
+                  </div>
+                  <textarea id="ha-fh-symbols"
+                    placeholder="e.g. RELIANCE, TCS, INFY, HDFCBANK, WIPRO"
+                    style="width:100%; min-height:90px; border-radius:var(--radius-md); border:1px solid var(--border); background:rgba(255,255,255,0.05); color:var(--text-primary); padding:10px 12px; font-size:0.85rem; font-family:var(--font-mono, monospace); resize:vertical; box-sizing:border-box; outline:none;"></textarea>
+                </div>
+                <div style="display:flex; flex-direction:column; gap:8px; min-width:180px;">
+                  <div class="form-group mb-0">
+                    <label style="font-size:0.75rem; font-weight:600; color:var(--text-secondary);">OR Window:</label>
+                    <select class="form-select" id="ha-fh-window" style="border-radius:var(--radius-md); margin-top:4px;">
+                      <option value="45" selected>45 Minutes</option>
+                      <option value="60">60 Minutes</option>
+                    </select>
+                  </div>
+                  <div class="form-group mb-0">
+                    <label style="font-size:0.75rem; font-weight:600; color:var(--text-secondary);">Gap Threshold %:</label>
+                    <input type="number" class="form-control" id="ha-fh-gap-threshold" value="0.3" step="0.1" min="0.1" style="border-radius:var(--radius-md); margin-top:4px; padding:6px 12px; background:rgba(255,255,255,0.05); color:var(--text-primary); border:1px solid var(--border);">
+                  </div>
+                  <button class="btn btn-primary" id="btn-ha-fh-run" onclick="window.haFHRun()"
+                    style="padding:10px 16px; font-weight:700; border-radius:var(--radius-md); border:none; background:linear-gradient(135deg,#9C27B0,#7B1FA2); width:100%;">
+                    ⚡ Run Analyzer
+                  </button>
+                </div>
+              </div>
+
+              <!-- Progress -->
+              <div id="ha-fh-progress-wrap" style="display:none; margin-top:14px;">
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
+                  <span style="font-size:0.78rem; font-weight:600; color:var(--text-secondary);" id="ha-fh-progress-label">Analyzing...</span>
+                  <span style="font-size:0.72rem; color:var(--text-muted);" id="ha-fh-progress-count"></span>
+                </div>
+                <div style="background:rgba(255,255,255,0.08); border-radius:20px; height:6px; overflow:hidden;">
+                  <div id="ha-fh-progress-bar"
+                    style="height:100%; background:linear-gradient(90deg,#9C27B0,#E040FB); border-radius:20px; width:0%; transition:width 0.3s ease;">
+                  </div>
+                </div>
+              </div>
+
+              <!-- Today's Results Table -->
+              <div id="ha-fh-results" style="display:none; margin-top:16px;">
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+                  <span style="font-size:0.82rem; font-weight:700; color:var(--text-primary);">Today's Pattern &amp; Predictions</span>
+                  <div style="display:flex; gap:8px; align-items:center;">
+                    <button class="btn btn-sm btn-secondary" onclick="window.haFHExportResultsCSV()" style="font-size:0.7rem; padding:3px 8px; border-radius:4px; border:1px solid var(--border); background:rgba(255,255,255,0.05); color:var(--text-primary); cursor:pointer;">📥 Export CSV</button>
+                    <span style="font-size:0.7rem; color:var(--text-muted);" id="ha-fh-results-ts"></span>
+                  </div>
+                </div>
+                <div style="overflow-x:auto; border-radius:var(--radius-md); border:1px solid var(--border);">
+                  <table class="table" style="width:100%; font-size:0.75rem; white-space:nowrap;">
+                    <thead id="ha-fh-results-thead">
+                      <tr style="background:rgba(255,255,255,0.06); border-bottom:1.5px solid var(--border);">
+                        <th style="padding:8px 12px; text-align:left; color:var(--text-secondary);">Symbol</th>
+                        <th style="padding:8px 10px; text-align:center; color:var(--text-secondary);">Date</th>
+                        <th style="padding:8px 10px; text-align:center; color:var(--text-secondary);">Pattern Key</th>
+                        <th style="padding:8px 10px; text-align:center; color:var(--text-secondary);">Predicted Outcome</th>
+                        <th style="padding:8px 10px; text-align:center; color:var(--text-secondary);">Confidence</th>
+                        <th style="padding:8px 10px; text-align:center; color:var(--text-secondary);">Actual Outcome</th>
+                        <th style="padding:8px 10px; text-align:center; color:var(--text-secondary);">Validation</th>
+                        <th style="padding:8px 10px; text-align:center; color:var(--text-secondary);">Details (Cont / Rev / Chop)</th>
+                      </tr>
+                    </thead>
+                    <tbody id="ha-fh-rows"></tbody>
+                  </table>
+                </div>
+              </div>
+
+              <!-- Predictions Ledger -->
+              <div style="margin-top:20px; border-top:1px solid var(--border-light); padding-top:16px;">
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
+                  <h4 style="margin:0; font-family:var(--font-display); font-weight:700; color:var(--text-primary);">📈 Prediction Ledger &amp; Scorecard</h4>
+                  <div style="display:flex; gap:8px;">
+                    <button class="btn btn-sm btn-secondary" onclick="window.haFHExportHistoryCSV()" style="font-size:0.72rem; padding:4px 10px; border:1px solid var(--border); background:rgba(255,255,255,0.05); color:var(--text-primary); cursor:pointer;">📥 Export CSV</button>
+                    <button class="btn btn-sm btn-secondary" onclick="window.haFHFetchHistory()" style="font-size:0.72rem; padding:4px 10px;">🔄 Refresh History</button>
+                  </div>
+                </div>
+                
+                <div style="display:grid; grid-template-columns: repeat(4, 1fr); gap:12px; margin-bottom:16px;">
+                  <div style="background:rgba(255,255,255,0.03); border:1px solid var(--border); padding:10px; border-radius:6px; text-align:center;">
+                    <div style="font-size:0.7rem; color:var(--text-secondary); font-weight:600;">Total Logged</div>
+                    <div style="font-size:1.4rem; font-weight:800; color:var(--text-primary); margin-top:2px;" id="fh-card-total">0</div>
+                  </div>
+                  <div style="background:rgba(255,255,255,0.03); border:1px solid var(--border); padding:10px; border-radius:6px; text-align:center;">
+                    <div style="font-size:0.7rem; color:var(--text-secondary); font-weight:600;">Validated</div>
+                    <div style="font-size:1.4rem; font-weight:800; color:var(--text-primary); margin-top:2px;" id="fh-card-validated">0</div>
+                  </div>
+                  <div style="background:rgba(76,175,80,0.05); border:1px solid rgba(76,175,80,0.2); padding:10px; border-radius:6px; text-align:center;">
+                    <div style="font-size:0.7rem; color:var(--green); font-weight:600;">Correct</div>
+                    <div style="font-size:1.4rem; font-weight:800; color:var(--green); margin-top:2px;" id="fh-card-correct">0</div>
+                  </div>
+                  <div style="background:rgba(30,136,229,0.05); border:1px solid rgba(30,136,229,0.2); padding:10px; border-radius:6px; text-align:center;">
+                    <div style="font-size:0.7rem; color:#1E88E5; font-weight:600;">Accuracy Rate</div>
+                    <div style="font-size:1.4rem; font-weight:800; color:#1E88E5; margin-top:2px;" id="fh-card-accuracy">0%</div>
+                  </div>
+                </div>
+
+                <div style="max-height:220px; overflow-y:auto; border-radius:var(--radius-md); border:1px solid var(--border);">
+                  <table class="table" style="width:100%; font-size:0.72rem; white-space:nowrap;">
+                    <thead id="ha-fh-history-thead">
+                      <tr style="background:rgba(255,255,255,0.04); border-bottom:1px solid var(--border);">
+                        <th style="padding:6px 10px; text-align:left; color:var(--text-secondary);">Date</th>
+                        <th style="padding:6px 10px; text-align:left; color:var(--text-secondary);">Symbol</th>
+                        <th style="padding:6px 10px; text-align:center; color:var(--text-secondary);">Pattern</th>
+                        <th style="padding:6px 10px; text-align:center; color:var(--text-secondary);">Prediction</th>
+                        <th style="padding:6px 10px; text-align:center; color:var(--text-secondary);">Confidence</th>
+                        <th style="padding:6px 10px; text-align:center; color:var(--text-secondary);">Actual</th>
+                        <th style="padding:6px 10px; text-align:center; color:var(--text-secondary);">Result</th>
+                        <th style="padding:6px 10px; text-align:center; color:var(--text-secondary);">Logged At</th>
+                      </tr>
+                    </thead>
+                    <tbody id="ha-fh-history-rows">
+                      <tr>
+                        <td colspan="8" style="text-align:center; padding:15px; color:var(--text-muted);">No predictions logged yet. Run predictions above to start tracking performance.</td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Empty State -->
+          <div id="ha-empty-state" class="card"
+            style="padding:60px 20px; text-align:center; background: var(--bg-glass); backdrop-filter: blur(12px);">
+            <div style="font-size:4rem; margin-bottom:16px;">🔍</div>
+            <h4 style="font-family:var(--font-display); font-weight:700; color:var(--text-primary); font-size:1.4rem;">
+              Select an Instrument to Begin</h4>
+            <p style="color:var(--text-secondary); max-width:480px; margin:8px auto 0; font-size:0.88rem;">Select an
+              index or F&O stock and select your historical window. We will perform a deep multi-timeframe backtest,
+              analyze opening gap behaviors, and extract volume walls.</p>
+          </div>
+
+          <!-- Result Dashboard (Hidden by default) -->
+          <div id="ha-result-panel" style="display:none;">
+            <!-- Summary Row -->
+            <!-- Summary Row (Upgraded to 5 columns responsive auto-fit grid) -->
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 16px;"
+              class="mb-16">
+              <div class="stat-card" style="background:var(--bg-glass); backdrop-filter:blur(8px);">
+                <span class="stat-label">Instrument Focus</span>
+                <span class="stat-value" id="ha-stat-symbol"
+                  style="font-size:1.6rem; color:var(--primary-dark);">—</span>
+                <span class="stat-change up" id="ha-stat-change" style="font-size:0.8rem;">—</span>
+              </div>
+              <div class="stat-card" style="background:var(--bg-glass); backdrop-filter:blur(8px); position:relative;">
+                <span class="stat-label">Macro Predictive Score</span>
+                <div style="display:flex; align-items:center; gap:12px; margin-top:4px;">
+                  <span class="stat-value" id="ha-stat-score"
+                    style="font-size:2rem; font-family:var(--font-display); font-weight:800; color:var(--primary);">—</span>
+                  <span class="tag tag-neutral" id="ha-stat-direction"
+                    style="font-size:0.75rem; padding:4px 8px; border-radius:6px; font-weight:700;">NEUTRAL</span>
+                </div>
+              </div>
+              <div class="stat-card"
+                style="background:var(--bg-glass); backdrop-filter:blur(8px); border: 1px solid rgba(255,255,255,0.15);">
+                <span class="stat-label">Upcoming Session Bias</span>
+                <div style="display:flex; align-items:center; gap:12px; margin-top:4px;">
+                  <span class="stat-value" id="ha-stat-predict-bias"
+                    style="font-size:1.6rem; font-family:var(--font-display); font-weight:800; color:var(--text-muted);">—</span>
+                  <span class="tag tag-neutral" id="ha-stat-predict-confidence"
+                    style="font-size:0.75rem; padding:4px 8px; border-radius:6px; font-weight:700;">—</span>
+                </div>
+                <span id="ha-stat-predict-details"
+                  style="font-size:0.68rem; color:var(--text-secondary); display:block; margin-top:4px; line-height:1.2;">—</span>
+              </div>
+              <div class="stat-card" style="background:var(--bg-glass); backdrop-filter:blur(8px);">
+                <span class="stat-label">Volatility Coiling (CHOP)</span>
+                <span class="stat-value" id="ha-stat-chop" style="font-size:1.6rem; color:var(--purple);">—</span>
+                <span class="tag" id="ha-stat-chop-label"
+                  style="font-size:0.7rem; display:inline-block; margin-top:4px; padding:2px 6px; border-radius:4px; font-weight:600; background:rgba(171, 71, 188, 0.1); color:var(--purple);">—</span>
+              </div>
+              <div class="stat-card" style="background:var(--bg-glass); backdrop-filter:blur(8px);">
+                <span class="stat-label">Multi-TF Trend Status</span>
+                <div style="display:flex; flex-direction:column; gap:4px; margin-top:6px;">
+                  <div style="display:flex; justify-content:space-between; font-size:0.75rem;">
+                    <span style="color:var(--text-secondary); font-weight:500;">Daily:</span>
+                    <span id="ha-tf-daily" style="font-weight:700; color:var(--text-muted);">—</span>
+                  </div>
+                  <div style="display:flex; justify-content:space-between; font-size:0.75rem;">
+                    <span style="color:var(--text-secondary); font-weight:500;">1 Hour:</span>
+                    <span id="ha-tf-1h" style="font-weight:700; color:var(--text-muted);">—</span>
+                  </div>
+                  <div style="display:flex; justify-content:space-between; font-size:0.75rem;">
+                    <span style="color:var(--text-secondary); font-weight:500;">15 Min:</span>
+                    <span id="ha-tf-15m" style="font-weight:700; color:var(--text-muted);">—</span>
+                  </div>
+                </div>
+              </div>
+              <div class="stat-card" style="background:var(--bg-glass); backdrop-filter:blur(8px);">
+                <span class="stat-label">EMA 50/200 Crossover</span>
+                <span class="stat-value" id="ha-stat-ema-cross"
+                  style="font-size:1.4rem; color:var(--text-primary); margin-top:4px; display:block;">—</span>
+                <span class="tag" id="ha-stat-ema-cross-label"
+                  style="font-size:0.7rem; display:inline-block; margin-top:6px; padding:2px 6px; border-radius:4px; font-weight:600; background:rgba(255,255,255,0.1); color:var(--text-secondary);">—</span>
+              </div>
+              <div class="stat-card" style="background:var(--bg-glass); backdrop-filter:blur(8px);">
+                <span class="stat-label">1h &amp; 15m Structure Alignment</span>
+                <span class="stat-value" id="ha-stat-struct"
+                  style="font-size:1.3rem; color:var(--text-primary); margin-top:4px; display:block;">—</span>
+                <span class="tag" id="ha-stat-struct-label"
+                  style="font-size:0.68rem; display:inline-block; margin-top:6px; padding:3px 8px; border-radius:4px; font-weight:600; background:rgba(255,255,255,0.1); color:var(--text-secondary); line-height:1.2; max-width:100%; white-space:normal; word-break:break-word;">—</span>
+              </div>
+            </div>
+
+            <!-- Main Layout Grid -->
+            <div style="display:grid; grid-template-columns: 1.2fr 1fr; gap:16px; margin-bottom:16px;">
+              <!-- Left Column: Historical OHLCV Data Table -->
+              <div class="card"
+                style="background:var(--bg-glass); backdrop-filter:blur(8px); display:flex; flex-direction:column; max-height: 600px;">
+                <div class="card-header" style="display:flex; justify-content:space-between; align-items:center;">
+                  <h3 style="font-family:var(--font-display); font-weight:700; color:var(--primary-dark);">📋 Historical
+                    OHLCV Data (Max 30 Days)</h3>
+                  <div style="font-size:0.75rem; color:var(--text-secondary); font-weight:600;" id="ha-table-count">Last
+                    30 Sessions</div>
+                </div>
+                <!-- Table Wrapper -->
+                <div
+                  style="flex:1; overflow-y:auto; margin:8px 0; border:1px solid var(--border); border-radius:var(--radius-md); background:rgba(255,255,255,0.4);"
+                  id="ha-table-wrapper">
+                  <table class="table" style="width:100%; border-collapse:collapse; font-size:0.85rem;">
+                    <thead>
+                      <tr
+                        style="border-bottom:1.5px solid var(--border); background:rgba(255,255,255,0.6); position:sticky; top:0; z-index:10;">
+                        <th style="text-align:left; padding:10px 12px; color:var(--text-secondary); font-weight:600;">
+                          Date</th>
+                        <th style="text-align:right; padding:10px 12px; color:var(--text-secondary); font-weight:600;">
+                          Price</th>
+                        <th style="text-align:right; padding:10px 12px; color:var(--text-secondary); font-weight:600;">
+                          Open</th>
+                        <th style="text-align:right; padding:10px 12px; color:var(--text-secondary); font-weight:600;">
+                          High</th>
+                        <th style="text-align:right; padding:10px 12px; color:var(--text-secondary); font-weight:600;">
+                          Low</th>
+                        <th style="text-align:right; padding:10px 12px; color:var(--text-secondary); font-weight:600;">
+                          Vol.</th>
+                        <th style="text-align:right; padding:10px 12px; color:var(--text-secondary); font-weight:600;">
+                          Change %</th>
+                      </tr>
+                    </thead>
+                    <tbody id="ha-ohlcv-rows">
+                      <!-- Dynamic rows will render here -->
+                      <tr>
+                        <td colspan="7" style="text-align:center; padding:40px; color:var(--text-muted);">Please scan to
+                          fetch historical data</td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+                <div style="font-size:0.72rem; color:var(--text-secondary); margin-top:8px;">
+                  <span>💡 Colors represent positive/negative performance relative to the previous close.</span>
+                </div>
+              </div>
+
+              <!-- Right Column: Predictive Analytics Panel -->
+              <div style="display:flex; flex-direction:column; gap:16px;">
+                <!-- Card 1: Retrospective Win-Rate Backtest Matrix -->
+                <div class="card" style="background:var(--bg-glass); backdrop-filter:blur(8px);">
+                  <div class="card-header">
+                    <h3 style="display:flex; align-items:center; gap:8px;">
+                      <span>🎯 Scoring Signal Performance Backtest</span>
+                    </h3>
+                  </div>
+                  <div style="padding:8px 0;">
+                    <p style="font-size:0.75rem; color:var(--text-secondary); margin-bottom:12px;">Retrospective
+                      analysis of the Scoring Engine's triggers over the selected historical period:</p>
+                    <table class="table" style="width:100%; font-size:0.78rem;">
+                      <thead>
+                        <tr style="border-bottom:1.5px solid var(--border);">
+                          <th style="text-align:left; padding:8px 4px; color:var(--text-secondary);">Historical Signal
+                          </th>
+                          <th style="text-align:center; padding:8px 4px; color:var(--text-secondary);">Triggers</th>
+                          <th style="text-align:center; padding:8px 4px; color:var(--text-secondary);">1D Forward %</th>
+                          <th style="text-align:center; padding:8px 4px; color:var(--text-secondary);">2D Forward %</th>
+                          <th style="text-align:center; padding:8px 4px; color:var(--text-secondary);">5D Forward %</th>
+                          <th style="text-align:right; padding:8px 4px; color:var(--text-secondary);">Avg Move</th>
+                        </tr>
+                      </thead>
+                      <tbody id="ha-backtest-rows">
+                        <tr>
+                          <td colspan="6" style="text-align:center; padding:20px; color:var(--text-muted);">Please scan
+                            to compute metrics</td>
+                        </tr>
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+
+                <!-- Card 2: Streak Reversal & Overextended Exhaustion Index -->
+                <div class="card" style="background:var(--bg-glass); backdrop-filter:blur(8px);">
+                  <div class="card-header">
+                    <h3 style="display:flex; align-items:center; gap:8px;">
+                      <span>🌪️ Streak Reversal &amp; Overextended Exhaustion Index</span>
+                    </h3>
+                  </div>
+                  <div style="padding:8px 0; display:flex; flex-direction:column; gap:12px;">
+                    <p style="font-size:0.75rem; color:var(--text-secondary);">Historical multi-session trend
+                      overextension limits &amp; pull-back/snapback reversal probabilities:</p>
+                    <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px;">
+                      <!-- Upward Rise Streak (Bullish Exhaustion) -->
+                      <div
+                        style="background:rgba(38,166,154,0.06); padding:12px; border-radius:var(--radius-md); border:1px solid rgba(38,166,154,0.15); display:flex; flex-direction:column; gap:8px;">
+                        <div
+                          style="font-size:0.75rem; font-weight:700; color:var(--green); display:flex; justify-content:space-between; align-items:center;">
+                          <span>🟢 Upward Climb Streaks</span>
+                          <span class="badge"
+                            style="background:rgba(38, 166, 154, 0.2); color:var(--green); font-size:0.65rem;"
+                            id="ha-climb-badge">Active</span>
+                        </div>
+                        <div style="font-size:1.1rem; font-weight:800; color:var(--text-primary);" id="ha-climb-streak">
+                          0 Consecutive Days
+                        </div>
+                        <div style="display:flex; flex-direction:column; gap:6px;">
+                          <div style="display:flex; justify-content:space-between; font-size:0.72rem;">
+                            <span style="color:var(--text-secondary);">Pullback Prob (Next Day):</span>
+                            <span id="ha-climb-prob" style="font-weight:700; color:var(--green);">—</span>
+                          </div>
+                          <div style="display:flex; justify-content:space-between; font-size:0.72rem;">
+                            <span style="color:var(--text-secondary);">EMA Snapback Target:</span>
+                            <span id="ha-climb-target" style="font-weight:700; color:var(--text-primary);">—</span>
+                          </div>
+                        </div>
+                      </div>
+                      <!-- Downward Drop Streak (Bearish Exhaustion) -->
+                      <div
+                        style="background:rgba(239,83,80,0.06); padding:12px; border-radius:var(--radius-md); border:1px solid rgba(239,83,80,0.15); display:flex; flex-direction:column; gap:8px;">
+                        <div
+                          style="font-size:0.75rem; font-weight:700; color:var(--red); display:flex; justify-content:space-between; align-items:center;">
+                          <span>🔴 Downward Drop Streaks</span>
+                          <span class="badge"
+                            style="background:rgba(239, 83, 80, 0.2); color:var(--red); font-size:0.65rem;"
+                            id="ha-drop-badge">Active</span>
+                        </div>
+                        <div style="font-size:1.1rem; font-weight:800; color:var(--text-primary);" id="ha-drop-streak">
+                          0 Consecutive Days
+                        </div>
+                        <div style="display:flex; flex-direction:column; gap:6px;">
+                          <div style="display:flex; justify-content:space-between; font-size:0.72rem;">
+                            <span style="color:var(--text-secondary);">Bounce Prob (Next Day):</span>
+                            <span id="ha-drop-prob" style="font-weight:700; color:var(--red);">—</span>
+                          </div>
+                          <div style="display:flex; justify-content:space-between; font-size:0.72rem;">
+                            <span style="color:var(--text-secondary);">EMA Snapback Target:</span>
+                            <span id="ha-drop-target" style="font-weight:700; color:var(--text-primary);">—</span>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Card 3: Opening Gap Fade/Follow Probability Index -->
+                <div class="card" style="background:var(--bg-glass); backdrop-filter:blur(8px);">
+                  <div class="card-header">
+                    <h3>📊 Opening Gap-Fade vs. Gap-Follow Index</h3>
+                  </div>
+                  <div style="padding:8px 0; display:flex; flex-direction:column; gap:12px;">
+                    <p style="font-size:0.75rem; color:var(--text-secondary);">Historical behavior metrics mapping gap
+                      sizes to subsequent 30-minute trend continuation:</p>
+                    <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px;">
+                      <!-- Gap Up Stats -->
+                      <div
+                        style="background:rgba(38,166,154,0.06); padding:10px; border-radius:var(--radius-md); border:1px solid rgba(38,166,154,0.15);">
+                        <div
+                          style="font-size:0.75rem; font-weight:700; color:var(--green); display:flex; justify-content:space-between; align-items:center;">
+                          <span>🟢 Gap Up Opens</span>
+                          <span id="ha-gapup-count">—</span>
+                        </div>
+                        <div style="display:flex; flex-direction:column; gap:6px; margin-top:8px;">
+                          <div style="display:flex; justify-content:space-between; font-size:0.72rem;">
+                            <span style="color:var(--text-secondary);">Gap-Follow (Continuation):</span>
+                            <span id="ha-gapup-follow" style="font-weight:700; color:var(--text-primary);">—</span>
+                          </div>
+                          <div style="display:flex; justify-content:space-between; font-size:0.72rem;">
+                            <span style="color:var(--text-secondary);">Gap-Fade (Reversal/Fill):</span>
+                            <span id="ha-gapup-fade" style="font-weight:700; color:var(--text-primary);">—</span>
+                          </div>
+                        </div>
+                      </div>
+                      <!-- Gap Down Stats -->
+                      <div
+                        style="background:rgba(239,83,80,0.06); padding:10px; border-radius:var(--radius-md); border:1px solid rgba(239,83,80,0.15);">
+                        <div
+                          style="font-size:0.75rem; font-weight:700; color:var(--red); display:flex; justify-content:space-between; align-items:center;">
+                          <span>🔴 Gap Down Opens</span>
+                          <span id="ha-gapdown-count">—</span>
+                        </div>
+                        <div style="display:flex; flex-direction:column; gap:6px; margin-top:8px;">
+                          <div style="display:flex; justify-content:space-between; font-size:0.72rem;">
+                            <span style="color:var(--text-secondary);">Gap-Follow (Continuation):</span>
+                            <span id="ha-gapdown-follow" style="font-weight:700; color:var(--text-primary);">—</span>
+                          </div>
+                          <div style="display:flex; justify-content:space-between; font-size:0.72rem;">
+                            <span style="color:var(--text-secondary);">Gap-Fade (Reversal/Fill):</span>
+                            <span id="ha-gapdown-fade" style="font-weight:700; color:var(--text-primary);">—</span>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Card 3: Institutional Volume Climax Walls -->
+                <div class="card" style="background:var(--bg-glass); backdrop-filter:blur(8px);">
+                  <div class="card-header">
+                    <h3>🏔️ Institutional Volume Climax Support &amp; Resistance</h3>
+                  </div>
+                  <div style="padding:8px 0; display:flex; flex-direction:column; gap:8px;">
+                    <p style="font-size:0.75rem; color:var(--text-secondary);">Key historical dates showing volume
+                      spikes &gt; 2.5x standard averages. The closes of these days act as critical horizontal walls:</p>
+                    <div style="display:flex; flex-direction:column; gap:8px; max-height:220px; overflow-y:auto;"
+                      id="ha-climax-list">
+                      <div style="text-align:center; padding:20px; color:var(--text-muted); font-size:0.78rem;">Please
+                        scan to view institutional volume walls</div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- ═══ PAGE: Notion Notes Workspace ═══ -->
+        <div class="page" id="page-notes">
+          <!-- Notion Connection Header/Settings -->
+          <div class="card mb-16"
+            style="background: var(--bg-glass); backdrop-filter: blur(12px); border: 1px solid var(--border);">
+            <div class="card-header"
+              style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:16px;">
+              <div>
+                <h3
+                  style="font-family:var(--font-display); font-weight:700; color:var(--primary-dark); display:flex; align-items:center; gap:8px;">
+                  <span>📝 Notion Notes Workspace</span>
+                  <span id="notion-status-badge" class="badge"
+                    style="background:rgba(239,83,80,0.1); color:var(--red); font-size:0.75rem; padding:4px 8px; border-radius:10px;">Disconnected</span>
+                </h3>
+                <p style="font-size:0.78rem; color:var(--text-secondary); margin-top:4px;">Draft local observations,
+                  link notes to specific symbols/sentiments, and sync them seamlessly to Notion pages or databases.</p>
+              </div>
+              <div class="card-actions">
+                <button class="btn btn-secondary" id="btn-toggle-notion-config"
+                  style="font-size:0.8rem; padding:6px 12px; border-radius:var(--radius-sm);">
+                  ⚙️ Notion Setup
+                </button>
+              </div>
+            </div>
+
+            <!-- Notion Config Form (Toggled via button) -->
+            <div id="notion-config-panel"
+              style="display:none; padding:16px; border-top:1px solid var(--border-light); background:rgba(255,255,255,0.2);">
+              <div style="display:grid; grid-template-columns:1.5fr 1.2fr 1fr 1fr; gap:16px; align-items:flex-end;">
+                <div class="form-group mb-0">
+                  <label
+                    style="font-size:0.72rem; font-weight:700; color:var(--text-secondary); text-transform:uppercase;">Notion
+                    Integration Token</label>
+                  <input type="password" class="form-control" id="notion-token" placeholder="secret_xxxxxxxxx"
+                    style="border-radius:var(--radius-sm); font-size:0.82rem; padding:8px;">
+                </div>
+                <div class="form-group mb-0">
+                  <label
+                    style="font-size:0.72rem; font-weight:700; color:var(--text-secondary); text-transform:uppercase;">Database
+                    / Page ID</label>
+                  <input type="text" class="form-control" id="notion-parent-id" placeholder="Enter Notion ID"
+                    style="border-radius:var(--radius-sm); font-size:0.82rem; padding:8px;">
+                </div>
+                <div class="form-group mb-0">
+                  <label
+                    style="font-size:0.72rem; font-weight:700; color:var(--text-secondary); text-transform:uppercase;">Parent
+                    Type</label>
+                  <select class="form-select" id="notion-parent-type"
+                    style="border-radius:var(--radius-sm); font-size:0.82rem; padding:8px;">
+                    <option value="database">🗄️ Notion Database</option>
+                    <option value="page">📄 Notion Page (as Sub-Page)</option>
+                  </select>
+                </div>
+                <div style="display:flex; gap:8px;">
+                  <button class="btn btn-secondary" id="btn-save-notion-config"
+                    style="padding:10px 12px; font-weight:600; width:50%; font-size:0.75rem;">Save</button>
+                  <button class="btn btn-primary" id="btn-test-notion-connection"
+                    style="padding:10px 12px; font-weight:600; width:50%; font-size:0.75rem; background:linear-gradient(135deg, var(--primary), var(--primary-dark)); border:none;">Test</button>
+                </div>
+              </div>
+              <div id="notion-connection-feedback" style="margin-top:10px; font-size:0.72rem; display:none;"></div>
+            </div>
+          </div>
+
+          <!-- Main Layout Split Grid -->
+          <div style="display:grid; grid-template-columns:300px 1fr; gap:16px; min-height:600px; margin-bottom:16px;">
+            <!-- Left Side: Directory and Filters -->
+            <div class="card"
+              style="background:var(--bg-glass); backdrop-filter:blur(8px); display:flex; flex-direction:column; padding:12px;">
+              <!-- Action header -->
+              <div style="display:flex; gap:8px; margin-bottom:12px;">
+                <button class="btn btn-primary" id="btn-new-note"
+                  style="flex:1; font-weight:700; border-radius:var(--radius-sm); background:linear-gradient(135deg, var(--primary), var(--primary-dark)); border:none; display:flex; align-items:center; justify-content:center; gap:6px;">
+                  <span>➕ New Note</span>
+                </button>
+              </div>
+              <!-- Search and filters -->
+              <div style="display:flex; flex-direction:column; gap:8px; margin-bottom:12px;">
+                <input type="text" class="form-control" id="note-search" placeholder="Search notes..."
+                  style="border-radius:var(--radius-sm); font-size:0.78rem; padding:6px 10px;">
+                <select class="form-select" id="note-filter-symbol"
+                  style="border-radius:var(--radius-sm); font-size:0.78rem; padding:6px 10px;">
+                  <option value="">All Stocks</option>
+                </select>
+              </div>
+              <!-- Notes List Scroll Container -->
+              <div style="flex:1; overflow-y:auto; display:flex; flex-direction:column; gap:8px; max-height: 480px;"
+                id="notes-list-container">
+                <!-- Dynamically loaded note items -->
+                <div class="empty-state" style="padding:30px 10px;">
+                  <span style="font-size:1.5rem;">📓</span>
+                  <p style="font-size:0.75rem; color:var(--text-secondary); margin-top:8px;">No notes found. Create one
+                    to begin!</p>
+                </div>
+              </div>
+            </div>
+
+            <!-- Right Side: Editor Workspace -->
+            <div class="card"
+              style="background:var(--bg-glass); backdrop-filter:blur(8px); display:flex; flex-direction:column;"
+              id="note-editor-panel">
+              <!-- Note Active View -->
+              <div id="note-active-view" style="display:flex; flex-direction:column; height:100%; flex:1;">
+                <!-- Header Toolbar -->
+                <div
+                  style="display:flex; justify-content:space-between; align-items:center; padding-bottom:12px; border-bottom:1px solid var(--border-light); margin-bottom:12px;">
+                  <!-- Tabs: Edit vs Preview -->
+                  <div class="tabs mb-0" id="editor-tabs"
+                    style="border:none; background:rgba(0,0,0,0.05); padding:2px; border-radius:6px; display:inline-flex;">
+                    <button class="tab-btn active" data-tab="edit"
+                      style="padding:4px 12px; font-size:0.75rem; border-radius:4px;">✍️ Edit Note</button>
+                    <button class="tab-btn" data-tab="preview"
+                      style="padding:4px 12px; font-size:0.75rem; border-radius:4px;">👁️ Preview</button>
+                  </div>
+                  <!-- Save / Sync Actions -->
+                  <div style="display:flex; gap:8px; align-items:center;">
+                    <span id="note-save-indicator"
+                      style="font-size:0.72rem; color:var(--text-secondary); display:none;">Saved locally</span>
+                    <button class="btn btn-sm btn-secondary" id="btn-save-note" title="Save Note Locally"
+                      style="font-size:0.75rem; font-weight:700; padding:6px 12px; border-radius:4px; display:flex; align-items:center; gap:4px;">
+                      <span>💾 Save</span>
+                    </button>
+                    <button class="btn btn-sm btn-primary" id="btn-sync-note" title="Sync to Notion Workspace"
+                      style="font-size:0.75rem; font-weight:700; padding:6px 12px; border-radius:4px; display:flex; align-items:center; gap:4px; background:linear-gradient(135deg, var(--purple), #8e24aa); border:none;">
+                      <span>☁️ Sync to Notion</span>
+                    </button>
+                    <button class="btn btn-sm btn-secondary" id="btn-delete-note" title="Delete Note"
+                      style="font-size:0.75rem; padding:6px 10px; border-radius:4px; color:var(--red);">
+                      🗑️
+                    </button>
+                  </div>
+                </div>
+
+                <!-- Note Metadata Form Row -->
+                <div style="display:grid; grid-template-columns: 2fr 1fr 1fr; gap:12px; margin-bottom:12px;">
+                  <div style="display:flex; flex-direction:column; gap:4px;">
+                    <label
+                      style="font-size:0.68rem; font-weight:700; color:var(--text-secondary); text-transform:uppercase;">Note
+                      Title</label>
+                    <input type="text" class="form-control" id="active-note-title"
+                      placeholder="Enter descriptive title..."
+                      style="font-size:0.9rem; font-weight:700; border-radius:var(--radius-sm); padding:8px;">
+                  </div>
+                  <div style="display:flex; flex-direction:column; gap:4px;">
+                    <label
+                      style="font-size:0.68rem; font-weight:700; color:var(--text-secondary); text-transform:uppercase;">Link
+                      Stock Symbol</label>
+                    <select class="form-select" id="active-note-symbol"
+                      style="border-radius:var(--radius-sm); font-size:0.82rem; padding:8px; font-weight:600;">
+                      <option value="">None (General)</option>
+                    </select>
+                  </div>
+                  <div style="display:flex; flex-direction:column; gap:4px;">
+                    <label
+                      style="font-size:0.68rem; font-weight:700; color:var(--text-secondary); text-transform:uppercase;">Market
+                      Bias</label>
+                    <select class="form-select" id="active-note-sentiment"
+                      style="border-radius:var(--radius-sm); font-size:0.82rem; padding:8px; font-weight:600;">
+                      <option value="NEUTRAL">⚪ Neutral</option>
+                      <option value="BULLISH">🟢 Bullish</option>
+                      <option value="BEARISH">🔴 Bearish</option>
+                    </select>
+                  </div>
+                </div>
+
+                <!-- Core Note Content Box -->
+                <div style="flex:1; display:flex; flex-direction:column; position:relative; min-height: 380px;">
+                  <!-- Editor Markdown Table Helper Toolbar -->
+                  <div
+                    style="display:flex; gap:8px; align-items:center; background:rgba(0,0,0,0.03); border:1px solid var(--border); border-bottom:none; border-top-left-radius:var(--radius-sm); border-top-right-radius:var(--radius-sm); padding:6px 12px;"
+                    id="editor-toolbar">
+                    <span
+                      style="font-size:0.68rem; font-weight:700; color:var(--text-secondary); text-transform:uppercase; margin-right:8px;">Workspace
+                      Tools:</span>
+                    <button class="btn btn-sm btn-primary" id="btn-visual-add-table"
+                      title="Add Notion-style Table Block"
+                      style="font-size:0.7rem; padding:3px 8px; border-radius:4px; font-weight:600; display:flex; align-items:center; gap:4px;">📊
+                      Add Notion Table</button>
+                  </div>
+
+                  <!-- Notion-style Visual Table Editor -->
+                  <div id="visual-table-container"
+                    style="margin-bottom:12px; border:1px solid var(--border); border-radius:var(--radius-sm); background:rgba(255,255,255,0.7); padding:10px; display:none; flex-direction:column; gap:8px;">
+                    <div
+                      style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid var(--border-light); padding-bottom:6px;">
+                      <span
+                        style="font-size:0.72rem; font-weight:700; color:var(--primary-dark); display:flex; align-items:center; gap:6px;">
+                        📊 Notion-style Table Block
+                      </span>
+                      <div style="display:flex; gap:6px;">
+                        <button class="btn btn-sm btn-secondary" id="btn-visual-add-row"
+                          style="font-size:0.65rem; padding:2px 6px; border-radius:4px; font-weight:600;">➕ Row</button>
+                        <button class="btn btn-sm btn-secondary" id="btn-visual-add-col"
+                          style="font-size:0.65rem; padding:2px 6px; border-radius:4px; font-weight:600;">➕
+                          Column</button>
+                        <button class="btn btn-sm btn-secondary" id="btn-visual-remove"
+                          style="font-size:0.65rem; padding:2px 6px; border-radius:4px; font-weight:600; color:var(--red);">🗑️
+                          Remove Table</button>
+                      </div>
+                    </div>
+                    <div style="overflow-x:auto;" id="visual-table-grid-wrapper">
+                      <!-- Live Table Grid goes here -->
+                    </div>
+                  </div>
+
+                  <!-- Editor Textarea -->
+                  <textarea id="active-note-content"
+                    placeholder="Type your trading journal observations here... Supporting Markdown formatting:&#10;# Heading 1&#10;## Heading 2&#10;- Bullet list item"
+                    style="flex:1; resize:none; font-family:var(--font-mono, monospace); font-size:0.85rem; border-top-left-radius:0; border-top-right-radius:0; border-bottom-left-radius:var(--radius-md); border-bottom-right-radius:var(--radius-md); padding:12px; border:1px solid var(--border); background:rgba(255,255,255,0.6); outline:none; line-height:1.5;"
+                    class="form-control"></textarea>
+
+                  <!-- Markdown Live Preview Container (Hidden by default) -->
+                  <div id="active-note-preview"
+                    style="display:none; flex:1; overflow-y:auto; padding:12px; border-radius:var(--radius-md); border:1px solid var(--border); background:rgba(255,255,255,0.7); font-size:0.85rem; line-height:1.6;"
+                    class="markdown-preview"></div>
+                </div>
+
+                <!-- Footer telemetry -->
+                <div
+                  style="display:flex; justify-content:space-between; align-items:center; margin-top:10px; font-size:0.68rem; color:var(--text-secondary); font-weight:500;">
+                  <span id="note-created-at">Created: —</span>
+                  <span id="note-sync-indicator" style="display:flex; align-items:center; gap:4px;">
+                    <span
+                      style="display:inline-block; width:6px; height:6px; border-radius:50%; background:var(--text-secondary);"
+                      id="sync-dot"></span>
+                    <span id="sync-text">Not Synced</span>
+                  </span>
+                </div>
+              </div>
+
+              <!-- Note Selection Placeholder View -->
+              <div id="note-placeholder-view"
+                style="display:flex; flex-direction:column; align-items:center; justify-content:center; flex:1; padding:60px 20px; text-align:center;">
+                <div style="font-size:3rem; margin-bottom:12px;">📝</div>
+                <h4 style="font-family:var(--font-display); font-weight:700; color:var(--text-primary);">No Note
+                  Selected</h4>
+                <p style="color:var(--text-secondary); max-width:320px; margin-top:6px; font-size:0.8rem;">Select an
+                  existing note from the directory or create a new note to start typing your observations.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- ═══ PAGE: Equity Screener ═══ -->
+        <div class="page" id="page-screener">
+          <div class="card mb-16">
+            <div class="card-header">
+              <h3>🔍 F&O Equity Screener</h3>
+              <div class="card-actions">
+                <button class="btn btn-sm btn-primary" id="btn-screen-run">🔄 Scan Now</button>
+              </div>
+            </div>
+            <div class="screener-filters" id="screener-filters">
+              <select class="form-select" id="screen-sector">
+                <option value="">All Sectors</option>
+                <option value="IT">IT</option>
+                <option value="Banking">Banking</option>
+                <option value="Pharma">Pharma</option>
+                <option value="Auto">Auto</option>
+                <option value="FMCG">FMCG</option>
+                <option value="Metal">Metal</option>
+                <option value="Energy">Energy</option>
+                <option value="Realty">Realty</option>
+                <option value="Infra">Infra</option>
+                <option value="Finance">Finance</option>
+                <option value="Chemicals">Chemicals</option>
+                <option value="Defence">Defence</option>
+                <option value="Retail">Retail</option>
+                <option value="Telecom">Telecom</option>
+                <option value="Insurance">Insurance</option>
+                <option value="Media">Media</option>
+                <option value="Other">Other</option>
+              </select>
+              <div class="filter-chip active" data-cap="all">All</div>
+              <div class="filter-chip" data-cap="large">Large Cap</div>
+              <div class="filter-chip" data-cap="mid">Mid Cap</div>
+              <select class="form-select" id="screen-signal">
+                <option value="">All Signals</option>
+                <option value="bullish">Bullish</option>
+                <option value="bearish">Bearish</option>
+                <option value="neutral">Neutral</option>
+              </select>
+              <select class="form-select" id="screen-sort">
+                <option value="score">Sort: Score ↓</option>
+                <option value="change">Sort: Change% ↓</option>
+                <option value="volume">Sort: Volume ↓</option>
+                <option value="name">Sort: Name A-Z</option>
+              </select>
+            </div>
+            <div style="overflow-x:auto;">
+              <table class="data-table" id="screener-table">
+                <thead>
+                  <tr>
+                    <th>Stock</th>
+                    <th>Sector</th>
+                    <th>LTP</th>
+                    <th>Chg%</th>
+                    <th>Volume</th>
+                    <th>Vol Ratio</th>
+                    <th>RSI</th>
+                    <th>MACD</th>
+                    <th>Signal</th>
+                    <th>Score</th>
+                    <th>Action</th>
+                  </tr>
+                </thead>
+                <tbody id="screener-body">
+                  <tr>
+                    <td colspan="11" class="text-muted" style="text-align:center;padding:30px;">Click "Scan Now" to
+                      screen F&O stocks</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+
+
+
+
+        <!-- ═══ PAGE: Watchlist ═══ -->
+        <div class="page" id="page-watchlist">
+          <div class="card mb-16">
+            <div class="card-header">
+              <h3>⭐ Watchlist</h3>
+              <div class="card-actions flex gap-8">
+                <div style="position:relative;display:flex;align-items:center;">
+                  <input type="text" class="form-input" id="watchlist-add-input" list="watchlist-stock-list"
+                    placeholder="Add stock e.g. RELIANCE" style="width:220px;">
+                  <datalist id="watchlist-stock-list"></datalist>
+                </div>
+                <button class="btn btn-primary" id="btn-watchlist-add">+ Add</button>
+              </div>
+            </div>
+            <div id="watchlist-grid"></div>
+          </div>
+        </div>
+
+        <!-- ═══ PAGE: Portfolio ═══ -->
+        <div class="page" id="page-portfolio">
+          <div class="card mb-16">
+            <div class="card-header">
+              <h3>💼 Portfolio Tracker</h3>
+              <div class="card-actions">
+                <button class="btn btn-primary" onclick="portfolio.load()">🔄 Refresh</button>
+              </div>
+            </div>
+            <div id="portfolio-content">
+              <div style="text-align:center;padding:60px 20px;color:var(--text-muted);">
+                <div style="font-size:3rem;margin-bottom:12px;">💼</div>
+                <h3 style="font-family:var(--font-display);margin-bottom:8px;">Portfolio Tracker</h3>
+                <p style="font-size:0.85rem;">Connect to Kite to view your holdings, positions, and P&L.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- ═══ PAGE: Live Movers ═══ -->
+        <div class="page" id="page-live-movers">
+          <div class="card mb-16">
+            <div class="card-header">
+              <h3>🔥 Live Movers</h3>
+              <div class="card-actions">
+                <button class="btn btn-primary" onclick="liveMovers.load()">🔄 Refresh</button>
+              </div>
+            </div>
+            <div id="movers-content">
+              <div style="text-align:center;padding:60px 20px;color:var(--text-muted);">
+                <div style="font-size:3rem;margin-bottom:12px;">🔥</div>
+                <h3 style="font-family:var(--font-display);margin-bottom:8px;">Intraday Movers</h3>
+                <p style="font-size:0.85rem;">View top gainers, losers, volume buzzers, and OI leaders during market
+                  hours.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- ═══ PAGE: Index Movers Dashboard ═══ -->
+        <div class="page" id="page-index-movers">
+
+          <!-- Controls Row -->
+          <div class="card mb-16">
+            <div class="card-header" style="flex-wrap:wrap;gap:10px;">
+              <h3>📊 Index Movers Dashboard</h3>
+              <div class="card-actions" style="flex-wrap:wrap;gap:8px;align-items:center;">
+
+                <div style="display:flex;align-items:center;gap:6px;">
+                  <label style="font-size:0.75rem;color:var(--text-muted);white-space:nowrap;">Index</label>
+                  <select id="im-index" class="form-control" style="width:150px;padding:6px 10px;font-size:0.8rem;">
+                    <optgroup label="── NSE ──">
+                      <option value="nifty50">Nifty 50</option>
+                      <option value="banknifty">Bank Nifty</option>
+                      <option value="niftyit">Nifty IT</option>
+                      <option value="nifty100">Nifty 100</option>
+                    </optgroup>
+                    <optgroup label="── BSE ──">
+                      <option value="sensex">BSE Sensex</option>
+                      <option value="bsebankex">BSE Bankex</option>
+                      <option value="bseit">BSE IT</option>
+                      <option value="bse100">BSE 100</option>
+                    </optgroup>
+                  </select>
+                </div>
+
+                <div style="display:flex;align-items:center;gap:6px;">
+                  <label style="font-size:0.75rem;color:var(--text-muted);white-space:nowrap;">Day</label>
+                  <div style="display:flex;border:1px solid var(--border);border-radius:6px;overflow:hidden;">
+                    <button id="im-day-today" onclick="indexMovers.setDay(0)" style="padding:5px 10px;font-size:0.75rem;font-weight:600;border:none;cursor:pointer;
+                             background:var(--primary);color:#fff;">Today</button>
+                    <button id="im-day-prev" onclick="indexMovers.setDay(1)" style="padding:5px 10px;font-size:0.75rem;font-weight:600;border:none;cursor:pointer;
+                             background:var(--bg-card);color:var(--text-secondary);">Yesterday</button>
+                  </div>
+                </div>
+
+                <div style="display:flex;align-items:center;gap:6px;">
+                  <label style="font-size:0.75rem;color:var(--text-muted);white-space:nowrap;">Top N movers</label>
+                  <select id="im-topn" class="form-control" style="width:90px;padding:6px 10px;font-size:0.8rem;">
+                    <option value="5">Top 5</option>
+                    <option value="10" selected>Top 10</option>
+                    <option value="15">Top 15</option>
+                    <option value="20">Top 20</option>
+                  </select>
+                </div>
+
+                <div style="display:flex;align-items:center;gap:6px;">
+                  <label style="font-size:0.75rem;color:var(--text-muted);white-space:nowrap;">Alert threshold
+                    (%)</label>
+                  <input id="im-threshold" type="number" class="form-control" value="2" min="0.1" max="20" step="0.1"
+                    style="width:70px;padding:6px 10px;font-size:0.8rem;" />
+                </div>
+
+                <button id="im-fetch-btn" class="btn btn-primary" onclick="indexMovers.fetch()">Fetch Movers</button>
+                <button id="im-auto-refresh" class="btn btn-secondary" onclick="indexMovers.toggleAutoRefresh()">▶ Auto
+                  Refresh</button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Summary Stats -->
+          <div class="grid-4 mb-16">
+            <div class="stat-card">
+              <span class="stat-label">Total Stocks</span>
+              <span class="stat-value" id="im-stat-total">—</span>
+              <span class="stat-change" style="color:var(--text-muted);">
+                <span id="im-exchange-badge"
+                  style="font-size:0.68rem;padding:1px 6px;border-radius:4px;font-weight:700;">NSE</span>
+              </span>
+            </div>
+            <div class="stat-card">
+              <span class="stat-label">Gainers</span>
+              <span class="stat-value" id="im-stat-gainers" style="color:var(--green);">—</span>
+              <span class="stat-change up">advancing</span>
+            </div>
+            <div class="stat-card">
+              <span class="stat-label">Losers</span>
+              <span class="stat-value" id="im-stat-losers" style="color:var(--red);">—</span>
+              <span class="stat-change down">declining</span>
+            </div>
+            <div class="stat-card">
+              <span class="stat-label">Last Updated</span>
+              <span class="stat-value" id="im-stat-updated" style="font-size:1rem;">—</span>
+              <span class="stat-change" id="im-stat-alerts" style="color:var(--text-muted);">—</span>
+            </div>
+          </div>
+
+          <!-- Sector Breakdown -->
+          <div class="card mb-16">
+            <div class="card-header">
+              <h3>📊 Sector Breakdown</h3>
+              <span style="font-size:0.75rem;color:var(--text-muted);">Click any sector to expand stocks · sorted by avg
+                change</span>
+            </div>
+            <div id="im-sector-view" style="padding:4px 0;">
+              <div style="text-align:center;padding:40px;color:var(--text-muted);">Fetch to load</div>
+            </div>
+          </div>
+
+          <!-- Alerts Triggered -->
+          <div class="card">
+            <div class="card-header">
+              <h3>🔔 Alerts Triggered</h3>
+              <span style="font-size:0.75rem;color:var(--text-muted);">Stocks that crossed the alert threshold %</span>
+            </div>
+            <div style="overflow-x:auto;">
+              <table class="data-table" style="font-size:0.82rem;">
+                <thead>
+                  <tr>
+                    <th>Symbol</th>
+                    <th>LTP</th>
+                    <th>Change %</th>
+                  </tr>
+                </thead>
+                <tbody id="im-alerts-body">
+                  <tr>
+                    <td colspan="3" style="text-align:center;padding:16px;color:var(--text-muted);">No alerts yet. Fetch
+                      data to check.</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+        </div>
+
+        <!-- ═══ PAGE: News ═══ -->
+        <div class="page" id="page-news">
+          <div class="card mb-16">
+            <div class="card-header">
+              <h3>📰 News & Sentiment</h3>
+              <div class="card-actions flex gap-8">
+                <button class="btn btn-primary" id="btn-news-all" onclick="newsFeed.load('', true)">All News</button>
+              </div>
+            </div>
+            <div id="news-content">
+              <div style="text-align:center;padding:60px 20px;color:var(--text-muted);">
+                <div style="font-size:3rem;margin-bottom:12px;">📰</div>
+                <h3 style="font-family:var(--font-display);margin-bottom:8px;">News & Sentiment Feed</h3>
+                <p style="font-size:0.85rem;">Aggregated market news with AI sentiment scoring from Livemint, ET, and
+                  MoneyControl.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- ═══ PAGE: Stock Analysis ═══ -->
+        <div class="page" id="page-analysis">
+          <div class="card mb-16">
+            <div class="card-header">
+              <h3>🔬 On-Demand Stock Analysis</h3>
+              <div class="card-actions flex gap-8" style="flex-wrap:wrap;">
+                <div style="position:relative;display:flex;align-items:center;">
+                  <span
+                    style="position:absolute;left:10px;color:var(--text-muted);font-size:0.9rem;pointer-events:none;">🔍</span>
+                  <input type="text" id="analysis-symbol-input" placeholder="Search F&amp;O stock e.g. RELIANCE"
+                    autocomplete="off" list="analysis-symbol-list"
+                    style="padding:8px 12px 8px 30px;min-width:240px;border-radius:8px;border:1px solid var(--border);background:var(--bg-card);color:var(--text-primary);font-size:0.85rem;outline:none;">
+                  <datalist id="analysis-symbol-list"></datalist>
+                </div>
+                <div class="tabs" style="margin-bottom:0;">
+                  <button class="tab-btn active" id="btn-mode-premarket" data-mode="premarket">📊 Pre-Market</button>
+                  <button class="tab-btn" id="btn-mode-live" data-mode="live">⚡ Live</button>
+                </div>
+                <div class="tabs" style="margin-bottom:0;">
+                  <button class="tab-btn" id="btn-ema-preset1" data-preset="preset1" title="EMA 5, 9, 21">📊 EMA
+                    5,9,21</button>
+                  <button class="tab-btn active" id="btn-ema-preset2" data-preset="preset2" title="EMA 9, 21, 50">📊 EMA
+                    9,21,50</button>
+                </div>
+                <button class="btn btn-sm btn-primary" id="btn-run-analysis">▶ Analyse</button>
+                <button class="btn btn-sm btn-secondary" id="btn-stop-analysis" style="display:none;">⏹ Stop
+                  Live</button>
+                <button class="btn btn-sm btn-secondary" id="btn-signal-chart" style="display:none;"
+                  title="Open intraday signal chart">📈 Signal Chart</button>
+              </div>
+            </div>
+            <div id="analysis-status" style="padding:8px 0;min-height:28px;"></div>
+            <div id="analysis-result" style="display:none;padding-top:4px;"></div>
+            <div id="analysis-empty" class="empty-state">
+              <div class="empty-icon">🔬</div>
+              <h4>Select a Stock &amp; Mode</h4>
+              <p>Choose any F&amp;O stock, pick Pre-Market or Live mode, and click Analyse.<br>
+                <span style="font-size:0.78rem;color:var(--text-muted);">Live mode needs an active Kite session and
+                  refreshes every 15 seconds. Signal flips trigger real-time alerts.</span>
+              </p>
+            </div>
+          </div>
+
+          <!-- Bulk Stock Analysis Panel -->
+          <div class="card mb-16" style="background:var(--bg-glass); backdrop-filter:blur(8px);">
+            <div class="card-header"
+              style="display:flex; justify-content:space-between; align-items:center; cursor:pointer;"
+              onclick="window.saBulkToggle()">
+              <h3
+                style="font-family:var(--font-display); font-weight:700; display:flex; align-items:center; gap:8px; margin:0;">
+                <span>📋 Bulk Stock Analysis & CSV Export</span>
+                <span class="badge"
+                  style="background:rgba(30,136,229,0.1); color:#1E88E5; font-size:0.7rem; padding:3px 8px; border-radius:8px;">Multi-Stock</span>
+              </h3>
+              <span id="sa-bulk-toggle-icon" style="color:var(--text-secondary); font-size:0.8rem; font-weight:600;">▼
+                Expand</span>
+            </div>
+
+            <div id="sa-bulk-panel"
+              style="display:none; padding-top:12px; border-top:1px solid var(--border); margin-top:12px;">
+              <p style="font-size:0.78rem; color:var(--text-secondary); margin-bottom:12px;">
+                Batch-analyse up to 100 stocks using the full scoring engine. Results include equity score, direction,
+                RSI, MACD, CHOP, EMA crossover and backtest win-rates — downloadable as CSV.
+              </p>
+              <div style="display:grid; grid-template-columns:1fr auto; gap:12px; align-items:flex-start;">
+                <div>
+                  <!-- Quick-fill cap buttons -->
+                  <div style="display:flex; gap:8px; margin-bottom:8px; flex-wrap:wrap;">
+                    <span
+                      style="font-size:0.75rem; font-weight:600; color:var(--text-secondary); align-self:center; white-space:nowrap;">Quick
+                      Fill:</span>
+                    <button onclick="window.saBulkFillCap('large')"
+                      style="padding:4px 12px; border-radius:20px; border:1.5px solid rgba(30,136,229,0.4); background:rgba(30,136,229,0.08); color:#1E88E5; font-size:0.72rem; font-weight:700; cursor:pointer;"
+                      onmouseover="this.style.background='rgba(30,136,229,0.18)'"
+                      onmouseout="this.style.background='rgba(30,136,229,0.08)'">🔵 Large Cap</button>
+                    <button onclick="window.saBulkFillCap('mid')"
+                      style="padding:4px 12px; border-radius:20px; border:1.5px solid rgba(255,167,38,0.4); background:rgba(255,167,38,0.08); color:#FFA726; font-size:0.72rem; font-weight:700; cursor:pointer;"
+                      onmouseover="this.style.background='rgba(255,167,38,0.18)'"
+                      onmouseout="this.style.background='rgba(255,167,38,0.08)'">🟠 Mid Cap</button>
+                    <button onclick="window.saBulkFillCap('small')"
+                      style="padding:4px 12px; border-radius:20px; border:1.5px solid rgba(38,166,154,0.4); background:rgba(38,166,154,0.08); color:#26A69A; font-size:0.72rem; font-weight:700; cursor:pointer;"
+                      onmouseover="this.style.background='rgba(38,166,154,0.18)'"
+                      onmouseout="this.style.background='rgba(38,166,154,0.08)'">🟢 Small Cap</button>
+                    <button onclick="document.getElementById('sa-bulk-symbols').value=''"
+                      style="padding:4px 10px; border-radius:20px; border:1px solid var(--border); background:transparent; color:var(--text-muted); font-size:0.72rem; cursor:pointer;"
+                      title="Clear">✕ Clear</button>
+                  </div>
+                  <textarea id="sa-bulk-symbols"
+                    placeholder="e.g. RELIANCE, TCS, INFY, HDFCBANK  — or use quick-fill buttons above"
+                    style="width:100%; min-height:80px; border-radius:var(--radius-md); border:1px solid var(--border); background:rgba(255,255,255,0.05); color:var(--text-primary); padding:10px 12px; font-size:0.85rem; font-family:var(--font-mono, monospace); resize:vertical; box-sizing:border-box; outline:none;"></textarea>
+                  <div style="font-size:0.7rem; color:var(--text-muted); margin-top:4px;">
+                    💡 Uses Pre-Market mode (365-day daily OHLCV). Quick-fill loads F&amp;O universe for that cap tier.
+                  </div>
+                </div>
+                <div style="display:flex; flex-direction:column; gap:8px; min-width:160px;">
+                  <button class="btn btn-primary" id="btn-sa-bulk-run" onclick="window.saBulkRun()"
+                    style="padding:10px 16px; font-weight:700; border-radius:var(--radius-md); border:none; background:linear-gradient(135deg,#1E88E5,#1565C0); width:100%;">
+                    ⚡ Run Bulk Scan
+                  </button>
+                  <button class="btn" id="btn-sa-bulk-csv" onclick="window.saBulkDownloadCSV()" disabled
+                    style="padding:8px 16px; font-weight:600; border-radius:var(--radius-md); border:1px solid var(--border); background:rgba(38,166,154,0.1); color:var(--green); width:100%; cursor:not-allowed; opacity:0.5;">
+                    ⬇ Download CSV
+                  </button>
+                </div>
+              </div>
+
+              <!-- Progress Bar -->
+              <div id="sa-bulk-progress-wrap" style="display:none; margin-top:14px;">
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
+                  <span style="font-size:0.78rem; font-weight:600; color:var(--text-secondary);"
+                    id="sa-bulk-progress-label">Scanning…</span>
+                  <span style="font-size:0.72rem; color:var(--text-muted);" id="sa-bulk-progress-count"></span>
+                </div>
+                <div style="background:rgba(255,255,255,0.08); border-radius:20px; height:6px; overflow:hidden;">
+                  <div id="sa-bulk-progress-bar"
+                    style="height:100%; background:linear-gradient(90deg,#26A69A,#1E88E5); border-radius:20px; width:0%; transition:width 0.3s ease;">
+                  </div>
+                </div>
+              </div>
+
+              <!-- Results Table -->
+              <div id="sa-bulk-results" style="display:none; margin-top:16px;">
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+                  <span style="font-size:0.82rem; font-weight:700; color:var(--text-primary);"
+                    id="sa-bulk-results-count"></span>
+                  <span style="font-size:0.7rem; color:var(--text-muted);" id="sa-bulk-results-ts"></span>
+                </div>
+                <div style="overflow-x:auto; border-radius:var(--radius-md); border:1px solid var(--border);">
+                  <table class="table" style="width:100%; font-size:0.75rem; white-space:nowrap;">
+                    <thead>
+                      <tr style="background:rgba(255,255,255,0.06); border-bottom:1.5px solid var(--border);">
+                        <th style="padding:8px 12px; text-align:left; color:var(--text-secondary);">Symbol</th>
+                        <th style="padding:8px 10px; text-align:center; color:var(--text-secondary);">Score</th>
+                        <th style="padding:8px 10px; text-align:center; color:var(--text-secondary);">Direction</th>
+                        <th style="padding:8px 10px; text-align:right; color:var(--text-secondary);">LTP</th>
+                        <th style="padding:8px 10px; text-align:center; color:var(--text-secondary);">RSI</th>
+                        <th style="padding:8px 10px; text-align:center; color:var(--text-secondary);">MACD</th>
+                        <th style="padding:8px 10px; text-align:center; color:var(--text-secondary);">CHOP</th>
+                        <th style="padding:8px 10px; text-align:center; color:var(--text-secondary);">EMA Cross</th>
+                        <th style="padding:8px 10px; text-align:center; color:var(--text-secondary);">EMA Str.</th>
+                        <th style="padding:8px 10px; text-align:center; color:var(--text-secondary);">Gap↑ Fade</th>
+                        <th style="padding:8px 10px; text-align:center; color:var(--text-secondary);">Gap↓ Fade</th>
+                        <th style="padding:8px 10px; text-align:center; color:var(--text-secondary);">Bull WR%</th>
+                        <th style="padding:8px 10px; text-align:center; color:var(--text-secondary);">Bear WR%</th>
+                        <th style="padding:8px 10px; text-align:center; color:var(--text-secondary);">Streak</th>
+                        <th style="padding:8px 10px; text-align:center; color:var(--text-secondary);">Daily Trend</th>
+                        <th style="padding:8px 10px; text-align:center; color:var(--text-secondary);">Hourly Trend</th>
+                        <th style="padding:8px 10px; text-align:center; color:var(--text-secondary);">15m Trend</th>
+                        <th style="padding:8px 10px; text-align:center; color:var(--text-secondary);">Status</th>
+                      </tr>
+                    </thead>
+                    <tbody id="sa-bulk-rows"></tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- ── Inline Signal Chart (5m / 15m) ── -->
+          <div class="card mb-16" id="analysis-chart-card" style="display:none;">
+            <div class="card-header">
+              <h3>📈 Signal Chart</h3>
+              <div class="card-actions flex gap-8">
+                <div class="tabs" style="margin-bottom:0;" id="analysis-chart-interval-tabs">
+                  <button class="tab-btn active" data-interval="5minute">5m</button>
+                  <button class="tab-btn" data-interval="15minute">15m</button>
+                </div>
+                <span id="analysis-chart-session-label"
+                  style="font-size:0.72rem;color:var(--text-muted);align-self:center;"></span>
+                <span id="analysis-chart-live-badge"
+                  style="display:none;padding:2px 8px;border-radius:10px;font-size:0.68rem;font-weight:700;background:#EF535022;color:#EF5350;border:1px solid #EF535055;align-self:center;letter-spacing:0.05em;">&#9679;
+                  LIVE</span>
+                <button id="btn-stop-signal-chart" style="display:none;" class="btn btn-sm btn-secondary"
+                  title="Stop live updates">&#9632; Stop</button>
+              </div>
+            </div>
+            <div id="analysis-chart-container" style="height:420px;width:100%;"></div>
+          </div>
+
+          <!-- Signal Summary Row (analysis page) -->
+          <div class="grid-4 mb-16" id="analysis-signal-summary"
+            style="display:none;grid-template-columns:repeat(6,1fr);">
+            <div class="stat-card" style="padding:10px;text-align:center;">
+              <span class="stat-label" style="font-size:0.6rem;">Total Signals</span>
+              <span class="stat-value" style="font-size:1rem;" id="as-total">0</span>
+            </div>
+            <div class="stat-card" style="padding:10px;text-align:center;">
+              <span class="stat-label" style="font-size:0.6rem;">▲ CALL Entry</span>
+              <span class="stat-value" style="font-size:1rem;color:#26A69A;" id="as-buys">0</span>
+            </div>
+            <div class="stat-card" style="padding:10px;text-align:center;">
+              <span class="stat-label" style="font-size:0.6rem;">▼ PUT Entry</span>
+              <span class="stat-value" style="font-size:1rem;color:#EF5350;" id="as-sells">0</span>
+            </div>
+            <div class="stat-card" style="padding:10px;text-align:center;">
+              <span class="stat-label" style="font-size:0.6rem;">Win Rate</span>
+              <span class="stat-value" style="font-size:1rem;" id="as-winrate">—</span>
+            </div>
+            <div class="stat-card" style="padding:10px;text-align:center;">
+              <span class="stat-label" style="font-size:0.6rem;">Strong Signals</span>
+              <span class="stat-value" style="font-size:1rem;color:#1E88E5;" id="as-strong">0</span>
+            </div>
+            <div class="stat-card" style="padding:10px;text-align:center;">
+              <span class="stat-label" style="font-size:0.6rem;">Hyp. P&amp;L</span>
+              <span class="stat-value" style="font-size:1rem;" id="as-pnl">—</span>
+            </div>
+          </div>
+
+          <!-- Signal Log (analysis page) -->
+          <div class="card mb-16" id="analysis-signal-log-card" style="display:none;">
+            <div class="card-header">
+              <h3>🎯 Signal Log</h3>
+              <div class="card-actions">
+                <span style="font-size:0.72rem;color:var(--text-muted);" id="analysis-signal-log-count"></span>
+              </div>
+            </div>
+            <div id="analysis-signal-log-body" style="max-height:340px;overflow-y:auto;padding:8px 12px;"></div>
+          </div>
+        </div>
+
+        <!-- ═══ PAGE: SMC Options Signal Dashboard ═══ -->
+        <div class="page" id="page-smc-dashboard">
+          <!-- Header card -->
+          <div class="card mb-16">
+            <div class="card-header" style="flex-wrap:wrap;gap:10px;">
+              <div style="display:flex;align-items:center;gap:8px;">
+                <span id="smc-live-dot"
+                  style="width:10px;height:10px;border-radius:50%;background:#26A69A;display:inline-block;"></span>
+                <h3 style="margin:0;">SMC Options Signal Dashboard</h3>
+                <span class="tag"
+                  style="background:rgba(30,136,229,0.1);color:#1E88E5;border:1px solid rgba(30,136,229,0.3);font-size:0.68rem;">NSE
+                  · Zerodha Kite</span>
+              </div>
+              <div class="card-actions flex gap-8" style="flex-wrap:wrap;">
+                <select class="form-select" id="smc-symbol-select" style="min-width:160px;">
+                  <option value="NIFTY 50">NIFTY</option>
+                  <option value="NIFTY BANK">BANKNIFTY</option>
+                  <option value="BSE SENSEX">SENSEX</option>
+                </select>
+                <select class="form-select" id="smc-date-select"></select>
+                <span id="smc-updated" style="font-size:0.72rem;color:var(--text-muted);align-self:center;"></span>
+              </div>
+            </div>
+            <!-- Key metrics -->
+            <div class="grid-4" style="margin-top:12px;grid-template-columns:repeat(4,1fr);">
+              <div class="stat-card">
+                <span class="stat-label">LTP (Spot)</span>
+                <span class="stat-value" id="smc-ltp" style="font-size:1.6rem;">—</span>
+                <span id="smc-ltp-change" style="font-size:0.75rem;"></span>
+              </div>
+              <div class="stat-card">
+                <span class="stat-label">Signal Bias</span>
+                <span class="stat-value" id="smc-bias" style="font-size:1.6rem;">—</span>
+                <span id="smc-confidence" style="font-size:0.75rem;color:var(--text-muted);"></span>
+              </div>
+              <div class="stat-card">
+                <span class="stat-label">PCR (OI)</span>
+                <span class="stat-value" id="smc-pcr" style="font-size:1.6rem;">—</span>
+                <span id="smc-pcr-label" style="font-size:0.75rem;color:var(--text-muted);"></span>
+              </div>
+              <div class="stat-card">
+                <span class="stat-label">IV Rank</span>
+                <span class="stat-value" id="smc-iv-rank" style="font-size:1.6rem;">—</span>
+                <span id="smc-iv-label" style="font-size:0.75rem;color:var(--text-muted);"></span>
+              </div>
+            </div>
+            <!-- Timeframe + simulate -->
+            <div style="display:flex;align-items:center;gap:12px;margin-top:12px;flex-wrap:wrap;">
+              <div class="tabs" style="margin:0;" id="smc-interval-tabs">
+                <button class="tab-btn active" data-interval="5minute">5m</button>
+                <button class="tab-btn" data-interval="15minute">15m</button>
+                <button class="tab-btn" data-interval="60minute">1h</button>
+                <button class="tab-btn" data-interval="day">1D</button>
+              </div>
+              <span style="font-size:0.75rem;color:var(--text-muted);">Simulate:</span>
+              <button class="btn btn-sm" id="btn-smc-bull"
+                style="background:#26A69A22;color:#26A69A;border:1px solid #26A69A55;">Bull setup</button>
+              <button class="btn btn-sm" id="btn-smc-bear"
+                style="background:#EF535022;color:#EF5350;border:1px solid #EF535055;">Bear setup</button>
+              <button class="btn btn-sm btn-secondary" id="btn-smc-exit">Exit signal</button>
+            </div>
+          </div>
+
+          <!-- SMC Structure + Momentum -->
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px;">
+            <div class="card">
+              <div class="card-header">
+                <h3 style="font-size:0.75rem;letter-spacing:0.08em;color:var(--text-muted);">SMC STRUCTURE</h3>
+              </div>
+              <table style="width:100%;border-collapse:collapse;font-size:0.82rem;">
+                <tr>
+                  <td style="padding:8px 0;color:var(--text-secondary);">Market Structure</td>
+                  <td style="text-align:right;font-weight:600;" id="smc-market-structure">—</td>
+                </tr>
+                <tr>
+                  <td style="padding:8px 0;color:var(--text-secondary);">BOS / ChoCH</td>
+                  <td style="text-align:right;font-weight:600;" id="smc-bos">—</td>
+                </tr>
+                <tr>
+                  <td style="padding:8px 0;color:var(--text-secondary);">Premium/Discount</td>
+                  <td style="text-align:right;font-weight:600;" id="smc-premium-discount">—</td>
+                </tr>
+                <tr>
+                  <td style="padding:8px 0;color:var(--text-secondary);">FVG (Imbalance)</td>
+                  <td style="text-align:right;font-weight:600;" id="smc-fvg">—</td>
+                </tr>
+                <tr>
+                  <td style="padding:8px 0;color:var(--text-secondary);">Sweep / Liquidity</td>
+                  <td style="text-align:right;font-weight:600;" id="smc-sweep">—</td>
+                </tr>
+              </table>
+              <div style="margin-top:8px;">
+                <div style="font-size:0.72rem;color:var(--text-muted);margin-bottom:6px;font-weight:600;">Order Blocks
+                </div>
+                <div id="smc-ob-list" style="display:flex;gap:6px;flex-wrap:wrap;"></div>
+              </div>
+            </div>
+            <div class="card">
+              <div class="card-header">
+                <h3 style="font-size:0.75rem;letter-spacing:0.08em;color:var(--text-muted);">MOMENTUM + VOLUME</h3>
+              </div>
+              <table style="width:100%;border-collapse:collapse;font-size:0.82rem;">
+                <tr>
+                  <td style="padding:8px 0;color:var(--text-secondary);">RSI (14)</td>
+                  <td style="text-align:right;font-weight:600;" id="smc-rsi">—</td>
+                </tr>
+                <tr>
+                  <td style="padding:8px 0;color:var(--text-secondary);">MACD</td>
+                  <td style="text-align:right;font-weight:600;" id="smc-macd">—</td>
+                </tr>
+                <tr>
+                  <td style="padding:8px 0;color:var(--text-secondary);">EMA Stack</td>
+                  <td style="text-align:right;font-weight:600;" id="smc-ema-stack">—</td>
+                </tr>
+                <tr>
+                  <td style="padding:8px 0;color:var(--text-secondary);">Volume Delta</td>
+                  <td style="text-align:right;font-weight:600;" id="smc-vol-delta">—</td>
+                </tr>
+                <tr>
+                  <td style="padding:8px 0;color:var(--text-secondary);">OI Change</td>
+                  <td style="text-align:right;font-weight:600;" id="smc-oi-change">—</td>
+                </tr>
+              </table>
+              <div style="margin-top:10px;">
+                <div style="display:flex;justify-content:space-between;font-size:0.72rem;margin-bottom:4px;">
+                  <span style="color:var(--text-muted);">Overall signal strength</span>
+                  <span id="smc-strength-label" style="font-weight:600;color:var(--text-muted);">—</span>
+                </div>
+                <div style="height:6px;background:var(--border);border-radius:3px;overflow:hidden;">
+                  <div id="smc-strength-bar"
+                    style="height:100%;border-radius:3px;background:#26A69A;width:0%;transition:width 0.5s;"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Chart Patterns + Recommended Trade -->
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px;">
+            <div class="card">
+              <div class="card-header">
+                <h3 style="font-size:0.75rem;letter-spacing:0.08em;color:var(--text-muted);">CHART PATTERNS</h3>
+              </div>
+              <table style="width:100%;border-collapse:collapse;font-size:0.82rem;">
+                <tr>
+                  <td style="padding:8px 0;color:var(--text-secondary);">Pattern</td>
+                  <td style="text-align:right;font-weight:600;" id="smc-pattern-name">—</td>
+                </tr>
+                <tr>
+                  <td style="padding:8px 0;color:var(--text-secondary);">Support</td>
+                  <td style="text-align:right;font-weight:600;" id="smc-support">—</td>
+                </tr>
+                <tr>
+                  <td style="padding:8px 0;color:var(--text-secondary);">Resistance</td>
+                  <td style="text-align:right;font-weight:600;" id="smc-resistance">—</td>
+                </tr>
+                <tr>
+                  <td style="padding:8px 0;color:var(--text-secondary);">Candle (last bar)</td>
+                  <td style="text-align:right;font-weight:600;" id="smc-candle-pattern">—</td>
+                </tr>
+              </table>
+            </div>
+            <div class="card" id="smc-reco-card">
+              <div class="card-header">
+                <h3 style="font-size:0.75rem;letter-spacing:0.08em;color:var(--text-muted);">RECOMMENDED TRADE</h3>
+              </div>
+              <div id="smc-reco-body">
+                <div style="color:var(--text-muted);font-size:0.8rem;padding:16px 0;">Run analysis to see recommendation
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Live Signal Tags -->
+          <div class="card">
+            <div class="card-header">
+              <h3>LIVE SIGNAL TAGS</h3>
+              <div class="card-actions">
+                <button class="btn btn-sm btn-secondary" id="btn-smc-clear-tags">Clear all</button>
+              </div>
+            </div>
+            <div id="smc-tag-feed" style="max-height:400px;overflow-y:auto;">
+              <div class="empty-state" style="padding:24px;">
+                <div style="font-size:0.82rem;color:var(--text-muted);">No signal tags yet. Signals fire automatically
+                  when bias or structure changes.</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- ═══ PAGE: Strategy Builder ═══ -->
+        <div class="page" id="page-strategy">
+          <div class="card mb-16">
+            <div class="card-header">
+              <h3>🏗 Options Strategy Builder</h3>
+              <div class="card-actions">
+                <span style="font-size:0.75rem;color:var(--text-muted);">Build multi-leg strategies with live payoff
+                  diagrams</span>
+              </div>
+            </div>
+            <div id="strategy-content">
+              <div class="empty-state">
+                <div class="empty-icon">🏗</div>
+                <h4>Strategy Builder</h4>
+                <p>Loading...</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- ═══ PAGE: Backtester ═══ -->
+        <div class="page" id="page-backtest">
+          <div class="card mb-16">
+            <div class="card-header">
+              <h3>🧪 Backtesting Engine</h3>
+              <div class="card-actions">
+                <span style="font-size:0.75rem;color:var(--text-muted);">Simulate signals on real historical data</span>
+              </div>
+            </div>
+            <div id="backtest-content">
+              <div class="empty-state">
+                <div class="empty-icon">🧪</div>
+                <h4>Backtesting Engine</h4>
+                <p>Loading...</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- ═══ PAGE: Trade Journal ═══ -->
+        <div class="page" id="page-journal">
+          <!-- Entry Form -->
+          <div class="card mb-16">
+            <div class="card-header">
+              <h3>📓 Log Trade</h3>
+            </div>
+            <form id="journal-form" style="padding:12px 16px;display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+              <div style="display:flex;flex-direction:column;gap:4px;">
+                <label style="font-size:0.7rem;color:var(--text-muted);text-transform:uppercase;">Symbol</label>
+                <input type="text" id="j-symbol" placeholder="RELIANCE" required
+                  style="padding:8px;border-radius:6px;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);color:var(--text-primary);font-size:0.82rem;" />
+              </div>
+              <div style="display:flex;flex-direction:column;gap:4px;">
+                <label style="font-size:0.7rem;color:var(--text-muted);text-transform:uppercase;">Direction</label>
+                <select id="j-direction"
+                  style="padding:8px;border-radius:6px;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);color:var(--text-primary);font-size:0.82rem;">
+                  <option value="LONG">▲ Long</option>
+                  <option value="SHORT">▼ Short</option>
+                </select>
+              </div>
+              <div style="display:flex;flex-direction:column;gap:4px;">
+                <label style="font-size:0.7rem;color:var(--text-muted);text-transform:uppercase;">Entry Price</label>
+                <input type="number" id="j-entry-price" step="0.05" required
+                  style="padding:8px;border-radius:6px;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);color:var(--text-primary);font-size:0.82rem;" />
+              </div>
+              <div style="display:flex;flex-direction:column;gap:4px;">
+                <label style="font-size:0.7rem;color:var(--text-muted);text-transform:uppercase;">Exit Price
+                  (optional)</label>
+                <input type="number" id="j-exit-price" step="0.05"
+                  style="padding:8px;border-radius:6px;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);color:var(--text-primary);font-size:0.82rem;" />
+              </div>
+              <div style="display:flex;flex-direction:column;gap:4px;">
+                <label style="font-size:0.7rem;color:var(--text-muted);text-transform:uppercase;">Quantity</label>
+                <input type="number" id="j-qty" value="1" min="1"
+                  style="padding:8px;border-radius:6px;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);color:var(--text-primary);font-size:0.82rem;" />
+              </div>
+              <div style="display:flex;flex-direction:column;gap:4px;">
+                <label style="font-size:0.7rem;color:var(--text-muted);text-transform:uppercase;">Entry Date</label>
+                <input type="date" id="j-entry-date" required
+                  style="padding:8px;border-radius:6px;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);color:var(--text-primary);font-size:0.82rem;" />
+              </div>
+              <div style="display:flex;flex-direction:column;gap:4px;">
+                <label style="font-size:0.7rem;color:var(--text-muted);text-transform:uppercase;">Exit Date</label>
+                <input type="date" id="j-exit-date"
+                  style="padding:8px;border-radius:6px;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);color:var(--text-primary);font-size:0.82rem;" />
+              </div>
+              <div style="display:flex;flex-direction:column;gap:4px;">
+                <label style="font-size:0.7rem;color:var(--text-muted);text-transform:uppercase;">Tags (comma
+                  sep)</label>
+                <input type="text" id="j-tags" placeholder="swing,momentum"
+                  style="padding:8px;border-radius:6px;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);color:var(--text-primary);font-size:0.82rem;" />
+              </div>
+              <div style="grid-column:1/-1;display:flex;flex-direction:column;gap:4px;">
+                <label style="font-size:0.7rem;color:var(--text-muted);text-transform:uppercase;">Rationale</label>
+                <input type="text" id="j-rationale" placeholder="Why did you take this trade?"
+                  style="padding:8px;border-radius:6px;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);color:var(--text-primary);font-size:0.82rem;" />
+              </div>
+              <div style="grid-column:1/-1;">
+                <button type="submit" class="btn btn-primary" style="width:100%;padding:10px;">📝 Log Trade</button>
+              </div>
+            </form>
+          </div>
+
+          <!-- Stats -->
+          <div class="card mb-16">
+            <div class="card-header">
+              <h3>📊 Analytics</h3>
+            </div>
+            <div id="journal-stats" style="padding:12px 16px;">
+              <div style="text-align:center;padding:16px;color:var(--text-muted);font-size:0.8rem;">Complete and close
+                trades to see analytics</div>
+            </div>
+          </div>
+
+          <!-- Trade List -->
+          <div class="card">
+            <div class="card-header">
+              <h3>📋 Trade Log</h3>
+              <div class="card-actions" id="journal-filters">
+                <button class="tab-btn active" data-filter="ALL">All</button>
+                <button class="tab-btn" data-filter="OPEN">Open</button>
+                <button class="tab-btn" data-filter="CLOSED">Closed</button>
+              </div>
+            </div>
+            <div id="journal-list" style="max-height:400px;overflow-y:auto;"></div>
+          </div>
+        </div>
+
+        <!-- ═══ PAGE: Paper Trading ═══ -->
+        <div class="page" id="page-paper">
+          <!-- Order Form -->
+          <div class="card mb-16">
+            <div class="card-header">
+              <h3>📝 Place Order</h3>
+              <div class="card-actions">
+                <button class="btn btn-sm btn-secondary" id="paper-reset-btn">🔄 Reset Portfolio</button>
+              </div>
+            </div>
+            <div style="padding:12px 16px;display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end;">
+              <div style="display:flex;flex-direction:column;gap:4px;flex:2;">
+                <label style="font-size:0.7rem;color:var(--text-muted);text-transform:uppercase;">Symbol</label>
+                <input type="text" id="paper-symbol" placeholder="RELIANCE"
+                  style="padding:8px;border-radius:6px;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);color:var(--text-primary);font-size:0.82rem;" />
+              </div>
+              <div style="display:flex;flex-direction:column;gap:4px;flex:1;">
+                <label style="font-size:0.7rem;color:var(--text-muted);text-transform:uppercase;">Qty</label>
+                <input type="number" id="paper-qty" value="1" min="1"
+                  style="padding:8px;border-radius:6px;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);color:var(--text-primary);font-size:0.82rem;" />
+              </div>
+              <div style="display:flex;flex-direction:column;gap:4px;flex:1.5;">
+                <label style="font-size:0.7rem;color:var(--text-muted);text-transform:uppercase;">Price (₹)</label>
+                <input type="number" id="paper-price" step="0.05"
+                  style="padding:8px;border-radius:6px;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);color:var(--text-primary);font-size:0.82rem;" />
+              </div>
+              <button class="btn btn-primary" id="paper-buy-btn" style="padding:8px 16px;">▲ Buy</button>
+              <button class="btn" id="paper-sell-btn" style="padding:8px 16px;background:#EF5350;color:#fff;">▼
+                Sell</button>
+            </div>
+          </div>
+
+          <!-- Portfolio Summary -->
+          <div class="card mb-16">
+            <div class="card-header">
+              <h3>💰 Portfolio Summary</h3>
+            </div>
+            <div id="paper-summary" style="padding:12px 16px;">
+              <div style="text-align:center;padding:16px;color:var(--text-muted);font-size:0.8rem;">Loading portfolio...
+              </div>
+            </div>
+          </div>
+
+          <!-- Positions -->
+          <div class="card">
+            <div class="card-header">
+              <h3>📋 Positions</h3>
+              <div class="card-actions" id="paper-filters">
+                <button class="tab-btn active" data-filter="OPEN">Open</button>
+                <button class="tab-btn" data-filter="CLOSED">Closed</button>
+                <button class="tab-btn" data-filter="ALL">All</button>
+              </div>
+            </div>
+            <div id="paper-positions" style="max-height:400px;overflow-y:auto;"></div>
+          </div>
+        </div>
+
+        <!-- ═══ PAGE: Recommendations ═══ -->
+        <div class="page" id="page-recommendations">
+          <div class="card mb-16">
+            <div class="card-header">
+              <h3>🎯 Live Recommendations</h3>
+              <div class="card-actions">
+                <span class="text-muted" id="reco-timestamp" style="font-size:0.75rem;">—</span>
+                <button class="btn btn-sm btn-secondary" id="btn-reco-auto"
+                  title="Auto-refresh every 60s during market hours">🔄 Auto</button>
+                <button class="btn btn-sm btn-primary" id="btn-gen-reco">Generate</button>
+              </div>
+            </div>
+
+            <div class="grid-2 mb-16" style="gap:16px;">
+              <div class="card" style="padding:16px;">
+                <div class="card-header" style="padding:0 0 12px 0;">
+                  <h4>Equity Picks</h4>
+                </div>
+                <div id="reco-list-equity" class="top-picks-grid">
+                  <div class="empty-state">
+                    <div class="empty-icon">🎯</div>
+                    <h4>No strong equity picks</h4>
+                    <p>Click "Generate" to get fresh equity signals.</p>
+                  </div>
+                </div>
+              </div>
+              <div class="card" style="padding:16px;">
+                <div class="card-header" style="padding:0 0 12px 0;">
+                  <h4>Options Picks</h4>
+                </div>
+                <div id="reco-list-options" class="top-picks-grid">
+                  <div class="empty-state">
+                    <div class="empty-icon">🎯</div>
+                    <h4>No strong options picks</h4>
+                    <p>Click "Generate" to get fresh options signals.</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- ── Intraday Picks ── -->
+          <div class="card mb-16" id="intraday-picks-card">
+            <div class="card-header">
+              <div style="display:flex;align-items:center;gap:10px;">
+                <h3>⚡ Intraday Picks</h3>
+                <span
+                  style="font-size:0.68rem;padding:2px 8px;border-radius:4px;background:rgba(0,188,212,0.12);color:#00BCD4;border:1px solid rgba(0,188,212,0.3);font-weight:600;">15-min
+                  · ORB · VWAP</span>
+              </div>
+              <div class="card-actions">
+                <span class="text-muted" id="intraday-timestamp" style="font-size:0.72rem;">—</span>
+                <button class="btn btn-sm" id="btn-load-intraday"
+                  style="background:linear-gradient(135deg,#00BCD4,#0097A7);color:#fff;font-weight:600;">
+                  ⚡ Load Intraday
+                </button>
+              </div>
+            </div>
+            <div id="reco-list-intraday" style="padding:8px 0;">
+              <div class="empty-state">
+                <div class="empty-icon">⚡</div>
+                <h4>No intraday picks yet</h4>
+                <p>Click "Load Intraday" to scan 15-min signals. Best used during market hours (9:15 AM – 3:30 PM).</p>
+              </div>
+            </div>
+          </div>
+
+        </div>
+
+        <!-- ═══ PAGE: Reco Tracker ═══ -->
+        <div class="page" id="page-reco-tracker">
+          <!-- Summary Cards -->
+          <div class="grid-4 mb-16" style="grid-template-columns:repeat(5,1fr);" id="reco-tracker-summary">
+            <div class="stat-card" style="padding:12px;text-align:center;">
+              <span class="stat-label" style="font-size:0.65rem;">Total Signals</span>
+              <span class="stat-value" style="font-size:1.2rem;">0</span>
+            </div>
+            <div class="stat-card" style="padding:12px;text-align:center;">
+              <span class="stat-label" style="font-size:0.65rem;">Open</span>
+              <span class="stat-value" style="font-size:1.2rem;">0</span>
+            </div>
+            <div class="stat-card" style="padding:12px;text-align:center;">
+              <span class="stat-label" style="font-size:0.65rem;">Closed</span>
+              <span class="stat-value" style="font-size:1.2rem;">0</span>
+            </div>
+            <div class="stat-card" style="padding:12px;text-align:center;">
+              <span class="stat-label" style="font-size:0.65rem;">Win Rate</span>
+              <span class="stat-value" style="font-size:1.2rem;">—</span>
+            </div>
+            <div class="stat-card" style="padding:12px;text-align:center;">
+              <span class="stat-label" style="font-size:0.65rem;">Net P&amp;L</span>
+              <span class="stat-value" style="font-size:1.2rem;">—</span>
+            </div>
+          </div>
+
+          <!-- Controls -->
+          <div class="card mb-16">
+            <div class="card-header">
+              <h3>📊 Recommendation P&amp;L Tracker</h3>
+              <div class="card-actions flex gap-8" style="flex-wrap:wrap;">
+                <input type="date" class="form-input" id="reco-tracker-date"
+                  style="width:160px;padding:6px 10px;font-size:0.82rem;">
+                <select class="form-select" id="reco-fno-capture-mode" title="FNO Session Capture Mode"
+                  style="width:140px;padding:6px;font-size:0.78rem;">
+                  <option value="all">FNO: All Phases</option>
+                  <option value="premarket">FNO: Premarket</option>
+                  <option value="opening">FNO: Opening</option>
+                  <option value="live">FNO: Live Only</option>
+                </select>
+                <button class="btn btn-sm btn-primary" id="btn-reco-auto-close">📡 Auto-fetch Close Prices</button>
+                <button class="btn btn-sm btn-secondary" id="btn-reco-export-csv">📥 Export CSV</button>
+              </div>
+            </div>
+
+            <!-- Source Tabs -->
+            <div style="padding:8px 16px 0;display:flex;gap:8px;flex-wrap:wrap;">
+              <div class="tabs" id="reco-tracker-source-tabs" style="margin-bottom:0;">
+                <button class="tab-btn active" data-source="">All Sources</button>
+                <button class="tab-btn" data-source="equity_picks">📈 Equity</button>
+                <button class="tab-btn" data-source="options_picks">⛓️ Options</button>
+                <button class="tab-btn" data-source="fno_session">⏰ FNO</button>
+              </div>
+              <div class="tabs" id="reco-tracker-status-tabs" style="margin-bottom:0;">
+                <button class="tab-btn active" data-status="">All Status</button>
+                <button class="tab-btn" data-status="OPEN">Open</button>
+                <button class="tab-btn" data-status="CLOSED">Closed</button>
+              </div>
+            </div>
+
+            <!-- Table -->
+            <div style="overflow-x:auto;padding:0 0 8px;">
+              <table class="data-table" id="reco-tracker-table">
+                <thead>
+                  <tr>
+                    <th>Symbol</th>
+                    <th>Source</th>
+                    <th>Signal</th>
+                    <th>Score</th>
+                    <th>Entry</th>
+                    <th>Target</th>
+                    <th>SL</th>
+                    <th>Exit</th>
+                    <th>P&amp;L</th>
+                    <th>Status</th>
+                    <th>Time</th>
+                    <th>Actions</th>
+                  </tr>
+                </thead>
+                <tbody id="reco-tracker-table-body">
+                  <tr>
+                    <td colspan="12" style="text-align:center;padding:40px;color:var(--text-muted);">📊 Run
+                      recommendations or FNO analysis to start tracking</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <!-- Accuracy Analytics -->
+          <div class="card">
+            <div class="card-header">
+              <h3>🎯 Accuracy Analytics</h3>
+            </div>
+            <div id="reco-tracker-stats" style="padding:12px 16px;">
+              <div style="text-align:center;padding:20px;color:var(--text-muted);font-size:0.8rem;">Close
+                recommendations to see accuracy analytics</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- ═══ PAGE: Historical ═══ -->
+        <div class="page" id="page-historical">
+          <div class="card mb-16">
+            <div class="card-header">
+              <h3>📊 Historical Price Chart</h3>
+              <div class="card-actions flex gap-8" style="flex-wrap:wrap;">
+                <select class="form-select" id="hist-symbol">
+                  <option value="">Select Stock...</option>
+                  <optgroup label="📊 Indices" id="hist-indices">
+                    <option value="NIFTY 50">NIFTY 50</option>
+                    <option value="NIFTY BANK">NIFTY BANK</option>
+                    <option value="NIFTY FIN SERVICE">NIFTY FIN SERVICE</option>
+                    <option value="NIFTY NEXT 50">NIFTY NEXT 50</option>
+                    <option value="INDIA VIX">INDIA VIX</option>
+                    <option value="SENSEX">SENSEX</option>
+                  </optgroup>
+                  <optgroup label="📈 F&amp;O Stocks" id="hist-fno-stocks"></optgroup>
+                </select>
+                <div class="tabs" style="margin-bottom:0;" id="hist-interval-tabs">
+                  <button class="tab-btn" data-interval="5minute">5m</button>
+                  <button class="tab-btn" data-interval="15minute">15m</button>
+                  <button class="tab-btn active" data-interval="day">1D</button>
+                  <button class="tab-btn" data-interval="week">1W</button>
+                </div>
+                <select class="form-select" id="hist-range">
+                  <option value="5">5 Days</option>
+                  <option value="10">10 Days</option>
+                  <option value="30">30 Days</option>
+                  <option value="90" selected>3 Months</option>
+                  <option value="180">6 Months</option>
+                  <option value="365">1 Year</option>
+                </select>
+                <button class="btn btn-sm btn-primary" id="btn-load-chart">Load Chart</button>
+              </div>
+            </div>
+            <div class="chart-container" id="main-chart"></div>
+          </div>
+
+          <!-- Technical Indicators Summary -->
+          <div class="card">
+            <div class="card-header">
+              <h3>Technical Indicators</h3>
+            </div>
+            <div class="grid-4" id="tech-indicators">
+              <div class="stat-card">
+                <span class="stat-label">RSI (14)</span>
+                <span class="stat-value" id="ind-rsi">—</span>
+              </div>
+              <div class="stat-card">
+                <span class="stat-label">MACD Signal</span>
+                <span class="stat-value" id="ind-macd">—</span>
+              </div>
+              <div class="stat-card">
+                <span class="stat-label">ADX</span>
+                <span class="stat-value" id="ind-adx">—</span>
+              </div>
+              <div class="stat-card">
+                <span class="stat-label">ATR</span>
+                <span class="stat-value" id="ind-atr">—</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- ═══ PAGE: Alerts ═══ -->
+        <div class="page" id="page-alerts">
+          <div class="card mb-16">
+            <div class="card-header">
+              <h3>🔔 Alert Center</h3>
+              <div class="card-actions flex gap-8">
+                <button class="btn btn-sm btn-secondary" id="btn-clear-alerts">Clear All</button>
+                <button class="btn btn-sm btn-primary" id="btn-add-alert">+ Add Rule</button>
+              </div>
+            </div>
+
+            <!-- Active Alert Rules -->
+            <div class="mb-16">
+              <h4 class="mb-8" style="font-size:0.85rem;color:var(--text-secondary);">Active Rules</h4>
+              <div id="alert-rules">
+                <div class="empty-state" style="padding:20px;">
+                  <p class="text-muted">No alert rules configured. Click "+ Add Rule" to create one.</p>
+                </div>
+              </div>
+            </div>
+
+            <!-- Alert Log -->
+            <h4 class="mb-8" style="font-size:0.85rem;color:var(--text-secondary);">Alert Log</h4>
+            <div id="alert-log">
+              <div class="empty-state" style="padding:30px;">
+                <div class="empty-icon">🔕</div>
+                <h4>No Alerts</h4>
+                <p>Alerts will appear here when triggered</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+
+        <!-- ═══ PAGE: FNO Sessions ═══ -->
+        <div class="page" id="page-fno-session">
+          <div class="card mb-16">
+            <div class="card-header">
+              <div>
+                <h3>⏰ FNO Session Analysis</h3>
+                <small style="color:var(--text-secondary);">Premarket (3:30 PM–9:00 AM) → Opening Bell (9:00–9:15 IST) →
+                  Live Trading (9:15 AM–3:30 PM)</small>
+              </div>
+              <div class="card-actions flex gap-8">
+                <button class="btn btn-sm btn-primary" id="btn-session-analyze">🔄 Analyze Now</button>
+              </div>
+            </div>
+
+            <!-- Session Selector -->
+            <div style="margin-bottom:16px;display:flex;gap:10px;flex-wrap:wrap;">
+              <div class="form-select" style="min-width:200px;">
+                <select id="fno-session-symbol" style="width:100%;padding:8px;">
+                  <option value="">Select F&O Stock</option>
+                </select>
+              </div>
+              <button class="btn btn-primary" id="btn-fno-quick-analyze">Quick Analysis</button>
+            </div>
+
+            <!-- Current Session Status -->
+            <div id="session-status-container"
+              style="margin-bottom:16px;padding:16px;background:var(--bg-secondary);border-radius:var(--radius-md);border-left:4px solid var(--primary);">
+              <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+                <strong id="current-session-label" style="font-size:1rem;">Premarket</strong>
+                <span id="current-session-time"
+                  style="font-family:var(--font-mono);font-size:0.85rem;color:var(--text-secondary);">--:--:--</span>
+              </div>
+              <p id="session-description" style="font-size:0.82rem;color:var(--text-secondary);margin:0;">Loading
+                session info...</p>
+            </div>
+
+            <!-- Analysis Results -->
+            <div id="fno-analysis-results" style="margin-top:20px;">
+              <div class="empty-state">
+                <div class="empty-icon">⏳</div>
+                <h4>No Analysis Yet</h4>
+                <p>Select a stock and click "Quick Analysis" to get started</p>
+              </div>
+            </div>
+          </div>
+
+          <!-- Session-Specific Strategies -->
+          <div class="grid-2">
+            <div class="card">
+              <div class="card-header">
+                <h3 style="font-size:0.95rem;">🌅 Premarket (3:30 PM–9:00 AM)</h3>
+              </div>
+              <div style="font-size:0.78rem;line-height:1.6;color:var(--text-secondary);">
+                <strong style="color:var(--text-primary);display:block;margin-bottom:8px;">Focus Areas:</strong>
+                <ul style="list-style:none;padding:0;margin:0;">
+                  <li>✓ Gap analysis from previous close</li>
+                  <li>✓ Pre-open OI accumulation/liquidation</li>
+                  <li>✓ Overnight news & events</li>
+                  <li>✓ FII/DII sentiment</li>
+                  <li>✓ Circuit breaker probability</li>
+                </ul>
+                <hr style="border:none;border-top:1px solid var(--border);margin:10px 0;">
+                <strong style="color:var(--text-primary);display:block;margin-bottom:6px;">Trade Setup:</strong>
+                <p style="margin:0;">Place orders at market open based on gap confirmation. Focus on breakouts with
+                  volume.</p>
+              </div>
+            </div>
+
+            <div class="card">
+              <div class="card-header">
+                <h3 style="font-size:0.95rem;">📊 Opening Bell (9:00–9:15 AM)</h3>
+              </div>
+              <div style="font-size:0.78rem;line-height:1.6;color:var(--text-secondary);">
+                <strong style="color:var(--text-primary);display:block;margin-bottom:8px;">Focus Areas:</strong>
+                <ul style="list-style:none;padding:0;margin:0;">
+                  <li>✓ First 15-min momentum & range</li>
+                  <li>✓ Volume buildup in first candles</li>
+                  <li>✓ PCR ratio movement</li>
+                  <li>✓ IV expansion/contraction</li>
+                  <li>✓ Reversal or continuation signals</li>
+                </ul>
+                <hr style="border:none;border-top:1px solid var(--border);margin:10px 0;">
+                <strong style="color:var(--text-primary);display:block;margin-bottom:6px;">Trade Setup:</strong>
+                <p style="margin:0;">Enter options spreads (Bull Call/Put) when direction is confirmed. Use stop-loss at
+                  opening range.</p>
+              </div>
+            </div>
+
+            <div class="card">
+              <div class="card-header">
+                <h3 style="font-size:0.95rem;">⚡ Live Session (9:15 AM–3:30 PM)</h3>
+              </div>
+              <div style="font-size:0.78rem;line-height:1.6;color:var(--text-secondary);">
+                <strong style="color:var(--text-primary);display:block;margin-bottom:8px;">Focus Areas:</strong>
+                <ul style="list-style:none;padding:0;margin:0;">
+                  <li>✓ Real-time price action & trends</li>
+                  <li>✓ PCR oscillations & max pain</li>
+                  <li>✓ IV crush/expansion dynamics</li>
+                  <li>✓ Intraday volume surges</li>
+                  <li>✓ Momentum confirmations (RSI, MACD)</li>
+                </ul>
+                <hr style="border:none;border-top:1px solid var(--border);margin:10px 0;">
+                <strong style="color:var(--text-primary);display:block;margin-bottom:6px;">Trade Setup:</strong>
+                <p style="margin:0;">Execute direct options buys or spreads based on live momentum. Manage exits near
+                  max pain levels.</p>
+              </div>
+            </div>
+
+            <div class="card">
+              <div class="card-header">
+                <h3 style="font-size:0.95rem;">📈 Quick Tips</h3>
+              </div>
+              <div style="font-size:0.78rem;line-height:1.6;color:var(--text-secondary);">
+                <ul style="list-style:none;padding:0;margin:0;">
+                  <li>🎯 <strong>Max Pain:</strong> Unlikely direction (avoid going against it)</li>
+                  <li>💰 <strong>PCR Swing:</strong> &gt;10% change = major direction shift</li>
+                  <li>⚡ <strong>IV Crush:</strong> Post-event, theta works in your favor</li>
+                  <li>📊 <strong>Volume Spike:</strong> &gt;1.5x avg = strong conviction</li>
+                  <li>🔄 <strong>Reversal:</strong> Near max pain + opposite PCR = high prob</li>
+                </ul>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- ═══ PAGE: FNO Trade Alerts ═══ -->
+        <div class="page" id="page-fno-trade-alerts">
+          <!-- Controls -->
+          <div class="card mb-16">
+            <div class="card-header" style="flex-wrap:wrap;gap:10px;">
+              <div style="display:flex;align-items:center;gap:8px;">
+                <h3 style="margin:0;">🚨 FNO Trade Alerts</h3>
+                <span class="tag"
+                  style="background:rgba(239,83,80,0.1);color:#EF5350;border:1px solid rgba(239,83,80,0.3);font-size:0.68rem;">Breakout
+                  | BOS | CHoCH</span>
+              </div>
+              <div class="card-actions" style="flex-wrap:wrap;gap:8px;align-items:center;">
+                <select id="fta-universe" class="form-select"
+                  style="padding:6px 10px;font-size:0.78rem;min-width:140px;">
+                  <option value="ALL_FNO">All F&amp;O (180+)</option>
+                  <option value="ALL_EQUITY">All Equity (NSE &amp; BSE)</option>
+                  <option value="NIFTY50" selected>Nifty 50</option>
+                  <option value="BANKNIFTY">Bank Nifty</option>
+                  <option value="FINNIFTY">Fin Nifty</option>
+                  <option value="NIFTYIT">Nifty IT</option>
+                  <option value="NIFTYPHARMA">Pharma</option>
+                  <option value="NIFTYMETAL">Metal</option>
+                  <option value="NIFTYAUTO">Auto</option>
+                  <option value="NIFTYFMCG">FMCG</option>
+                  <option value="NIFTYREALTY">Realty</option>
+                  <option value="NIFTYPSE">PSE</option>
+                </select>
+                <select id="fta-min-score" class="form-select"
+                  style="padding:6px 10px;font-size:0.78rem;min-width:110px;">
+                  <option value="4">Score ≥ 4</option>
+                  <option value="6" selected>Score ≥ 6</option>
+                  <option value="8">Score ≥ 8</option>
+                  <option value="10">Score ≥ 10</option>
+                </select>
+                <button class="btn btn-primary" id="fta-run-btn" style="padding:7px 18px;font-weight:700;">▶ Run
+                  Scan</button>
+                <button class="btn btn-secondary" id="fta-summary-btn" style="padding:7px 16px;font-weight:700;"
+                  title="Download 10-day P&amp;L summary as CSV">📈 Summary</button>
+                <select id="fta-auto-refresh" class="form-select"
+                  style="padding:6px 10px;font-size:0.78rem;min-width:130px;">
+                  <option value="0">Auto: Off</option>
+                  <option value="5">Auto: 5 min</option>
+                  <option value="10">Auto: 10 min</option>
+                </select>
+                <span id="fta-countdown"
+                  style="font-family:var(--font-mono);font-size:0.75rem;color:var(--text-muted);min-width:48px;"></span>
+              </div>
+            </div>
+            <!-- Live Progress Bar -->
+            <div id="fta-progress-wrapper" style="display:none; padding: 0 20px 16px 20px;">
+              <div
+                style="display:flex; justify-content:space-between; font-size:0.72rem; color:var(--text-muted); margin-bottom:6px; font-weight:600;">
+                <span id="fta-progress-text">Initializing scan...</span>
+                <span id="fta-progress-pct">0%</span>
+              </div>
+              <div
+                style="width:100%; height:6px; background:rgba(255,255,255,0.08); border-radius:3px; overflow:hidden;">
+                <div id="fta-progress-bar"
+                  style="height:100%; width:0%; background:linear-gradient(90deg, #26A69A, #4DB6AC); transition:width 0.2s ease;">
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Snapshot Summary -->
+          <div class="card mb-16" id="fta-snapshot-card">
+            <div class="card-header" style="cursor:pointer;" id="fta-snapshot-toggle">
+              <h3 style="font-size:0.9rem;">📊 Current Market Snapshot <span id="fta-snapshot-time"
+                  style="font-weight:400;color:var(--text-muted);">—</span></h3>
+            </div>
+            <div id="fta-snapshot-body" style="padding:12px 16px;">
+              <div style="text-align:center;padding:30px;color:var(--text-muted);font-size:0.82rem;">
+                Click <strong>▶ Run Scan</strong> to scan F&amp;O universe for trade alerts.
+              </div>
+            </div>
+          </div>
+
+          <!-- ══ AI Validation Panel ══ -->
+          <div class="card mb-16" id="fta-ai-panel">
+            <div class="card-header" style="flex-wrap:wrap;gap:10px;">
+              <div style="display:flex;align-items:center;gap:8px;">
+                <h3 style="margin:0;">🤖 AI Alert Validator</h3>
+                <span class="tag"
+                  style="background:rgba(156,39,176,0.12);color:#CE93D8;border:1px solid rgba(156,39,176,0.35);font-size:0.68rem;">Ranked
+                  by Profit Probability</span>
+              </div>
+              <div class="card-actions" style="flex-wrap:wrap;gap:8px;align-items:center;">
+
+                <!-- Provider + Model selector -->
+                <select id="fta-ai-provider" class="form-select"
+                  style="padding:6px 10px;font-size:0.78rem;min-width:130px;" title="Choose AI provider">
+                  <option value="gemini">Gemini</option>
+                  <option value="openai">OpenAI (GPT)</option>
+                  <option value="anthropic">Claude</option>
+                </select>
+
+                <select id="fta-ai-model" class="form-select"
+                  style="padding:6px 10px;font-size:0.78rem;min-width:200px;" title="Choose model">
+                  <!-- Populated by JS when provider changes -->
+                </select>
+
+                <!-- API key (password field, per-session) -->
+                <input type="password" id="fta-ai-key" class="form-input" placeholder="Paste API key…"
+                  style="padding:6px 10px;font-size:0.78rem;min-width:200px;max-width:280px;"
+                  title="API key is never stored — session only" />
+
+                <button class="btn btn-primary" id="fta-ai-run-btn"
+                  style="padding:7px 18px;font-weight:700;background:linear-gradient(135deg,#7B1FA2,#512DA8);border-color:transparent;"
+                  title="Run AI validation on the latest scan results">
+                  ✨ Run AI Validation
+                </button>
+              </div>
+            </div>
+
+            <!-- Status / progress bar -->
+            <div id="fta-ai-status" style="
+              display:none;
+              padding:8px 16px;
+              font-size:0.78rem;
+              color:#CE93D8;
+              background:rgba(156,39,176,0.07);
+              border-bottom:1px solid rgba(156,39,176,0.2);
+              align-items:center;gap:8px;
+            ">
+              <span style="display:inline-block;width:10px;height:10px;border-radius:50%;
+                           background:#9C27B0;animation:fta-ai-pulse 1s ease-in-out infinite;"></span>
+              <span id="fta-ai-status-text">Calling AI model…</span>
+            </div>
+
+            <!-- Ranked results body -->
+            <div id="fta-ai-body" style="padding:14px 16px;">
+              <div class="empty-state" style="padding:30px;">
+                <div class="empty-icon">🤖</div>
+                <h4>No AI Validation Yet</h4>
+                <p>Run a scan first, then click <strong>✨ Run AI Validation</strong> to rank alerts by profit
+                  probability.</p>
+              </div>
+            </div>
+
+            <!-- Info footer -->
+            <div
+              style="padding:6px 16px 10px;font-size:0.7rem;color:var(--text-muted);border-top:1px solid var(--border);">
+              ℹ️ AI uses scan data only — no live pricing. Key is never persisted. Results are advisory, not financial
+              advice.
+            </div>
+          </div>
+
+          <!-- Tables + Risk are now rendered inside snapshot blocks -->
+          <div id="fta-breakout-card" style="display:none;"></div>
+          <div id="fta-bos-card" style="display:none;"></div>
+          <div id="fta-choch-card" style="display:none;"></div>
+          <div id="fta-risk-card" style="display:none;"></div>
+        </div>
+
+        <!-- ═══ PAGE: Settings ═══ -->
+        <div class="page" id="page-settings">
+          <div class="settings-grid">
+            <div class="card settings-group">
+              <div class="card-header">
+                <h3>🔑 Kite Connect API</h3>
+              </div>
+              <label>API Key</label>
+              <input type="password" class="form-input" id="set-api-key" placeholder="Your Kite API Key">
+              <label>API Secret</label>
+              <input type="password" class="form-input" id="set-api-secret" placeholder="Your Kite API Secret">
+              <label>Access Token</label>
+              <input type="password" class="form-input" id="set-access-token" placeholder="Generated after login">
+              <label>Request Token (from redirect)</label>
+              <input type="password" class="form-input" id="set-request-token"
+                placeholder="Paste request_token from callback URL">
+              <div class="flex gap-8 mt-16">
+                <button class="btn btn-primary" id="btn-kite-login">🔗 Start Kite Login</button>
+                <button class="btn btn-primary" id="btn-connect">⚡ Connect</button>
+              </div>
+              <div id="kite-status" class="mt-16" style="font-size:0.82rem;">
+                <span class="text-muted">Click Start Login to automate session generation</span>
+              </div>
+            </div>
+
+            <div class="card settings-group">
+              <div class="card-header">
+                <h3>⚙️ Scoring Parameters</h3>
+              </div>
+              <label>Minimum Score Threshold</label>
+              <input type="number" class="form-input" id="set-score-threshold" value="70" min="0" max="100">
+              <label>Max IV Percentile (Buy)</label>
+              <input type="number" class="form-input" id="set-max-ivp" value="50" min="0" max="100">
+              <label>Min Risk-Reward Ratio</label>
+              <input type="number" class="form-input" id="set-min-rr" value="2" min="1" step="0.5">
+              <label>Min OI Filter (Contracts)</label>
+              <input type="number" class="form-input" id="set-min-oi" value="5000" min="0" step="500">
+              <label>Position Size % of Capital</label>
+              <input type="number" class="form-input" id="set-pos-size" value="20" min="1" max="100">
+              <button class="btn btn-secondary mt-16" id="btn-save-settings">💾 Save Settings</button>
+            </div>
+
+            <div class="card settings-group">
+              <div class="card-header">
+                <h3>🖥️ Backend Server</h3>
+              </div>
+              <label>Backend URL</label>
+              <input type="text" class="form-input" id="set-backend-url" value="" placeholder="(auto-detect)">
+              <label>Status</label>
+              <div id="backend-status" class="mt-16" style="font-size:0.82rem;">
+                <span class="tag tag-bearish">Not Connected</span>
+              </div>
+              <button class="btn btn-secondary mt-16" id="btn-test-backend">🔍 Test Connection</button>
+            </div>
+
+            <div class="card settings-group">
+              <div class="card-header">
+                <h3>💾 Data Cache</h3>
+              </div>
+              <p style="font-size:0.78rem;color:var(--text-secondary);margin-bottom:12px;">
+                Historical OHLCV data is cached locally in SQLite for faster access. Only new/recent candles are fetched
+                from Kite API on subsequent scans.
+              </p>
+              <div class="grid-4 mb-16" style="gap:8px;">
+                <div class="stat-card" style="padding:10px;">
+                  <span class="stat-label" style="font-size:0.65rem;">Candles Cached</span>
+                  <span class="stat-value" id="cache-candles" style="font-size:1rem;">—</span>
+                </div>
+                <div class="stat-card" style="padding:10px;">
+                  <span class="stat-label" style="font-size:0.65rem;">Instruments</span>
+                  <span class="stat-value" id="cache-instruments" style="font-size:1rem;">—</span>
+                </div>
+                <div class="stat-card" style="padding:10px;">
+                  <span class="stat-label" style="font-size:0.65rem;">Unique Stocks</span>
+                  <span class="stat-value" id="cache-tokens" style="font-size:1rem;">—</span>
+                </div>
+                <div class="stat-card" style="padding:10px;">
+                  <span class="stat-label" style="font-size:0.65rem;">DB Size</span>
+                  <span class="stat-value" id="cache-size" style="font-size:1rem;">—</span>
+                </div>
+              </div>
+              <div class="flex gap-8">
+                <button class="btn btn-secondary" id="btn-refresh-cache">🔄 Refresh Stats</button>
+                <button class="btn btn-secondary" id="btn-clear-cache" style="color:var(--red);">🗑️ Clear
+                  Cache</button>
+              </div>
+              <div id="cache-status" class="mt-16" style="font-size:0.82rem;"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div id="page-multi-chart" class="page">
+        <div class="flex gap-8" style="align-items:center; margin-bottom:8px; flex-wrap:wrap;">
+          <input list="mc-stock-list" id="mc-stock-select" class="form-input" placeholder="Search F&O Stock / Index..."
+            style="min-width:200px;">
+          <datalist id="mc-stock-list">
+            <!-- Populated dynamically -->
+          </datalist>
+          <input type="date" id="mc-date-select" class="form-input">
+          <button class="btn btn-secondary" id="mc-display-chart-btn">Display Chart</button>
+          <button class="btn btn-primary" id="mc-add-chart-btn">➕ Add Chart</button>
+          <a href="/multi-chart.html" target="_blank" rel="noopener" class="btn btn-secondary"
+            style="font-size:0.72rem;text-decoration:none;margin-left:auto;"
+            title="Open Multi-Chart in a new browser tab">↗ New Tab</a>
+        </div>
+
+        <div id="mc-grid" class="multi-chart-grid layout-1x1">
+          <!-- Dynamically inserted chart boxes -->
+        </div>
+      </div>
+
+    </div>
+  </div>
+  </div>
+  <!-- Add Alert Modal -->
+  <div class="modal-overlay" id="modal-overlay">
+    <div class="modal">
+      <h3>➕ Add Alert Rule</h3>
+      <label
+        style="display:block;font-size:0.8rem;font-weight:600;color:var(--text-secondary);margin-bottom:4px;">Stock</label>
+      <select class="form-select w-full mb-8" id="alert-stock"></select>
+      <label style="display:block;font-size:0.8rem;font-weight:600;color:var(--text-secondary);margin-bottom:4px;">Alert
+        Type</label>
+      <select class="form-select w-full mb-8" id="alert-type">
+        <option value="price_above">Price Above</option>
+        <option value="price_below">Price Below</option>
+        <option value="oi_spike">OI Spike (>10%)</option>
+        <option value="score_change">Score Change (>10pts)</option>
+      </select>
+      <label
+        style="display:block;font-size:0.8rem;font-weight:600;color:var(--text-secondary);margin-bottom:4px;">Value</label>
+      <input type="number" class="form-input w-full mb-8" id="alert-value" placeholder="Target price / threshold">
+      <div class="flex gap-8 justify-between mt-16">
+        <button class="btn btn-secondary" id="btn-modal-cancel">Cancel</button>
+        <button class="btn btn-primary" id="btn-modal-save">Save Alert</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Scripts (defer = non-blocking, loads after HTML parse) -->
+  <script src="js/lightweight-charts.standalone.production.js" defer></script>
+  <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
+  <script src="js/kite-api.js" defer></script>
+  <script src="js/technical-indicators.js" defer></script>
+  <script src="js/gap-analysis-engine.js" defer></script>
+  <script src="js/scoring-engine.js" defer></script>
+
+  <script src="js/charts.js" defer></script>
+  <script src="js/alerts.js" defer></script>
+  <script src="js/trade-journal.js" defer></script>
+  <script src="js/paper-trading.js" defer></script>
+  <script src="js/research-ai.js" defer></script>
+  <script src="js/fno-session-analyzer.js" defer></script>
+  <script src="js/equity-screener.js" defer></script>
+  <script src="js/analysis.js" defer></script>
+  <script src="js/watchlist.js" defer></script>
+  <script src="js/strategy-builder.js" defer></script>
+  <script src="js/backtester.js" defer></script>
+  <script src="js/portfolio.js" defer></script>
+  <script src="js/news-feed.js" defer></script>
+  <script src="js/live-movers.js" defer></script>
+  <script src="js/index-movers.js" defer></script>
+  <script src="js/chart-signals.js" defer></script>
+  <script src="js/reco-tracker.js" defer></script>
+  <script src="js/smc-dashboard.js" defer></script>
+  <script src="js/trade-tracker.js" defer></script>
+  <script src="js/fno-trade-alerts.js?v=8" defer></script>
+  <script src="js/multi-chart.js?v=6" defer></script>
+  <script src="js/historical-analysis.js?v=1.0.1" defer></script>
+  <script src="js/notion-notes.js" defer></script>
+  <script src="js/app.js" defer></script>
+  <script>
+    // ── Ticker Config Fetch & Update ──
+    async function fetchTickerConfig() {
+      try {
+        const res = await fetch('/api/ticker/config');
+        if (res.ok) {
+          const config = await res.json();
+          const select = document.getElementById('ticker-config-select');
+          if (select && config.synergy) {
+            select.value = config.synergy;
+          }
+        }
+      } catch (e) {
+        console.error("Failed to fetch ticker config", e);
+      }
+    }
+
+    async function updateTickerConfig(val) {
+      try {
+        const res = await fetch('/api/ticker/config', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ synergy: val })
+        });
+        if (res.ok) {
+          const data = await res.json();
+          alert("WebSocket mode updated! Please restart the server terminal to apply changes.");
+        }
+      } catch (e) {
+        alert("Failed to update WebSocket configuration: " + e);
+      }
+    }
+
+    window.addEventListener('DOMContentLoaded', fetchTickerConfig);
+  </script>
+
+  <!-- ═══ Mobile Bottom Navigation Bar ═══ -->
+  <nav class="mobile-bottom-nav" id="mobile-bottom-nav" aria-label="Mobile navigation">
+    <button class="mobile-tab-btn active" data-page="dashboard" id="mob-tab-dashboard">
+      <span class="tab-icon">🏠</span>
+      <span>Home</span>
+    </button>
+    <button class="mobile-tab-btn" data-page="screener" id="mob-tab-screener">
+      <span class="tab-icon">🔍</span>
+      <span>Screener</span>
+    </button>
+    <button class="mobile-tab-btn" id="mob-tab-oispurt" onclick="window.open('/oi-spurt-scanner.html','_blank')">
+      <span class="tab-icon">📊</span>
+      <span>OI Spurt</span>
+    </button>
+    <button class="mobile-tab-btn" data-page="watchlist" id="mob-tab-watchlist">
+      <span class="tab-icon">⭐</span>
+      <span>Watchlist</span>
+    </button>
+    <button class="mobile-tab-btn" data-page="alerts" id="mob-tab-alerts">
+      <span class="tab-icon">🔔</span>
+      <span>Alerts</span>
+    </button>
+  </nav>
+
+  <!-- ═══ Mobile Sidebar Toggle Script ═══ -->
+  <script>
+    (function() {
+      const sidebar    = document.querySelector('.sidebar');
+      const overlay    = document.getElementById('sidebar-overlay');
+      const menuBtn    = document.getElementById('mobile-menu-btn');
+      const bottomTabs = document.querySelectorAll('.mobile-tab-btn[data-page]');
+
+      function openSidebar() {
+        sidebar.classList.add('sidebar-open');
+        overlay.classList.add('active');
+        document.body.style.overflow = 'hidden';
+      }
+
+      function closeSidebar() {
+        sidebar.classList.remove('sidebar-open');
+        overlay.classList.remove('active');
+        document.body.style.overflow = '';
+      }
+
+      if (menuBtn) menuBtn.addEventListener('click', openSidebar);
+      if (overlay) overlay.addEventListener('click', closeSidebar);
+
+      // Close drawer when any sidebar nav item is clicked on mobile
+      if (sidebar) {
+        sidebar.querySelectorAll('.nav-item').forEach(function(item) {
+          item.addEventListener('click', function() {
+            if (window.innerWidth <= 767) closeSidebar();
+          });
+        });
+      }
+
+      // Sync bottom tab active state with main nav
+      bottomTabs.forEach(function(btn) {
+        btn.addEventListener('click', function() {
+          const page = btn.dataset.page;
+          if (page && window.switchPage) window.switchPage(page);
+          bottomTabs.forEach(function(b) { b.classList.remove('active'); });
+          btn.classList.add('active');
+          if (window.innerWidth <= 767) closeSidebar();
+        });
+      });
+
+      // Sync active bottom tab when desktop nav is used
+      document.querySelectorAll('.nav-item[data-page]').forEach(function(item) {
+        item.addEventListener('click', function() {
+          const page = item.dataset.page;
+          bottomTabs.forEach(function(b) {
+            b.classList.toggle('active', b.dataset.page === page);
+          });
+        });
+      });
+    })();
+  </script>
+</body>
+
+</html>
