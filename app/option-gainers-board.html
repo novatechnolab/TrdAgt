@@ -1200,7 +1200,7 @@
 
     .stock-row-header {
       display: grid;
-      grid-template-columns: 125px 70px 70px 75px 75px 80px 75px 70px 50px 55px 1fr;
+      grid-template-columns: 125px 65px 65px 70px 70px 75px 70px 65px 45px 55px 95px 105px 1fr;
       gap: 12px;
       align-items: center;
       padding: 10px 16px;
@@ -1265,6 +1265,17 @@
       font-weight: 700;
       font-size: 0.72rem;
       line-height: 1.3;
+    }
+
+    .col-futbuild {
+      text-align: center;
+    }
+
+    .col-netdrift {
+      text-align: center;
+      font-size: 0.78rem;
+      font-family: var(--mono);
+      font-weight: 700;
     }
 
     .col-timeframes {
@@ -1368,7 +1379,7 @@
 
     .stock-board-header {
       display: grid;
-      grid-template-columns: 125px 70px 70px 75px 75px 80px 75px 70px 50px 55px 1fr;
+      grid-template-columns: 125px 65px 65px 70px 70px 75px 70px 65px 45px 55px 95px 105px 1fr;
       gap: 12px;
       align-items: center;
       padding: 8px 16px;
@@ -1500,6 +1511,44 @@
     let currentSortDirection = 'desc';
     let lastData = null;
     const expandedSymbols = new Set();
+    const spurtCache = {};
+
+    function getBuildupBadge(sym) {
+      const cached = spurtCache[sym];
+      if (!cached || (Date.now() - cached.fetchedAt > 180000)) {
+        return `<span style="font-size:0.75rem; color:var(--text-muted)">–</span>`;
+      }
+      const b = cached.futures_buildup;
+      let bg = 'rgba(255, 255, 255, 0.05)', color = 'var(--text-muted)', border = 'rgba(255, 255, 255, 0.1)';
+      let text = b;
+      if (b.includes('LB') || b.includes('Long Buildup')) {
+        bg = 'rgba(63, 185, 80, 0.15)'; color = 'var(--green)'; border = 'rgba(63, 185, 80, 0.25)'; text = 'LB';
+      } else if (b.includes('SC') || b.includes('Short Covering')) {
+        bg = 'rgba(56, 139, 253, 0.15)'; color = 'var(--accent)'; border = 'rgba(56, 139, 253, 0.25)'; text = 'SC';
+      } else if (b.includes('LU') || b.includes('Long Unwinding')) {
+        bg = 'rgba(241, 224, 90, 0.15)'; color = 'var(--yellow)'; border = 'rgba(241, 224, 90, 0.25)'; text = 'LU';
+      } else if (b.includes('SB') || b.includes('Short Buildup')) {
+        bg = 'rgba(248, 81, 73, 0.15)'; color = 'var(--red)'; border = 'rgba(248, 81, 73, 0.25)'; text = 'SB';
+      }
+      return `<span class="badge" style="background:${bg}; color:${color}; border:1px solid ${border}; font-size:9px; padding:2px 6px; border-radius:4px; font-weight:700;">${text}</span>`;
+    }
+
+    function getDriftHtml(sym) {
+      const cached = spurtCache[sym];
+      if (!cached || (Date.now() - cached.fetchedAt > 180000)) {
+        return `<span style="font-size:0.75rem; color:var(--text-muted)">Not live</span>`;
+      }
+      const d = cached.net_drift;
+      let color = 'var(--text-muted)';
+      if (d.includes('Bullish') || d.includes('Lifting')) {
+        color = 'var(--green)';
+      } else if (d.includes('Bearish') || d.includes('Sinking')) {
+        color = 'var(--red)';
+      } else if (d.includes('Range')) {
+        color = 'var(--yellow)';
+      }
+      return `<span style="color:${color}; font-weight:700; font-size:0.78rem;">${d}</span>`;
+    }
 
     function toggleDetails(headerEl) {
       const container = headerEl.parentElement;
@@ -1623,6 +1672,7 @@
 
         renderBoard(data);
         fetchEmaCrossovers();
+        fetchOIStatsForSymbols(data.stocks.map(s => s.symbol));
         updateStats(data);
 
         const isSnapshot = !!data.is_eod_snapshot;
@@ -1743,6 +1793,33 @@
           } else if (currentSortColumn === 'fhvol') {
             valA = a.fh_cumulative_ratio != null ? a.fh_cumulative_ratio : 0;
             valB = b.fh_cumulative_ratio != null ? b.fh_cumulative_ratio : 0;
+          } else if (currentSortColumn === 'futbuild') {
+            const getBuildupWeight = (s) => {
+              const cached = spurtCache[s.symbol];
+              if (!cached || (Date.now() - cached.fetchedAt > 180000)) return 0;
+              const b = cached.futures_buildup || '';
+              if (b.includes('LB') || b.includes('Long Buildup')) return 4;
+              if (b.includes('SC') || b.includes('Short Covering')) return 3;
+              if (b.includes('LU') || b.includes('Long Unwinding')) return 2;
+              if (b.includes('SB') || b.includes('Short Buildup')) return 1;
+              return 0;
+            };
+            valA = getBuildupWeight(a);
+            valB = getBuildupWeight(b);
+          } else if (currentSortColumn === 'netdrift') {
+            const getDriftWeight = (s) => {
+              const cached = spurtCache[s.symbol];
+              if (!cached || (Date.now() - cached.fetchedAt > 180000)) return 0;
+              const d = cached.net_drift || '';
+              if (d.includes('Bullish Breakout')) return 5;
+              if (d.includes('Lifting')) return 4;
+              if (d.includes('Range-Bound')) return 3;
+              if (d.includes('Sinking')) return 2;
+              if (d.includes('Bearish Breakout')) return 1;
+              return 0;
+            };
+            valA = getDriftWeight(a);
+            valB = getDriftWeight(b);
           }
 
           if (valA !== valB) {
@@ -1903,6 +1980,16 @@
               ${fhBadge}
             </div>
             
+            <!-- Column 10b: Future Buildup -->
+            <div class="col-futbuild">
+              ${getBuildupBadge(s.symbol)}
+            </div>
+
+            <!-- Column 10c: Net Drift -->
+            <div class="col-netdrift">
+              ${getDriftHtml(s.symbol)}
+            </div>
+            
             <!-- Column 11: Confluence Badges & Expand Arrow -->
             <div class="col-timeframes">
               <div class="conf-row" id="conf-${s.symbol}">
@@ -1934,6 +2021,8 @@
           <div class="col-inst sortable" onclick="handleHeaderSort('inst')">Inst Hold${getSortArrow('inst')}</div>
           <div class="col-e9h sortable" onclick="handleHeaderSort('e9h')">E9H${getSortArrow('e9h')}</div>
           <div class="col-fhvol sortable" onclick="handleHeaderSort('fhvol')">FH Vol${getSortArrow('fhvol')}</div>
+          <div class="col-futbuild sortable" onclick="handleHeaderSort('futbuild')">Fut Buildup${getSortArrow('futbuild')}</div>
+          <div class="col-netdrift sortable" onclick="handleHeaderSort('netdrift')">Net Drift${getSortArrow('netdrift')}</div>
           <div class="col-timeframes" style="padding-right: 24px;">Confluence</div>
         </div>
         ${cardsHtml}
@@ -2503,6 +2592,43 @@
           fetchBoard();
         }
       }, 1000);
+    }
+
+    // ── Spurt Scanner Stats Fetcher ──
+    let _oiStatsFetchActive = false;
+    async function fetchOIStatsForSymbols(symbols) {
+      if (_oiStatsFetchActive) return;
+      _oiStatsFetchActive = true;
+      
+      const now = Date.now();
+      const symbolsToFetch = symbols.filter(sym => {
+        const cached = spurtCache[sym];
+        return !cached || (now - cached.fetchedAt > 120000); // refresh every 2 mins
+      });
+
+      if (symbolsToFetch.length === 0) {
+        _oiStatsFetchActive = false;
+        return;
+      }
+
+      for (const sym of symbolsToFetch) {
+        try {
+          const response = await fetch(`/api/oi/symbol/${sym}`);
+          if (response.ok) {
+            const resData = await response.json();
+            spurtCache[sym] = {
+              futures_buildup: resData.futures_data?.buildup || '–',
+              net_drift: resData.transition_conviction?.net_drift || 'Not live',
+              fetchedAt: Date.now()
+            };
+            if (lastData) renderBoard(lastData);
+          }
+        } catch (e) {
+          console.warn(`Failed to fetch Spurt stats for ${sym}:`, e);
+        }
+        await new Promise(resolve => setTimeout(resolve, 150));
+      }
+      _oiStatsFetchActive = false;
     }
 
     // ── Toast ─────────────────────────────────────────────────────────────────

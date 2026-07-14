@@ -12,6 +12,13 @@ def init_db():
     try:
         conn = sqlite3.connect(DB_PATH)
         cursor = conn.cursor()
+        
+        # Safe migration check: drop table if it uses the older single-state schema
+        cursor.execute("PRAGMA table_info(oi_transition_states)")
+        cols = [col[1] for col in cursor.fetchall()]
+        if cols and "state" in cols:
+            cursor.execute("DROP TABLE IF EXISTS oi_transition_states")
+            
         cursor.execute("""
             CREATE TABLE IF NOT EXISTS oi_transition_states (
                 symbol TEXT NOT NULL,
@@ -20,7 +27,9 @@ def init_db():
                 leg TEXT NOT NULL,
                 premium REAL NOT NULL,
                 oi INTEGER NOT NULL,
-                state TEXT NOT NULL,
+                baseline_status TEXT NOT NULL,
+                from_state TEXT NOT NULL,
+                to_state TEXT NOT NULL,
                 updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                 PRIMARY KEY (symbol, strike, expiry, leg)
             )
@@ -57,6 +66,118 @@ def classify_buildup(oi_chg, cur_ltp, prv_ltp):
         return "SC"
     else:
         return "LU"
+
+
+def initialize_daily_baselines(kite=None):
+    """
+    Runs daily (normally at 09:30 hrs) to fetch baseline status for all F&O stocks.
+    Unconditionally deletes all data in the table by default before loading any data.
+    Will exit immediately on weekends or holidays (non-market days).
+    Also checks if baseline data for today already exists in the database and bypasses if so (restores on restart).
+    """
+    import pytz
+    tz = pytz.timezone("Asia/Kolkata")
+    now = datetime.datetime.now(tz)
+    today_date = now.date().isoformat()
+    
+    # 1. Exit immediately on weekends (Saturday=5, Sunday=6)
+    if now.weekday() > 4:
+        logging.getLogger(__name__).info("[Daily Baseline] Skipping initialization (Weekend).")
+        return False
+        
+    logging.getLogger(__name__).info("[Daily Baseline] Starting daily baseline setup...")
+    
+    init_db()
+    conn = sqlite3.connect(DB_PATH)
+    cursor = conn.cursor()
+    try:
+        # Pre-flight Check: Exit if baseline already exists for today (restart protection)
+        cursor.execute("SELECT last_snapshot_time FROM oi_transition_v2_meta LIMIT 1")
+        meta_row = cursor.fetchone()
+        if meta_row:
+            last_snap_ts = meta_row[0]
+            last_snap_date = datetime.date.fromtimestamp(last_snap_ts).isoformat()
+            if last_snap_date == today_date:
+                cursor.execute("SELECT COUNT(*) FROM oi_transition_states")
+                record_count = cursor.fetchone()[0]
+                if record_count > 0:
+                    logging.getLogger(__name__).info("[Daily Baseline] Baseline records for today already exist in DB. Skipping setup.")
+                    return True
+
+        # 2. Unconditionally delete all data in the tables by default before load
+        cursor.execute("DELETE FROM oi_transition_states")
+        cursor.execute("DELETE FROM oi_transition_v2_meta")
+        conn.commit()
+        logging.getLogger(__name__).info("[Daily Baseline] Unconditional database purge completed.")
+        
+        # 3. If kite is not provided, fetch it lazily
+        if not kite:
+            try:
+                from server import get_kite
+                kite = get_kite()
+            except ImportError:
+                pass
+                
+        if not kite:
+            logging.getLogger(__name__).error("[Daily Baseline] Kite Connect session not available. Baseline load aborted.")
+            return False
+
+        # 4. Fetch all active F&O underlyings from DB
+        cursor.execute("SELECT DISTINCT name FROM instruments WHERE segment = 'NFO-FUT' AND name IS NOT NULL AND name != ''")
+        underlyings = sorted(list({r[0] for r in cursor.fetchall()}))
+
+        if not underlyings:
+            underlyings = ["NIFTY", "BANKNIFTY", "FINNIFTY", "MIDCPNIFTY", "RELIANCE", "TCS", "INFY", "HDFCBANK", "ICICIBANK"]
+
+        logging.getLogger(__name__).info(f"[Daily Baseline] Resolving initial states for {len(underlyings)} symbols...")
+
+        # 5. Fetch initial states and write baseline records
+        from oi_spurt_routes import get_option_chain
+        current_time = time.time()
+        
+        for sym in underlyings:
+            try:
+                chain, expiry_val, _, _, ltp_val, _, _ = get_option_chain(kite, sym)
+                if not chain or not ltp_val:
+                    continue
+                    
+                sorted_chain = sorted(chain, key=lambda x: x["strike"])
+                atm_idx = min(range(len(sorted_chain)), key=lambda i: abs(sorted_chain[i]["strike"] - ltp_val))
+                
+                for i, row in enumerate(sorted_chain):
+                    if abs(i - atm_idx) <= 5:
+                        strike = row["strike"]
+                        for leg in ("CE", "PE"):
+                            prefix = leg.lower()
+                            oi_chg = row.get(f"{prefix}_oi_chg", 0)
+                            curr_ltp = row.get(f"{prefix}_ltp", 0.0)
+                            prev_ltp = row.get(f"{prefix}_prev_ltp", curr_ltp)
+                            curr_state = classify_buildup(oi_chg, curr_ltp, prev_ltp)
+                            
+                            cursor.execute("""
+                                INSERT OR REPLACE INTO oi_transition_states 
+                                (symbol, strike, expiry, leg, premium, oi, baseline_status, from_state, to_state, updated_at)
+                                VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'NA', CURRENT_TIMESTAMP)
+                            """, (sym, strike, expiry_val or "–", leg, curr_ltp, row.get(f"{prefix}_oi", 0), curr_state, curr_state))
+                            
+                # Insert meta row
+                cursor.execute("""
+                    INSERT OR REPLACE INTO oi_transition_v2_meta
+                    (symbol, last_snapshot_time, last_calculated_bias, last_confirmed_bias)
+                    VALUES (?, ?, 'Neutral', 'Neutral')
+                """, (sym, current_time))
+                
+                conn.commit()
+            except Exception as ex:
+                logging.getLogger(__name__).warning(f"[Daily Baseline] Error for {sym}: {ex}")
+                
+        logging.getLogger(__name__).info("[Daily Baseline] Daily baseline setup completed successfully.")
+        return True
+    except Exception as e:
+        logging.getLogger(__name__).error(f"[Daily Baseline] Baseline setup failed: {e}")
+        return False
+    finally:
+        conn.close()
 
 def process_symbol_transitions(symbol, chain_rows, expiry, ltp, iv_event_windows=[]):
     """
@@ -107,6 +228,10 @@ def process_symbol_transitions(symbol, chain_rows, expiry, ltp, iv_event_windows
             VALUES (?, ?, 'Neutral', 'Neutral')
         """, (symbol, current_time))
 
+        # Fetch existing DB states
+        cursor.execute("SELECT strike, leg, baseline_status, from_state, to_state FROM oi_transition_states WHERE symbol = ?", (symbol,))
+        db_states = {(r[0], r[1]): (r[2], r[3], r[4]) for r in cursor.fetchall()}
+
         for i, row in enumerate(sorted_chain):
             if abs(i - atm_idx) <= 5:
                 strike = row["strike"]
@@ -116,11 +241,34 @@ def process_symbol_transitions(symbol, chain_rows, expiry, ltp, iv_event_windows
                     curr_ltp = row.get(f"{prefix}_ltp", 0.0)
                     prev_ltp = row.get(f"{prefix}_prev_ltp", curr_ltp)
                     curr_state = classify_buildup(oi_chg, curr_ltp, prev_ltp)
+                    
+                    existing = db_states.get((strike, leg))
+                    if not existing:
+                        baseline_status = curr_state
+                        from_state = curr_state
+                        to_state = "NA"
+                    else:
+                        baseline_status, prev_from, prev_to = existing
+                        if prev_to == "NA":
+                            if curr_state != baseline_status:
+                                from_state = baseline_status
+                                to_state = curr_state
+                            else:
+                                from_state = baseline_status
+                                to_state = "NA"
+                        else:
+                            if curr_state != prev_to:
+                                from_state = prev_to
+                                to_state = curr_state
+                            else:
+                                from_state = prev_from
+                                to_state = prev_to
+                    
                     cursor.execute("""
                         INSERT OR REPLACE INTO oi_transition_states 
-                        (symbol, strike, expiry, leg, premium, oi, state, updated_at)
-                        VALUES (?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)
-                    """, (symbol, strike, expiry, leg, curr_ltp, row.get(f"{prefix}_oi", 0), curr_state))
+                        (symbol, strike, expiry, leg, premium, oi, baseline_status, from_state, to_state, updated_at)
+                        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)
+                    """, (symbol, strike, expiry or "–", leg, curr_ltp, row.get(f"{prefix}_oi", 0), baseline_status, from_state, to_state))
         conn.commit()
 
         last_snap_ts = current_time
@@ -138,20 +286,33 @@ def process_symbol_transitions(symbol, chain_rows, expiry, ltp, iv_event_windows
         for i, row in enumerate(sorted_chain):
             if abs(i - atm_idx) <= 5:
                 strike = row["strike"]
-                # CE Leg
-                ce_oi_chg = row.get("ce_oi_chg", 0)
-                ce_ltp = row.get("ce_ltp", 0.0)
-                ce_prev_ltp = row.get("ce_prev_ltp", ce_ltp)
-                ce_state = classify_buildup(ce_oi_chg, ce_ltp, ce_prev_ltp)
+                # Fetch DB status to calculate scoring
+                cursor.execute("""
+                    SELECT baseline_status, to_state FROM oi_transition_states 
+                    WHERE symbol = ? AND strike = ? AND leg = 'CE'
+                """, (symbol, strike))
+                ce_row = cursor.fetchone()
+                if ce_row:
+                    ce_base, ce_to = ce_row
+                    ce_state = ce_to if ce_to != "NA" else ce_base
+                else:
+                    ce_state = "Flat"
+                
                 ce_dir = 1 if ce_state in ("SC", "LB") else -1 if ce_state in ("SB", "LU") else 0
                 ce_weight = 2 if strike < ltp else 1
                 interval_scores.append(ce_dir * ce_weight)
 
-                # PE Leg
-                pe_oi_chg = row.get("pe_oi_chg", 0)
-                pe_ltp = row.get("pe_ltp", 0.0)
-                pe_prev_ltp = row.get("pe_prev_ltp", pe_ltp)
-                pe_state = classify_buildup(pe_oi_chg, pe_ltp, pe_prev_ltp)
+                cursor.execute("""
+                    SELECT baseline_status, to_state FROM oi_transition_states 
+                    WHERE symbol = ? AND strike = ? AND leg = 'PE'
+                """, (symbol, strike))
+                pe_row = cursor.fetchone()
+                if pe_row:
+                    pe_base, pe_to = pe_row
+                    pe_state = pe_to if pe_to != "NA" else pe_base
+                else:
+                    pe_state = "Flat"
+                
                 pe_dir = 1 if pe_state in ("SB", "LU") else -1 if pe_state in ("SC", "LB") else 0
                 pe_weight = 2 if strike > ltp else 1
                 interval_scores.append(pe_dir * pe_weight)
@@ -172,27 +333,12 @@ def process_symbol_transitions(symbol, chain_rows, expiry, ltp, iv_event_windows
         else:
             C_t = last_confirmed_bias
 
-        # Save updates and take a new 5-minute snapshot baseline states
+        # Save updates only to meta table
         cursor.execute("""
             UPDATE oi_transition_v2_meta
             SET last_snapshot_time = ?, last_calculated_bias = ?, last_confirmed_bias = ?
             WHERE symbol = ?
         """, (current_time, B_t, C_t, symbol))
-
-        for i, row in enumerate(sorted_chain):
-            if abs(i - atm_idx) <= 5:
-                strike = row["strike"]
-                for leg in ("CE", "PE"):
-                    prefix = leg.lower()
-                    oi_chg = row.get(f"{prefix}_oi_chg", 0)
-                    curr_ltp = row.get(f"{prefix}_ltp", 0.0)
-                    prev_ltp = row.get(f"{prefix}_prev_ltp", curr_ltp)
-                    curr_state = classify_buildup(oi_chg, curr_ltp, prev_ltp)
-                    cursor.execute("""
-                        INSERT OR REPLACE INTO oi_transition_states 
-                        (symbol, strike, expiry, leg, premium, oi, state, updated_at)
-                        VALUES (?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)
-                    """, (symbol, strike, expiry, leg, curr_ltp, row.get(f"{prefix}_oi", 0), curr_state))
         conn.commit()
 
         # Update runtime variables for current API return payload
@@ -201,8 +347,50 @@ def process_symbol_transitions(symbol, chain_rows, expiry, ltp, iv_event_windows
         last_confirmed_bias = C_t
 
     # 4. Fetch Active Snapshotted States from DB for transition display
-    cursor.execute("SELECT strike, leg, state FROM oi_transition_states WHERE symbol = ?", (symbol,))
-    db_states = {(r[0], r[1]): r[2] for r in cursor.fetchall()}
+    # Run dynamic transition updates on current live status
+    cursor.execute("SELECT strike, leg, baseline_status, from_state, to_state FROM oi_transition_states WHERE symbol = ?", (symbol,))
+    db_states = {(r[0], r[1]): (r[2], r[3], r[4]) for r in cursor.fetchall()}
+
+    for i, row in enumerate(sorted_chain):
+        if abs(i - atm_idx) <= 5:
+            strike = row["strike"]
+            for leg in ("CE", "PE"):
+                prefix = leg.lower()
+                oi_chg = row.get(f"{prefix}_oi_chg", 0)
+                curr_ltp = row.get(f"{prefix}_ltp", 0.0)
+                prev_ltp = row.get(f"{prefix}_prev_ltp", curr_ltp)
+                curr_state = classify_buildup(oi_chg, curr_ltp, prev_ltp)
+
+                existing = db_states.get((strike, leg))
+                if not existing:
+                    baseline_status = curr_state
+                    from_state = curr_state
+                    to_state = "NA"
+                else:
+                    baseline_status, prev_from, prev_to = existing
+                    if prev_to == "NA":
+                        if curr_state != baseline_status:
+                            from_state = baseline_status
+                            to_state = curr_state
+                        else:
+                            from_state = baseline_status
+                            to_state = "NA"
+                    else:
+                        if curr_state != prev_to:
+                            from_state = prev_to
+                            to_state = curr_state
+                        else:
+                            from_state = prev_from
+                            to_state = prev_to
+
+                cursor.execute("""
+                    INSERT OR REPLACE INTO oi_transition_states 
+                    (symbol, strike, expiry, leg, premium, oi, baseline_status, from_state, to_state, updated_at)
+                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)
+                """, (symbol, strike, expiry or "–", leg, curr_ltp, row.get(f"{prefix}_oi", 0), baseline_status, from_state, to_state))
+                # Update in-memory dict for rendering
+                db_states[(strike, leg)] = (baseline_status, from_state, to_state)
+    conn.commit()
 
     strike_details = []
     realtime_scores = []
@@ -211,32 +399,31 @@ def process_symbol_transitions(symbol, chain_rows, expiry, ltp, iv_event_windows
         dist = abs(i - atm_idx)
         if dist <= 5:
             strike = row["strike"]
-            # Map zones for frontend visual splitting (ATM±3 in table, ATM±4-5 in registry)
             zone = "ATM±3" if dist <= 3 else "ATM±4-7"
 
             # CE
-            ce_oi_chg = row.get("ce_oi_chg", 0)
-            ce_ltp = row.get("ce_ltp", 0.0)
-            ce_prev_ltp = row.get("ce_prev_ltp", ce_ltp)
-            ce_state = classify_buildup(ce_oi_chg, ce_ltp, ce_prev_ltp)
-            ce_dir = 1 if ce_state in ("SC", "LB") else -1 if ce_state in ("SB", "LU") else 0
+            existing_ce = db_states.get((strike, "CE"))
+            if existing_ce:
+                base_ce, from_ce, to_ce = existing_ce
+            else:
+                base_ce, from_ce, to_ce = "Flat", "Flat", "NA"
+            active_ce = to_ce if to_ce != "NA" else base_ce
+            ce_dir = 1 if active_ce in ("SC", "LB") else -1 if active_ce in ("SB", "LU") else 0
             ce_weight = 2 if strike < ltp else 1
             ce_score = ce_dir * ce_weight
             realtime_scores.append(ce_score)
-            
-            from_ce = db_states.get((strike, "CE"), ce_state)
 
             # PE
-            pe_oi_chg = row.get("pe_oi_chg", 0)
-            pe_ltp = row.get("pe_ltp", 0.0)
-            pe_prev_ltp = row.get("pe_prev_ltp", pe_ltp)
-            pe_state = classify_buildup(pe_oi_chg, pe_ltp, pe_prev_ltp)
-            pe_dir = 1 if pe_state in ("SB", "LU") else -1 if pe_state in ("SC", "LB") else 0
+            existing_pe = db_states.get((strike, "PE"))
+            if existing_pe:
+                base_pe, from_pe, to_pe = existing_pe
+            else:
+                base_pe, from_pe, to_pe = "Flat", "Flat", "NA"
+            active_pe = to_pe if to_pe != "NA" else base_pe
+            pe_dir = 1 if active_pe in ("SB", "LU") else -1 if active_pe in ("SC", "LB") else 0
             pe_weight = 2 if strike > ltp else 1
             pe_score = pe_dir * pe_weight
             realtime_scores.append(pe_score)
-
-            from_pe = db_states.get((strike, "PE"), pe_state)
 
             comp_score = ce_score + pe_score
 
@@ -245,12 +432,12 @@ def process_symbol_transitions(symbol, chain_rows, expiry, ltp, iv_event_windows
                 "zone": zone,
                 "ce": {
                     "from_state": from_ce,
-                    "to_state": ce_state,
+                    "to_state": to_ce if to_ce != "NA" else from_ce,
                     "score": ce_score
                 },
                 "pe": {
                     "from_state": from_pe,
-                    "to_state": pe_state,
+                    "to_state": to_pe if to_pe != "NA" else from_pe,
                     "score": pe_score
                 },
                 "composite": comp_score,

@@ -722,7 +722,14 @@ def run_instruments_sync(force=False):
         except Exception:
             bse = []
             
-        all_instruments = nse + nfo + bse
+        try:
+            bfo = kite.instruments('BFO')
+            nfo_names = {i['name'].upper() for i in nfo if i.get('name')}
+            bfo_filtered = [i for i in bfo if i.get('name') and i['name'].upper() not in nfo_names]
+        except Exception:
+            bfo_filtered = []
+            
+        all_instruments = nse + nfo + bse + bfo_filtered
         if len(all_instruments) > 1000:
             db_conn = sqlite3.connect(DB_PATH)
             cache_store_instruments(db_conn, all_instruments)
@@ -730,7 +737,7 @@ def run_instruments_sync(force=False):
             global _instruments_cache
             _instruments_cache = None
             
-            fno_count = len([i for i in all_instruments if i.get('segment') in ('NFO-FUT', 'NFO-OPT')])
+            fno_count = len([i for i in all_instruments if i.get('segment') in ('NFO-FUT', 'NFO-OPT', 'BFO-FUT', 'BFO-OPT')])
             cash_count = len([i for i in all_instruments if i.get('instrument_type') == 'EQ' and i.get('segment') in ('NSE', 'BSE')])
             logging.info(f"[Daily Sync] Finished. DB loaded with {fno_count} F&O and {cash_count} Cash stocks details.")
         else:
@@ -1067,6 +1074,30 @@ def start_kite_dependent_services(kite):
         # threading.Thread(target=_fno_breakout_scanner_loop, daemon=True, name="FNOAutoScannerThread").start()
     except Exception as _e:
         print(f"  [Error] Failed to start F&O Auto-Scanner: {_e}")
+
+    # 9. Daily Transition States Baseline Scheduler (runs past 09:30 AM on weekdays)
+    def _daily_baseline_scheduler_loop():
+        import pytz
+        tz = pytz.timezone("Asia/Kolkata")
+        last_init_date = None
+        logging.info("[Daily Baseline] Background scheduler active.")
+        while True:
+            try:
+                now = datetime.datetime.now(tz)
+                # Weekday check (Monday=0 to Friday=4)
+                if now.weekday() < 5:
+                    today_str = now.strftime("%Y-%m-%d")
+                    # Trigger only once per day at or after 09:30 AM IST
+                    if last_init_date != today_str and (now.hour > 9 or (now.hour == 9 and now.minute >= 30)):
+                        from oi_transition_engine import initialize_daily_baselines
+                        success = initialize_daily_baselines(kite)
+                        if success:
+                            last_init_date = today_str
+            except Exception as e:
+                logging.error(f"[Daily Baseline] Scheduler error: {e}")
+            time.sleep(60)
+
+    threading.Thread(target=_daily_baseline_scheduler_loop, daemon=True, name="DailyBaselineScheduler").start()
 
     print("[STARTUP] All Kite-dependent services launched.\n")
 

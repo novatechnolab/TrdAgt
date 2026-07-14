@@ -238,11 +238,13 @@
     }
 
     @keyframes pulse-red {
+
       0%,
       100% {
         opacity: 1;
         box-shadow: 0 0 0 0 rgba(255, 61, 113, .4);
       }
+
       50% {
         opacity: .7;
         box-shadow: 0 0 0 4px rgba(255, 61, 113, 0);
@@ -1038,8 +1040,15 @@
     }
 
     @keyframes ai-pulse {
-      0%, 100% { opacity: 1; }
-      50%       { opacity: 0.5; }
+
+      0%,
+      100% {
+        opacity: 1;
+      }
+
+      50% {
+        opacity: 0.5;
+      }
     }
 
     .ai-analyze-btn.loading .ai-btn-label::after {
@@ -1070,12 +1079,29 @@
       text-transform: uppercase;
     }
 
-    .ai-analysis-body h2:first-child { margin-top: 0; }
+    .ai-analysis-body h2:first-child {
+      margin-top: 0;
+    }
 
-    .ai-analysis-body p  { margin: 3px 0 6px; color: var(--muted2); }
-    .ai-analysis-body ul { margin: 3px 0 6px; padding-left: 16px; color: var(--muted2); }
-    .ai-analysis-body li { margin-bottom: 2px; }
-    .ai-analysis-body strong { color: var(--text); font-weight: 600; }
+    .ai-analysis-body p {
+      margin: 3px 0 6px;
+      color: var(--muted2);
+    }
+
+    .ai-analysis-body ul {
+      margin: 3px 0 6px;
+      padding-left: 16px;
+      color: var(--muted2);
+    }
+
+    .ai-analysis-body li {
+      margin-bottom: 2px;
+    }
+
+    .ai-analysis-body strong {
+      color: var(--text);
+      font-weight: 600;
+    }
 
     .ai-analysis-body .ai-error {
       color: var(--red);
@@ -1536,7 +1562,8 @@
     </div>
     <button class="go-btn" id="search-btn">GO</button>
     <div class="status-bar">
-      <span id="source-indicator" style="font-size: 8px; font-weight: 500; display: inline-flex; align-items: center; gap: 4px; border: 1px solid var(--border); padding: 2px 6px; border-radius: 4px; background: var(--surface); margin-right: 4px;">
+      <span id="source-indicator"
+        style="font-size: 8px; font-weight: 500; display: inline-flex; align-items: center; gap: 4px; border: 1px solid var(--border); padding: 2px 6px; border-radius: 4px; background: var(--surface); margin-right: 4px;">
         <span id="ind-nse" style="opacity: 0.4; transition: all 0.3s ease;">NSE Scraper</span>
         <span style="opacity: 0.2;">|</span>
         <span id="ind-kite" style="opacity: 0.4; transition: all 0.3s ease;">Kite API</span>
@@ -1745,31 +1772,31 @@
       const indNse = document.getElementById('ind-nse');
       const indKite = document.getElementById('ind-kite');
       const pulseEl = document.querySelector('.pulse');
-      
+
       if (indNse && indKite) {
         if (isKite) {
           indNse.style.color = 'var(--muted2)';
           indNse.style.opacity = '0.4';
           indNse.style.fontWeight = '400';
           indNse.style.textShadow = 'none';
-          
+
           indKite.style.color = 'var(--red)';
           indKite.style.opacity = '1';
           indKite.style.fontWeight = '700';
           indKite.style.textShadow = '0 0 4px rgba(255, 61, 113, 0.4)';
-          
+
           if (pulseEl) pulseEl.classList.add('red');
         } else {
           indNse.style.color = 'var(--green)';
           indNse.style.opacity = '1';
           indNse.style.fontWeight = '700';
           indNse.style.textShadow = '0 0 4px rgba(0, 230, 118, 0.4)';
-          
+
           indKite.style.color = 'var(--muted2)';
           indKite.style.opacity = '0.4';
           indKite.style.fontWeight = '400';
           indKite.style.textShadow = 'none';
-          
+
           if (pulseEl) pulseEl.classList.remove('red');
         }
       }
@@ -1785,10 +1812,10 @@
         else if (delta > 0) { rankCls = 'sl-up'; rankBadge = `<span class="sl-rank-badge sl-rank-up">▲${delta}</span>`; }
         else if (delta < 0) { rankCls = 'sl-down'; rankBadge = `<span class="sl-rank-badge sl-rank-down">▼${Math.abs(delta)}</span>`; }
         const stockTs = oiTimestampMap[d.symbol]?.time || now;
-        
+
         const oiColorStyle = isKite ? 'style="color: var(--red);"' : '';
         const barStyle = isKite ? 'background: linear-gradient(90deg, var(--red), transparent);' : '';
-        
+
         return `
     <div class="sl-item ${activeTab === d.symbol ? 'active' : ''} ${rankCls}" id="li-${d.symbol}" onclick="selectSymbol('${d.symbol}')">
       <div class="sl-left">
@@ -2209,11 +2236,11 @@
                 </div>
                 <div style="max-height: 85px; overflow-y: auto; font-size: 8px; color: var(--text);">
                   ${registryDetails.length > 0 ? registryDetails.map(r => {
-                    const ceTo = r.ce.to_state;
-                    const peTo = r.pe.to_state;
-                    const ceClass = ceTo === 'LB' || ceTo === 'SC' ? 'pos' : ceTo === 'LU' || ceTo === 'SB' ? 'neg' : 'neu';
-                    const peClass = peTo === 'LB' || peTo === 'SC' ? 'pos' : peTo === 'LU' || peTo === 'SB' ? 'neg' : 'neu';
-                    return `
+          const ceTo = r.ce.to_state;
+          const peTo = r.pe.to_state;
+          const ceClass = ceTo === 'LB' || ceTo === 'SC' ? 'pos' : ceTo === 'LU' || ceTo === 'SB' ? 'neg' : 'neu';
+          const peClass = peTo === 'LB' || peTo === 'SC' ? 'pos' : peTo === 'LU' || peTo === 'SB' ? 'neg' : 'neu';
+          return `
                       <div style="display:flex; justify-content:space-between; margin-bottom:3px; padding-bottom:3px; border-bottom:1px dashed rgba(128,128,128,0.08);">
                         <span><b>Strike ${fmt(r.strike, 0)}:</b></span>
                         <span>
@@ -2222,7 +2249,7 @@
                         </span>
                       </div>
                     `;
-                  }).join('') : '<div style="color:var(--muted2); font-style:italic; font-size: 7.5px;">No logged strikes</div>'}
+        }).join('') : '<div style="color:var(--muted2); font-style:italic; font-size: 7.5px;">No logged strikes</div>'}
                 </div>
               </div>
             </div>
@@ -2374,7 +2401,7 @@
       <!-- Column 2: Heatmap and State Transition Conviction -->
       <div style="display: flex; flex-direction: column; gap: 7px;">
         <!-- 1) OI Chain Heatmap -->
-        ${buildHeatmap(sym, d.chain_data, ltp, d.max_pain, d.straddle, d.atm, d.expiry, d.pcr, prev.chain_data, prev.arrowState)}
+        ${buildHeatmap(sym, d.chain_data, ltp, d.max_pain, d.straddle, d.atm, d.expiry, d.pcr, prev.chain_data, prev.arrowState, d.dual_side_analysis)}
 
         <!-- 2) State Transition Conviction -->
         ${transitionConvictionHtml}
@@ -2397,11 +2424,23 @@
     }
 
     // ─── OI Chain Heatmap ───────────────────────────────
-    function buildHeatmap(sym, chain, ltp, maxPain, straddle, atm, expiry, pcr, prevChain, prevArrows = {}) {
+    function buildHeatmap(sym, chain, ltp, maxPain, straddle, atm, expiry, pcr, prevChain, prevArrows = {}, dualSide = null) {
       if (!chain?.length) return `
     <div class="sec-head">OI Chain Heatmap</div>
-    <div class="heatmap-wrap" style="padding:16px;color:var(--muted);font-size:10px;text-align:center">
-      🔗 Connect Kite API to view live OI Chain Heatmap
+    <div class="heatmap-wrap" style="padding:16px;text-align:center;">
+      <div style="color:var(--muted);font-size:11px;font-weight:bold;letter-spacing:1px;text-transform:uppercase;margin-bottom:12px;">⚠️ offline</div>
+      
+      <div class="dual-side-alert" style="padding:10px 14px; border-radius:6px; background:rgba(255,255,255,0.02); border:1px dashed rgba(255,255,255,0.1); display:flex; flex-direction:column; gap:6px; text-align:left;">
+        <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid rgba(255,255,255,0.05); padding-bottom:5px;">
+          <span style="font-size:10px; font-weight:700; color:var(--muted)">🔄 DUAL-SIDE STATE ANALYSIS</span>
+          <span class="badge" style="background:rgba(255,255,255,0.1); color:#fff; font-weight:700; font-size:8.5px; padding:2px 6px; border-radius:4px; text-transform:uppercase;">BIAS: Not live</span>
+        </div>
+        <div style="font-size:9.5px; color:var(--muted); line-height:1.6;">
+          <div><strong>State:</strong> <span style="color:#fff; font-weight:500;">Not live</span></div>
+          <div><strong>Signal:</strong> <span style="color:#fff; font-weight:500;">Not live</span></div>
+          <div><strong>Bias:</strong> <span style="color:#fff; font-weight:500;">Not live</span></div>
+        </div>
+      </div>
     </div>`;
 
       const maxPEOI = Math.max(...chain.map(r => r.pe_oi), 1);
@@ -2540,6 +2579,37 @@
         prevDetails[sym].arrowState = newArrowState;
       }
 
+      const dsState = dualSide?.state || 'Not live';
+      const dsSignal = dualSide?.signal || 'Not live';
+      const dsBias = dualSide?.bias || 'Not live';
+
+      const stateColor = 
+        dsState === 'RANGE_PINNING' ? 'var(--yellow)' : 
+        dsState === 'VOL_COILING' ? 'var(--accent)' : 
+        dsState === 'TRENDING' ? 'var(--green)' : 
+        dsState === 'Not live' ? 'var(--muted)' : 'var(--muted)';
+      
+      const biasBg = 
+        dsBias === 'NEUTRAL_THETA_FAVORABLE' ? 'var(--green)' : 
+        dsBias === 'NEUTRAL_BREAKOUT_WATCH' ? 'var(--yellow)' : 
+        'rgba(255, 255, 255, 0.1)';
+      
+      const biasText = 
+        (dsBias === 'NEUTRAL_THETA_FAVORABLE' || dsBias === 'NEUTRAL_BREAKOUT_WATCH') ? '#000' : '#fff';
+
+      const dualSideHtml = `
+      <div class="dual-side-alert" style="margin-top:12px; padding:10px 14px; border-radius:6px; background:rgba(255,255,255,0.02); border:1px dashed rgba(255,255,255,0.1); display:flex; flex-direction:column; gap:6px;">
+        <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid rgba(255,255,255,0.05); padding-bottom:5px;">
+          <span style="font-size:10px; font-weight:700; color:${stateColor}">🔄 STATE: ${dsState}</span>
+          <span class="badge" style="background:${biasBg}; color:${biasText}; font-weight:700; font-size:8.5px; padding:2px 6px; border-radius:4px; text-transform:uppercase;">BIAS: ${dsBias}</span>
+        </div>
+        <div style="font-size:9.5px; color:var(--muted); line-height:1.6;">
+          <div><strong>State:</strong> <span style="color:#fff; font-weight:500;">${dsState}</span></div>
+          <div><strong>Signal:</strong> <span style="color:#fff; font-weight:500;">${dsSignal}</span></div>
+          <div><strong>Bias:</strong> <span style="color:#fff; font-weight:500;">${dsBias}</span></div>
+        </div>
+      </div>`;
+
       return `
     <div class="sec-head">OI Chain Heatmap</div>
     <div class="heatmap-wrap">
@@ -2567,12 +2637,13 @@
         </tr></thead>
         <tbody>${rows}</tbody>
       </table>
+      ${dualSideHtml}
     </div>`;
     }
 
     // ─── AI Heatmap Analysis ─────────────────────────────
     async function runAiAnalysis(sym) {
-      const btn  = document.getElementById(`ai-btn-${sym}`);
+      const btn = document.getElementById(`ai-btn-${sym}`);
       const body = document.getElementById(`ai-body-${sym}`);
       if (!btn || !body) return;
 
@@ -2623,19 +2694,19 @@
 
       try {
         const payload = {
-          chain_data : d.chain_data,
-          pcr        : d.pcr,
-          spot       : d.ltp ?? null,
-          max_pain   : d.max_pain,
-          straddle   : d.straddle,
-          expiry     : d.expiry,
-          atm        : d.atm
+          chain_data: d.chain_data,
+          pcr: d.pcr,
+          spot: d.ltp ?? null,
+          max_pain: d.max_pain,
+          straddle: d.straddle,
+          expiry: d.expiry,
+          atm: d.atm
         };
 
         const res = await fetch(`/api/oi/symbol/${encodeURIComponent(sym)}/ai-analyze`, {
-          method : 'POST',
+          method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body   : JSON.stringify(payload)
+          body: JSON.stringify(payload)
         });
 
         const json = await res.json();
@@ -2649,7 +2720,7 @@
           // Convert simple markdown to HTML (headers, bold, bullets)
           const md = (json.analysis || '')
             .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
-            .replace(/^## (.+)$/gm,  '<h2>$1</h2>')
+            .replace(/^## (.+)$/gm, '<h2>$1</h2>')
             .replace(/^### (.+)$/gm, '<h3>$1</h3>')
             .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
             .replace(/^- (.+)$/gm, '<li>$1</li>')

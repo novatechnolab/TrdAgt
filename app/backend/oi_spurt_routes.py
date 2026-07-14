@@ -26,6 +26,16 @@ import datetime
 import threading
 import time
 import queue
+import pytz
+
+def is_market_hours():
+    tz = pytz.timezone("Asia/Kolkata")
+    now = datetime.datetime.now(tz)
+    if now.weekday() > 4:
+        return False
+    start = now.replace(hour=9, minute=15, second=0, microsecond=0)
+    end = now.replace(hour=15, minute=30, second=0, microsecond=0)
+    return start <= now <= end
 from collections import defaultdict
 from flask import Blueprint, jsonify, request
 from oi_scanner_routes import implied_vol, trading_time_to_expiry, RISK_FREE_RATE
@@ -46,6 +56,75 @@ def _get_kite():
     if kite is None:
         raise RuntimeError("Kite session not connected. Configure via Settings → Kite API.")
     return kite
+
+def get_premium_threshold(prv_ltp, sym):
+    if prv_ltp <= 0:
+        return 0.025
+    sym_upper = sym.upper() if sym else ""
+    # Indices: NIFTY, BANKNIFTY, etc.
+    if sym_upper in ("NIFTY", "BANKNIFTY", "FINNIFTY", "MIDCPNIFTY", "SENSEX", "BANKEX", "NIFTYIT", "NIFTYNXT50"):
+        base = 0.0250  # 2.50%
+    # Large Caps
+    elif sym_upper in ("RELIANCE", "TCS", "INFY", "HDFCBANK", "ICICIBANK", "BHARTIARTL", "ITC", "SBIN", "LT", "AXISBANK", "MARUTI", "HINDUNILVR", "KOTAKBANK", "TATASTEEL", "M&M", "TRENT"):
+        base = 0.0200  # 2.00%
+    # Mid/Small Caps
+    else:
+        base = 0.0300  # 3.00%
+        
+    # Minimum 2-tick change barrier (0.10 rupees) to filter spread noise
+    tick_barrier = 0.10 / prv_ltp
+    return max(base, tick_barrier)
+
+
+def classify_dual_side_addition(ce_oi_chg, pe_oi_chg, ce_prem_chg, pe_prem_chg, 
+                                  spot_pct_chg, spot_threshold, oi_add_threshold):
+    # Check if market hours are active
+    if not is_market_hours():
+        return {
+            "state": "Not live",
+            "signal": "Not live",
+            "bias": "Not live"
+        }
+
+    spot_flat = abs(spot_pct_chg) <= spot_threshold
+    both_oi_up = ce_oi_chg > oi_add_threshold and pe_oi_chg > oi_add_threshold
+    
+    if not spot_flat:
+        return {
+            "state": "TRENDING",
+            "signal": f"Spot is trending ({spot_pct_chg:+.2f}%). Focus on standard directional buildup signals.",
+            "bias": "DIRECTIONAL"
+        }
+        
+    if not both_oi_up:
+        return {
+            "state": "CONSOLIDATION",
+            "signal": "Spot is flat. Low range writing activity. Option premiums stable.",
+            "bias": "NEUTRAL"
+        }
+
+    both_premium_down = ce_prem_chg < 0 and pe_prem_chg < 0
+    both_premium_up = ce_prem_chg > 0 and pe_prem_chg > 0
+
+    if both_premium_down:
+        return {
+            "state": "RANGE_PINNING",
+            "signal": "Writers adding both legs, premium eroding — range expected, IV likely to decay",
+            "bias": "NEUTRAL_THETA_FAVORABLE"
+        }
+    elif both_premium_up:
+        return {
+            "state": "VOL_COILING",
+            "signal": "Both legs bought despite flat spot — IV expansion ahead of possible breakout",
+            "bias": "NEUTRAL_BREAKOUT_WATCH"
+        }
+    else:
+        return {
+            "state": "MIXED_DUAL_ADD",
+            "signal": "OI adding both sides but premium legs diverging — check individually",
+            "bias": "UNCLEAR"
+        }
+
 
 # ── NSE scrape ─────────────────────────────────────────────────────────────────
 NSE_HEADERS = {
@@ -845,8 +924,16 @@ def api_symbol(symbol):
             """4-way buildup classifier for per-strike chain_data rows."""
             if prv_ltp <= 0 or cur_ltp <= 0: return "–"
             if oi_chg == 0: return "Flat"
-            price_up = cur_ltp > prv_ltp * 1.0025
+
+            pct_chg = (cur_ltp - prv_ltp) / prv_ltp
+            THRESHOLD = 0.0025  # 0.25%, applied symmetrically
+
+            if abs(pct_chg) <= THRESHOLD:
+                return "Flat"  # price move too small to classify direction
+
+            price_up = pct_chg > THRESHOLD
             oi_up    = oi_chg > 0
+
             if oi_up and price_up:      return "Long Buildup"
             if oi_up and not price_up:  return "Short Buildup"
             if not oi_up and price_up:  return "Short Covering"
@@ -1157,19 +1244,67 @@ def api_symbol(symbol):
         except Exception as ex:
             errors.append(f"Transition Conviction engine error: {ex}")
 
+    # Calculate Straddle / Dual-Side Addition Analysis
+    dual_side_analysis = None
+    if chain and ltp and atm_strike:
+        # Find ATM strike row
+        atm_row = next((r for r in chain if r["strike"] == atm_strike), None)
+        if atm_row:
+            ce_oi_chg_pct = atm_row.get("ce_oi_eod_chg_pct", 0.0)
+            pe_oi_chg_pct = atm_row.get("pe_oi_eod_chg_pct", 0.0)
+            
+            ce_ltp = atm_row.get("ce_ltp", 0.0)
+            ce_prev = atm_row.get("ce_prev_ltp", ce_ltp)
+            ce_prem_chg = ((ce_ltp - ce_prev) / ce_prev * 100) if ce_prev > 0 else 0.0
+            
+            pe_ltp = atm_row.get("pe_ltp", 0.0)
+            pe_prev = atm_row.get("pe_prev_ltp", pe_ltp)
+            pe_prem_chg = ((pe_ltp - pe_prev) / pe_prev * 100) if pe_prev > 0 else 0.0
+            
+            # Determine thresholds based on asset class
+            sym_upper = sym.upper()
+            if sym_upper in ("NIFTY", "BANKNIFTY", "FINNIFTY", "MIDCPNIFTY", "SENSEX", "BANKEX", "NIFTYIT", "NIFTYNXT50"):
+                spot_threshold = 0.20   # 0.20% daily spot change
+                oi_add_threshold = 3.0  # 3.0% daily OI increase
+            elif sym_upper in ("RELIANCE", "TCS", "INFY", "HDFCBANK", "ICICIBANK", "BHARTIARTL", "ITC", "SBIN", "LT", "AXISBANK", "MARUTI", "HINDUNILVR", "KOTAKBANK", "TATASTEEL", "M&M", "TRENT"):
+                spot_threshold = 0.30   # 0.30% daily spot change
+                oi_add_threshold = 5.0  # 5.0% daily OI increase
+            else:
+                spot_threshold = 0.40   # 0.40% daily spot change
+                oi_add_threshold = 5.0  # 5.0% daily OI increase
+
+            dual_side_analysis = classify_dual_side_addition(
+                ce_oi_chg=ce_oi_chg_pct,
+                pe_oi_chg=pe_oi_chg_pct,
+                ce_prem_chg=ce_prem_chg,
+                pe_prem_chg=pe_prem_chg,
+                spot_pct_chg=price_change_pct,
+                spot_threshold=spot_threshold,
+                oi_add_threshold=oi_add_threshold
+            )
+            
+    # Default to "Not live" if it couldn't be derived (e.g. out of market hours or chain is empty)
+    if not dual_side_analysis:
+        dual_side_analysis = {
+            "state": "Not live",
+            "signal": "Not live",
+            "bias": "Not live"
+        }
+
     return jsonify({
-        "symbol":           sym,
-        "ltp":              ltp,
-        "price_change_pct": price_change_pct,  # accurate % from Kite net_change/prev_close
-        "expiry":           expiry,
-        "pivots":           pivots,
-        "pivot_source":     pivot_source,
-        "max_pain":         max_pain,
-        "pcr":              pcr,
-        "strikes":          strikes,
-        "chain_data":       chain_data,
-        "straddle":         straddle,
-        "atm":              atm_strike,
+        "symbol":             sym,
+        "ltp":                ltp,
+        "price_change_pct":   price_change_pct,  # accurate % from Kite net_change/prev_close
+        "expiry":             expiry,
+        "pivots":             pivots,
+        "pivot_source":       pivot_source,
+        "max_pain":           max_pain,
+        "pcr":                pcr,
+        "strikes":            strikes,
+        "chain_data":         chain_data,
+        "straddle":           straddle,
+        "atm":                atm_strike,
+        "dual_side_analysis": dual_side_analysis,
         "retail_action":    final_retail_action or "WAIT (No clear setup)",
         "h_action":         final_h_action,
         "signal_source":    signal_source,    # {strike, oi, side} — which strike fired retail action
@@ -1385,3 +1520,4 @@ def ai_analyze_heatmap(symbol):
     except Exception as e:
         logging.error(f"[AI-HEATMAP] Gemini error: {str(e)}")
         return jsonify({"ok": False, "error": f"Gemini API error: {str(e)}"}), 500
+
