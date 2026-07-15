@@ -1202,7 +1202,7 @@
 
     .stock-row-header {
       display: grid;
-      grid-template-columns: 100px 55px 50px 55px 60px 65px 55px 55px 35px 45px 55px 85px 1fr;
+      grid-template-columns: 125px 65px 60px 60px 65px 70px 60px 60px 45px 50px 65px 1fr 95px;
       gap: 8px;
       align-items: center;
       padding: 10px 16px;
@@ -1381,7 +1381,7 @@
 
     .stock-board-header {
       display: grid;
-      grid-template-columns: 100px 55px 50px 55px 60px 65px 55px 55px 35px 45px 55px 85px 1fr;
+      grid-template-columns: 125px 65px 60px 60px 65px 70px 60px 60px 45px 50px 65px 1fr 95px;
       gap: 8px;
       align-items: center;
       padding: 8px 16px;
@@ -1864,7 +1864,7 @@
 
         // EMA9 Hold badge
         const e9hState = s.ema9_hold;
-        const e9hMins  = s.ema9_hold_minutes || 0;
+        const e9hMins = s.ema9_hold_minutes || 0;
         let e9hBadge = '<span style="color:var(--text-muted);">—</span>';
         if (e9hState === 'Y') {
           const e9hColor = e9hMins >= 30 ? '#3fb950' : 'rgba(63,185,80,0.75)';
@@ -1877,7 +1877,7 @@
         // First-Hour Volume Spurt badge (combined: spurt / cumulative)
         const fhSpurt = s.fh_spurt_ratio;
         const fhCumul = s.fh_cumulative_ratio;
-        const fhTag   = s.fh_spurt_tag;
+        const fhTag = s.fh_spurt_tag;
         let fhBadge = '<span style="color:var(--text-muted);font-size:0.7rem;">—</span>';
         if (fhSpurt != null && fhCumul != null) {
           let fhColor = '#8b949e'; // Normal
@@ -2601,7 +2601,7 @@
     async function fetchOIStatsForSymbols(symbols) {
       if (_oiStatsFetchActive) return;
       _oiStatsFetchActive = true;
-      
+
       const now = Date.now();
       const symbolsToFetch = symbols.filter(sym => {
         const cached = spurtCache[sym];

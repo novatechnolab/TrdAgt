@@ -895,3 +895,49 @@ def compute_score(close, ema21, ema50, vwap, rsi, macd_hist, bos, choch, htf, vo
         score += 1
     
     return score
+
+
+def check_ema9_respect(candles_5min, ema9_series, direction="bullish", 
+                        max_body_penetration_pct=20, min_consecutive=2):
+    """
+    Checks if candles are respecting EMA9 as support/resistance.
+    
+    direction: "bullish" = price should hold above EMA9
+               "bearish" = price should hold below EMA9
+    max_body_penetration_pct: max % of candle body allowed to cross EMA9
+    min_consecutive: how many recent candles must satisfy this
+    """
+    results = []
+
+    for i in range(-min_consecutive, 0):
+        candle = candles_5min[i]
+        ema9 = ema9_series[i]
+        o, c = candle["open"], candle["close"]
+        body_top = max(o, c)
+        body_bottom = min(o, c)
+        body_size = body_top - body_bottom
+
+        if body_size == 0:
+            results.append(True)  # doji — neutral, don't penalize
+            continue
+
+        if direction == "bullish":
+            # how much of the body sits below EMA9
+            penetration = max(0, ema9 - body_bottom)
+            penetration_pct = (penetration / body_size) * 100
+            holds = penetration_pct <= max_body_penetration_pct
+        else:
+            # bearish: how much of the body sits above EMA9
+            penetration = max(0, body_top - ema9)
+            penetration_pct = (penetration / body_size) * 100
+            holds = penetration_pct <= max_body_penetration_pct
+
+        results.append(holds)
+
+    confirmed = all(results)
+    return {
+        "state": "CONFIRMED" if confirmed else "NOT_CONFIRMED",
+        "direction": direction,
+        "bars_checked": min_consecutive,
+        "detail": results
+    }

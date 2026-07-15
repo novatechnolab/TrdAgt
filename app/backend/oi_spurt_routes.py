@@ -28,15 +28,8 @@ import time
 import queue
 import pytz
 
-def is_market_hours():
-    tz = pytz.timezone("Asia/Kolkata")
-    now = datetime.datetime.now(tz)
-    if now.weekday() > 4:
-        return False
-    start = now.replace(hour=9, minute=15, second=0, microsecond=0)
-    end = now.replace(hour=15, minute=30, second=0, microsecond=0)
-    return start <= now <= end
 from collections import defaultdict
+from session_utils import is_market_hours
 from flask import Blueprint, jsonify, request
 from oi_scanner_routes import implied_vol, trading_time_to_expiry, RISK_FREE_RATE
 
@@ -78,13 +71,7 @@ def get_premium_threshold(prv_ltp, sym):
 
 def classify_dual_side_addition(ce_oi_chg, pe_oi_chg, ce_prem_chg, pe_prem_chg, 
                                   spot_pct_chg, spot_threshold, oi_add_threshold):
-    # Check if market hours are active
-    if not is_market_hours():
-        return {
-            "state": "Not live",
-            "signal": "Not live",
-            "bias": "Not live"
-        }
+
 
     spot_flat = abs(spot_pct_chg) <= spot_threshold
     both_oi_up = ce_oi_chg > oi_add_threshold and pe_oi_chg > oi_add_threshold

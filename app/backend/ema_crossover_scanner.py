@@ -17,7 +17,7 @@ import os
 import sqlite3
 from datetime import datetime
 from session_utils import now_ist
-from indicators import compute_ema
+from indicators import compute_ema, check_ema9_respect
 
 try:
     from kiteconnect import KiteTicker
@@ -1056,65 +1056,58 @@ def _get_active_trading_date(now):
     return target.strftime('%Y-%m-%d')
 
 
-def _compute_ema9_hold(candles):
+def _compute_ema9_hold(candles, max_body_penetration_pct=20):
     """
-    Computes EMA9 Hold state from 5-minute candles.
+    Computes EMA9 Respect and EMA21 Trend Alignment from 5-minute candles.
 
     Rules:
-      - Price closing ABOVE EMA9 → Y (holding above)
-      - Price closing BELOW EMA9 → N (holding below)
-      - Flip requires minimum 2 consecutive 5m candle closes on the
-        opposite side of EMA9 (hysteresis filter to avoid noise)
-
-    Returns:
-      (state, hold_minutes)
-        state: 'Y' (above EMA9) or 'N' (below EMA9) or None
-        hold_minutes: how many minutes the current confirmed state has persisted
+      1. Trend filter: EMA9 must remain on the correct side of EMA21 (EMA9 > EMA21 for Y, EMA9 < EMA21 for N).
+      2. Penetration filter: Candle body penetration across EMA9 must not exceed 20%.
+      3. Walk backward from the last candle to count consecutive valid bars.
     """
-    if not candles or len(candles) < 12:
+    if not candles or len(candles) < 21:
         return None, 0
 
     closes = [c.get('close', 0) or 0 for c in candles]
     ema9 = compute_ema(closes, 9)
+    ema21 = compute_ema(closes, 21)
 
-    if not ema9 or len(ema9) != len(closes):
+    if not ema9 or not ema21 or len(ema9) != len(closes) or len(ema21) != len(closes):
         return None, 0
 
-    # Walk candles to determine confirmed state with 2-candle hysteresis
-    confirmed_state = None   # 'Y' or 'N'
-    consecutive_opposite = 0
-    state_start_idx = 0
+    # Determine trend side on latest bar
+    direction = "bullish" if ema9[-1] > ema21[-1] else "bearish"
+    confirmed_state = "Y" if direction == "bullish" else "N"
 
-    for i in range(len(closes)):
-        if ema9[i] is None or ema9[i] <= 0 or closes[i] <= 0:
-            continue
+    # Walk backward to find the number of consecutive aligned candles
+    consecutive_bars = 0
+    for i in range(len(closes) - 1, -1, -1):
+        if ema9[i] is None or ema21[i] is None:
+            break
 
-        above = closes[i] > ema9[i]
+        # 1. Trend Filter Check
+        if direction == "bullish" and ema9[i] <= ema21[i]:
+            break
+        elif direction == "bearish" and ema9[i] >= ema21[i]:
+            break
 
-        if confirmed_state is None:
-            # First valid candle sets the initial state
-            confirmed_state = 'Y' if above else 'N'
-            state_start_idx = i
-            consecutive_opposite = 0
-            continue
+        # 2. Body Penetration Check using clean library helper
+        respect_res = check_ema9_respect(
+            [candles[i]], 
+            [ema9[i]], 
+            direction=direction, 
+            max_body_penetration_pct=max_body_penetration_pct, 
+            min_consecutive=1
+        )
+        if respect_res["state"] != "CONFIRMED":
+            break
 
-        current_is_same = (confirmed_state == 'Y' and above) or \
-                          (confirmed_state == 'N' and not above)
+        consecutive_bars += 1
 
-        if current_is_same:
-            consecutive_opposite = 0
-        else:
-            consecutive_opposite += 1
-            if consecutive_opposite >= 2:  # 2 consecutive closes confirm flip
-                confirmed_state = 'Y' if above else 'N'
-                state_start_idx = i - 1  # Flip started 1 candle ago
-                consecutive_opposite = 0
+    if consecutive_bars == 0:
+        return None, 0
 
-    # Calculate hold duration from state_start_idx to last candle
-    hold_candles = max(0, len(closes) - 1 - state_start_idx)
-    hold_minutes = hold_candles * 5   # Each candle = 5 minutes
-
-    return confirmed_state, hold_minutes
+    return confirmed_state, consecutive_bars * 5
 
 
 def _calculate_intraday_linearity(candles, today_str):
