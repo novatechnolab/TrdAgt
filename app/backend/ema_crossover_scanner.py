@@ -51,344 +51,51 @@ _tick_buffers_lock = threading.Lock()
 _triggered_alerts = []  # List of triggered alerts today (Fix 2: protected by _alerts_lock)
 _alerts_lock = threading.Lock()  # Fix 2: separate lock so _tick_buffers_lock is never held during alert emit
 
-# ── First-Hour Volume Spurt: per-slot baseline cache ─────────────────────────
-# Warmed ONCE per day (after market close or at startup if stale).
-# Stores avg volume for each of 12 five-minute slots (09:15–10:15) computed
-# from 10 clean historical trading days (excludes expiry, gap, VIX-shock days).
-_fh_baseline_cache  = {}      # {symbol: {"09:15:00": avg_vol, "09:20:00": avg_vol, ...}}
-_fh_baseline_date   = None    # date object when cache was last built
-_fh_baseline_lock   = threading.Lock()
-_fh_baseline_warming = False
+# ── EMA Collision Alert globals ───────────────────────────────────────────────
+# Separate from squeeze breakout alerts — different trigger mechanism.
+EMA_COLLISION_LOOKBACK      = 8        # candles to look back for collision (8 x 5m = 40 min)
+EMA_COLLISION_DEDUP_SEC     = 3600     # 60 min dedup per symbol+direction
+_COLLISION_THRESHOLD_PCT    = 0.15    # |EMA9-EMA21|/close must be < this % to be "in zone"
+_collision_alerts      = []            # [{type, symbol, direction, ltp, time, trigger_epoch}]
+_collision_alerts_lock = threading.Lock()
+_collision_dedup       = {}            # {"SYMBOL_bullish": epoch}
+_collision_watchlist   = {}            # {symbol: {ltp, ema_gap_pct, time}} — in-zone but not yet confirmed
+_collision_wl_lock     = threading.Lock()
+
 _fh_rescan_needed   = False    # Set by warm thread to trigger a re-scan with fresh baselines
 
-_FH_SLOTS = [
-    "09:15:00", "09:20:00", "09:25:00", "09:30:00", "09:35:00", "09:40:00",
-    "09:45:00", "09:50:00", "09:55:00", "10:00:00", "10:05:00", "10:10:00",
-]
-_FH_SLOTS_SET = frozenset(_FH_SLOTS)  # O(1) membership lookups
-_FH_DB_PATH = os.path.normpath(os.path.join(os.path.dirname(os.path.abspath(__file__)), "tradesignal_cache.db"))
+# ── EMA Crossover Alert globals & dedup ──────────────────────────────────────
+_ema_cross_dedup = {}  # {"SYMBOL_direction": epoch}
+_ema_cross_dedup_lock = threading.Lock()
+EMA_CROSS_DEDUP_SEC = 14400  # 4 hours (14400 seconds)
 
-
-def _fh_init_db():
-    """Create the first_hour_baselines table if it doesn't exist."""
+def _send_telegram_ema_cross(symbol, direction, ltp, vol_ratio, slot_str):
+    """Format and send a Telegram alert for a 5m EMA Crossover."""
     try:
-        conn = sqlite3.connect(_FH_DB_PATH)
-        conn.execute("""
-            CREATE TABLE IF NOT EXISTS first_hour_baselines (
-                symbol TEXT PRIMARY KEY,
-                baselines TEXT NOT NULL,
-                active_date TEXT NOT NULL
-            )
-        """)
-        conn.commit()
-        conn.close()
-    except Exception as e:
-        logging.warning(f"[FH Volume] DB init error: {e}")
-
-
-def _fh_load_from_db():
-    """Load cached baselines from SQLite. Only use if active_date matches today."""
-    global _fh_baseline_cache, _fh_baseline_date
-    try:
-        today_str = _get_active_trading_date(now_ist())
-        conn = sqlite3.connect(_FH_DB_PATH)
-        cursor = conn.cursor()
-        cursor.execute("SELECT symbol, baselines, active_date FROM first_hour_baselines LIMIT 1")
-        row = cursor.fetchone()
-        if row and row[2] == today_str:
-            # Date matches — load all rows
-            cursor.execute("SELECT symbol, baselines FROM first_hour_baselines WHERE active_date = ?", (today_str,))
-            rows = cursor.fetchall()
-            cache = {}
-            for sym, bl_json in rows:
-                try:
-                    cache[sym] = json.loads(bl_json)
-                except Exception:
-                    pass
-            with _fh_baseline_lock:
-                _fh_baseline_cache = cache
-                _fh_baseline_date = today_str
-            logging.info(f"[FH Volume] Loaded {len(cache)} baselines from SQLite (date={today_str}).")
-        else:
-            logging.info(f"[FH Volume] SQLite baselines stale or empty (db_date={row[2] if row else 'none'}, need={today_str}).")
-        conn.close()
-    except Exception as e:
-        logging.warning(f"[FH Volume] DB load error: {e}")
-
-
-def _fh_save_single_to_db(symbol, slots, active_date_str):
-    """Save a single computed baseline to SQLite."""
-    try:
-        conn = sqlite3.connect(_FH_DB_PATH)
-        conn.execute(
-            "INSERT OR REPLACE INTO first_hour_baselines (symbol, baselines, active_date) VALUES (?, ?, ?)",
-            (symbol, json.dumps(slots), active_date_str)
-        )
-        conn.commit()
-        conn.close()
-    except Exception as e:
-        logging.warning(f"[FH Volume] DB save error for {symbol}: {e}")
-
-
-def _fh_save_to_db(baselines_dict, active_date_str):
-    """Save computed baselines to SQLite."""
-    try:
-        conn = sqlite3.connect(_FH_DB_PATH)
-        conn.execute("DELETE FROM first_hour_baselines WHERE active_date != ?", (active_date_str,))
-        items = [(sym, json.dumps(slots), active_date_str) for sym, slots in baselines_dict.items()]
-        conn.executemany(
-            "INSERT OR REPLACE INTO first_hour_baselines (symbol, baselines, active_date) VALUES (?, ?, ?)",
-            items
-        )
-        conn.commit()
-        conn.close()
-        logging.info(f"[FH Volume] Saved {len(items)} baselines to SQLite (date={active_date_str}).")
-    except Exception as e:
-        logging.warning(f"[FH Volume] DB save error: {e}")
-
-
-def get_fh_baseline(symbol):
-    """Thread-safe read of a symbol's per-slot baseline. Returns dict or None."""
-    with _fh_baseline_lock:
-        return _fh_baseline_cache.get(symbol)
-
-
-def _fh_warm_baselines_bg(kite, token_map):
-    """Background: compute first-hour per-slot volume baselines for all symbols.
-    Fetches 25 calendar days of 5-min candles, applies exclusion filters
-    (expiry days, gap opens >1.5%, VIX >10% daily move), keeps 10 clean days,
-    and averages each slot's volume across those days.
-
-    token_map = {symbol: instrument_token} — reuses existing resolved tokens."""
-    global _fh_baseline_warming
-    from datetime import timedelta, date as dt_date
-    import datetime as dt_mod
-    from session_utils import NSE_HOLIDAYS
-    import random
-
-    try:
-        today = dt_date.today()
-        active_date_str = _get_active_trading_date(now_ist())
-        from_dt = today - timedelta(days=30)  # ~25 calendar days → 15+ trading days
-        to_dt   = today - timedelta(days=1)
-
-        # Prune old day baselines from database once before warming
-        try:
-            conn = sqlite3.connect(_FH_DB_PATH)
-            conn.execute("DELETE FROM first_hour_baselines WHERE active_date != ?", (active_date_str,))
-            conn.commit()
-            conn.close()
-        except Exception as e:
-            logging.warning(f"[FH Volume] DB prune error: {e}")
-
-        # ── Step 1: Identify expiry dates from NFO instruments cache ──────
-        expiry_dates = set()
-        try:
-            from db_instruments import get_cached_instruments
-            nfo_instruments = get_cached_instruments("NFO")
-            for inst in nfo_instruments:
-                exp = inst.get("expiry")
-                if exp and isinstance(exp, dt_date):
-                    if from_dt <= exp <= to_dt:
-                        expiry_dates.add(exp)
-                elif exp and isinstance(exp, str):
-                    try:
-                        exp_d = datetime.strptime(exp[:10], "%Y-%m-%d").date()
-                        if from_dt <= exp_d <= to_dt:
-                            expiry_dates.add(exp_d)
-                    except Exception:
-                        pass
-            logging.info(f"[FH Volume] Found {len(expiry_dates)} expiry dates in range.")
-        except Exception as e:
-            logging.warning(f"[FH Volume] Expiry detection failed: {e}")
-
-        # ── Step 2: Fetch India VIX daily candles for VIX filter ──────────
-        vix_shock_dates = set()
-        try:
-            vix_token = None
-            from db_instruments import get_cached_instruments
-            nse_instruments = get_cached_instruments("NSE")
-            for inst in nse_instruments:
-                if inst.get("tradingsymbol") == "INDIA VIX":
-                    vix_token = inst.get("instrument_token")
-                    break
-            if vix_token:
-                time.sleep(0.6)
-                vix_hist = kite.historical_data(int(vix_token), from_dt, to_dt, "day")
-                for i in range(1, len(vix_hist)):
-                    prev_close = vix_hist[i-1].get("close", 0)
-                    curr_close = vix_hist[i].get("close", 0)
-                    if prev_close > 0:
-                        vix_change_pct = abs((curr_close - prev_close) / prev_close * 100)
-                        if vix_change_pct >= 10.0:
-                            candle_date = vix_hist[i].get("date")
-                            if hasattr(candle_date, 'date'):
-                                candle_date = candle_date.date()
-                            elif isinstance(candle_date, str):
-                                candle_date = datetime.strptime(candle_date[:10], "%Y-%m-%d").date()
-                            vix_shock_dates.add(candle_date)
-                logging.info(f"[FH Volume] VIX shock dates: {len(vix_shock_dates)}")
-        except Exception as e:
-            logging.warning(f"[FH Volume] VIX fetch failed (non-critical): {e}")
-
-        # ── Step 3: Per-symbol baseline computation ───────────────────────
-        pending_symbols = list(token_map.keys())
-        results = {}
-        processed = 0
-        total = len(token_map)
-
-        while pending_symbols:
-            sym = pending_symbols.pop(0)  # FIFO queue: pop from front
-            token = token_map[sym]
-            try:
-                time.sleep(0.6)  # Rate limit: 1.67 req/s
-                
-                # Fetch 5-min candles for the lookback window
-                hist_5m = kite.historical_data(int(token), from_dt, to_dt, "5minute")
-                if not hist_5m:
-                    continue
-
-                # Also need daily candles for gap-open filter
-                time.sleep(0.6)
-                hist_daily = kite.historical_data(int(token), from_dt, to_dt, "day")
-
-                # Build gap-open exclusion set
-                gap_dates = set()
-                if hist_daily and len(hist_daily) >= 2:
-                    for i in range(1, len(hist_daily)):
-                        prev_close = hist_daily[i-1].get("close", 0)
-                        day_open   = hist_daily[i].get("open", 0)
-                        if prev_close > 0 and day_open > 0:
-                            gap_pct = abs((day_open - prev_close) / prev_close * 100)
-                            if gap_pct >= 1.5:
-                                candle_date = hist_daily[i].get("date")
-                                if hasattr(candle_date, 'date'):
-                                    candle_date = candle_date.date()
-                                elif isinstance(candle_date, str):
-                                    candle_date = datetime.strptime(candle_date[:10], "%Y-%m-%d").date()
-                                gap_dates.add(candle_date)
-
-                # Group 5-min candles by date, filter first-hour slots only
-                by_date = {}  # {date_obj: {slot_str: volume}}
-                for c in hist_5m:
-                    dt_val = c.get("date")
-                    if hasattr(dt_val, 'date'):
-                        c_date = dt_val.date()
-                        c_time = dt_val.strftime("%H:%M:%S")
-                    elif isinstance(dt_val, str):
-                        c_date = datetime.strptime(dt_val[:10], "%Y-%m-%d").date()
-                        c_time = dt_val[11:19]
-                    else:
-                        continue
-
-                    if c_time not in _FH_SLOTS_SET:
-                        continue
-                    if c_date not in by_date:
-                        by_date[c_date] = {}
-                    by_date[c_date][c_time] = c.get("volume", 0) or 0
-
-                # Apply exclusion filters
-                all_excluded = expiry_dates | vix_shock_dates | gap_dates | set(NSE_HOLIDAYS)
-                clean_dates = sorted(
-                    [d for d in by_date.keys()
-                     if d not in all_excluded
-                     and d.weekday() < 5
-                     and d != today],  # exclude today
-                    reverse=True  # newest first
-                )
-
-                # Keep at most 10 clean days (drop oldest first)
-                clean_dates = clean_dates[:10]
-
-                if len(clean_dates) < 3:
-                    # Not enough clean data — skip this symbol
-                    continue
-
-                # Compute per-slot average across clean days
-                slot_baselines = {}
-                for slot in _FH_SLOTS:
-                    slot_vols = [by_date[d].get(slot, 0) for d in clean_dates if slot in by_date.get(d, {})]
-                    if slot_vols:
-                        slot_baselines[slot] = round(sum(slot_vols) / len(slot_vols), 0)
-                    else:
-                        slot_baselines[slot] = 0
-
-                results[sym] = slot_baselines
-                processed += 1
-
-                # Save immediately to memory cache & database
-                with _fh_baseline_lock:
-                    _fh_baseline_cache[sym] = slot_baselines
-                    global _fh_baseline_date
-                    _fh_baseline_date = active_date_str
-
-                _fh_save_single_to_db(sym, slot_baselines, active_date_str)
-
-            except Exception as e:
-                is_rate_limit = "429" in str(e) or "too many" in str(e).lower()
-                if is_rate_limit:
-                    backoff = 5.0 + random.uniform(0.5, 2.0)
-                    logging.warning(f"[FH Volume] Rate limited at {sym}, appending to back of queue. Sleeping {backoff:.1f}s...")
-                    pending_symbols.append(sym)  # Send to back to retry later
-                    time.sleep(backoff)
-                else:
-                    logging.warning(f"[FH Volume] Error for {sym}: {e}")
-
-        logging.info(f"[FH Volume] Baseline warm complete: {processed}/{total} symbols successfully warmed.")
-
-        # Signal the scanner loop to re-scan so FH values populate in the board
-        global _fh_rescan_needed
-        _fh_rescan_needed = True
-
-    except Exception as e:
-        logging.error(f"[FH Volume] Baseline warm failed: {e}")
-    finally:
-        _fh_baseline_warming = False
-
-
-def ensure_fh_baselines_warm(kite, token_map):
-    """Non-blocking: triggers baseline warm if cache is missing/stale."""
-    global _fh_baseline_warming
-    if not token_map:
-        return
-
-    active_date = _get_active_trading_date(now_ist())
-
-    # Try loading from SQLite first if memory is empty
-    with _fh_baseline_lock:
-        if not _fh_baseline_cache or _fh_baseline_date != active_date:
-            _fh_init_db()
-            _fh_load_from_db()
-
-    # Identify which symbols are missing from the cache for today
-    with _fh_baseline_lock:
-        if _fh_baseline_date == active_date:
-            missing_tokens = {sym: tok for sym, tok in token_map.items() if sym not in _fh_baseline_cache}
-        else:
-            missing_tokens = dict(token_map)
-
-        if not missing_tokens:
-            return  # Everything is warmed for today!
-
-        if _fh_baseline_warming:
-            return  # Already warming
-
-    # Check RVOL warm isn't running (avoid rate-limit collision)
-    try:
-        from option_gainers_scanner import _avg_volume_warming
-        if _avg_volume_warming:
-            logging.debug("[FH Volume] Deferred — RVOL warm in progress.")
+        from session_utils import is_market_hours
+        if not is_market_hours():
             return
-    except ImportError:
-        pass
 
-    with _fh_baseline_lock:
-        if _fh_baseline_warming:
+        from server import _send_telegram_message, _telegram_configured
+        if not _telegram_configured():
             return
-        _fh_baseline_warming = True
 
-    logging.info(f"[FH Volume] Warmed={len(token_map) - len(missing_tokens)}/{len(token_map)}. Warming {len(missing_tokens)} remaining symbols...")
-    threading.Thread(target=_fh_warm_baselines_bg, args=(kite, missing_tokens), daemon=True).start()
+        emoji = "🟢 BULLISH CROSS" if direction == "bullish" else "🔴 BEARISH CROSS"
+        vol_str = f"{vol_ratio}x" if vol_ratio is not None else "N/A"
+
+        msg = (
+            f"⚡ [5M] {emoji} — #{symbol}\n"
+            f"━━━━━━━━━━━━━━━━━━━━\n"
+            f"📈 Stock LTP: ₹{ltp}\n"
+            f"📊 Volume  : {vol_str} (vs 20D slot avg)\n"
+            f"━━━━━━━━━━━━━━━━━━━━\n"
+            f"🕐 Time     : {slot_str} IST"
+        )
+
+        _send_telegram_message(msg)
+        logging.info("[EMA Cross Alert] Telegram alert dispatched for %s (%s)", symbol, direction)
+    except Exception as e:
+        logging.warning("[EMA Cross Alert] Failed to dispatch Telegram alert: %s", e)
 
 
 def _compute_fh_spurt(candles, symbol):
@@ -397,11 +104,18 @@ def _compute_fh_spurt(candles, symbol):
 
     Returns (spurt_ratio, cumulative_ratio, spurt_tag) or (None, None, None) if
     baselines are not yet available or no first-hour candles exist today."""
-    baselines = get_fh_baseline(symbol)
+    from volume_baseline import get_symbol_baselines
+    baselines = get_symbol_baselines(symbol, "5m")
     if not baselines:
         return None, None, None
 
     active_date_str = _get_active_trading_date(now_ist())
+
+    # First-hour slots: 09:15 to 10:10
+    fh_slots = frozenset([
+        "09:15", "09:20", "09:25", "09:30", "09:35", "09:40",
+        "09:45", "09:50", "09:55", "10:00", "10:05", "10:10"
+    ])
 
     # Extract today's first-hour candles
     today_slots = {}  # {slot_str: volume}
@@ -410,15 +124,15 @@ def _compute_fh_spurt(candles, symbol):
         if isinstance(dt_val, str):
             if not dt_val.startswith(active_date_str):
                 continue
-            c_time = dt_val[11:19]
+            c_time = dt_val[11:16]
         elif hasattr(dt_val, 'date'):
             if dt_val.date().isoformat() != active_date_str:
                 continue
-            c_time = dt_val.strftime("%H:%M:%S")
+            c_time = dt_val.strftime("%H:%M")
         else:
             continue
 
-        if c_time in _FH_SLOTS_SET:
+        if c_time in fh_slots:
             today_slots[c_time] = c.get('volume', 0) or 0
 
     if not today_slots:
@@ -476,20 +190,23 @@ def get_ema_crossover_state():
     with _state_lock:
         state = dict(_ema_crossover_state)
 
-    # After 09:00 IST, clear any data whose last_update is either:
-    #   (a) from a different calendar day, OR
-    #   (b) from today but before 09:00 (pre-market overnight scan)
+    # After 09:00 IST, clear any data whose last_update is stale —
+    # BUT only do this on actual trading days (weekdays, non-holidays).
+    # On weekends/holidays we always keep the last EOD data visible.
     if state.get('crossovers') and now.hour >= 9:
-        last_update = state.get('last_update') or ''
-        try:
-            update_dt   = datetime.strptime(last_update, '%Y-%m-%d %H:%M:%S')
-            update_date = update_dt.strftime('%Y-%m-%d')
-            today_str   = now.strftime('%Y-%m-%d')
-            # Stale if different date OR same date but captured before market open
-            if update_date != today_str or update_dt.hour < 9:
-                state = {**state, 'crossovers': {}, 'status': 'idle', 'last_update': None}
-        except Exception:
-            pass
+        from session_utils import NSE_HOLIDAYS
+        is_trading_day = now.weekday() < 5 and now.date() not in NSE_HOLIDAYS
+        if is_trading_day:
+            last_update = state.get('last_update') or ''
+            try:
+                update_dt   = datetime.strptime(last_update, '%Y-%m-%d %H:%M:%S')
+                update_date = update_dt.strftime('%Y-%m-%d')
+                today_str   = now.strftime('%Y-%m-%d')
+                # Stale if different date OR same date but captured before market open
+                if update_date != today_str or update_dt.hour < 9:
+                    state = {**state, 'crossovers': {}, 'status': 'idle', 'last_update': None}
+            except Exception:
+                pass
 
     return state
 
@@ -917,6 +634,142 @@ def _send_telegram_breakout(alert):
         logging.warning("[Live Breakouts] Failed to dispatch Telegram/Discord alert: %s", e)
 
 
+# ── EMA Collision Detection ────────────────────────────────────────────────────
+
+def _check_ema_collision_state(candles):
+    """
+    Two-phase EMA9/EMA21 collision detector for 5-min candles.
+    Returns: (in_zone: bool, direction: str|None, gap_pct: float)
+      in_zone   → True if EMAs were within _COLLISION_THRESHOLD_PCT in last
+                  EMA_COLLISION_LOOKBACK candles
+      direction → 'bullish' | 'bearish' | None  (None = in zone but not confirmed)
+      gap_pct   → current EMA gap as % of close (for watchlist display)
+    """
+    if not candles or len(candles) < 25:
+        return False, None, 0.0
+
+    closes = [c['close'] for c in candles]
+
+    def _ema(prices, period):
+        k = 2.0 / (period + 1)
+        result = [prices[0]]
+        for p in prices[1:]:
+            result.append(p * k + result[-1] * (1 - k))
+        return result
+
+    ema9  = _ema(closes, 9)
+    ema21 = _ema(closes, 21)
+
+    c_now   = closes[-1]
+    c_prev  = closes[-2]
+    e9_now  = ema9[-1]
+    e21_now = ema21[-1]
+    e9_prev = ema9[-2]
+
+    # Current EMA gap as % of close
+    gap_pct = abs(e9_now - e21_now) / c_now * 100.0 if c_now else 0.0
+
+    # Collision check: any of last EMA_COLLISION_LOOKBACK candles had gap < threshold
+    lookback = min(EMA_COLLISION_LOOKBACK, len(closes))
+    in_zone = any(
+        closes[-(i+1)] > 0 and
+        abs(ema9[-(i+1)] - ema21[-(i+1)]) / closes[-(i+1)] * 100.0 < _COLLISION_THRESHOLD_PCT
+        for i in range(lookback)
+    )
+
+    if not in_zone:
+        return False, None, gap_pct
+
+    # Confirm direction: 2 consecutive closes on same side + EMA9 crossed EMA21
+    bullish = (e9_now > e21_now and c_prev > e9_prev and c_now > e9_now)
+    bearish = (e9_now < e21_now and c_prev < e9_prev and c_now < e9_now)
+
+    if bullish:
+        return True, 'bullish', gap_pct
+    if bearish:
+        return True, 'bearish', gap_pct
+
+    return True, None, gap_pct  # in zone, not yet confirmed
+
+
+def _send_telegram_collision(alert):
+    """Send Telegram notification for a confirmed EMA collision alert."""
+    try:
+        from session_utils import is_market_hours
+        if not is_market_hours():
+            return
+        from server import _send_telegram_message, _telegram_configured
+        if not _telegram_configured():
+            return
+
+        direction = alert.get('direction', '')
+        symbol    = alert.get('symbol', '')
+        ltp       = alert.get('ltp', 0.0)
+        time_str  = alert.get('time', '')
+        gap_pct   = alert.get('gap_pct', 0.0)
+
+        emoji = "\U0001f535 EMA COLLISION \u2014 BULLISH" if direction == 'bullish' else "\U0001f7e0 EMA COLLISION \u2014 BEARISH"
+        msg = (
+            f"\u26a1 {emoji}\n"
+            f"\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\n"
+            f"\U0001f4cc Symbol  : #{symbol}\n"
+            f"\U0001f4c8 LTP     : \u20b9{ltp}\n"
+            f"\U0001f4ca EMA Gap : {gap_pct:.3f}% of LTP\n"
+            f"\U0001f4ca Signal  : EMA9/EMA21 Coil \u2192 Confirmed Break\n"
+            f"\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\n"
+            f"\U0001f550 Time    : {time_str} IST"
+        )
+        _send_telegram_message(msg)
+        logging.info("[EMA Collision] Telegram alert dispatched for %s", symbol)
+    except Exception as e:
+        logging.warning("[EMA Collision] Telegram failed: %s", e)
+
+
+def _emit_collision_alert(symbol, direction, ltp):
+    """
+    Emit a confirmed EMA collision alert via SocketIO + Telegram.
+    60-min dedup per symbol+direction pair.
+    """
+    import time as _time
+    key = f"{symbol}_{direction}"
+    now_epoch = _time.time()
+
+    # Dedup guard
+    last = _collision_dedup.get(key, 0)
+    if now_epoch - last < EMA_COLLISION_DEDUP_SEC:
+        return
+
+    _collision_dedup[key] = now_epoch
+
+    # Get gap_pct for display (best-effort from watchlist)
+    with _collision_wl_lock:
+        gap_pct = _collision_watchlist.get(symbol, {}).get('ema_gap_pct', 0.0)
+
+    alert = {
+        "type":          "ema_collision",
+        "symbol":        symbol,
+        "direction":     direction,
+        "ltp":           round(ltp, 2),
+        "gap_pct":       round(gap_pct, 3),
+        "time":          now_ist().strftime("%H:%M:%S"),
+        "trigger_epoch": now_epoch,
+    }
+
+    with _collision_alerts_lock:
+        _collision_alerts.append(alert)
+
+    # SocketIO emit
+    try:
+        from server import socketio
+        socketio.emit('ema_collision_alert', alert)
+    except Exception as e:
+        logging.warning("[EMA Collision] SocketIO emit failed: %s", e)
+
+    # Telegram
+    _send_telegram_collision(alert)
+    logging.info("[EMA Collision] Alert fired: %s %s @ \u20b9%s", symbol, direction, ltp)
+
+
 def _evaluate_1m_candle_close(snapshot):
     """
     Evaluate a completed 1M candle snapshot for breakout conditions.
@@ -1029,11 +882,35 @@ def get_live_breakout_state():
                 "consolidation_high": round(buf["consolidation_high"], 2),
                 "consolidation_low":  round(buf["consolidation_low"],  2),
                 "last_ltp":           round(buf["last_ltp"], 2),
+                "watch_type":         "bb_squeeze",  # distinguish from EMA coil
             })
 
+    # Merge EMA collision zone stocks into watchlist
+    with _collision_wl_lock:
+        for sym, info in _collision_watchlist.items():
+            watchlist_symbols.append({
+                "symbol":             sym,
+                "squeeze_duration_mins": 0,
+                "consolidation_high": 0,
+                "consolidation_low":  0,
+                "last_ltp":           info["ltp"],
+                "watch_type":         "ema_coil",   # blue badge in UI
+                "ema_gap_pct":        info["ema_gap_pct"],
+                "coil_time":          info["time"],
+            })
+
+    # EMA collision alerts snapshot
+    with _collision_alerts_lock:
+        collision_snapshot = list(_collision_alerts)
+
+    bb_squeezes = [w for w in watchlist_symbols if w.get("watch_type") == "bb_squeeze"]
+    ema_coils   = [w for w in watchlist_symbols if w.get("watch_type") == "ema_coil"]
     return {
-        "squeeze_watchlist": watchlist_symbols,
+        "squeeze_watchlist": watchlist_symbols,   # kept for backward compat
         "triggered_alerts":  alerts_snapshot,
+        "collision_alerts":  collision_snapshot,
+        "bb_squeezes":       bb_squeezes,
+        "ema_coils":         ema_coils,
     }
 
 def _get_active_trading_date(now):
@@ -1169,6 +1046,57 @@ def _scan_single_symbol(kite, symbol):
         res[f"cross_time_{label}"] = elapsed
         res[f"cross_epoch_{label}"] = epoch
         res[f"cross_candle_size_{label}"] = size_pct
+
+        # New 5m crossover volume baseline integration & Telegram alerting
+        if label == '5m' and cross != 'none' and candles:
+            last_c = candles[-1]
+            ltp_now = last_c.get('close', 0)
+            dt_val = last_c.get('date')
+            slot_str = None
+            if isinstance(dt_val, str):
+                slot_str = dt_val[11:16]
+            elif hasattr(dt_val, 'strftime'):
+                slot_str = dt_val.strftime("%H:%M")
+
+            if slot_str:
+                import volume_baseline
+                vol_ratio, base_val = volume_baseline.get_vol_ratio(symbol, '5m', slot_str, last_c.get('volume', 0) or 0)
+                res["cross_5m_vol_ratio"] = vol_ratio
+                res["cross_5m_vol_baseline"] = base_val
+
+                # Telegram alert logic with 4-hour dedup (EMA 5m cross only)
+                key = f"{symbol}_{cross}"
+                now_epoch = int(time.time())
+                with _ema_cross_dedup_lock:
+                    last_time = _ema_cross_dedup.get(key, 0)
+                    if now_epoch - last_time >= EMA_CROSS_DEDUP_SEC:
+                        # Only alert if volume ratio is at least 2.0x
+                        if vol_ratio is not None and vol_ratio >= 2.0:
+                            _ema_cross_dedup[key] = now_epoch
+                            _send_telegram_ema_cross(symbol, cross, round(ltp_now, 2), vol_ratio, slot_str)
+
+                            # Append to Live Breakouts dashboard alert list
+                            alert = {
+                                "symbol":           symbol,
+                                "direction":        cross,
+                                "time":             now_ist().strftime("%H:%M:%S"),
+                                "ltp":              round(ltp_now, 2),
+                                "grade":            "5M Cross",
+                                "vol_multiplier":   vol_ratio,
+                                "trigger_epoch":    now_epoch,
+                                "candles_5m_elapsed": 1,
+                            }
+                            with _alerts_lock:
+                                _clear_stale_alerts_under_lock()
+                                if not any(a["symbol"] == symbol and a["grade"] == "5M Cross" for a in _triggered_alerts):
+                                    _triggered_alerts.append(alert)
+
+                            # Emit socket event for real-time dashboard updates
+                            try:
+                                from server import socketio
+                                socketio.emit('live_breakout_alert', alert)
+                            except Exception:
+                                pass
         
         # Compute intraday session linearity on 15m candles
         if label == '15m':
@@ -1179,6 +1107,29 @@ def _scan_single_symbol(kite, symbol):
             
         # Piggyback squeeze calculations on 5m candles to avoid extra API calls
         if label == '5m':
+            # EMA Collision — two-phase: watchlist (zone) + alert (confirmed)
+            try:
+                in_zone, collision_dir, gap_pct = _check_ema_collision_state(candles)
+                res["ema_collision"] = collision_dir
+                ltp_now = candles[-1]['close'] if candles else 0
+
+                # Phase 1: update collision watchlist
+                with _collision_wl_lock:
+                    if in_zone and not collision_dir:  # in zone but not yet confirmed
+                        _collision_watchlist[symbol] = {
+                            "ltp":         round(ltp_now, 2),
+                            "ema_gap_pct": gap_pct,
+                            "time":        now_ist().strftime("%H:%M:%S"),
+                        }
+                    else:
+                        _collision_watchlist.pop(symbol, None)  # confirmed or exited zone
+
+                # Phase 2: emit alert on confirmation
+                if collision_dir:
+                    _emit_collision_alert(symbol, collision_dir, ltp_now)
+            except Exception:
+                res["ema_collision"] = None
+
             in_sq, bb_w, low_bb, gap, c_high, c_low = calculate_squeeze_metrics(candles)
             volumes = [c.get('volume', 0.0) or 0.0 for c in candles] if candles else []
             avg_vol = sum(volumes[-20:]) / 20.0 if len(volumes) >= 20 else 0.0
@@ -1192,6 +1143,14 @@ def _scan_single_symbol(kite, symbol):
                 "consolidation_low": c_low,
                 "avg_5m_volume": avg_vol
             }
+
+            # Store raw candle details for Nifty constituent contribution reuse
+            if candles:
+                last_c = candles[-1]
+                res["last_candle_close"] = last_c.get('close', 0.0)
+                res["last_candle_open"] = last_c.get('open', 0.0)
+                res["last_candle_vol"] = last_c.get('volume', 0)
+                res["prev_candle_close"] = candles[-2].get('close', last_c.get('close', 0.0)) if len(candles) >= 2 else last_c.get('close', 0.0)
 
             # EMA9 Hold indicator — piggybacks on existing 5m candles
             try:
@@ -1271,9 +1230,10 @@ def _ema_crossover_loop():
                             if kite:
                                 token_map = _get_token_map()
                                 if token_map:
-                                    ensure_fh_baselines_warm(kite, token_map)
+                                    import volume_baseline
+                                    volume_baseline.ensure_baselines_warm(kite, token_map)
                         except Exception as e:
-                            logging.warning(f"[FH Volume] Out-of-hours Case 1 baseline warm trigger failed: {e}")
+                            logging.warning(f"[Volume Baseline] Out-of-hours Case 1 baseline warm trigger failed: {e}")
 
                         time.sleep(300)
                         continue
@@ -1285,9 +1245,10 @@ def _ema_crossover_loop():
                             if kite:
                                 token_map = _get_token_map()
                                 if token_map:
-                                    ensure_fh_baselines_warm(kite, token_map)
+                                    import volume_baseline
+                                    volume_baseline.ensure_baselines_warm(kite, token_map)
                         except Exception as e:
-                            logging.warning(f"[FH Volume] Out-of-hours Case 2 baseline warm trigger failed: {e}")
+                            logging.warning(f"[Volume Baseline] Out-of-hours Case 2 baseline warm trigger failed: {e}")
                         time.sleep(300)
                         continue
 
@@ -1355,16 +1316,14 @@ def _ema_crossover_loop():
                     except Exception as ex:
                         logging.error(f"[EMA Crossover Scanner] Failed pre-warming: {ex}")
 
-                # Ensure FH volume baselines are warm before scanning
+                # Ensure volume baselines are warm before scanning
                 try:
-                    token_map_fh = _get_token_map()
-                    if token_map_fh:
-                        ensure_fh_baselines_warm(kite, token_map_fh)
+                    token_map_bl = _get_token_map()
+                    if token_map_bl:
+                        import volume_baseline
+                        volume_baseline.ensure_baselines_warm(kite, token_map_bl)
                 except Exception as e:
-                    logging.warning(f"[FH Volume] Pre-scan baseline warm trigger failed: {e}")
-
-                # Reload baselines from DB in case a previous warm cycle saved them
-                _fh_load_from_db()
+                    logging.warning(f"[Volume Baseline] Pre-scan baseline warm trigger failed: {e}")
                 
                 logging.info(f"[EMA Crossover Scanner] Starting crossover scan for {len(underlying_names)} symbols...")
                 print(f"[EMA Crossover Scanner] Starting crossover scan for {len(underlying_names)} symbols...")
@@ -1410,6 +1369,14 @@ def _ema_crossover_loop():
                         temp_crossovers[sym]["spot_change_pct"] = spot_change_map.get(sym)
                 except Exception as e:
                     logging.warning(f"[EMA Crossover Scanner] Spot change fetch failed: {e}")
+
+                # Trigger Nifty index candle analysis (uses 5m candle details captured above)
+                try:
+                    import nifty_candle_analyzer
+                    nifty_time_str = now.strftime("%Y-%m-%d %H:%M:%S")
+                    nifty_candle_analyzer.analyze_and_store_candle(kite, temp_crossovers, nifty_time_str)
+                except Exception as ex:
+                    logging.warning(f"[Nifty Analyzer] Execution failed during scan: {ex}")
 
                 with _state_lock:
                     _ema_crossover_state["last_update"] = now.strftime("%Y-%m-%d %H:%M:%S")
@@ -1474,9 +1441,10 @@ def _ema_crossover_loop():
                         if kite:
                             token_map = _get_token_map()
                             if token_map:
-                                ensure_fh_baselines_warm(kite, token_map)
+                                import volume_baseline
+                                volume_baseline.ensure_baselines_warm(kite, token_map)
                     except Exception as e:
-                        logging.warning(f"[FH Volume] Post-scan warm trigger failed: {e}")
+                        logging.warning(f"[Volume Baseline] Post-scan warm trigger failed: {e}")
                 last_scan_time = current_time
                 
             time.sleep(10)
@@ -1586,19 +1554,18 @@ def _load_eod_snapshot():
         except Exception:
             last_update_hour = 0   # unknown → treat as pre-market (safe default)
 
-        # Valid only when the snapshot holds real market-session data:
-        #   1. Same calendar day AND captured after 09:00 (live session data)
-        #   2. Yesterday AND current time is still before 09:00 (pre-open window,
-        #      yesterday's EOD is still the best available view)
-        if snap_date == today and last_update_hour >= 9:
-            is_valid = True
-        elif snap_date == today - timedelta(days=1) and now.hour < 9:
+        # Valid if the snapshot is from the most recent trading session
+        # _get_expected_trading_date() correctly handles weekends:
+        #   e.g. on Sunday it returns Friday, so Friday's snapshot is accepted.
+        last_trading_date = _get_expected_trading_date(now)
+        if snap_date == last_trading_date and last_update_hour >= 9:
             is_valid = True
         else:
             is_valid = False
             logging.info(
-                f"[EMA Crossover] EOD snapshot rejected — pre-market data "
-                f"(captured {last_update_str}, now {now.strftime('%Y-%m-%d %H:%M')}) — skipped."
+                f"[EMA Crossover] EOD snapshot rejected — "
+                f"snap_date={snap_date}, last_trading_date={last_trading_date}, "
+                f"captured_hour={last_update_hour} — skipped."
             )
 
         if not is_valid:
@@ -1617,18 +1584,17 @@ def _load_eod_snapshot():
 def start_ema_crossover_scanner():
     global _ema_thread
     _load_eod_snapshot()   # Restore last scan's data immediately on startup
-    _fh_init_db()          # Ensure first-hour baselines table exists
-    _fh_load_from_db()     # Load cached baselines if fresh for today
     
-    # Trigger first-hour baseline warm on startup if cache is not yet warmed today
+    # Trigger baseline warm on startup if cache is not yet warmed today
     try:
         kite = _get_kite()
         if kite:
             token_map = _get_token_map()
             if token_map:
-                ensure_fh_baselines_warm(kite, token_map)
+                import volume_baseline
+                volume_baseline.ensure_baselines_warm(kite, token_map)
     except Exception as e:
-        logging.warning(f"[FH Volume] Startup warm trigger failed: {e}")
+        logging.warning(f"[Volume Baseline] Startup warm trigger failed: {e}")
 
     if _ema_thread is None or not _ema_thread.is_alive():
         logging.info("[EMA Crossover Scanner] Spawning background thread...")

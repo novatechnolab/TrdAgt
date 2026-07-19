@@ -1407,6 +1407,414 @@
     }
 
     /* Keep all columns visible, no media query hiding col-linearity or col-points */
+
+    /* ── Accumulation Dashboard ──────────────────────────────────────────── */
+    .accum-panel-header {
+      background: var(--bg-card2);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 10px 16px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      cursor: pointer;
+      user-select: none;
+      margin-top: 4px;
+      transition: border-color 0.2s;
+    }
+    .accum-panel-header:hover { border-color: var(--border2); }
+
+    .accum-body {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-top: none;
+      border-radius: 0 0 var(--radius) var(--radius);
+      overflow: hidden;
+    }
+
+    /* Mini status bar */
+    .accum-status-bar {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      padding: 8px 16px;
+      background: rgba(14, 17, 23, 0.6);
+      border-bottom: 1px solid var(--border);
+      font-size: 0.7rem;
+      color: var(--text-muted);
+      flex-wrap: wrap;
+    }
+    .accum-status-bar .as-label {
+      font-size: 0.58rem;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      color: var(--text-muted);
+      font-weight: 600;
+    }
+    .accum-status-bar .as-val {
+      font-weight: 700;
+      color: var(--text);
+      font-family: var(--mono);
+    }
+    .accum-status-item {
+      display: flex;
+      flex-direction: column;
+      gap: 1px;
+      padding: 0 10px;
+      border-right: 1px solid var(--border);
+    }
+    .accum-status-item:last-child { border-right: none; }
+
+    /* Regime badge */
+    .accum-regime {
+      font-size: 0.6rem;
+      font-weight: 600;
+      padding: 1px 6px;
+      border-radius: 3px;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+    }
+    .accum-regime.TRENDING  { background: rgba(63,185,80,0.15);  color: var(--green); }
+    .accum-regime.SIDEWAYS  { background: rgba(210,153,34,0.15); color: var(--amber); }
+    .accum-regime.VOLATILE  { background: rgba(248,81,73,0.15);  color: var(--red);   }
+    .accum-regime.EXPIRY    { background: rgba(188,140,255,0.15);color: var(--purple);}
+
+    /* Filter bar */
+    .accum-filter-bar {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      padding: 6px 12px;
+      background: rgba(14, 17, 23, 0.4);
+      border-bottom: 1px solid var(--border);
+    }
+    .accum-filter-btn {
+      padding: 3px 10px;
+      font-size: 0.62rem;
+      font-weight: 600;
+      font-family: var(--font);
+      letter-spacing: 0.04em;
+      cursor: pointer;
+      background: transparent;
+      color: var(--text-muted);
+      border: 1px solid transparent;
+      border-radius: 3px;
+      transition: all 0.15s;
+      text-transform: uppercase;
+    }
+    .accum-filter-btn:hover { border-color: var(--border2); color: var(--text); }
+    .accum-filter-btn.active { background: rgba(56,139,253,0.15); border-color: rgba(56,139,253,0.3); color: var(--blue); }
+    .accum-filter-sep { width: 1px; height: 16px; background: var(--border); margin: 0 2px; }
+    .accum-view-toggle {
+      margin-left: auto;
+      display: flex;
+      gap: 0;
+      border: 1px solid var(--border2);
+      border-radius: 4px;
+      overflow: hidden;
+    }
+    .accum-view-btn {
+      padding: 3px 8px;
+      font-size: 0.6rem;
+      font-weight: 600;
+      font-family: var(--font);
+      letter-spacing: 0.04em;
+      cursor: pointer;
+      background: transparent;
+      color: var(--text-muted);
+      border: none;
+      transition: all 0.15s;
+    }
+    .accum-view-btn.active { background: var(--blue); color: var(--bg); }
+
+    /* Breaking Now panel */
+    .accum-breaking-panel {
+      padding: 8px 12px;
+    }
+    .accum-breaking-panel:empty { display: none; }
+    .accum-breaking-label {
+      font-size: 0.6rem;
+      font-weight: 700;
+      color: var(--red);
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      margin-bottom: 6px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .accum-breaking-label::after { content:''; flex:1; height:1px; background:rgba(248,81,73,0.2); }
+    .accum-breaking-card {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      background: rgba(20,24,32,0.8);
+      border: 1px solid var(--red);
+      border-radius: 6px;
+      padding: 8px 12px;
+      margin: 0 6px 6px 0;
+      animation: accumBreakGlow 1s ease-in-out infinite alternate;
+    }
+    @keyframes accumBreakGlow {
+      from { box-shadow: 0 0 4px rgba(248,81,73,0.1); }
+      to   { box-shadow: 0 0 14px rgba(248,81,73,0.3); }
+    }
+    .accum-bc-sym    { font-weight: 700; font-size: 0.82rem; }
+    .accum-bc-dir    { font-size: 1rem; }
+    .accum-bc-price  { font-size: 0.7rem; color: var(--text-muted); font-family: var(--mono); }
+    .accum-bc-target { font-size: 0.65rem; color: var(--green); }
+    .accum-bc-wall   { font-size: 0.55rem; background: rgba(210,153,34,0.15); color: var(--amber); padding: 1px 4px; border-radius: 2px; font-weight: 600; }
+
+    /* Table */
+    .accum-tbl-wrap { overflow-x: auto; }
+    .accum-tbl {
+      width: 100%;
+      border-collapse: collapse;
+      table-layout: fixed;
+    }
+    .accum-tbl thead th {
+      background: rgba(20,24,32,0.8);
+      border-bottom: 1px solid var(--border2);
+      padding: 6px 10px;
+      text-align: left;
+      font-size: 0.56rem;
+      font-weight: 600;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      white-space: nowrap;
+    }
+    .accum-tbl tbody tr {
+      border-bottom: 1px solid var(--border);
+      transition: background 0.1s;
+    }
+    .accum-tbl tbody tr:hover { background: rgba(20,24,32,0.5); }
+    .accum-tbl tbody td {
+      padding: 7px 10px;
+      vertical-align: middle;
+      font-size: 0.72rem;
+    }
+
+    /* Accum table column widths */
+    .accum-col-sym   { width: 110px; }
+    .accum-col-dir   { width: 40px; text-align: center; }
+    .accum-col-trend { width: 90px; }
+    .accum-col-conf  { width: 120px; }
+    .accum-col-brk   { width: 80px; }
+    .accum-col-stop  { width: 70px; }
+    .accum-col-coil  { width: 70px; }
+    .accum-col-wall  { width: 100px; }
+    .accum-col-liq   { width: 70px; }
+    .accum-col-play  { width: 90px; }
+
+    /* Grade badge */
+    .accum-grade {
+      font-size: 0.65rem;
+      font-weight: 700;
+      padding: 1px 5px;
+      border-radius: 3px;
+      letter-spacing: 0.03em;
+    }
+    .accum-grade-A { background: rgba(63,185,80,0.15);  color: var(--green); }
+    .accum-grade-B { background: rgba(210,153,34,0.15); color: var(--amber); }
+    .accum-grade-C { background: rgba(56,139,253,0.15); color: var(--blue);  }
+
+    /* Direction arrows */
+    .accum-dir-up   { color: var(--green); font-size: 0.9rem; font-weight: 700; }
+    .accum-dir-down { color: var(--red);   font-size: 0.9rem; font-weight: 700; }
+    .accum-dir-none { color: var(--text-muted); }
+
+    /* Confidence */
+    .accum-conf {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      font-size: 0.62rem;
+      font-weight: 700;
+      letter-spacing: 0.03em;
+    }
+    .accum-conf-dots { display: flex; gap: 2px; }
+    .accum-conf-dot {
+      width: 6px; height: 6px; border-radius: 50%;
+    }
+    .accum-conf-dot.filled { background: var(--green); }
+    .accum-conf-dot.half   { background: var(--green); }
+    .accum-conf-dot.empty  { background: rgba(255,255,255,0.08); border: 1px solid var(--border2); }
+    .accum-conf-VERY_STRONG { color: var(--green); }
+    .accum-conf-STRONG      { color: var(--green); }
+    .accum-conf-MODERATE    { color: var(--amber); }
+
+    /* Wall tags */
+    .accum-wall-tag {
+      display: inline-block;
+      font-size: 0.52rem;
+      font-weight: 700;
+      padding: 1px 4px;
+      border-radius: 2px;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+    }
+    .accum-wall-tag.ce-wall  { background: rgba(248,81,73,0.12);  color: var(--red);   }
+    .accum-wall-tag.trapped  { background: rgba(248,81,73,0.12);  color: var(--red);   }
+    .accum-wall-tag.pe-wall  { background: rgba(63,185,80,0.12);  color: var(--green); }
+    .accum-wall-tag.clear    { background: rgba(63,185,80,0.08);  color: var(--green); }
+
+    /* State badges */
+    .accum-state-BREAKING     { color: var(--red);    font-size: 0.62rem; font-weight: 700; }
+    .accum-state-DISTRIBUTION { color: var(--amber);  font-size: 0.62rem; font-weight: 600; }
+    .accum-state-ACCUMULATING { color: var(--text-muted); font-size: 0.62rem; }
+
+    /* Tags */
+    .accum-tag {
+      display: inline-block;
+      font-size: 0.5rem;
+      font-weight: 600;
+      padding: 1px 4px;
+      border-radius: 2px;
+      margin: 1px 1px 0 0;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+    }
+    .accum-tag-warn  { background: rgba(210,153,34,0.15); color: var(--amber); }
+    .accum-tag-green { background: rgba(63,185,80,0.12);  color: var(--green); }
+    .accum-tag-grey  { background: rgba(255,255,255,0.05); color: var(--text-muted); }
+
+    /* Trend pills */
+    .accum-trend-pills {
+      display: flex;
+      gap: 3px;
+    }
+    .accum-trend-pill {
+      font-size: 0.48rem;
+      font-weight: 800;
+      padding: 1px 3px;
+      border-radius: 2px;
+      background: rgba(255,255,255,0.04);
+      color: var(--text-muted);
+      border: 1px solid var(--border2);
+      min-width: 14px;
+      text-align: center;
+    }
+    .accum-trend-pill.bullish { background: rgba(63,185,80,0.2); color: #58d68d; border-color: rgba(88,214,141,0.3); }
+    .accum-trend-pill.bearish { background: rgba(248,81,73,0.2); color: #f88379; border-color: rgba(248,131,121,0.3); }
+
+    /* Options play */
+    .accum-opt-play {
+      font-size: 0.6rem;
+      font-weight: 600;
+      padding: 1px 5px;
+      border-radius: 3px;
+    }
+    .accum-opt-CE   { background: rgba(63,185,80,0.12);  color: var(--green); }
+    .accum-opt-PE   { background: rgba(248,81,73,0.12);  color: var(--red);   }
+    .accum-opt-SKIP { background: rgba(255,255,255,0.05); color: var(--text-muted); }
+
+    /* Empty state */
+    .accum-empty {
+      text-align: center;
+      padding: 30px 16px;
+      color: var(--text-muted);
+    }
+    .accum-empty-icon { font-size: 1.6rem; margin-bottom: 8px; }
+    .accum-empty-title { font-size: 0.82rem; font-weight: 600; color: var(--text); margin-bottom: 4px; }
+    .accum-empty-sub { font-size: 0.68rem; }
+
+    /* Row hot highlight */
+    .accum-tbl tbody tr.accum-row-hot {
+      box-shadow: inset 3px 0 0 var(--green);
+      background: rgba(63,185,80,0.03);
+    }
+
+    /* ── Nifty Analyzer ──────────────────────────────────────────────────── */
+    .nifty-body {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-top: none;
+      border-radius: 0 0 var(--radius) var(--radius);
+      overflow: hidden;
+      padding: 14px 16px;
+    }
+    .nifty-header-strip {
+      display: flex; justify-content: space-between; align-items: center;
+      padding: 10px 0 12px;
+      border-bottom: 1px solid var(--border);
+      margin-bottom: 12px;
+      flex-wrap: wrap; gap: 8px;
+    }
+    .nifty-price { font-family: var(--mono); font-size: 1.45rem; font-weight: 700; color: var(--text); }
+    .nifty-chg   { font-family: var(--mono); font-size: 0.8rem; font-weight: 600; margin-left: 8px; }
+    .nifty-chg.up { color: var(--green); } .nifty-chg.dn { color: var(--red); }
+    .nifty-meta  { font-family: var(--mono); font-size: 0.65rem; color: var(--text-muted); text-align: right; line-height: 1.5; }
+    .nifty-live-dot { display:inline-block; width:6px; height:6px; border-radius:50%; background:var(--green); margin-right:5px; animation: pulse 1.8s infinite; }
+    @keyframes pulse { 0%,100%{opacity:1;} 50%{opacity:0.3;} }
+
+    /* Gauge */
+    .nifty-gauge-panel { margin-bottom: 12px; }
+    .nifty-gauge-label { display:flex; justify-content:space-between; align-items:baseline; margin-bottom:10px; }
+    .nifty-section-title { font-family:var(--mono); font-size:0.6rem; letter-spacing:0.12em; text-transform:uppercase; color:var(--text-muted); }
+    .nifty-bias-readout { font-family:var(--mono); font-weight:700; font-size:0.9rem; }
+    .nifty-bias-readout.bullish { color:var(--green); } .nifty-bias-readout.bearish { color:var(--red); } .nifty-bias-readout.choppy { color:var(--amber); }
+    .nifty-gauge-track { position:relative; height:32px; display:flex; border-radius:3px; overflow:visible; margin-bottom:4px; }
+    .nifty-gauge-zone { flex:1; position:relative; display:flex; align-items:center; justify-content:center; border-right:1px solid var(--border); }
+    .nifty-gauge-zone:last-child { border-right:none; }
+    .nifty-gauge-zone::after { content:''; position:absolute; inset:0; opacity:0.12; }
+    .nifty-zone-bear::after { background:var(--red); } .nifty-zone-choppy::after { background:var(--amber); } .nifty-zone-bull::after { background:var(--green); }
+    .nifty-zone-tag { font-family:var(--mono); font-size:0.58rem; letter-spacing:0.08em; text-transform:uppercase; color:var(--text-muted); z-index:1; }
+    .nifty-needle { position:absolute; top:-6px; bottom:-6px; width:2px; background:var(--text); box-shadow:0 0 8px 1px rgba(233,230,221,0.4); transition:left 900ms cubic-bezier(.2,.9,.25,1); z-index:2; }
+    .nifty-ticks { display:flex; justify-content:space-between; font-family:var(--mono); font-size:0.58rem; color:var(--text-muted); margin-top:3px; }
+    .nifty-drivers { display:flex; gap:14px; flex-wrap:wrap; margin-top:10px; padding-top:10px; border-top:1px dashed var(--border); }
+    .nifty-driver { font-family:var(--mono); font-size:0.62rem; color:var(--text-muted); display:flex; align-items:center; gap:5px; }
+    .nifty-driver .ndot { width:5px; height:5px; border-radius:50%; flex-shrink:0; }
+    .ndot.g { background:var(--green); } .ndot.r { background:var(--red); } .ndot.a { background:var(--amber); }
+
+    /* Grid */
+    .nifty-grid { display:grid; grid-template-columns:1.3fr 1fr; gap:12px; margin-top:12px; }
+    .nifty-panel { background:var(--bg-card2); border:1px solid var(--border); border-radius:var(--radius); padding:14px 16px; }
+    .nifty-candle-wrap { background:rgba(14,17,23,0.5); border:1px solid var(--border); border-radius:var(--radius); padding:10px 8px 6px; margin-top:10px; }
+    .nifty-pattern-tags { display:flex; gap:6px; flex-wrap:wrap; margin-top:10px; }
+    .nifty-tag { font-family:var(--mono); font-size:0.6rem; padding:3px 7px; border-radius:2px; border:1px solid var(--border); color:var(--text-muted); background:var(--bg-card2); }
+    .nifty-tag.bull { color:var(--green); border-color:rgba(63,185,80,0.3); background:rgba(63,185,80,0.06); }
+    .nifty-tag.bear { color:var(--red);   border-color:rgba(248,81,73,0.3);  background:rgba(248,81,73,0.06); }
+    .nifty-signal-grid { display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-top:10px; }
+    .nifty-signal-card { background:rgba(14,17,23,0.5); border:1px solid var(--border); border-radius:var(--radius); padding:9px 12px; }
+    .nifty-signal-card .sk { font-family:var(--mono); font-size:0.58rem; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.06em; }
+    .nifty-signal-card .sv { font-family:var(--mono); font-size:0.82rem; font-weight:700; margin-top:3px; }
+    .sv.green { color:var(--green); } .sv.red { color:var(--red); } .sv.amber { color:var(--amber); }
+
+    /* Sector */
+    .nifty-stacked-bar { display:flex; width:100%; height:14px; border-radius:2px; overflow:hidden; margin:10px 0 10px; border:1px solid var(--border); }
+    .nifty-sector-col-header { display:flex; align-items:center; justify-content:space-between; padding:4px 4px 6px; border-bottom:1px solid var(--border); font-family:var(--mono); font-size:0.58rem; font-weight:700; color:var(--text-muted); letter-spacing:0.06em; text-transform:uppercase; }
+    .nifty-sector-list { display:flex; flex-direction:column; }
+    .nifty-sector-row { display:flex; align-items:center; justify-content:space-between; padding:6px 4px; border-bottom:1px solid var(--border); font-family:var(--mono); font-size:0.65rem; cursor:pointer; user-select:none; transition:background 0.15s; }
+    .nifty-sector-row:hover { background:rgba(255,255,255,0.03); }
+    .nifty-sector-arrow { font-size:0.55rem; color:var(--text-muted); width:10px; display:inline-block; }
+    .nifty-sector-left { display:flex; align-items:center; gap:6px; flex:1; overflow:hidden; white-space:nowrap; text-overflow:ellipsis; }
+    .nifty-swatch { width:7px; height:7px; border-radius:1px; flex-shrink:0; }
+    .nifty-sector-name { color:var(--text-muted); overflow:hidden; text-overflow:ellipsis; }
+    .nifty-sector-right { display:flex; align-items:center; }
+    .nifty-sector-chg { font-size:0.6rem; width:50px; text-align:right; }
+    .nifty-sector-chg.up { color:var(--green); } .nifty-sector-chg.dn { color:var(--red); }
+    .nifty-sector-impact { font-size:0.6rem; width:55px; text-align:right; font-weight:600; }
+    .nifty-sector-impact.up { color:var(--green); } .nifty-sector-impact.dn { color:var(--red); }
+    .nifty-sector-wt { width:42px; text-align:right; font-weight:600; color:var(--text); }
+
+    /* Stock Subrow */
+    .nifty-stock-container { background:rgba(14,17,23,0.4); border-bottom:1px solid var(--border); padding:2px 0 4px 16px; }
+    .nifty-stock-row { display:flex; align-items:center; justify-content:space-between; padding:3px 4px 3px 0; font-family:var(--mono); font-size:0.6rem; color:var(--text-muted); }
+    .nifty-stock-name { color:var(--text); font-weight:500; flex:1; }
+    .nifty-stock-right { display:flex; align-items:center; }
+    .nifty-total-row { display:flex; justify-content:space-between; margin-top:8px; padding-top:8px; border-top:1px solid var(--border); font-family:var(--mono); font-size:0.6rem; color:var(--text-muted); }
+
+    /* OI Chain Heatmap */
+    .nifty-oi-metrics-bar { display:flex; gap:16px; align-items:center; flex-wrap:wrap; font-family:var(--mono); font-size:0.65rem; color:var(--text-muted); padding:6px 12px; background:rgba(14,17,23,0.5); border:1px solid var(--border); border-radius:3px; }
+    .nifty-oi-metrics-bar b { font-weight:700; }
+    .nifty-oi-tbl { width:100%; border-collapse:collapse; font-family:var(--mono); font-size:0.62rem; text-align:center; }
+    .nifty-oi-tbl th { background:rgba(14,17,23,0.7); color:var(--text-muted); font-size:0.58rem; font-weight:700; padding:6px 4px; border:1px solid var(--border); letter-spacing:0.04em; }
+    .nifty-oi-tbl td { padding:5px 4px; border:1px solid var(--border); color:var(--text); white-space:nowrap; }
+    .nifty-oi-tbl tr.atm-row { background:rgba(56,139,253,0.08) !important; font-weight:700; }
+    .nifty-oi-tbl tr.maxpain-row { background:rgba(210,153,34,0.08) !important; }
+    .nifty-badge-atm { background:rgba(56,139,253,0.2); color:var(--blue); font-size:0.55rem; padding:1px 4px; border-radius:2px; font-weight:700; margin-right:4px; }
+    .nifty-badge-mp { background:rgba(210,153,34,0.2); color:var(--amber); font-size:0.55rem; padding:1px 4px; border-radius:2px; font-weight:700; margin-right:4px; }
   </style>
 </head>
 
@@ -1512,8 +1920,17 @@
     let currentSortColumn = 'gain';
     let currentSortDirection = 'desc';
     let lastData = null;
+    let _mainBoardCollapsed = false;
     const expandedSymbols = new Set();
     const spurtCache = {};
+
+    function toggleMainBoardPanel() {
+      _mainBoardCollapsed = !_mainBoardCollapsed;
+      const wrapper = document.getElementById('main-board-collapsible-wrapper');
+      const arrow = document.getElementById('main-board-collapse-arrow');
+      if (wrapper) wrapper.style.display = _mainBoardCollapsed ? 'none' : 'block';
+      if (arrow) arrow.textContent = _mainBoardCollapsed ? '▲' : '▼';
+    }
 
     function getBuildupBadge(sym) {
       const cached = spurtCache[sym];
@@ -2010,24 +2427,246 @@
         </div>`;
       }).join('');
 
+      const wrapperDisplay = _mainBoardCollapsed ? 'display: none;' : 'display: block;';
+      const arrowChar = _mainBoardCollapsed ? '▲' : '▼';
+
       const html = `
       <div class="stock-cards-grid">
-        <div class="stock-board-header">
-          <div class="col-symbol">Symbol</div>
-          <div class="col-spot">% ▲/▼</div>
-          <div class="col-rvol sortable" onclick="handleHeaderSort('rvol')">RVOL${getSortArrow('rvol')}</div>
-          <div class="col-linearity sortable" onclick="handleHeaderSort('linearity')">Linearity${getSortArrow('linearity')}</div>
-          <div class="col-points">Points</div>
-          <div class="col-highest sortable" onclick="handleHeaderSort('gain')">Gain${getSortArrow('gain')}</div>
-          <div class="col-gap sortable" onclick="handleHeaderSort('gap')">GAP${getSortArrow('gap')}</div>
-          <div class="col-inst sortable" onclick="handleHeaderSort('inst')">Inst Hold${getSortArrow('inst')}</div>
-          <div class="col-e9h sortable" onclick="handleHeaderSort('e9h')">E9H${getSortArrow('e9h')}</div>
-          <div class="col-fhvol sortable" onclick="handleHeaderSort('fhvol')">FH Vol${getSortArrow('fhvol')}</div>
-          <div class="col-futbuild sortable" onclick="handleHeaderSort('futbuild')">Fut Buildup${getSortArrow('futbuild')}</div>
-          <div class="col-netdrift sortable" onclick="handleHeaderSort('netdrift')">Net Drift${getSortArrow('netdrift')}</div>
-          <div class="col-timeframes" style="padding-right: 24px;">Confluence</div>
+        <div class="outer-panel-header" onclick="toggleMainBoardPanel()" style="background: var(--bg-card2); border: 1px solid var(--border); border-radius: var(--radius); padding: 10px 16px; display: flex; justify-content: space-between; align-items: center; cursor: pointer; user-select: none; margin-bottom: 2px;">
+          <div style="font-weight: 700; font-size: 0.88rem; color: var(--text); display: flex; align-items: center; gap: 8px;">
+            <span>🔥 Premium Gainers Board</span>
+            <span style="background: rgba(56, 139, 253, 0.15); color: var(--blue); font-size: 0.68rem; padding: 2px 8px; border-radius: 12px; font-weight: 600; font-family: var(--mono);">${stocks.length} Stocks</span>
+          </div>
+          <span id="main-board-collapse-arrow" style="font-size: 0.75rem; color: var(--text-muted); font-weight: bold;">${arrowChar}</span>
         </div>
-        ${cardsHtml}
+        <div id="main-board-collapsible-wrapper" style="${wrapperDisplay}">
+          <div class="stock-board-header">
+            <div class="col-symbol">Symbol</div>
+            <div class="col-spot">% ▲/▼</div>
+            <div class="col-rvol sortable" onclick="handleHeaderSort('rvol')">RVOL${getSortArrow('rvol')}</div>
+            <div class="col-linearity sortable" onclick="handleHeaderSort('linearity')">Linearity${getSortArrow('linearity')}</div>
+            <div class="col-points">Points</div>
+            <div class="col-highest sortable" onclick="handleHeaderSort('gain')">Gain${getSortArrow('gain')}</div>
+            <div class="col-gap sortable" onclick="handleHeaderSort('gap')">GAP${getSortArrow('gap')}</div>
+            <div class="col-inst sortable" onclick="handleHeaderSort('inst')">Inst Hold${getSortArrow('inst')}</div>
+            <div class="col-e9h sortable" onclick="handleHeaderSort('e9h')">E9H${getSortArrow('e9h')}</div>
+            <div class="col-fhvol sortable" onclick="handleHeaderSort('fhvol')">FH Vol${getSortArrow('fhvol')}</div>
+            <div class="col-futbuild sortable" onclick="handleHeaderSort('futbuild')">Fut Buildup${getSortArrow('futbuild')}</div>
+            <div class="col-netdrift sortable" onclick="handleHeaderSort('netdrift')">Net Drift${getSortArrow('netdrift')}</div>
+            <div class="col-timeframes" style="padding-right: 24px;">Confluence</div>
+          </div>
+          ${cardsHtml}
+        </div>
+
+        <!-- ── Accumulation Dashboard (collapsible) ── -->
+        <div class="accum-panel-header" onclick="toggleAccumSection()">
+          <div style="font-weight: 700; font-size: 0.88rem; color: var(--text); display: flex; align-items: center; gap: 8px;">
+            <span>◎ Accumulation Dashboard</span>
+            <span id="accum-grade-pill" style="background: rgba(56, 139, 253, 0.15); color: var(--blue); font-size: 0.68rem; padding: 2px 8px; border-radius: 12px; font-weight: 600; font-family: var(--mono);">A: 0 · B: 0 · C: 0</span>
+          </div>
+          <span id="accum-toggle-arrow" style="font-size: 0.75rem; color: var(--text-muted); font-weight: bold;">▼</span>
+        </div>
+        <div id="accum-body" class="accum-body" style="display:none">
+          <!-- Status bar -->
+          <div class="accum-status-bar" id="accum-status-bar">
+            <div class="accum-status-item">
+              <span class="as-label">Scanner</span>
+              <span class="as-val" id="accum-state">—</span>
+            </div>
+            <div class="accum-status-item">
+              <span class="as-label">Regime</span>
+              <span class="as-val" id="accum-regime">—</span>
+            </div>
+            <div class="accum-status-item">
+              <span class="as-label">India VIX</span>
+              <span class="as-val" id="accum-vix">—</span>
+            </div>
+            <div class="accum-status-item">
+              <span class="as-label">Gift Nifty</span>
+              <span class="as-val" id="accum-gift">—</span>
+            </div>
+            <div class="accum-status-item">
+              <span class="as-label">Bias</span>
+              <span class="as-val" id="accum-bias">—</span>
+            </div>
+            <div class="accum-status-item">
+              <span class="as-label">Max Pain</span>
+              <span class="as-val" id="accum-maxpain">—</span>
+            </div>
+            <div class="accum-status-item">
+              <span class="as-label">PCR</span>
+              <span class="as-val" id="accum-pcr">—</span>
+            </div>
+            <div class="accum-status-item" style="border-right:none">
+              <span class="as-label">A / B / C</span>
+              <span class="as-val" id="accum-abc">0 / 0 / 0</span>
+            </div>
+          </div>
+
+          <!-- Banners -->
+          <div id="accum-banners"></div>
+
+          <!-- Filter bar -->
+          <div class="accum-filter-bar">
+            <button class="accum-filter-btn active" data-af="top5" onclick="accumSetFilter('top5')">Top 5</button>
+            <button class="accum-filter-btn" data-af="breaking" onclick="accumSetFilter('breaking')">Breaking <span id="accum-cnt-breaking" style="font-size:0.55rem;color:var(--text-muted);margin-left:2px;"></span></button>
+            <button class="accum-filter-btn" data-af="hot" onclick="accumSetFilter('hot')">Hot</button>
+            <button class="accum-filter-btn" data-af="watch" onclick="accumSetFilter('watch')">Watch</button>
+            <button class="accum-filter-btn" data-af="dist" onclick="accumSetFilter('dist')">Distribution</button>
+            <span class="accum-filter-sep"></span>
+            <button class="accum-filter-btn" data-af="all" onclick="accumSetFilter('all')">All</button>
+            <div class="accum-view-toggle">
+              <button class="accum-view-btn active" id="accum-btn-simple" onclick="accumSetView('simple')">Simple</button>
+              <button class="accum-view-btn" id="accum-btn-advanced" onclick="accumSetView('advanced')">Advanced</button>
+            </div>
+          </div>
+
+          <!-- Breaking Now -->
+          <div id="accum-breaking-panel" class="accum-breaking-panel"></div>
+
+          <!-- Table -->
+          <div class="accum-tbl-wrap">
+            <table class="accum-tbl" id="accum-table">
+              <thead>
+                <tr>
+                  <th class="accum-col-sym">Symbol</th>
+                  <th class="accum-col-dir">Dir</th>
+                  <th class="accum-col-trend">Trend</th>
+                  <th class="accum-col-conf">Confidence</th>
+                  <th class="accum-col-brk">Breakout</th>
+                  <th class="accum-col-stop">Stop</th>
+                  <th class="accum-col-coil">Time in Coil</th>
+                  <th class="accum-col-wall">Walls</th>
+                  <th class="accum-col-liq">Liquidity</th>
+                  <th class="accum-col-play">Options Play</th>
+                </tr>
+              </thead>
+              <tbody id="accum-tbody">
+                <tr><td colspan="10">
+                  <div class="accum-empty">
+                    <div class="accum-empty-icon">◎</div>
+                    <div class="accum-empty-title">Accumulation data will appear once backend is connected</div>
+                    <div class="accum-empty-sub">Polling /api/accumulation — waiting for first scan cycle</div>
+                  </div>
+                </td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- ── Nifty Analyzer (collapsible) ── -->
+        <div class="accum-panel-header" onclick="toggleNiftySection()">
+          <div style="font-weight: 700; font-size: 0.88rem; color: var(--text); display: flex; align-items: center; gap: 8px;">
+            <span>📈 Nifty Analyzer</span>
+            <span id="nifty-bias-pill" style="background: rgba(56, 139, 253, 0.15); color: var(--blue); font-size: 0.68rem; padding: 2px 8px; border-radius: 12px; font-weight: 600; font-family: var(--mono);">—</span>
+          </div>
+          <span id="nifty-toggle-arrow" style="font-size: 0.75rem; color: var(--text-muted); font-weight: bold;">▼</span>
+        </div>
+        <div id="nifty-body" class="nifty-body" style="display:none">
+          <!-- Price header strip -->
+          <div class="nifty-header-strip">
+            <div>
+              <div style="font-family:var(--mono);font-size:0.65rem;font-weight:700;letter-spacing:0.1em;color:var(--text-muted);text-transform:uppercase;">NIFTY 50 · SPOT INDEX</div>
+              <div style="margin-top:3px;">
+                <span class="nifty-price" id="nifty-price">—</span><span class="nifty-chg" id="nifty-chg"></span>
+              </div>
+            </div>
+            <div class="nifty-meta">
+              <div><span class="nifty-live-dot"></span>LIVE — <span id="nifty-time">—</span></div>
+              <div>Timeframe: 5-min · Live via Kite</div>
+            </div>
+          </div>
+
+          <!-- Bias Gauge -->
+          <div class="nifty-gauge-panel">
+            <div class="nifty-gauge-label">
+              <span class="nifty-section-title">Index Bias — Composite Classifier</span>
+              <span class="nifty-bias-readout" id="nifty-bias-readout">—</span>
+            </div>
+            <div class="nifty-gauge-track">
+              <div class="nifty-gauge-zone nifty-zone-bear"><span class="nifty-zone-tag">Bearish</span></div>
+              <div class="nifty-gauge-zone nifty-zone-choppy"><span class="nifty-zone-tag">Choppy</span></div>
+              <div class="nifty-gauge-zone nifty-zone-bull"><span class="nifty-zone-tag">Bullish</span></div>
+              <div class="nifty-needle" id="nifty-needle" style="left:50%;"></div>
+            </div>
+            <div class="nifty-ticks"><span>0</span><span>35</span><span>65</span><span>100</span></div>
+            <div class="nifty-drivers" id="nifty-drivers"></div>
+          </div>
+
+          <!-- 2-col grid -->
+          <div class="nifty-grid">
+            <!-- Left col: Candles + Signals -->
+            <div>
+              <div class="nifty-panel">
+                <span class="nifty-section-title">Candle Pattern Analyzer · Last 14 × 5-min</span>
+                <div class="nifty-candle-wrap">
+                  <svg id="nifty-candle-svg" viewBox="0 0 640 160" width="100%" height="160" preserveAspectRatio="none"></svg>
+                </div>
+                <div class="nifty-pattern-tags" id="nifty-pattern-tags"></div>
+              </div>
+              <div class="nifty-panel" style="margin-top:10px;">
+                <span class="nifty-section-title">Supporting Signals</span>
+                <div class="nifty-signal-grid" id="nifty-signal-grid"></div>
+              </div>
+            </div>
+            <!-- Right col: Sector Weightage -->
+            <div class="nifty-panel">
+              <span class="nifty-section-title">Sector Weightage — NIFTY 50 (Σ 100%)</span>
+              <div class="nifty-stacked-bar" id="nifty-stacked-bar"></div>
+              <div class="nifty-sector-col-header">
+                <span style="flex:1;">Sector</span>
+                <span style="width:50px; text-align:right;">Gain</span>
+                <span style="width:55px; text-align:right;">Impact</span>
+                <span style="width:42px; text-align:right;">Wt</span>
+              </div>
+              <div class="nifty-sector-list" id="nifty-sector-list"></div>
+              <div class="nifty-total-row"><span id="nifty-sector-count">—</span><span>Total weight <b id="nifty-total-wt" style="color:var(--text);">—</b></span></div>
+            </div>
+          </div>
+
+          <!-- 📊 OI Chain Heatmap (collapsible) -->
+          <div class="accum-panel-header" onclick="toggleNiftyOiSection()" style="margin-top:12px;">
+            <div style="font-weight: 700; font-size: 0.8rem; color: var(--text); display: flex; align-items: center; gap: 8px;">
+              <span>📊 OI Chain Heatmap</span>
+              <span id="nifty-oi-summary-pill" style="background: rgba(56, 139, 253, 0.15); color: var(--blue); font-size: 0.65rem; padding: 2px 8px; border-radius: 12px; font-weight: 600; font-family: var(--mono);">—</span>
+            </div>
+            <span id="nifty-oi-toggle-arrow" style="font-size: 0.75rem; color: var(--text-muted); font-weight: bold;">▼</span>
+          </div>
+          <div id="nifty-oi-body" style="display:none; padding:12px; background:var(--bg-card2); border:1px solid var(--border); border-top:none; border-radius:0 0 var(--radius) var(--radius);">
+            <!-- Metrics Bar -->
+            <div class="nifty-oi-metrics-bar" id="nifty-oi-metrics-bar">
+              <span>Expiry: <b id="nifty-oi-exp">—</b></span>
+              <span>Max Pain: <b id="nifty-oi-mp" style="color:var(--amber);">—</b></span>
+              <span>Spot: <b id="nifty-oi-spot" style="color:var(--text);">—</b></span>
+              <span>Straddle: <b id="nifty-oi-straddle" style="color:var(--blue);">—</b></span>
+              <span>PCR: <b id="nifty-oi-pcr" style="color:var(--green);">—</b></span>
+            </div>
+            <!-- Heatmap Table Wrap -->
+            <div class="nifty-oi-tbl-wrap" style="overflow-x:auto; margin-top:8px;">
+              <table class="nifty-oi-tbl">
+                <thead>
+                  <tr>
+                    <th>CE OI</th>
+                    <th>CE BUILDUP</th>
+                    <th>ΔOI</th>
+                    <th>CE LTP</th>
+                    <th>STRIKE</th>
+                    <th>PE LTP</th>
+                    <th>ΔOI</th>
+                    <th>PE BUILDUP</th>
+                    <th>PE OI</th>
+                    <th>PCR</th>
+                    <th>ACTION</th>
+                  </tr>
+                </thead>
+                <tbody id="nifty-oi-tbody">
+                  <tr><td colspan="11" style="text-align:center; padding:15px; color:var(--text-muted);">Loading OI Chain...</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
       </div>
       <div class="board-right-bar-container" id="right-bar">
         <div class="crossover-columns-wrap">
@@ -2117,6 +2756,19 @@
                   <div style="font-size:0.58rem; color:var(--text-muted);">No active squeezes</div>
                 </div>
               </div>
+
+              <div style="border-bottom:1px solid rgba(255,255,255,0.05); margin:2px 0; flex-shrink:0;"></div>
+
+              <!-- Section 3: EMA Coil Watchlist -->
+              <div style="flex:1; display:flex; flex-direction:column; min-height:0;">
+                <div class="breakout-row-label" style="font-size:0.65rem; font-weight:700; color:#388bfd; display:flex; align-items:center; gap:5px; margin-bottom:6px; flex-shrink:0;">
+                  <span>⟳ EMA COIL WATCHLIST</span>
+                  <span class="badge" id="live-coil-count" style="background:rgba(56,139,253,0.15); color:#388bfd; font-size:0.55rem; padding:0px 4px; border-radius:10px; font-weight:700; line-height:1.2;">0</span>
+                </div>
+                <div id="live-coil-list" style="flex:1; overflow-y:auto; display:flex; flex-direction:column; gap:6px; padding-right:2px;">
+                  <div style="font-size:0.58rem; color:var(--text-muted);">No EMA coil stocks</div>
+                </div>
+              </div>
             </div>
           </div>
         </div>
@@ -2136,6 +2788,7 @@
       const savedScrollSqueezes = listSqueezesEl ? listSqueezesEl.scrollTop : 0;
 
       showBoard(html);
+      _accumRestoreState(); // Re-apply collapse state after DOM recreation
 
       // Update filters active buttons
       document.querySelectorAll('.bulls-card .filter-btn').forEach(btn => btn.classList.remove('active'));
@@ -2151,6 +2804,68 @@
 
       // Re-populate live breakouts and squeezes (since innerHTML was overwritten)
       renderLiveBreakouts();
+
+      // Restore the latest cached Accumulation Dashboard status bar values
+      const stEl = document.getElementById('accum-state');
+      if (stEl) {
+        stEl.textContent = _lastAccumStateText;
+        stEl.style.color = _lastAccumStateColor;
+      }
+      const regEl = document.getElementById('accum-regime');
+      if (regEl) {
+        regEl.textContent = _lastAccumRegimeText;
+        regEl.className = _lastAccumRegimeClass;
+      }
+      const vixEl = document.getElementById('accum-vix');
+      if (vixEl) {
+        vixEl.textContent = _lastAccumVixText;
+        vixEl.style.color = _lastAccumVixColor;
+      }
+      const giftEl = document.getElementById('accum-gift');
+      if (giftEl) {
+        giftEl.textContent = _lastAccumGiftText;
+      }
+      const biasEl = document.getElementById('accum-bias');
+      if (biasEl) {
+        biasEl.textContent = _lastAccumBiasText;
+        biasEl.style.color = _lastAccumBiasColor;
+      }
+      const mpEl = document.getElementById('accum-maxpain');
+      if (mpEl) {
+        mpEl.textContent = _lastAccumMaxPainText;
+      }
+      const pcrEl = document.getElementById('accum-pcr');
+      if (pcrEl) {
+        pcrEl.textContent = _lastAccumPcrText;
+      }
+      const gpEl = document.getElementById('accum-grade-pill');
+      if (gpEl) {
+        gpEl.textContent = _lastAccumGradePill;
+      }
+      const abcEl = document.getElementById('accum-abc');
+      if (abcEl) {
+        abcEl.textContent = _lastAccumAbcText;
+      }
+
+      if (_accumData) {
+        renderAccumDashboard(_accumData);
+      }
+      _accumRestoreState();
+
+      // Restore Nifty Analyzer pill & inner content
+      const niftyPillEl = document.getElementById('nifty-bias-pill');
+      if (niftyPillEl) {
+        niftyPillEl.textContent = _lastNiftyBiasPill;
+        niftyPillEl.style.background = _lastNiftyPillBg;
+        niftyPillEl.style.color = _lastNiftyPillColor;
+      }
+      if (_niftyQuoteData) renderNiftyQuote(_niftyQuoteData);
+      if (_niftyBiasData) renderNiftyBias(_niftyBiasData);
+      if (_niftyCandlesData) renderNiftyCandles(_niftyCandlesData);
+      if (_niftySectorsData) renderNiftySectors(_niftySectorsData);
+      if (_niftyOiData) renderNiftyOiChain(_niftyOiData);
+      _niftyRestoreState();
+      _niftyOiRestoreState();
 
       // Restore scroll tops
       const newListBullsEl = document.getElementById('crossover-list-bulls');
@@ -2661,24 +3376,30 @@
 
       const alertList = document.getElementById('live-alert-list');
       const squeezeList = document.getElementById('live-squeeze-list');
+      const coilList = document.getElementById('live-coil-list');
       const alertCount = document.getElementById('live-alert-count');
       const squeezeCount = document.getElementById('live-squeeze-count');
+      const coilCount = document.getElementById('live-coil-count');
 
       if (!alertList || !squeezeList) return;
 
-      const alerts = data.triggered_alerts || [];
-      const watches = data.squeeze_watchlist || [];
+      const alerts     = data.triggered_alerts  || [];
+      const watches    = data.squeeze_watchlist  || [];
+      const collisions = data.collision_alerts   || [];
+      const bbSqueezes = data.bb_squeezes        || [];
+      const emaCoils   = data.ema_coils          || [];
 
       // Update counts
-      if (alertCount) alertCount.textContent = alerts.length;
-      if (squeezeCount) squeezeCount.textContent = watches.length;
+      if (alertCount)   alertCount.textContent   = alerts.length;
+      if (squeezeCount) squeezeCount.textContent  = bbSqueezes.length;
+      if (coilCount)    coilCount.textContent     = emaCoils.length;
 
       const totalCount = document.getElementById('live-total-count');
       if (totalCount) totalCount.textContent = alerts.length + watches.length;
 
       const squeezeWatchlistSub = document.getElementById('live-squeeze-watchlist-subtitle');
       if (squeezeWatchlistSub) {
-        squeezeWatchlistSub.textContent = `Squeeze watchlist: ${watches.length} stocks being monitored`;
+        squeezeWatchlistSub.textContent = `Squeeze: ${bbSqueezes.length} · EMA Coil: ${emaCoils.length}`;
       }
 
       // Render alert vertical cards
@@ -2706,11 +3427,40 @@
         }).join('');
       }
 
-      // Render squeeze vertical cards
-      if (watches.length === 0) {
+      // Append EMA Collision confirmed alerts to the same feed (blue/orange pills)
+      if (collisions.length > 0) {
+        const collisionHtml = [...collisions].reverse().map(c => {
+          const isBull = c.direction === 'bullish';
+          const arrow  = isBull ? '▲' : '▼';
+          const color  = isBull ? '#388bfd' : '#e09400';
+          const bg     = isBull ? 'rgba(56,139,253,0.10)' : 'rgba(224,148,0,0.10)';
+          const gapStr = c.gap_pct ? ` · Δ${Number(c.gap_pct).toFixed(3)}%` : '';
+          return `
+            <div class="breakout-alert-pill horizontal" style="display:flex; justify-content:space-between; width:100%; padding:6px 10px; border-radius:6px; margin:0; box-sizing:border-box; background:${bg}; border-left:2px solid ${color};" title="EMA9/EMA21 Coil Breakout${gapStr} · LTP: ₹${c.ltp} · ${c.time}">
+              <div style="display:flex; align-items:center; gap:5px;">
+                <span style="font-weight:800; color:${color}; font-size:0.65rem;">${arrow} ${c.symbol}</span>
+                <span style="opacity:0.85; font-size:0.50rem; background:${bg}; padding:1px 4px; border-radius:3px; font-weight:700; color:${color}; border:1px solid ${color}40; letter-spacing:0.3px;">EMA COLLISION</span>
+              </div>
+              <div style="display:flex; align-items:center; gap:6px;">
+                <span style="font-family:var(--mono); font-weight:700; color:var(--text); font-size:0.62rem;">₹${c.ltp}</span>
+                <span style="opacity:0.5; font-size:0.52rem; color:var(--text-muted); font-family:var(--mono);">${c.time}</span>
+              </div>
+            </div>`;
+        }).join('');
+        if (alertList) {
+          if (alertList.innerHTML.includes('Waiting for breakouts')) {
+            alertList.innerHTML = collisionHtml;
+          } else {
+            alertList.innerHTML += collisionHtml;
+          }
+        }
+      }
+
+      // Render BB Squeeze watchlist (gold pills)
+      if (bbSqueezes.length === 0) {
         squeezeList.innerHTML = `<div style="font-size:0.56rem; color:var(--text-muted); padding:3px 0;">No active squeezes</div>`;
       } else {
-        squeezeList.innerHTML = [...watches]
+        squeezeList.innerHTML = [...bbSqueezes]
           .sort((a, b) => b.squeeze_duration_mins - a.squeeze_duration_mins)
           .map(w => {
             const durLabel = w.squeeze_duration_mins >= 2 ? `${w.squeeze_duration_mins}m` : '<1m';
@@ -2727,21 +3477,356 @@
               </div>`;
           }).join('');
       }
+
+      // Render EMA Coil watchlist (blue pills)
+      if (coilList) {
+        if (emaCoils.length === 0) {
+          coilList.innerHTML = `<div style="font-size:0.56rem; color:var(--text-muted); padding:3px 0;">No EMA coil stocks</div>`;
+        } else {
+          coilList.innerHTML = [...emaCoils]
+            .map(w => {
+              const gapLabel = w.ema_gap_pct ? `${Number(w.ema_gap_pct).toFixed(3)}%` : '';
+              const coilTime = w.coil_time || '';
+              return `
+                <div class="squeeze-pill horizontal" style="display:flex; justify-content:space-between; width:100%; padding:6px 10px; border-radius:6px; margin:0; box-sizing:border-box; border-left:2px solid #388bfd;" title="EMA Gap: ${gapLabel} of LTP · First seen: ${coilTime}">
+                  <div style="display:flex; align-items:center; gap:5px;">
+                    <span style="font-weight:800; color:#388bfd; font-size:0.65rem;">⟳ ${w.symbol}</span>
+                    <span style="opacity:0.85; font-size:0.52rem; background:rgba(56,139,253,0.12); padding:1px 3px; border-radius:3px; font-weight:600; color:#388bfd;">EMA Coil</span>
+                  </div>
+                  <div style="display:flex; align-items:center; gap:6px;">
+                    <span style="font-family:var(--mono); font-weight:700; color:var(--text); font-size:0.62rem;">₹${w.last_ltp}</span>
+                    ${gapLabel ? `<span style="opacity:0.75; font-size:0.52rem; font-weight:600; background:rgba(56,139,253,0.12); border-radius:3px; padding:1px 3px; color:#388bfd; font-family:var(--mono);">Δ${gapLabel}</span>` : ''}
+                    ${coilTime ? `<span style="opacity:0.5; font-size:0.52rem; color:var(--text-muted); font-family:var(--mono);">${coilTime}</span>` : ''}
+                  </div>
+                </div>`;
+            }).join('');
+        }
+      }
+    }
+
+    // ── Accumulation Dashboard ─────────────────────────────────────────────
+    let _accumCollapsed = true;
+    let _accumFilter = 'top5';
+    let _accumView = 'simple';
+    let _accumData = null;
+    let _lastAccumStateText = '—';
+    let _lastAccumStateColor = '';
+    let _lastAccumRegimeText = '—';
+    let _lastAccumRegimeClass = 'as-val accum-regime';
+    let _lastAccumVixText = '—';
+    let _lastAccumVixColor = '';
+    let _lastAccumGiftText = '—';
+    let _lastAccumBiasText = '—';
+    let _lastAccumBiasColor = '';
+    let _lastAccumMaxPainText = '—';
+    let _lastAccumPcrText = '—';
+    let _lastAccumGradePill = 'A: 0 · B: 0 · C: 0';
+    let _lastAccumAbcText = '0 / 0 / 0';
+
+    async function fetchAccum() {
+      try {
+        const res = await fetch('/api/accumulation');
+
+        if (res.status === 202) {
+          // Scanner is still running — show progress in status bar
+          try {
+            const d = await res.json();
+            const p = d.progress || {};
+            const stEl = document.getElementById('accum-state');
+            const pct = p.total > 0 ? ` ${p.current}/${p.total}` : '';
+            _lastAccumStateText = `SCANNING${pct}`;
+            _lastAccumStateColor = 'var(--amber)';
+            if (stEl) {
+              stEl.textContent = _lastAccumStateText;
+              stEl.style.color = _lastAccumStateColor;
+            }
+          } catch(_) {}
+          // Keep fast-polling until scan completes
+          if (_accumPollInterval) { clearInterval(_accumPollInterval); _accumPollInterval = null; }
+          _accumPollInterval = setInterval(fetchAccum, 5000);
+          return;
+        }
+
+        if (!res.ok) return;
+        const d = await res.json();
+        // Reset scanner state color
+        const stEl = document.getElementById('accum-state');
+        if (stEl) stEl.style.color = '';
+        const isFirstLoad = (_accumData === null);
+        renderAccumDashboard(d);
+        // Auto-expand on first successful data load only
+        if (isFirstLoad && _accumCollapsed) {
+          _accumCollapsed = false;
+          const body = document.getElementById('accum-body');
+          const arrow = document.getElementById('accum-toggle-arrow');
+          if (body) body.style.display = 'block';
+          if (arrow) arrow.textContent = '▲';
+        }
+      } catch (e) { /* silent — placeholder text stays visible */ }
+    }
+
+    function toggleAccumSection() {
+      _accumCollapsed = !_accumCollapsed;
+      _accumRestoreState();
+    }
+
+    function _accumRestoreState() {
+      const body = document.getElementById('accum-body');
+      const arrow = document.getElementById('accum-toggle-arrow');
+      if (body) body.style.display = _accumCollapsed ? 'none' : 'block';
+      if (arrow) arrow.textContent = _accumCollapsed ? '▼' : '▲';
+      // If we have data and panel is expanded, re-render content after DOM recreation
+      if (!_accumCollapsed && _accumData) renderAccumTable(_accumData);
+    }
+
+    function accumSetFilter(f) {
+      _accumFilter = f;
+      document.querySelectorAll('.accum-filter-btn').forEach(btn => {
+        btn.classList.toggle('active', btn.dataset.af === f);
+      });
+      if (_accumData) renderAccumTable(_accumData);
+    }
+
+    function accumSetView(v) {
+      _accumView = v;
+      document.getElementById('accum-btn-simple').classList.toggle('active', v === 'simple');
+      document.getElementById('accum-btn-advanced').classList.toggle('active', v === 'advanced');
+      if (_accumData) renderAccumTable(_accumData);
+    }
+
+    function renderAccumDashboard(d) {
+      _accumData = d;
+
+      const stateMap = { PRE_MARKET:'PRE-MARKET', PRICE_DISCOVERY:'PRICE DISCOVERY', LIVE:'LIVE', EOD_MODE:'EOD MODE', SESSION_CLOSED:'CLOSED', MARKET_CLOSED:'CLOSED', LOADING:'LOADING' };
+      _lastAccumStateText = stateMap[d.market_state] || d.market_state || '—';
+      _lastAccumStateColor = '';
+      const stEl = document.getElementById('accum-state');
+      if (stEl) stEl.textContent = _lastAccumStateText;
+
+      _lastAccumRegimeText = d.regime || '—';
+      _lastAccumRegimeClass = 'as-val accum-regime ' + (d.regime || '');
+      const regEl = document.getElementById('accum-regime');
+      if (regEl) {
+        regEl.textContent = _lastAccumRegimeText;
+        regEl.className = _lastAccumRegimeClass;
+      }
+
+      _lastAccumVixText = d.india_vix ? d.india_vix.toFixed(1) : '—';
+      _lastAccumVixColor = d.india_vix < 13 ? 'var(--green)' : d.india_vix < 17 ? 'var(--amber)' : 'var(--red)';
+      const vixEl = document.getElementById('accum-vix');
+      if (vixEl) {
+        vixEl.textContent = _lastAccumVixText;
+        vixEl.style.color = _lastAccumVixColor;
+      }
+
+      _lastAccumGiftText = d.gift_nifty ? d.gift_nifty.toFixed(0) : '—';
+      const giftEl = document.getElementById('accum-gift');
+      if (giftEl) giftEl.textContent = _lastAccumGiftText;
+
+      _lastAccumBiasText = d.market_bias || '—';
+      _lastAccumBiasColor = d.market_bias === 'BULLISH' ? 'var(--green)' : d.market_bias === 'CAUTIOUS' ? 'var(--red)' : 'var(--amber)';
+      const biasEl = document.getElementById('accum-bias');
+      if (biasEl) {
+        biasEl.textContent = _lastAccumBiasText;
+        biasEl.style.color = _lastAccumBiasColor;
+      }
+
+      // Max Pain
+      const mp = (d.results || []).find(r => r.max_pain && r.max_pain.strike);
+      _lastAccumMaxPainText = mp ? `${mp.max_pain.strike} ${mp.max_pain.direction === 'UP' ? '▲' : mp.max_pain.direction === 'DOWN' ? '▼' : '—'}` : '—';
+      const mpEl = document.getElementById('accum-maxpain');
+      if (mpEl) mpEl.textContent = _lastAccumMaxPainText;
+
+      // PCR
+      const pcrs = (d.results || []).map(r => r.pcr && r.pcr.pcr).filter(Boolean);
+      _lastAccumPcrText = pcrs.length ? (pcrs.reduce((a,b) => a+b, 0) / pcrs.length).toFixed(2) : '—';
+      const pcrEl = document.getElementById('accum-pcr');
+      if (pcrEl) pcrEl.textContent = _lastAccumPcrText;
+
+      // Grade counts
+      const gc = d.stocks_in_accumulation || {};
+      _lastAccumGradePill = `A: ${gc.A||0} · B: ${gc.B||0} · C: ${gc.C||0}`;
+      const gpEl = document.getElementById('accum-grade-pill');
+      if (gpEl) gpEl.textContent = _lastAccumGradePill;
+
+      _lastAccumAbcText = `${gc.A||0} / ${gc.B||0} / ${gc.C||0}`;
+      const abcEl = document.getElementById('accum-abc');
+      if (abcEl) abcEl.textContent = _lastAccumAbcText;
+
+      // Banners
+      const bannersEl = document.getElementById('accum-banners');
+      if (bannersEl) {
+        let bh = '';
+        if (d.market_state === 'SESSION_CLOSED') bh += '<div style="padding:5px 16px;font-size:0.65rem;font-weight:600;background:rgba(56,139,253,0.08);color:var(--blue);border-bottom:1px solid var(--border);">⏹ SESSION CLOSED — data for reference only</div>';
+        if (d.expiry_day) bh += '<div style="padding:5px 16px;font-size:0.65rem;font-weight:600;background:rgba(188,140,255,0.08);color:var(--purple);border-bottom:1px solid var(--border);">⚡ EXPIRY DAY — max pain and OI walls take priority. Premium decay accelerates after 2 PM.</div>';
+        if (d.oi_degraded) bh += '<div style="padding:5px 16px;font-size:0.65rem;font-weight:600;background:rgba(248,81,73,0.08);color:var(--red);border-bottom:1px solid var(--border);">⚠ OI DATA DEGRADED — grades based on price & volume only</div>';
+        bannersEl.innerHTML = bh;
+      }
+
+      // Breaking count
+      const breakCount = (d.results || []).filter(r => r.state === 'BREAKING').length;
+      const bcEl = document.getElementById('accum-cnt-breaking');
+      if (bcEl) bcEl.textContent = breakCount || '';
+
+      renderAccumBreaking(d);
+      renderAccumTable(d);
+    }
+
+    function renderAccumBreaking(d) {
+      const el = document.getElementById('accum-breaking-panel');
+      if (!el) return;
+      const breaking = (d.results || []).filter(r => r.state === 'BREAKING');
+      if (!breaking.length) { el.innerHTML = ''; return; }
+      let html = '<div class="accum-breaking-label">⚡ BREAKING NOW</div>';
+      breaking.forEach(r => {
+        const dir = r.direction === 'UP' ? '▲' : '▼';
+        const col = r.direction === 'UP' ? 'var(--green)' : 'var(--red)';
+        html += `<div class="accum-breaking-card">
+          <span class="accum-bc-sym">${r.symbol}</span>
+          <span class="accum-bc-dir" style="color:${col}">${dir}</span>
+          <span class="accum-bc-price">₹${r.ltp}</span>
+          <span class="accum-bc-target">Target: ₹${r.target1}</span>
+          ${r.ce_wall ? `<span class="accum-bc-wall">Wall@${r.ce_wall}</span>` : ''}
+        </div>`;
+      });
+      el.innerHTML = html;
+    }
+
+    function accumApplyFilter(results, filter) {
+      const confOrder = { VERY_STRONG: 3, STRONG: 2, MODERATE: 1 };
+      switch (filter) {
+        case 'top5':
+          return results.slice().sort((a, b) => (confOrder[b.confidence]||0) - (confOrder[a.confidence]||0) || b.coil_candles - a.coil_candles).slice(0, 5);
+        case 'breaking':
+          return results.filter(r => r.state === 'BREAKING');
+        case 'hot':
+          return results.filter(r => r.l3_score >= 6 || r.grade === 'A');
+        case 'watch':
+          return results.filter(r => r.grade === 'B');
+        case 'dist':
+          return results.filter(r => r.state === 'DISTRIBUTION');
+        default:
+          return results;
+      }
+    }
+
+    function renderAccumTable(d) {
+      const tbody = document.getElementById('accum-tbody');
+      if (!tbody) return;
+
+      let results = (d.results || []).slice();
+      results = accumApplyFilter(results, _accumFilter);
+
+      if (!results.length) {
+        tbody.innerHTML = `<tr><td colspan="10">
+          <div class="accum-empty">
+            <div class="accum-empty-icon">◎</div>
+            <div class="accum-empty-title">No setups match current filter</div>
+            <div class="accum-empty-sub">Switch to All to see all accumulating stocks</div>
+          </div>
+        </td></tr>`;
+        return;
+      }
+
+      const isEod = d.market_state === 'EOD_MODE';
+      tbody.innerHTML = results.map(r => {
+        // Direction
+        const dirIcon = r.direction === 'UP' ? '<span class="accum-dir-up">▲</span>' :
+                        r.direction === 'DOWN' ? '<span class="accum-dir-down">▼</span>' :
+                        '<span class="accum-dir-none">—</span>';
+
+        // Confidence
+        const confLabels = { VERY_STRONG:'VERY STRONG', STRONG:'STRONG', MODERATE:'MODERATE' };
+        const confDots = { VERY_STRONG:3, STRONG:2, MODERATE:1 };
+        const nDots = confDots[r.confidence] || 0;
+        const dotsHtml = [0,1,2].map(i => `<span class="accum-conf-dot ${i < nDots ? 'filled' : 'empty'}"></span>`).join('');
+        const confHtml = `<div class="accum-conf"><div class="accum-conf-dots">${dotsHtml}</div><span class="accum-conf-${r.confidence}">${confLabels[r.confidence]||r.confidence}</span></div>`;
+
+        // Grade
+        const gradeHtml = `<span class="accum-grade accum-grade-${r.grade}">${r.grade}</span>`;
+
+        // Wall tags
+        const wallTagMap = { CE_WALL_OVERHEAD:'CE WALL', TRAPPED_IN_WALLS:'TRAPPED', PE_WALL_BELOW:'PE WALL', CE_CLEAR:'CLEAR', PE_CLEAR:'CLEAR' };
+        const wallCls = { CE_WALL_OVERHEAD:'ce-wall', TRAPPED_IN_WALLS:'trapped', PE_WALL_BELOW:'pe-wall', CE_CLEAR:'clear', PE_CLEAR:'clear' };
+        const wallHtml = (r.wall_tags && r.wall_tags.length)
+          ? r.wall_tags.map(t => `<span class="accum-wall-tag ${wallCls[t]||''}">${wallTagMap[t]||t.replace(/_/g,' ')}</span>`).join(' ')
+          : '<span style="color:var(--text-muted);font-size:0.6rem">CLEAR</span>';
+
+        // Liquidity
+        const liq = r.options_play && r.options_play.liquidity ? r.options_play.liquidity : '—';
+        const liqColor = liq === 'GOOD' ? 'var(--green)' : liq === 'WIDE_SPREAD' ? 'var(--amber)' : liq === 'AVOID' ? 'var(--red)' : 'var(--text-muted)';
+
+        // Options play
+        let playHtml = '<span style="color:var(--text-muted);font-size:0.6rem">EOD only</span>';
+        if (isEod && r.options_play && r.options_play.play) {
+          const p = r.options_play.play;
+          if (p === 'SKIP') {
+            playHtml = `<span class="accum-opt-play accum-opt-SKIP">SKIP</span>`;
+          } else {
+            const tp = p.includes('CE') ? 'CE' : 'PE';
+            playHtml = `<span class="accum-opt-play accum-opt-${tp}">${p.replace('_',' ')} ₹${r.options_play.strike||''}</span>`;
+          }
+        }
+
+        // Tags
+        const tags = (r.tags || []).filter(t => !t.startsWith('CE_') && !t.startsWith('PE_') && !t.startsWith('TRAPPED')).map(t => {
+          const cls = t.includes('FAIL') ? 'accum-tag-warn' : t.includes('EVENT') ? 'accum-tag-warn' : t.includes('EXTENDED') ? 'accum-tag-green' : 'accum-tag-grey';
+          return `<span class="accum-tag ${cls}">${t.replace(/_/g,' ')}</span>`;
+        }).join('');
+
+        // Trends
+        const trends = r.trends || {};
+        const trendHtml = `<div class="accum-trend-pills">
+          <span class="accum-trend-pill ${trends.daily === 'Bullish' ? 'bullish' : trends.daily === 'Bearish' ? 'bearish' : ''}" title="Daily">D</span>
+          <span class="accum-trend-pill ${trends.hourly === 'Bullish' ? 'bullish' : trends.hourly === 'Bearish' ? 'bearish' : ''}" title="Hourly">1H</span>
+          <span class="accum-trend-pill ${trends['15min'] === 'Bullish' ? 'bullish' : trends['15min'] === 'Bearish' ? 'bearish' : ''}" title="15min">15M</span>
+        </div>`;
+
+        // Row class
+        const isHot = r.grade === 'A' && r.l3_score >= 6;
+        const rowCls = isHot ? 'accum-row-hot' : '';
+
+        return `<tr class="${rowCls}">
+          <td class="accum-col-sym" style="font-weight:700;">
+            ${r.symbol}
+            <div style="font-size:0.55rem;color:var(--text-muted);margin-top:1px;">${r.sector||''}</div>
+            ${gradeHtml}
+            ${tags}
+          </td>
+          <td class="accum-col-dir">${dirIcon}</td>
+          <td class="accum-col-trend">${trendHtml}</td>
+          <td class="accum-col-conf">${confHtml}</td>
+          <td class="accum-col-brk" style="font-weight:600;">₹${r.breakout_level}</td>
+          <td class="accum-col-stop" style="color:var(--text-muted);">₹${r.stop_level}</td>
+          <td class="accum-col-coil">${r.time_in_coil}</td>
+          <td class="accum-col-wall">${wallHtml}</td>
+          <td class="accum-col-liq" style="color:${liqColor};font-size:0.62rem;">${liq.replace('_',' ')}</td>
+          <td class="accum-col-play">${playHtml}</td>
+        </tr>`;
+      }).join('');
     }
 
     // ── Init ──────────────────────────────────────────────────────────────────
     fetchBoard();
     fetchEmaCrossovers();
     fetchLiveBreakouts();
+    fetchAccum();
 
-    // Independent EMA crossover poll — survives EOD snapshot pause
-    // Only polls during market hours (09:15–15:30 IST, Mon–Fri); data is static after close
+    // Independent EMA crossover poll — fires during market hours OR any time a scan
+    // may have started on the backend (always poll every 30s so we catch the
+    // scanning → progress bar transition even outside market hours).
     setInterval(() => {
       const now = new Date(new Date().toLocaleString('en-US', { timeZone: 'Asia/Kolkata' }));
       const h = now.getHours(), m = now.getMinutes(), d = now.getDay();
       const inMarket = d >= 1 && d <= 5 &&
         ((h === 9 && m >= 15) || (h >= 10 && h <= 14) || (h === 15 && m <= 30));
-      if (inMarket) fetchEmaCrossovers();
+      // Always poll: when in market, when actively scanning, OR after-hours/weekends
+      // (backend may have kicked off a new scan that changed status to 'scanning').
+      // The 3s fast-poll inside fetchEmaCrossovers handles tight progress updates once
+      // a scanning status is detected.
+      if (inMarket || (crossoverData && crossoverData.status === 'scanning') || true) {
+        fetchEmaCrossovers();
+      }
     }, 30000);
 
     // Live Breakout poll — every 15 seconds during market hours
@@ -2752,6 +3837,387 @@
         ((h === 9 && m >= 15) || (h >= 10 && h <= 14) || (h === 15 && m <= 30));
       if (inMarket) fetchLiveBreakouts();
     }, 15000);
+
+    // Accumulation Dashboard poll — 5s while scanning (202), 30s once data is loaded
+    let _accumPollInterval = null;
+    function _startAccumPoll() {
+      if (_accumPollInterval) clearInterval(_accumPollInterval);
+      const interval = (_accumData === null) ? 5000 : 30000;
+      _accumPollInterval = setInterval(async () => {
+        const wasNull = (_accumData === null);
+        await fetchAccum();
+        // If data just arrived, switch to slow poll
+        if (wasNull && _accumData !== null) {
+          _startAccumPoll();
+        }
+      }, interval);
+    }
+    _startAccumPoll();
+
+    // ── Nifty Analyzer ────────────────────────────────────────────────────
+    let _niftyCollapsed = true;
+    let _lastNiftyBiasPill = '—';
+    let _lastNiftyPillBg   = 'rgba(56,139,253,0.15)';
+    let _lastNiftyPillColor = 'var(--blue)';
+
+    let _niftyQuoteData = null;
+    let _niftyBiasData = null;
+    let _niftyCandlesData = null;
+    let _niftySectorsData = null;
+
+    function toggleNiftySection() {
+      _niftyCollapsed = !_niftyCollapsed;
+      _niftyRestoreState();
+    }
+
+    function _niftyRestoreState() {
+      const body  = document.getElementById('nifty-body');
+      const arrow = document.getElementById('nifty-toggle-arrow');
+      if (body)  body.style.display  = _niftyCollapsed ? 'none' : 'block';
+      if (arrow) arrow.textContent   = _niftyCollapsed ? '▼' : '▲';
+    }
+
+    function renderNiftyQuote(d) {
+      if (!d) return;
+      const priceEl = document.getElementById('nifty-price');
+      if (priceEl && d.ltp !== undefined) priceEl.textContent = d.ltp.toLocaleString('en-IN', {minimumFractionDigits:2});
+      const chgEl = document.getElementById('nifty-chg');
+      if (chgEl && d.change !== undefined && d.change_pct !== undefined) {
+        const up = d.change >= 0;
+        chgEl.className = 'nifty-chg ' + (up ? 'up' : 'dn');
+        chgEl.textContent = (up ? '▲ +' : '▼ ') + d.change.toFixed(2) + ' (' + (up ? '+' : '') + d.change_pct.toFixed(2) + '%)';
+      }
+      const timeEl = document.getElementById('nifty-time');
+      if (timeEl && d.timestamp) timeEl.textContent = new Date(d.timestamp).toLocaleString('en-IN');
+    }
+
+    function renderNiftyBias(d) {
+      if (!d) return;
+      const readout = document.getElementById('nifty-bias-readout');
+      if (readout && d.zone) {
+        readout.className = 'nifty-bias-readout ' + d.zone;
+        readout.textContent = d.zone.toUpperCase() + ' · Score ' + d.score + '/100';
+      }
+      const needle = document.getElementById('nifty-needle');
+      if (needle && d.score !== undefined) needle.style.left = d.score + '%';
+
+      // Update pill with zone info
+      if (d.zone) {
+        const zoneColors = { bullish: ['rgba(63,185,80,0.15)', 'var(--green)'], bearish: ['rgba(248,81,73,0.15)', 'var(--red)'], choppy: ['rgba(210,153,34,0.15)', 'var(--amber)'] };
+        const zc = zoneColors[d.zone] || ['rgba(56,139,253,0.15)', 'var(--blue)'];
+        _lastNiftyBiasPill  = d.zone.toUpperCase() + ' ' + d.score + '/100';
+        _lastNiftyPillBg    = zc[0];
+        _lastNiftyPillColor = zc[1];
+        const pillEl = document.getElementById('nifty-bias-pill');
+        if (pillEl) { pillEl.textContent = _lastNiftyBiasPill; pillEl.style.background = _lastNiftyPillBg; pillEl.style.color = _lastNiftyPillColor; }
+      }
+
+      const driversEl = document.getElementById('nifty-drivers');
+      if (driversEl) {
+        driversEl.innerHTML = '';
+        (d.drivers || []).forEach(dr => {
+          const sp = document.createElement('span');
+          sp.className = 'nifty-driver';
+          sp.innerHTML = '<span class="ndot ' + dr.tone + '"></span>' + dr.text;
+          driversEl.appendChild(sp);
+        });
+      }
+
+      const sigGrid = document.getElementById('nifty-signal-grid');
+      if (sigGrid) {
+        sigGrid.innerHTML = '';
+        (d.drivers || []).forEach(dr => {
+          const parts = dr.text.split(':');
+          const k = parts[0];
+          const v = parts.slice(1).join(':').trim();
+          const card = document.createElement('div');
+          card.className = 'nifty-signal-card';
+          const toneClass = dr.tone === 'g' ? 'green' : dr.tone === 'r' ? 'red' : 'amber';
+          card.innerHTML = '<div class="sk">' + k + '</div><div class="sv ' + toneClass + '">' + v + '</div>';
+          sigGrid.appendChild(card);
+        });
+      }
+    }
+
+    function renderNiftyCandles(d) {
+      if (!d) return;
+      const svg = document.getElementById('nifty-candle-svg');
+      if (!svg) return;
+      svg.innerHTML = '';
+      const candles = d.candles || [];
+      if (!candles.length) return;
+      const min = Math.min(...candles.map(c => c.l)), max = Math.max(...candles.map(c => c.h));
+      const pad=10, W=640, H=160, cw=(W-pad*2)/candles.length;
+      const y = v => H - pad - ((v-min)/(max-min||1))*(H-pad*2);
+      const ns = 'http://www.w3.org/2000/svg';
+      candles.forEach((c, i) => {
+        const x = pad + i*cw + cw/2;
+        const up = c.c >= c.o;
+        const color = up ? '#3FB950' : '#F85149';
+        const wick = document.createElementNS(ns, 'line');
+        wick.setAttribute('x1',x); wick.setAttribute('x2',x);
+        wick.setAttribute('y1',y(c.h)); wick.setAttribute('y2',y(c.l));
+        wick.setAttribute('stroke', color); wick.setAttribute('stroke-width','1.2');
+        svg.appendChild(wick);
+        const bTop = y(Math.max(c.o,c.c));
+        const bH   = Math.max(2, Math.abs(y(c.o)-y(c.c)));
+        const rect = document.createElementNS(ns, 'rect');
+        rect.setAttribute('x', x - cw*0.3); rect.setAttribute('y', bTop);
+        rect.setAttribute('width', cw*0.6); rect.setAttribute('height', bH);
+        rect.setAttribute('fill', color); rect.setAttribute('rx','1');
+        svg.appendChild(rect);
+      });
+      const tagsEl = document.getElementById('nifty-pattern-tags');
+      if (tagsEl) {
+        tagsEl.innerHTML = '';
+        (d.patterns || []).forEach(p => {
+          const tag = document.createElement('span');
+          tag.className = 'nifty-tag ' + (p.tone === 'bull' ? 'bull' : p.tone === 'bear' ? 'bear' : '');
+          tag.textContent = p.pattern + ' — candle #' + (p.index+1);
+          tagsEl.appendChild(tag);
+        });
+      }
+    }
+
+    // Set to track expanded sector accordions across board refreshes
+    let _expandedSectors = new Set();
+
+    function toggleNiftySector(sectorName) {
+      if (_expandedSectors.has(sectorName)) {
+        _expandedSectors.delete(sectorName);
+      } else {
+        _expandedSectors.add(sectorName);
+      }
+      if (_niftySectorsData) renderNiftySectors(_niftySectorsData);
+    }
+
+    /**
+     * Renders Nifty 50 Sector Weightage multi-column table and collapsible constituent stocks.
+     * Columns: SECTOR | GAIN | IMPACT | WT
+     * Rationale:
+     * - GAIN: Sector Index % change (constituent-weighted).
+     * - IMPACT: Weighted contribution of sector to Nifty 50 overall movement: (Sector Gain % * Sector Wt %) / 100
+     * - WT: Total Sector weight in Nifty 50.
+     */
+    function renderNiftySectors(d) {
+      if (!d) return;
+      const bar = document.getElementById('nifty-stacked-bar');
+      if (bar) { bar.innerHTML = ''; (d.sectors||[]).forEach(s => { const seg=document.createElement('div'); seg.style.width=s.wt+'%'; seg.style.background=s.color; seg.title=s.name+' — '+s.wt+'%'; bar.appendChild(seg); }); }
+      const list = document.getElementById('nifty-sector-list');
+      if (list) {
+        list.innerHTML = '';
+        (d.sectors||[]).forEach(s => {
+          const isExp = _expandedSectors.has(s.name);
+          const hasStocks = s.stocks && s.stocks.length > 0;
+          const arrow = hasStocks ? (isExp ? '▼' : '▶') : '';
+          // Weighted Impact: contribution of this sector to Nifty 50 overall move %
+          const impact = (s.chg * s.wt) / 100.0;
+
+          const rowWrap = document.createElement('div');
+
+          const row = document.createElement('div');
+          row.className = 'nifty-sector-row';
+          if (hasStocks) row.onclick = () => toggleNiftySector(s.name);
+          row.innerHTML = '<div class="nifty-sector-left">'
+            + '<span class="nifty-sector-arrow">' + arrow + '</span>'
+            + '<span class="nifty-swatch" style="background:' + s.color + '"></span>'
+            + '<span class="nifty-sector-name">' + s.name + '</span>'
+            + '</div>'
+            + '<div class="nifty-sector-right">'
+            + '<span class="nifty-sector-chg ' + (s.chg >= 0 ? 'up' : 'dn') + '">' + (s.chg >= 0 ? '+' : '') + s.chg.toFixed(2) + '%</span>'
+            + '<span class="nifty-sector-impact ' + (impact >= 0 ? 'up' : 'dn') + '">' + (impact >= 0 ? '+' : '') + impact.toFixed(2) + '%</span>'
+            + '<span class="nifty-sector-wt">' + s.wt.toFixed(1) + '%</span>'
+            + '</div>';
+          rowWrap.appendChild(row);
+
+          if (hasStocks && isExp) {
+            const stockContainer = document.createElement('div');
+            stockContainer.className = 'nifty-stock-container';
+            s.stocks.forEach(st => {
+              const stRow = document.createElement('div');
+              stRow.className = 'nifty-stock-row';
+              stRow.innerHTML = '<span class="nifty-stock-name">' + st.symbol + '</span>'
+                + '<div class="nifty-stock-right">'
+                + '<span class="nifty-sector-chg ' + (st.chg >= 0 ? 'up' : 'dn') + '">' + (st.chg >= 0 ? '+' : '') + st.chg.toFixed(2) + '%</span>'
+                + '<span class="nifty-sector-impact" style="color:var(--text-faint);">—</span>'
+                + '<span class="nifty-sector-wt" style="color:var(--text-muted);">' + st.wt.toFixed(1) + '%</span>'
+                + '</div>';
+              stockContainer.appendChild(stRow);
+            });
+            rowWrap.appendChild(stockContainer);
+          }
+
+          list.appendChild(rowWrap);
+        });
+      }
+      const cnt = document.getElementById('nifty-sector-count');
+      if (cnt) cnt.textContent = (d.sectors||[]).length + ' sectors';
+      const tot = document.getElementById('nifty-total-wt');
+      if (tot) tot.textContent = (d.total_weight||0).toFixed(1) + '%';
+    }
+
+    async function fetchNiftyQuote() {
+      try {
+        const r = await fetch('/api/index-quote');
+        _niftyQuoteData = await r.json();
+        renderNiftyQuote(_niftyQuoteData);
+      } catch(e) {}
+    }
+
+    async function fetchNiftyBias() {
+      try {
+        const r = await fetch('/api/bias-score');
+        _niftyBiasData = await r.json();
+        renderNiftyBias(_niftyBiasData);
+      } catch(e) {}
+    }
+
+    async function fetchNiftyCandles() {
+      try {
+        const r = await fetch('/api/candles');
+        _niftyCandlesData = await r.json();
+        renderNiftyCandles(_niftyCandlesData);
+      } catch(e) {}
+    }
+
+    async function fetchNiftySectors() {
+      try {
+        const r = await fetch('/api/sector-weights');
+        _niftySectorsData = await r.json();
+        renderNiftySectors(_niftySectorsData);
+      } catch(e) {}
+    }
+
+    async function refreshNifty() {
+      await Promise.all([fetchNiftyQuote(), fetchNiftyBias(), fetchNiftyCandles(), fetchNiftySectors()]);
+    }
+
+    // Initial load + 15s poll
+    refreshNifty();
+    setInterval(refreshNifty, 15000);
+
+    // ── OI Chain Heatmap ───────────────────────────────────────────────────
+    let _niftyOiCollapsed = true;
+    let _niftyOiData = null;
+
+    function toggleNiftyOiSection() {
+      _niftyOiCollapsed = !_niftyOiCollapsed;
+      _niftyOiRestoreState();
+    }
+
+    function _niftyOiRestoreState() {
+      const body  = document.getElementById('nifty-oi-body');
+      const arrow = document.getElementById('nifty-oi-toggle-arrow');
+      if (body)  body.style.display  = _niftyOiCollapsed ? 'none' : 'block';
+      if (arrow) arrow.textContent   = _niftyOiCollapsed ? '▼' : '▲';
+    }
+
+    function formatOiNum(n) {
+      if (n === undefined || n === null) return '—';
+      const abs = Math.abs(n);
+      if (abs >= 10000000) return (n / 10000000).toFixed(2) + ' Cr';
+      if (abs >= 100000) return (n / 100000).toFixed(2) + ' L';
+      if (abs >= 1000) return (n / 1000).toFixed(1) + 'K';
+      return n.toString();
+    }
+
+    function formatOiChg(n) {
+      if (n === undefined || n === null || n === 0) return '+-';
+      const formatted = formatOiNum(n);
+      return (n > 0 ? '+' : '') + formatted;
+    }
+
+    /**
+     * Renders full-width 11-column OI Chain Heatmap table inside Nifty Analyzer.
+     * Features:
+     * - Descending Strike Order (highest strike at top down to lowest strike at bottom).
+     * - Dynamic heat-map background tints for Call OI (green) and Put OI (red/pink).
+     * - ATM (blue) and MAX PAIN (orange) strike row badging.
+     */
+    function renderNiftyOiChain(d) {
+      if (!d) return;
+      const expEl = document.getElementById('nifty-oi-exp');
+      if (expEl) expEl.textContent = d.expiry || '—';
+      const mpEl = document.getElementById('nifty-oi-mp');
+      if (mpEl) mpEl.textContent = d.max_pain !== undefined ? d.max_pain.toLocaleString('en-IN') : '—';
+      const spotEl = document.getElementById('nifty-oi-spot');
+      if (spotEl) spotEl.textContent = d.spot_ltp !== undefined ? d.spot_ltp.toLocaleString('en-IN', {minimumFractionDigits:2}) : '—';
+      const strdEl = document.getElementById('nifty-oi-straddle');
+      if (strdEl) strdEl.textContent = d.straddle !== undefined ? '₹' + d.straddle.toFixed(1) : '—';
+      const pcrEl = document.getElementById('nifty-oi-pcr');
+      if (pcrEl) pcrEl.textContent = d.pcr !== undefined ? d.pcr.toFixed(2) : '—';
+
+      // Summary Pill
+      const pillEl = document.getElementById('nifty-oi-summary-pill');
+      if (pillEl) {
+        pillEl.textContent = 'MP: ' + (d.max_pain || '—') + ' · PCR: ' + (d.pcr !== undefined ? d.pcr.toFixed(2) : '—');
+      }
+
+      const tbody = document.getElementById('nifty-oi-tbody');
+      if (!tbody) return;
+
+      // Sort strikes in descending order (highest strike at top, e.g. 24,800 -> 23,900)
+      const rows = (d.chain_data || []).slice().sort((a, b) => b.strike - a.strike);
+      if (!rows.length) {
+        tbody.innerHTML = '<tr><td colspan="11" style="text-align:center; padding:15px; color:var(--text-muted);">No OI Chain data available</td></tr>';
+        return;
+      }
+
+      const maxCeOi = Math.max(...rows.map(r => r.ce_oi || 0));
+      const maxPeOi = Math.max(...rows.map(r => r.pe_oi || 0));
+      const atmStrike = d.atm;
+      const maxPainStrike = d.max_pain;
+
+      tbody.innerHTML = '';
+      rows.forEach(r => {
+        const tr = document.createElement('tr');
+        if (r.strike === atmStrike) tr.classList.add('atm-row');
+        else if (r.strike === maxPainStrike) tr.classList.add('maxpain-row');
+
+        const ceAlpha = maxCeOi > 0 ? (0.05 + 0.35 * (r.ce_oi / maxCeOi)) : 0.05;
+        const peAlpha = maxPeOi > 0 ? (0.05 + 0.35 * (r.pe_oi / maxPeOi)) : 0.05;
+        const ceBg = 'background:rgba(63,185,80,' + ceAlpha.toFixed(2) + ');';
+        const peBg = 'background:rgba(248,81,73,' + peAlpha.toFixed(2) + ');';
+
+        let strikeBadge = '';
+        if (r.strike === atmStrike) strikeBadge += '<span class="nifty-badge-atm">ATM</span>';
+        if (r.strike === maxPainStrike) strikeBadge += '<span class="nifty-badge-mp">MAX PAIN</span>';
+
+        const strikeStyle = (r.strike === atmStrike) ? 'color:var(--blue);font-weight:700;' : ((r.strike === maxPainStrike) ? 'color:var(--amber);font-weight:700;' : 'font-weight:700;');
+
+        const ceBuildupColor = r.ce_buildup === 'Short Covering' || r.ce_buildup === 'Long Buildup' ? 'color:var(--green);' : (r.ce_buildup === 'Short Buildup' ? 'color:var(--red);' : 'color:var(--text-muted);');
+        const peBuildupColor = r.pe_buildup === 'Short Covering' || r.pe_buildup === 'Long Buildup' ? 'color:var(--green);' : (r.pe_buildup === 'Short Buildup' ? 'color:var(--red);' : 'color:var(--text-muted);');
+
+        const rowPcr = (r.ce_oi && r.ce_oi > 0) ? (r.pe_oi / r.ce_oi).toFixed(2) : '—';
+        const pcrColor = rowPcr >= 1.0 ? 'color:var(--green);' : 'color:var(--red);';
+
+        tr.innerHTML = '<td style="' + ceBg + '">' + formatOiNum(r.ce_oi) + '</td>'
+          + '<td style="' + ceBuildupColor + '">' + (r.ce_buildup || 'Flat') + '</td>'
+          + '<td style="color:var(--text-muted);">' + formatOiChg(r.ce_oi_chg) + '</td>'
+          + '<td>₹' + (r.ce_ltp !== undefined ? r.ce_ltp.toFixed(1) : '—') + '</td>'
+          + '<td style="' + strikeStyle + '">' + strikeBadge + r.strike.toLocaleString('en-IN') + '</td>'
+          + '<td>₹' + (r.pe_ltp !== undefined ? r.pe_ltp.toFixed(1) : '—') + '</td>'
+          + '<td style="color:var(--text-muted);">' + formatOiChg(r.pe_oi_chg) + '</td>'
+          + '<td style="' + peBuildupColor + '">' + (r.pe_buildup || 'Flat') + '</td>'
+          + '<td style="' + peBg + '">' + formatOiNum(r.pe_oi) + '</td>'
+          + '<td style="' + pcrColor + '">' + rowPcr + '</td>'
+          + '<td style="color:var(--text-muted);">' + (r.ce_action || r.pe_action || '–') + '</td>';
+
+        tbody.appendChild(tr);
+      });
+    }
+
+    async function fetchNiftyOiChain() {
+      try {
+        const r = await fetch('/api/oi/symbol/NIFTY');
+        _niftyOiData = await r.json();
+        renderNiftyOiChain(_niftyOiData);
+      } catch(e) {}
+    }
+
+    // Initial load + 30s poll for OI Chain Heatmap
+    fetchNiftyOiChain();
+    setInterval(fetchNiftyOiChain, 30000);
   </script>
 </body>
 

@@ -755,7 +755,337 @@ def compute_indicator_bundle(ohlcv: list) -> dict:
         'vwapArr': (_va := compute_intraday_vwap(ohlcv) if ohlcv and 'date' in ohlcv[0] else compute_vwap(ohlcv)),
         'vwap':    _va[-1] if _va else 0.0,
         'volRatio': compute_volume_ratio(volumes),
+        'technical_consensus': compute_technical_consensus(ohlcv),
     }
+
+
+# ── Technical Consensus Indicators ───────────────────────────────────────────
+
+def compute_stochastic(highs, lows, closes, k_period=9, d_period=6):
+    """Compute Stochastic Oscillator %K and %D."""
+    n = min(len(highs), len(lows), len(closes))
+    if n < k_period:
+        return {'k': [50.0] * n, 'd': [50.0] * n}
+    k_values = [50.0] * (k_period - 1)
+    for i in range(k_period - 1, n):
+        highest_high = max(highs[i - k_period + 1 : i + 1])
+        lowest_low = min(lows[i - k_period + 1 : i + 1])
+        diff = highest_high - lowest_low
+        k = 50.0 if diff == 0 else (closes[i] - lowest_low) / diff * 100
+        k_values.append(k)
+    d_values = [50.0] * (k_period - 1)
+    for i in range(k_period - 1, n):
+        if i < k_period - 1 + d_period - 1:
+            d_values.append(50.0)
+        else:
+            d = sum(k_values[i - d_period + 1 : i + 1]) / d_period
+            d_values.append(d)
+    return {'k': k_values, 'd': d_values}
+
+def compute_stochastic_rsi(closes, period=14):
+    """Compute Stochastic RSI."""
+    n = len(closes)
+    if n < period * 2:
+        return {'k': [50.0] * n, 'd': [50.0] * n}
+    rsi_vals = compute_rsi_array(closes, period)
+    stoch_rsi_k = [50.0] * (period * 2 - 1)
+    for i in range(period * 2 - 1, n):
+        window = rsi_vals[i - period + 1 : i + 1]
+        valid_window = [x for x in window if x is not None]
+        if not valid_window:
+            k = 50.0
+        else:
+            highest_rsi = max(valid_window)
+            lowest_rsi = min(valid_window)
+            diff = highest_rsi - lowest_rsi
+            curr_rsi = rsi_vals[i] if rsi_vals[i] is not None else 50.0
+            k = 50.0 if diff == 0 else (curr_rsi - lowest_rsi) / diff * 100
+        stoch_rsi_k.append(k)
+    stoch_rsi_d = [50.0] * (period * 2 - 1)
+    for i in range(period * 2 - 1, n):
+        d = sum(stoch_rsi_k[i - 2 : i + 1]) / 3.0
+        stoch_rsi_d.append(d)
+    return {'k': stoch_rsi_k, 'd': stoch_rsi_d}
+
+def compute_williams_r(highs, lows, closes, period=14):
+    """Compute Williams %R."""
+    n = min(len(highs), len(lows), len(closes))
+    if n < period:
+        return [-50.0] * n
+    w_r = [-50.0] * (period - 1)
+    for i in range(period - 1, n):
+        highest_high = max(highs[i - period + 1 : i + 1])
+        lowest_low = min(lows[i - period + 1 : i + 1])
+        diff = highest_high - lowest_low
+        val = -50.0 if diff == 0 else (highest_high - closes[i]) / diff * -100
+        w_r.append(val)
+    return w_r
+
+def compute_cci(highs, lows, closes, period=14):
+    """Compute Commodity Channel Index (CCI)."""
+    n = min(len(highs), len(lows), len(closes))
+    if n < period:
+        return [0.0] * n
+    typical_prices = [(highs[i] + lows[i] + closes[i]) / 3.0 for i in range(n)]
+    tp_sma = [0.0] * (period - 1)
+    for i in range(period - 1, n):
+        tp_sma.append(sum(typical_prices[i - period + 1 : i + 1]) / period)
+    cci = [0.0] * (period - 1)
+    for i in range(period - 1, n):
+        sma_val = tp_sma[i]
+        sum_abs_diff = sum(abs(typical_prices[j] - sma_val) for j in range(i - period + 1, i + 1))
+        mean_dev = sum_abs_diff / period
+        val = 0.0 if mean_dev == 0 else (typical_prices[i] - sma_val) / (0.015 * mean_dev)
+        cci.append(val)
+    return cci
+
+def compute_high_low_channels(highs, lows, period=14):
+    """Compute Highs and Lows channels (highest high and lowest low of last 14)."""
+    n = min(len(highs), len(lows))
+    if n < period:
+        return {'high': [0.0] * n, 'low': [0.0] * n}
+    ch_high = [0.0] * (period - 1)
+    ch_low = [0.0] * (period - 1)
+    for i in range(period - 1, n):
+        ch_high.append(max(highs[i - period + 1 : i + 1]))
+        ch_low.append(min(lows[i - period + 1 : i + 1]))
+    return {'high': ch_high, 'low': ch_low}
+
+def compute_ultimate_oscillator(highs, lows, closes, p1=7, p2=14, p3=28):
+    """Compute Ultimate Oscillator."""
+    n = min(len(highs), len(lows), len(closes))
+    if n < p3 + 1:
+        return [50.0] * n
+    bp = [0.0] * n
+    tr = [0.0] * n
+    for i in range(1, n):
+        prev_close = closes[i - 1]
+        bp[i] = closes[i] - min(lows[i], prev_close)
+        tr[i] = max(highs[i], prev_close) - min(lows[i], prev_close)
+    uo = [50.0] * p3
+    for i in range(p3, n):
+        sum_bp_7 = sum(bp[i - p1 + 1 : i + 1])
+        sum_tr_7 = sum(tr[i - p1 + 1 : i + 1])
+        avg7 = sum_bp_7 / sum_tr_7 if sum_tr_7 > 0 else 0.5
+        sum_bp_14 = sum(bp[i - p2 + 1 : i + 1])
+        sum_tr_14 = sum(tr[i - p2 + 1 : i + 1])
+        avg14 = sum_bp_14 / sum_tr_14 if sum_tr_14 > 0 else 0.5
+        sum_bp_28 = sum(bp[i - p3 + 1 : i + 1])
+        sum_tr_28 = sum(tr[i - p3 + 1 : i + 1])
+        avg28 = sum_bp_28 / sum_tr_28 if sum_tr_28 > 0 else 0.5
+        val = 100.0 * (4.0 * avg7 + 2.0 * avg14 + avg28) / (4.0 + 2.0 + 1.0)
+        uo.append(val)
+    return uo
+
+def compute_roc(closes, period=12):
+    """Compute Rate of Change (ROC)."""
+    n = len(closes)
+    if n < period + 1:
+        return [0.0] * n
+    roc = [0.0] * period
+    for i in range(period, n):
+        prev = closes[i - period]
+        val = 0.0 if prev == 0 else (closes[i] - prev) / prev * 100
+        roc.append(val)
+    return roc
+
+def compute_elder_ray(highs, lows, ema_13_arr):
+    """Compute Elder-Ray Bull Power and Bear Power."""
+    n = min(len(highs), len(lows), len(ema_13_arr))
+    bull_power = []
+    bear_power = []
+    for i in range(n):
+        ema = ema_13_arr[i]
+        if ema is None or ema == 0:
+            bull_power.append(0.0)
+            bear_power.append(0.0)
+        else:
+            bull_power.append(highs[i] - ema)
+            bear_power.append(lows[i] - ema)
+    return {'bull': bull_power, 'bear': bear_power}
+
+def compute_sma(data, period):
+    """Compute Simple Moving Average (SMA)."""
+    if not data or period <= 0:
+        return []
+    if len(data) < period:
+        return [sum(data) / len(data)] * len(data)
+    result = [None] * (period - 1)
+    for i in range(period - 1, len(data)):
+        result.append(sum(data[i - period + 1 : i + 1]) / period)
+    return result
+
+def compute_technical_consensus(ohlcv: list) -> dict:
+    """Compute consensus of standard oscillators and moving averages."""
+    if not ohlcv or len(ohlcv) < 28:
+        return {'consensus': 'NEUTRAL', 'bullish': 0, 'bearish': 0, 'neutral': 0}
+        
+    closes  = [c['close']  for c in ohlcv]
+    highs   = [c['high']   for c in ohlcv]
+    lows    = [c['low']    for c in ohlcv]
+    last_close = closes[-1]
+    
+    # ── 1. Calculate All Required Oscillators & Indicators ──
+    rsi = compute_rsi(closes)
+    
+    stoch = compute_stochastic(highs, lows, closes)
+    stoch_k, stoch_d = stoch['k'][-1], stoch['d'][-1]
+    
+    stoch_rsi = compute_stochastic_rsi(closes)
+    srsi_k = stoch_rsi['k'][-1]
+    
+    macd_arr = compute_macd_array(closes)
+    macd_hist = macd_arr['histogram']
+    
+    adx_val = compute_adx(highs, lows, closes)
+    plus_di = 0.0
+    minus_di = 0.0
+    if len(highs) >= 15:
+        tr, plus_dm, minus_dm = [], [], []
+        for i in range(1, len(highs)):
+            up   = highs[i] - highs[i - 1]
+            down = lows[i - 1] - lows[i]
+            plus_dm.append(up if up > down and up > 0 else 0)
+            minus_dm.append(down if down > up and down > 0 else 0)
+            tr.append(max(highs[i] - lows[i], abs(highs[i] - closes[i - 1]), abs(lows[i] - closes[i - 1])))
+        if len(tr) >= 14:
+            tr_n = sum(tr[-14:])
+            plus_n = sum(plus_dm[-14:])
+            minus_n = sum(minus_dm[-14:])
+            plus_di = (plus_n / tr_n * 100) if tr_n > 0 else 0
+            minus_di = (minus_n / tr_n * 100) if tr_n > 0 else 0
+            
+    w_r = compute_williams_r(highs, lows, closes)[-1]
+    cci = compute_cci(highs, lows, closes)[-1]
+    
+    hl_ch = compute_high_low_channels(highs, lows)
+    hl_high, hl_low = hl_ch['high'][-1], hl_ch['low'][-1]
+    hl_mid = (hl_high + hl_low) / 2.0
+    
+    uo = compute_ultimate_oscillator(highs, lows, closes)[-1]
+    roc_arr = compute_roc(closes)
+    
+    ema13_arr = compute_ema(closes, 13)
+    elder = compute_elder_ray(highs, lows, ema13_arr)
+    bull_arr = elder['bull']
+    bear_arr = elder['bear']
+    
+    # ── 2. Voting logic for Oscillators ──
+    bull_votes = 0
+    bear_votes = 0
+    neutral_votes = 0
+    
+    # RSI(14)
+    if rsi < 30: bull_votes += 1
+    elif rsi > 70: bear_votes += 1
+    else: neutral_votes += 1
+    
+    # STOCH(9,6)
+    if stoch_k < 20 and stoch_k > stoch_d: bull_votes += 1
+    elif stoch_k > 80 and stoch_k < stoch_d: bear_votes += 1
+    else: neutral_votes += 1
+    
+    # STOCHRSI(14)
+    if srsi_k < 20: bull_votes += 1
+    elif srsi_k > 80: bear_votes += 1
+    else: neutral_votes += 1
+    
+    # MACD(12,26)
+    if len(macd_hist) >= 2 and macd_hist[-1] is not None and macd_hist[-2] is not None:
+        prev_hist = macd_hist[-2]
+        curr_hist = macd_hist[-1]
+        if prev_hist <= 0 < curr_hist: bull_votes += 1
+        elif prev_hist >= 0 > curr_hist: bear_votes += 1
+        else: neutral_votes += 1
+    else:
+        neutral_votes += 1
+    
+    # ADX(14)
+    if adx_val > 20:
+        if plus_di > minus_di: bull_votes += 1
+        elif minus_di > plus_di: bear_votes += 1
+        else: neutral_votes += 1
+    else:
+        neutral_votes += 1
+        
+    # Williams %R
+    if w_r < -80: bull_votes += 1
+    elif w_r > -20: bear_votes += 1
+    else: neutral_votes += 1
+    
+    # CCI(14)
+    if cci < -100: bull_votes += 1
+    elif cci > 100: bear_votes += 1
+    else: neutral_votes += 1
+    
+    # Highs/Lows(14)
+    if last_close > hl_mid: bull_votes += 1
+    elif last_close < hl_mid: bear_votes += 1
+    else: neutral_votes += 1
+    
+    # Ultimate Oscillator
+    if uo < 30: bull_votes += 1
+    elif uo > 70: bear_votes += 1
+    else: neutral_votes += 1
+    
+    # ROC
+    if len(roc_arr) >= 2 and roc_arr[-1] is not None and roc_arr[-2] is not None:
+        prev_roc = roc_arr[-2]
+        curr_roc = roc_arr[-1]
+        if prev_roc <= 0 < curr_roc: bull_votes += 1
+        elif prev_roc >= 0 > curr_roc: bear_votes += 1
+        else: neutral_votes += 1
+    else:
+        neutral_votes += 1
+    
+    # Elder Bull/Bear Power (13)
+    if len(bull_arr) >= 2 and len(ema13_arr) >= 2 and ema13_arr[-1] is not None:
+        curr_bull = bull_arr[-1]
+        prev_bull = bull_arr[-2]
+        curr_bear = bear_arr[-1]
+        prev_bear = bear_arr[-2]
+        curr_ema = ema13_arr[-1]
+        if curr_bull > prev_bull and last_close > curr_ema:
+            bull_votes += 1
+        elif curr_bear < prev_bear and last_close < curr_ema:
+            bear_votes += 1
+        else:
+            neutral_votes += 1
+    else:
+        neutral_votes += 1
+    
+    # ── 3. Calculate Moving Averages and Vote ──
+    periods = [5, 10, 20, 50, 100, 200]
+    for p in periods:
+        # SMA
+        sma_arr = compute_sma(closes, p)
+        sma = sma_arr[-1] if sma_arr and sma_arr[-1] is not None else last_close
+        if last_close > sma: bull_votes += 1
+        elif last_close < sma: bear_votes += 1
+        else: neutral_votes += 1
+        
+        # EMA
+        ema_arr = compute_ema(closes, p)
+        ema = ema_arr[-1] if ema_arr and ema_arr[-1] is not None else last_close
+        if last_close > ema: bull_votes += 1
+        elif last_close < ema: bear_votes += 1
+        else: neutral_votes += 1
+        
+    if bull_votes > bear_votes:
+        consensus = 'BULLISH'
+    elif bear_votes > bull_votes:
+        consensus = 'BEARISH'
+    else:
+        consensus = 'NEUTRAL'
+        
+    return {
+        'consensus': consensus,
+        'bullish': bull_votes,
+        'bearish': bear_votes,
+        'neutral': neutral_votes
+    }
+
+
 
 # ── SMC Indicators (for APEX Dashboard) ────────────────────────────────────────
 

@@ -1,0 +1,930 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Nifty Candle-by-Candle Move Analyzer</title>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-main: #0B0E14;
+            --bg-card: #131A26;
+            --bg-row-hover: #1C2638;
+            --border-color: #232E42;
+            --text-primary: #F0F4F8;
+            --text-secondary: #8E9BAE;
+            --accent-broad: #10B981;
+            --accent-concentrated: #F59E0B;
+            --accent-rotation: #3B82F6;
+            --accent-red: #EF4444;
+            --accent-gold: #EAB308;
+            --font-display: 'Outfit', sans-serif;
+            --font-body: 'Plus Jakarta Sans', sans-serif;
+            --shadow-premium: 0 10px 30px -10px rgba(0, 0, 0, 0.7);
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            background-color: var(--bg-main);
+            color: var(--text-primary);
+            font-family: var(--font-body);
+            overflow-x: hidden;
+            padding: 24px;
+        }
+
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 24px;
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 16px;
+        }
+
+        .title-area h1 {
+            font-family: var(--font-display);
+            font-size: 28px;
+            font-weight: 700;
+            letter-spacing: -0.5px;
+            background: linear-gradient(135deg, #FFF 50%, #8E9BAE 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .title-area p {
+            color: var(--text-secondary);
+            font-size: 13px;
+            margin-top: 4px;
+        }
+
+        .status-badge {
+            background: rgba(16, 185, 129, 0.1);
+            color: var(--accent-broad);
+            border: 1px solid rgba(16, 185, 129, 0.2);
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .status-pulse {
+            width: 8px;
+            height: 8px;
+            background-color: var(--accent-broad);
+            border-radius: 50%;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0% { transform: scale(0.9); opacity: 1; }
+            50% { transform: scale(1.2); opacity: 0.5; }
+            100% { transform: scale(0.9); opacity: 1; }
+        }
+
+        /* Metrics Grid */
+        .metrics-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+            gap: 20px;
+            margin-bottom: 24px;
+        }
+
+        .metric-card {
+            background-color: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 16px;
+            padding: 20px;
+            box-shadow: var(--shadow-premium);
+            transition: transform 0.2s;
+        }
+
+        .metric-card:hover {
+            transform: translateY(-2px);
+        }
+
+        .metric-label {
+            color: var(--text-secondary);
+            font-size: 12px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .metric-value {
+            font-family: var(--font-display);
+            font-size: 32px;
+            font-weight: 700;
+            margin-top: 8px;
+        }
+
+        .metric-desc {
+            color: var(--text-secondary);
+            font-size: 12px;
+            margin-top: 6px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        /* Timeline Table Container */
+        .timeline-container {
+            background-color: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 16px;
+            box-shadow: var(--shadow-premium);
+            overflow: hidden;
+        }
+
+        .table-header {
+            padding: 16px 20px;
+            border-bottom: 1px solid var(--border-color);
+            font-weight: 600;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .table-header h2 {
+            font-family: var(--font-display);
+            font-size: 18px;
+        }
+
+        .view-controls {
+            display: flex;
+            gap: 10px;
+        }
+
+        .btn {
+            background: #1C2638;
+            color: var(--text-primary);
+            border: 1px solid var(--border-color);
+            padding: 6px 12px;
+            border-radius: 8px;
+            font-size: 12px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .btn.active, .btn:hover {
+            background: var(--text-primary);
+            color: var(--bg-main);
+        }
+
+        /* Stream Rows */
+        .stream-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .stream-th {
+            text-align: left;
+            padding: 14px 20px;
+            color: var(--text-secondary);
+            font-size: 12px;
+            font-weight: 600;
+            text-transform: uppercase;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .stream-row {
+            border-bottom: 1px solid var(--border-color);
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+
+        .stream-row:hover {
+            background-color: var(--bg-row-hover);
+        }
+
+        .stream-td {
+            padding: 16px 20px;
+            font-size: 14px;
+            vertical-align: middle;
+        }
+
+        /* Custom cell styles */
+        .cell-time {
+            font-weight: 600;
+            font-family: var(--font-display);
+            color: var(--text-primary);
+        }
+
+        .cell-move {
+            font-family: var(--font-display);
+            font-weight: 700;
+        }
+
+        .move-up { color: var(--accent-broad); }
+        .move-down { color: var(--accent-red); }
+
+        .breadth-bar-container {
+            width: 140px;
+            height: 10px;
+            background: rgba(239, 68, 68, 0.2);
+            border-radius: 4px;
+            overflow: hidden;
+            display: inline-block;
+            vertical-align: middle;
+            margin-right: 8px;
+        }
+
+        .breadth-bar-fill {
+            height: 100%;
+            background-color: var(--accent-broad);
+            border-radius: 4px;
+        }
+
+        .breadth-label {
+            font-size: 12px;
+            font-weight: 600;
+            color: var(--text-secondary);
+        }
+
+        /* Driver Badges */
+        .badge {
+            display: inline-flex;
+            align-items: center;
+            padding: 4px 10px;
+            border-radius: 6px;
+            font-size: 11px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.3px;
+        }
+
+        .badge-broad {
+            background: rgba(16, 185, 129, 0.1);
+            color: var(--accent-broad);
+            border: 1px solid rgba(16, 185, 129, 0.2);
+        }
+
+        .badge-concentrated {
+            background: rgba(245, 158, 11, 0.1);
+            color: var(--accent-concentrated);
+            border: 1px solid rgba(245, 158, 11, 0.2);
+        }
+
+        .badge-rotation {
+            background: rgba(59, 130, 246, 0.1);
+            color: var(--accent-rotation);
+            border: 1px solid rgba(59, 130, 246, 0.2);
+        }
+
+        .badge-gold {
+            background: rgba(234, 179, 8, 0.1);
+            color: var(--accent-gold);
+            border: 1px solid rgba(234, 179, 8, 0.2);
+        }
+
+        .badge-thin {
+            background: rgba(239, 68, 68, 0.1);
+            color: var(--accent-red);
+            border: 1px solid rgba(239, 68, 68, 0.2);
+        }
+
+        .badge-gray {
+            background: rgba(142, 155, 174, 0.1);
+            color: var(--text-secondary);
+            border: 1px solid rgba(142, 155, 174, 0.2);
+        }
+
+        /* Direction Badges */
+        .badge-bullish {
+            background: rgba(16, 185, 129, 0.15);
+            color: #10B981;
+            border: 1px solid rgba(16, 185, 129, 0.3);
+        }
+
+        .badge-bearish {
+            background: rgba(239, 68, 68, 0.15);
+            color: #EF4444;
+            border: 1px solid rgba(239, 68, 68, 0.3);
+        }
+
+        .badge-choppy {
+            background: rgba(245, 158, 11, 0.15);
+            color: #F59E0B;
+            border: 1px solid rgba(245, 158, 11, 0.3);
+        }
+
+        /* Sector Leaderboard styling */
+        .sector-leaderboard-container {
+            max-height: 120px;
+            overflow-y: auto;
+            padding-right: 6px;
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+        .sector-leaderboard-container::-webkit-scrollbar {
+            width: 4px;
+        }
+        .sector-leaderboard-container::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        .sector-leaderboard-container::-webkit-scrollbar-thumb {
+            background: var(--border-color);
+            border-radius: 2px;
+        }
+        .sector-row-metric {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 6px 10px;
+            background: rgba(28, 38, 56, 0.4);
+            border-radius: 8px;
+            border: 1px solid var(--border-color);
+            font-size: 13px;
+        }
+        .sector-name-lbl {
+            font-weight: 600;
+            width: 35%;
+            color: var(--text-primary);
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+        .sector-contrib-lbl {
+            font-family: var(--font-display);
+            font-weight: 700;
+            width: 25%;
+            text-align: right;
+        }
+        .sector-bar-wrapper {
+            width: 35%;
+            display: flex;
+            align-items: center;
+            justify-content: flex-end;
+            gap: 8px;
+        }
+        .split-bar-container {
+            width: 80px;
+            height: 6px;
+            background: rgba(239, 68, 68, 0.3);
+            border-radius: 3px;
+            overflow: hidden;
+        }
+        .split-bar-fill {
+            height: 100%;
+            background: var(--accent-broad);
+        }
+
+        /* Expandable details styling */
+        .details-row {
+            background-color: rgba(19, 26, 38, 0.6);
+            display: none;
+        }
+
+        .details-container {
+            padding: 24px;
+            border-bottom: 1px solid var(--border-color);
+            animation: slideDown 0.2s ease-out;
+        }
+
+        @keyframes slideDown {
+            from { opacity: 0; transform: translateY(-4px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .details-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+        }
+
+        @media (max-width: 768px) {
+            .details-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .detail-pane h3 {
+            font-family: var(--font-display);
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 12px;
+            border-left: 3px solid var(--accent-rotation);
+            padding-left: 8px;
+        }
+
+        .contrib-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 8px 12px;
+            background: #1C2638;
+            border-radius: 8px;
+            margin-bottom: 6px;
+            font-size: 13px;
+        }
+
+        .contrib-item .sym {
+            font-weight: 600;
+        }
+
+        .contrib-item .val {
+            font-family: var(--font-display);
+            font-weight: 700;
+        }
+
+        /* Sector grid details */
+        .sector-contrib-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 8px;
+        }
+
+        .sector-item {
+            background: #1C2638;
+            padding: 10px 12px;
+            border-radius: 8px;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            gap: 4px;
+        }
+
+        .sector-item .sec-name {
+            font-weight: 500;
+            font-size: 12px;
+            color: var(--text-secondary);
+        }
+
+        .sector-item .sec-val {
+            display: flex;
+            justify-content: space-between;
+            font-family: var(--font-display);
+            font-size: 14px;
+            font-weight: 700;
+        }
+
+        .sector-breadth-pct {
+            font-size: 11px;
+            font-weight: 600;
+            color: var(--text-secondary);
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Header Area -->
+    <header>
+        <div class="title-area">
+            <h1>Nifty Index Candle Analyzer ⚡</h1>
+            <p>Deconstructing price actions tick-by-tick to uncover institutional drive & sector rotation</p>
+        </div>
+        <div class="status-badge">
+            <span class="status-pulse"></span>
+            <span id="live-indicator">LIVE FEED RUNNING</span>
+        </div>
+    </header>
+
+    <!-- Metrics Cards -->
+    <div class="metrics-grid">
+        <div class="metric-card" style="grid-column: span 2; padding: 16px; display: flex; flex-direction: column; gap: 8px;">
+            <div class="metric-label" style="margin-bottom: 4px;">Sector-Wise Cumulative Attribution</div>
+            <div class="sector-leaderboard-container" style="max-height: 140px; overflow-y: auto;">
+                <table style="width: 100%; border-collapse: collapse; font-size: 13px; text-align: left;">
+                    <thead>
+                        <tr style="border-bottom: 1px solid var(--border-color); color: var(--text-secondary); font-size: 11px; text-transform: uppercase; height: 28px;">
+                            <th style="padding: 4px 0; font-weight: 600;">Sector</th>
+                            <th style="padding: 4px 0; font-weight: 600; text-align: right; width: 18%;">Index Weight</th>
+                            <th style="padding: 4px 0; font-weight: 600; text-align: right; width: 22%;">Daily Contrib</th>
+                            <th style="padding: 4px 0; font-weight: 600; text-align: right; width: 35%;">Pos/Neg Split</th>
+                        </tr>
+                    </thead>
+                    <tbody id="sector-leaderboard-body">
+                        <!-- Injected dynamically -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        <div class="metric-card">
+            <div class="metric-label">Indices Breadth (Daily)</div>
+            <div class="metric-value" id="daily-breadth">68.4%</div>
+            <div class="metric-desc">
+                <div class="breadth-bar-container" style="width: 100px;">
+                    <div class="breadth-bar-fill" style="width: 68.4%;"></div>
+                </div>
+                <span>34 of 50 Up</span>
+            </div>
+        </div>
+        <div class="metric-card">
+            <div class="metric-label">Market Trend Mix (Today)</div>
+            <div class="metric-value" style="font-size: 24px;" id="direction-mix">
+                12 <span style="font-size:12px; color:var(--text-secondary);">BUL</span> | 
+                4 <span style="font-size:12px; color:var(--text-secondary);">BEA</span> | 
+                3 <span style="font-size:12px; color:var(--text-secondary);">CHP</span>
+            </div>
+            <div class="metric-desc">Total analyzed candles: <span id="total-candles">19</span></div>
+        </div>
+    </div>
+
+    <!-- Timeline Stream Table -->
+    <div class="timeline-container">
+        <div class="table-header">
+            <h2>Chronological Candle Moves</h2>
+            <div class="view-controls">
+                <button class="btn active" id="btn-all" onclick="filterDriver('all')">All Drivers</button>
+                <button class="btn" id="btn-concentrated" onclick="filterDriver('concentrated')">Concentrated Only</button>
+                <button class="btn" id="btn-rotation" onclick="filterDriver('sector_rotation')">Sector Rotations</button>
+            </div>
+        </div>
+        <table class="stream-table">
+            <thead>
+                <tr>
+                    <th class="stream-th" style="width: 10%;">Time</th>
+                    <th class="stream-th" style="width: 12%;">Net Move</th>
+                    <th class="stream-th" style="width: 18%;">Weighted Breadth</th>
+                    <th class="stream-th" style="width: 15%;">Direction</th>
+                    <th class="stream-th" style="width: 15%;">Driver Type</th>
+                    <th class="stream-th" style="width: 15%;">RVOL Conviction</th>
+                    <th class="stream-th" style="width: 15%;">Key Driver Stock / Sector</th>
+                </tr>
+            </thead>
+            <tbody id="timeline-body">
+                <!-- Rows injected dynamically -->
+            </tbody>
+        </table>
+    </div>
+
+    <script>
+        // Static mock data for fallback & offline demonstration
+        const MOCK_DATA = [
+            {
+                timestamp: "2026-07-17 15:25:00",
+                direction: "bullish",
+                net_contribution: 12.45,
+                weighted_breadth: 74.20,
+                driver: "concentrated",
+                flagged_symbols: ["RELIANCE", "HDFCBANK"],
+                flagged_sector: null,
+                rvol_results: { "RELIANCE": 2.45, "HDFCBANK": 1.85, "NIFTY_FUT": 2.10 },
+                conviction: "confirmed",
+                analysis_details: {
+                    contributions: [
+                        { symbol: "RELIANCE", sector: "Oil Gas & Fuels", weight: 0.098, pct_change: 0.85, contribution: 0.0833 },
+                        { symbol: "HDFCBANK", sector: "Financial Services", weight: 0.115, pct_change: 0.60, contribution: 0.0690 },
+                        { symbol: "ICICIBANK", sector: "Financial Services", weight: 0.078, pct_change: -0.15, contribution: -0.0117 },
+                        { symbol: "TCS", sector: "Information Technology", weight: 0.041, pct_change: 0.20, contribution: 0.0082 }
+                    ],
+                    sector_breadth: {
+                        "Financial Services": 80.0, "Oil Gas & Fuels": 100.0, "Information Technology": 60.0,
+                        "Fast Moving Consumer Goods": 70.0, "Automobile": 65.0, "Metals & Mining": 50.0,
+                        "Construction": 80.0, "Healthcare": 55.0, "Telecommunication": 100.0,
+                        "Consumer Durables": 50.0, "Power": 60.0, "Construction Materials": 50.0, "Services": 50.0
+                    },
+                    sector_contribution: {
+                        "Financial Services": 4.12, "Oil Gas & Fuels": 3.85, "Information Technology": 1.45,
+                        "Fast Moving Consumer Goods": 0.85, "Automobile": 0.62, "Metals & Mining": 0.40,
+                        "Construction": 0.35, "Healthcare": 0.25, "Telecommunication": 0.22,
+                        "Consumer Durables": 0.15, "Power": 0.10, "Construction Materials": 0.05, "Services": 0.04
+                    }
+                }
+            },
+            {
+                timestamp: "2026-07-17 15:20:00",
+                direction: "bearish",
+                net_contribution: -8.12,
+                weighted_breadth: 28.50,
+                driver: "sector_rotation",
+                flagged_symbols: ["INFY", "TCS", "HCLTECH"],
+                flagged_sector: "Information Technology",
+                rvol_results: { "INFY": 1.95, "TCS": 1.65, "NIFTY_FUT": 1.45 },
+                conviction: "confirmed",
+                analysis_details: {
+                    contributions: [
+                        { symbol: "INFY", sector: "Information Technology", weight: 0.056, pct_change: -1.25, contribution: -0.0700 },
+                        { symbol: "TCS", sector: "Information Technology", weight: 0.041, pct_change: -0.95, contribution: -0.0389 },
+                        { symbol: "HDFCBANK", sector: "Financial Services", weight: 0.115, pct_change: 0.15, contribution: 0.0172 }
+                    ],
+                    sector_breadth: {
+                        "Information Technology": 10.0, "Financial Services": 60.0, "Oil Gas & Fuels": 40.0,
+                        "Fast Moving Consumer Goods": 30.0, "Automobile": 25.0, "Metals & Mining": 20.0,
+                        "Construction": 40.0, "Healthcare": 50.0, "Telecommunication": 30.0,
+                        "Consumer Durables": 40.0, "Power": 30.0, "Construction Materials": 20.0, "Services": 30.0
+                    },
+                    sector_contribution: {
+                        "Information Technology": -4.25, "Financial Services": 0.85, "Oil Gas & Fuels": -1.20,
+                        "Fast Moving Consumer Goods": -0.95, "Automobile": -0.80, "Metals & Mining": -0.65,
+                        "Construction": -0.42, "Healthcare": 0.15, "Telecommunication": -0.35,
+                        "Consumer Durables": -0.22, "Power": -0.15, "Construction Materials": -0.10, "Services": -0.03
+                    }
+                }
+            },
+            {
+                timestamp: "2026-07-17 15:15:00",
+                direction: "choppy",
+                net_contribution: 4.20,
+                weighted_breadth: 58.10,
+                driver: "broad_based",
+                flagged_symbols: [],
+                flagged_sector: null,
+                rvol_results: {},
+                conviction: "not_checked",
+                analysis_details: {
+                    contributions: [
+                        { symbol: "BHARTIARTL", sector: "Telecommunication", weight: 0.038, pct_change: 0.35, contribution: 0.0133 },
+                        { symbol: "LT", sector: "Construction", weight: 0.043, pct_change: 0.25, contribution: 0.0107 }
+                    ],
+                    sector_breadth: {
+                        "Telecommunication": 100.0, "Construction": 100.0, "Financial Services": 50.0,
+                        "Information Technology": 50.0, "Oil Gas & Fuels": 50.0, "Fast Moving Consumer Goods": 50.0,
+                        "Automobile": 50.0, "Metals & Mining": 50.0, "Healthcare": 50.0,
+                        "Consumer Durables": 50.0, "Power": 50.0, "Construction Materials": 50.0, "Services": 50.0
+                    },
+                    sector_contribution: {
+                        "Telecommunication": 1.33, "Construction": 1.07, "Financial Services": 0.45,
+                        "Information Technology": 0.35, "Oil Gas & Fuels": 0.30, "Fast Moving Consumer Goods": 0.25,
+                        "Automobile": 0.15, "Metals & Mining": 0.10, "Healthcare": 0.08,
+                        "Consumer Durables": 0.05, "Power": 0.04, "Construction Materials": 0.02, "Services": 0.01
+                    }
+                }
+            }
+        ];
+
+        let activeFilter = 'all';
+        let mainDataList = [];
+
+        async function fetchAnalysis() {
+            try {
+                const response = await fetch('/api/nifty-candle-analysis');
+                if (response.ok) {
+                    const data = await response.json();
+                    if (data && data.length > 0) {
+                        mainDataList = data;
+                        document.getElementById('live-indicator').textContent = "LIVE FEED RUNNING";
+                        updateTopSummaryStats();
+                        renderTimeline();
+                        return;
+                    }
+                }
+            } catch (err) {
+                console.warn("[Nifty Analyzer] Backend API offline. Reverting to mock visual data representation.");
+            }
+            
+            // Revert to fallback data
+            mainDataList = MOCK_DATA;
+            document.getElementById('live-indicator').textContent = "OFFLINE FALLBACK DATA";
+            updateTopSummaryStats();
+            renderTimeline();
+        }
+
+        function toggleRow(timestamp) {
+            const el = document.getElementById(`details-${timestamp.replace(/[: ]/g, '-')}`);
+            if (el) {
+                el.style.display = el.style.display === 'table-row' ? 'none' : 'table-row';
+            }
+        }
+
+        function filterDriver(type) {
+            activeFilter = type;
+            document.querySelectorAll('.view-controls .btn').forEach(b => b.classList.remove('active'));
+            
+            let btnId = 'btn-all';
+            if (type === 'concentrated') btnId = 'btn-concentrated';
+            else if (type === 'sector_rotation') btnId = 'btn-rotation';
+            
+            document.getElementById(btnId).classList.add('active');
+            renderTimeline();
+        }
+
+        function updateTopSummaryStats() {
+            let total = mainDataList.length;
+            let bul = mainDataList.filter(d => d.direction === 'bullish').length;
+            let bea = mainDataList.filter(d => d.direction === 'bearish').length;
+            let chp = mainDataList.filter(d => d.direction === 'choppy' || !d.direction).length;
+
+            document.getElementById('total-candles').textContent = total;
+            document.getElementById('direction-mix').innerHTML = `
+                <span class="move-up">${bul} BUL</span> | 
+                <span class="move-down">${bea} BEA</span> | 
+                <span style="color: var(--accent-gold);">${chp} CHP</span>
+            `;
+
+            // Calculate daily average breadth
+            if (total > 0) {
+                let avgBreadth = mainDataList.reduce((acc, row) => acc + row.weighted_breadth, 0) / total;
+                document.getElementById('daily-breadth').textContent = `${avgBreadth.toFixed(1)}%`;
+                document.querySelector('.metric-card:nth-child(2) .breadth-bar-fill').style.width = `${avgBreadth}%`;
+            }
+
+            // Default normalized sector weights for all 13 Nifty sectors (summing to 100.0%)
+            const DEFAULT_SECTOR_WEIGHTS = {
+                "Financial Services": 0.340,
+                "Information Technology": 0.130,
+                "Oil Gas & Fuels": 0.107,
+                "Fast Moving Consumer Goods": 0.087,
+                "Automobile": 0.074,
+                "Metals & Mining": 0.058,
+                "Construction": 0.042,
+                "Healthcare": 0.041,
+                "Telecommunication": 0.037,
+                "Consumer Durables": 0.027,
+                "Power": 0.026,
+                "Construction Materials": 0.021,
+                "Services": 0.010
+            };
+
+            // Calculate Sector-wise stats dynamically
+            let sectorStats = {};
+
+            mainDataList.forEach(row => {
+                const secContrib = row.analysis_details.sector_contribution;
+                if (!secContrib) return;
+                
+                for (const [sec, val] of Object.entries(secContrib)) {
+                    if (!sectorStats[sec]) {
+                        sectorStats[sec] = { net: 0, pos_sum: 0, neg_sum: 0 };
+                    }
+                    sectorStats[sec].net += val;
+                    if (val > 0) {
+                        sectorStats[sec].pos_sum += val;
+                    } else if (val < 0) {
+                        sectorStats[sec].neg_sum += Math.abs(val);
+                    }
+                }
+            });
+
+            // Convert to list for ALL 13 sectors (summing to exactly 100.0%)
+            let sectorList = Object.keys(DEFAULT_SECTOR_WEIGHTS).map(name => {
+                let stats = sectorStats[name] || { net: 0, pos_sum: 0, neg_sum: 0 };
+                let totalAbs = stats.pos_sum + stats.neg_sum;
+                let pctPos = totalAbs > 0 ? (stats.pos_sum / totalAbs) * 100 : 50;
+                return {
+                    name,
+                    weight: DEFAULT_SECTOR_WEIGHTS[name] * 100,
+                    net: stats.net,
+                    pctPos: Math.round(pctPos)
+                };
+            });
+
+            // Sort by sector index weight desc
+            sectorList.sort((a, b) => b.weight - a.weight);
+
+            // Render Sector Leaderboard HTML
+            const leadContainer = document.getElementById('sector-leaderboard-body');
+            if (sectorList.length === 0) {
+                leadContainer.innerHTML = `<tr><td colspan="4" style="text-align: center; color: var(--text-secondary); padding: 20px;">No sector stats logged yet.</td></tr>`;
+            } else {
+                leadContainer.innerHTML = sectorList.map(s => {
+                    const isUp = s.net >= 0;
+                    return `
+                        <tr style="border-bottom: 1px solid rgba(35, 46, 66, 0.5); height: 32px;">
+                            <td style="padding: 4px 0; font-weight: 600; color: var(--text-primary);">${s.name}</td>
+                            <td style="padding: 4px 0; text-align: right; color: var(--text-secondary); font-family: var(--font-display); font-weight: 500;">
+                                ${s.weight.toFixed(1)}%
+                            </td>
+                            <td style="padding: 4px 0; text-align: right; font-family: var(--font-display); font-weight: 700;" class="${isUp ? 'move-up' : 'move-down'}">
+                                ${isUp ? '+' : ''}${s.net.toFixed(2)} pts
+                            </td>
+                            <td style="padding: 4px 0;">
+                                <div style="display: flex; align-items: center; justify-content: flex-end; gap: 8px;">
+                                    <div class="split-bar-container">
+                                        <div class="split-bar-fill" style="width: ${s.pctPos}%;"></div>
+                                    </div>
+                                    <span class="breadth-label" style="font-size: 11px; min-width: 68px; text-align: right; white-space: nowrap;">
+                                        ${s.pctPos}% P / ${100 - s.pctPos}% N
+                                    </span>
+                                </div>
+                            </td>
+                        </tr>
+                    `;
+                }).join('');
+            }
+        }
+
+        function renderTimeline() {
+            const tbody = document.getElementById('timeline-body');
+            tbody.innerHTML = '';
+
+            let filtered = mainDataList;
+            if (activeFilter !== 'all') {
+                filtered = mainDataList.filter(row => row.driver === activeFilter);
+            }
+
+            if (filtered.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="6" class="stream-td" style="text-align: center; color: var(--text-secondary); padding: 40px;">No analyzed candles recorded for this driver filter.</td></tr>`;
+                return;
+            }
+
+            filtered.forEach(row => {
+                const tsId = row.timestamp.replace(/[: ]/g, '-');
+                const isUp = row.net_contribution >= 0;
+                
+                // Direction tag
+                let directionBadge = '';
+                if (row.direction === 'bullish') {
+                    directionBadge = `<span class="badge badge-bullish">Bullish</span>`;
+                } else if (row.direction === 'bearish') {
+                    directionBadge = `<span class="badge badge-bearish">Bearish</span>`;
+                } else {
+                    directionBadge = `<span class="badge badge-choppy">Choppy</span>`;
+                }
+
+                // Driver tags
+                let driverBadge = '';
+                if (row.driver === 'broad_based') {
+                    driverBadge = `<span class="badge badge-broad">Broad Based</span>`;
+                } else if (row.driver === 'concentrated') {
+                    driverBadge = `<span class="badge badge-concentrated">Concentrated</span>`;
+                } else if (row.driver === 'sector_rotation') {
+                    driverBadge = `<span class="badge badge-rotation">Sector Rotation</span>`;
+                }
+
+                // Conviction tags
+                let convictionBadge = '';
+                if (row.conviction === 'confirmed') {
+                    convictionBadge = `<span class="badge badge-gold">Confirmed</span>`;
+                } else if (row.conviction === 'thin') {
+                    convictionBadge = `<span class="badge badge-thin">Thin</span>`;
+                } else {
+                    convictionBadge = `<span class="badge badge-gray">Not Checked</span>`;
+                }
+
+                // Driver details
+                let primaryDetails = '';
+                if (row.driver === 'concentrated' && row.flagged_symbols) {
+                    primaryDetails = row.flagged_symbols.slice(0, 2).map(s => `<span class="badge badge-gray">${s}</span>`).join(' ');
+                } else if (row.driver === 'sector_rotation' && row.flagged_sector) {
+                    primaryDetails = `<span class="badge badge-rotation">${row.flagged_sector}</span>`;
+                } else {
+                    primaryDetails = `<span style="color:var(--text-secondary); font-size:12px;">—</span>`;
+                }
+
+                // Append Summary Row (colspan updated to 7 in details-row)
+                const rowHtml = `
+                    <tr class="stream-row" onclick="toggleRow('${row.timestamp}')">
+                        <td class="stream-td cell-time">${row.timestamp.split(' ')[1] || row.timestamp}</td>
+                        <td class="stream-td cell-move ${isUp ? 'move-up' : 'move-down'}">${isUp ? '+' : ''}${row.net_contribution.toFixed(2)} pts</td>
+                        <td class="stream-td">
+                            <div class="breadth-bar-container">
+                                <div class="breadth-bar-fill" style="width: ${row.weighted_breadth}%;"></div>
+                            </div>
+                            <span class="breadth-label">${row.weighted_breadth}%</span>
+                        </td>
+                        <td class="stream-td">${directionBadge}</td>
+                        <td class="stream-td">${driverBadge}</td>
+                        <td class="stream-td">${convictionBadge}</td>
+                        <td class="stream-td">${primaryDetails}</td>
+                    </tr>
+                    
+                    <tr class="details-row" id="details-${tsId}">
+                        <td colspan="7">
+                            <div class="details-container">
+                                <div class="details-grid">
+                                    <!-- Stock contribution pane -->
+                                    <div class="detail-pane">
+                                        <h3>Constituent Contributions</h3>
+                                        ${row.analysis_details.contributions.slice(0, 4).map(c => `
+                                            <div class="contrib-item">
+                                                <span class="sym">${c.symbol} <span style="font-size:10px; color:var(--text-secondary);">(${c.sector})</span></span>
+                                                <span class="val ${c.contribution >= 0 ? 'move-up' : 'move-down'}">${c.contribution >= 0 ? '+' : ''}${c.contribution.toFixed(3)} pts</span>
+                                            </div>
+                                        `).join('')}
+                                    </div>
+                                    
+                                    <!-- Sector breakdown pane -->
+                                    <div class="detail-pane">
+                                        <h3>Sector Level Attribution</h3>
+                                        <div class="sector-contrib-grid">
+                                            ${Object.entries(row.analysis_details.sector_contribution).map(([sec, val]) => `
+                                                <div class="sector-item">
+                                                    <span class="sec-name">${sec}</span>
+                                                    <span class="sec-val">
+                                                        <span class="${val >= 0 ? 'move-up' : 'move-down'}">${val >= 0 ? '+' : ''}${val.toFixed(2)}</span>
+                                                        <span class="sector-breadth-pct">${row.analysis_details.sector_breadth[sec]?.toFixed(0) || 50}% up</span>
+                                                    </span>
+                                                </div>
+                                            `).join('')}
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </td>
+                    </tr>
+                `;
+                tbody.insertAdjacentHTML('beforeend', rowHtml);
+            });
+        }
+
+        // Initialize and poll
+        fetchAnalysis();
+        setInterval(fetchAnalysis, 10000);
+    </script>
+</body>
+</html>

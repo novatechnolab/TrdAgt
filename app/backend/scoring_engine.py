@@ -76,6 +76,21 @@ class ScoringEngine:
         is_bullish = last_close > ema21_last
         factors = {}
 
+        # Compute technical consensus
+        consensus_res = {'consensus': 'NEUTRAL', 'bullish': 0, 'bearish': 0, 'neutral': 0}
+        if len(closes) >= 28:
+            try:
+                ohlcv_list = [{'close': closes[i], 'high': highs[i], 'low': lows[i], 'volume': volumes[i]} for i in range(len(closes))]
+                from indicators import compute_technical_consensus
+                consensus_res = compute_technical_consensus(ohlcv_list)
+            except Exception:
+                pass
+
+        bull_votes = consensus_res['bullish']
+        bear_votes = consensus_res['bearish']
+        total_votes = bull_votes + bear_votes + consensus_res['neutral']
+        total_votes = total_votes if total_votes > 0 else 23
+
         # ── 1. TECHNICAL MOMENTUM (30pts) ──
         tech = 0
         if is_bullish:
@@ -257,6 +272,7 @@ class ScoringEngine:
             'changePercent': change_pct, 'isBullishTrend': is_bullish,
             'putFilterVeto': put_veto, 'putFilterReasons': put_reasons,
             'risk': risk,
+            'technicalConsensus': consensus_res,
         }
         if smc_bias is not None:
             result['smcBias'] = smc_bias
@@ -313,6 +329,21 @@ class ScoringEngine:
         is_call_bias = ema21_last > ema50_last
         factors = {}
 
+        # Compute technical consensus
+        consensus_res = {'consensus': 'NEUTRAL', 'bullish': 0, 'bearish': 0, 'neutral': 0}
+        if len(closes) >= 28:
+            try:
+                ohlcv_list = [{'close': closes[i], 'high': highs[i], 'low': lows[i], 'volume': volumes[i]} for i in range(len(closes))]
+                from indicators import compute_technical_consensus
+                consensus_res = compute_technical_consensus(ohlcv_list)
+            except Exception:
+                pass
+
+        bull_votes = consensus_res['bullish']
+        bear_votes = consensus_res['bearish']
+        total_votes = bull_votes + bear_votes + consensus_res['neutral']
+        total_votes = total_votes if total_votes > 0 else 23
+
         # ── Global risk filters ──
         risk_veto = False; risk_reasons = []
 
@@ -348,37 +379,63 @@ class ScoringEngine:
                 risk_veto = True; risk_reasons.append(f'Bid-ask spread {spread:.2f}% > {BID_ASK_MAX_SPREAD_PCT}%')
 
         # ── 1. MOMENTUM + TREND (25pts) ──
+        # VWAP is only a meaningful intraday anchor for index underlyings
+        _sym_upper = (data.get('symbol') or '').upper()
+        _INDEX_SYMS = {'NIFTY', 'BANKNIFTY', 'FINNIFTY', 'MIDCPNIFTY', 'SENSEX', 'BANKEX'}
+        is_index_underlying = any(idx in _sym_upper for idx in _INDEX_SYMS)
         mt = 0
         if is_call_bias:
-            if live_ltp > vwap: mt += 8
-            elif live_ltp > vwap * 0.99: mt += 4
-            pct_above = (live_ltp - vwap) / vwap * 100 if vwap > 0 else 0
-            if 0 < pct_above <= 1.5: mt += 5
-            elif 0 < pct_above <= 2.5: mt += 3
-            elif pct_above > 0: mt += 1
-            if ema9_last > ema21_last and live_ltp > ema9_last: mt += 6
-            elif ema9_last > ema21_last and live_ltp > ema21_last: mt += 4
-            elif ema9_last > ema21_last: mt += 2
-            if macd['histogram'] > 0: mt += 3
-            elif abs(macd['histogram']) < 0.00001: mt += 1
-            if 45 <= rsi <= 65: mt += 3
-            elif 40 <= rsi <= 70: mt += 2
-            elif 30 <= rsi <= 75: mt += 1
+            if is_index_underlying:
+                # Indices: VWAP is the primary intraday anchor (original logic)
+                if live_ltp > vwap: mt += 8
+                elif live_ltp > vwap * 0.99: mt += 4
+                pct_above = (live_ltp - vwap) / vwap * 100 if vwap > 0 else 0
+                if 0 < pct_above <= 1.5: mt += 5
+                elif 0 < pct_above <= 2.5: mt += 3
+                elif pct_above > 0: mt += 1
+                if ema9_last > ema21_last and live_ltp > ema9_last: mt += 6
+                elif ema9_last > ema21_last and live_ltp > ema21_last: mt += 4
+                elif ema9_last > ema21_last: mt += 2
+                if macd['histogram'] > 0: mt += 3
+                elif abs(macd['histogram']) < 0.00001: mt += 1
+                if 45 <= rsi <= 65: mt += 3
+                elif 40 <= rsi <= 70: mt += 2
+                elif 30 <= rsi <= 75: mt += 1
+            else:
+                # Stock options: no VWAP — redistribute 13pts into EMA/MACD/RSI
+                if ema9_last > ema21_last and live_ltp > ema9_last: mt += 11
+                elif ema9_last > ema21_last and live_ltp > ema21_last: mt += 8
+                elif ema9_last > ema21_last: mt += 4
+                if macd['histogram'] > 0: mt += 8
+                elif abs(macd['histogram']) < 0.00001: mt += 3
+                if 45 <= rsi <= 65: mt += 6
+                elif 40 <= rsi <= 70: mt += 4
+                elif 30 <= rsi <= 75: mt += 2
         else:
-            if live_ltp < vwap: mt += 8
-            elif live_ltp < vwap * 1.01: mt += 4
-            pct_below = (vwap - live_ltp) / vwap * 100 if vwap > 0 else 0
-            if 0 < pct_below <= 1.5: mt += 5
-            elif 0 < pct_below <= 2.5: mt += 3
-            elif pct_below > 0: mt += 1
-            if ema9_last < ema21_last and live_ltp < ema9_last: mt += 6
-            elif ema9_last < ema21_last and live_ltp < ema21_last: mt += 4
-            elif ema9_last < ema21_last: mt += 2
-            if macd['histogram'] < 0: mt += 3
-            elif abs(macd['histogram']) < 0.00001: mt += 1
-            if 35 <= rsi <= 55: mt += 3
-            elif 30 <= rsi <= 60: mt += 2
-            elif 25 <= rsi <= 70: mt += 1
+            if is_index_underlying:
+                if live_ltp < vwap: mt += 8
+                elif live_ltp < vwap * 1.01: mt += 4
+                pct_below = (vwap - live_ltp) / vwap * 100 if vwap > 0 else 0
+                if 0 < pct_below <= 1.5: mt += 5
+                elif 0 < pct_below <= 2.5: mt += 3
+                elif pct_below > 0: mt += 1
+                if ema9_last < ema21_last and live_ltp < ema9_last: mt += 6
+                elif ema9_last < ema21_last and live_ltp < ema21_last: mt += 4
+                elif ema9_last < ema21_last: mt += 2
+                if macd['histogram'] < 0: mt += 3
+                elif abs(macd['histogram']) < 0.00001: mt += 1
+                if 35 <= rsi <= 55: mt += 3
+                elif 30 <= rsi <= 60: mt += 2
+                elif 25 <= rsi <= 70: mt += 1
+            else:
+                if ema9_last < ema21_last and live_ltp < ema9_last: mt += 11
+                elif ema9_last < ema21_last and live_ltp < ema21_last: mt += 8
+                elif ema9_last < ema21_last: mt += 4
+                if macd['histogram'] < 0: mt += 8
+                elif abs(macd['histogram']) < 0.00001: mt += 3
+                if 35 <= rsi <= 55: mt += 6
+                elif 30 <= rsi <= 60: mt += 4
+                elif 25 <= rsi <= 70: mt += 2
         factors['momentumTrend'] = {'score': min(mt, 25), 'max': 25, 'label': 'Momentum + Trend', 'color': '#FF5722'}
 
         # ── 2. VOLUME & ORDER FLOW (20pts) ──
@@ -568,6 +625,7 @@ class ScoringEngine:
             'riskFilterVeto': risk_veto, 'riskFilterReasons': risk_reasons,
             'risk': risk,
             'sessionMode': session_mode,
+            'technicalConsensus': consensus_res,
         }
         if smc_bias is not None:
             result['smcBias'] = smc_bias

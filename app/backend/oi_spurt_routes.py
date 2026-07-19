@@ -328,6 +328,7 @@ DB_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'tradesignal_
 _pending_baselines = set()
 _baseline_lock = threading.Lock()
 _baseline_queue = queue.PriorityQueue()  # Priority 0 = user-triggered (highest), higher = background
+_baseline_seq = __import__('itertools').count()  # Monotonic tie-breaker — avoids comparing KiteConnect objects
 _worker_thread = None
 
 def _fetch_and_cache_baseline_sync(kite, date_str: str, instrument_token: int, tradingsymbol: str, current_oi: int):
@@ -367,11 +368,12 @@ def _fetch_and_cache_baseline_sync(kite, date_str: str, instrument_token: int, t
 def _baseline_worker():
     """Background worker processing baseline fetch requests sequentially with pacing."""
     while True:
+        got_item = False
         try:
-            priority, task = _baseline_queue.get()
-            if task is None:
+            priority, _seq, kite, date_str, token, symbol, current_oi = _baseline_queue.get()
+            got_item = True
+            if kite is None:  # Sentinel: None kite signals shutdown
                 break
-            kite, date_str, token, symbol, current_oi = task
             _fetch_and_cache_baseline_sync(kite, date_str, token, symbol, current_oi)
             # Pacing delay: Sleep 0.35s to respect Zerodha's 3 requests/sec historical limit
             time.sleep(0.35)
@@ -379,7 +381,8 @@ def _baseline_worker():
             import logging
             logging.getLogger(__name__).error(f"Error in baseline worker loop: {ex}")
         finally:
-            _baseline_queue.task_done()
+            if got_item:
+                _baseline_queue.task_done()
 
 
 def get_cached_baseline(date_str: str, tradingsymbol: str) -> int | None:
@@ -528,7 +531,7 @@ def get_option_chain(kite, symbol: str):
                             
                         # Queue the task
                         # Priority 0 = user-triggered (highest priority in PriorityQueue)
-                        _baseline_queue.put((0, (kite, today_str, instr["instrument_token"], instr["tradingsymbol"], oi)))
+                        _baseline_queue.put((0, next(_baseline_seq), kite, today_str, instr["instrument_token"], instr["tradingsymbol"], oi))
             
         # Calculate % Change vs EOD Snapshot
         oi_eod_chg_pct = 0.0
@@ -894,11 +897,12 @@ def api_symbol(symbol):
                 is_atm_pe_writers_dominating = True
 
     max_pain = compute_max_pain(chain) if chain else None
-    pcr      = compute_pcr(chain)      if chain else None
     strikes  = top_strikes(chain, ltp) if chain else {"top_ce": [], "top_pe": [], "ce_wall": None, "pe_wall": None}
 
     # Build chain_data: ±10 strikes around ATM for the heatmap
     chain_data, straddle, atm_strike = [], None, None
+    raw_slice = []
+    pcr = None
     if chain and ltp:
         chain_sorted = sorted(chain, key=lambda r: r["strike"])
         atm_idx      = min(range(len(chain_sorted)), key=lambda i: abs(chain_sorted[i]["strike"] - ltp))
@@ -906,6 +910,7 @@ def api_symbol(symbol):
         start        = max(0, atm_idx - 9)
         end          = min(len(chain_sorted), atm_idx + 10)
         raw_slice    = chain_sorted[start:end]
+        pcr          = compute_pcr(raw_slice) if raw_slice else None
 
         def _bld(oi_chg, cur_ltp, prv_ltp):
             """4-way buildup classifier for per-strike chain_data rows."""

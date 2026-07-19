@@ -1,0 +1,210 @@
+# sector_map.py — FnO Sector Map + Signal Aggregation + Symbol List Refresh
+import json, os, logging, time
+from datetime import datetime, timedelta
+from config import FNO_SYMBOLS_JSON, SYMBOL_RETAIN_DAYS
+
+log = logging.getLogger("sector_map")
+
+# ── Sector map ──────────────────────────────────────────────────────────────
+# Leaders (top 3 by market cap) weight=2, followers weight=1
+SECTOR_MAP = {
+    "Banking & Finance": {
+        "leaders": ["HDFCBANK", "ICICIBANK", "KOTAKBANK"],
+        "followers": ["AXISBANK", "SBIN", "BAJFINANCE", "BANDHANBNK",
+                      "FEDERALBNK", "IDFCFIRSTB", "PNB"],
+    },
+    "IT": {
+        "leaders": ["INFY", "TCS", "WIPRO"],
+        "followers": ["HCLTECH", "TECHM", "LTIM", "MPHASIS", "PERSISTENT", "COFORGE"],
+    },
+    "Oil & Gas": {
+        "leaders": ["RELIANCE", "ONGC", "BPCL"],
+        "followers": ["IOC", "HINDPETRO", "OIL", "MGL", "IGL", "GAIL"],
+    },
+    "Auto": {
+        "leaders": ["MARUTI", "TATAMOTORS", "M&M"],
+        "followers": ["BAJAJ-AUTO", "HEROMOTOCO", "EICHERMOT", "TVSMOTOR", "ASHOKLEY"],
+    },
+    "Metals & Mining": {
+        "leaders": ["TATASTEEL", "JSWSTEEL", "HINDALCO"],
+        "followers": ["VEDL", "COALINDIA", "NMDC", "SAIL"],
+    },
+    "Pharma": {
+        "leaders": ["SUNPHARMA", "DRREDDY", "CIPLA"],
+        "followers": ["DIVISLAB", "APOLLOHOSP", "AUROPHARMA", "BIOCON"],
+    },
+    "FMCG": {
+        "leaders": ["HINDUNILVR", "ITC", "NESTLEIND"],
+        "followers": ["BRITANNIA", "DABUR", "MARICO", "GODREJCP"],
+    },
+    "Cement": {
+        "leaders": ["ULTRACEMCO", "SHREECEM", "AMBUJACEM"],
+        "followers": ["ACC", "JKCEMENT"],
+    },
+    "Real Estate": {
+        "leaders": ["DLF", "GODREJPROP", "OBEROIRLTY"],
+        "followers": ["PRESTIGE", "PHOENIXLTD"],
+    },
+    "Power": {
+        "leaders": ["NTPC", "POWERGRID", "TATAPOWER"],
+        "followers": ["ADANIGREEN", "CESC"],
+    },
+    "Insurance": {
+        "leaders": ["HDFCLIFE", "SBILIFE", "ICICIGI"],
+        "followers": ["LICI"],
+    },
+    "Consumer Durables": {
+        "leaders": ["HAVELLS", "VOLTAS", "BLUESTARCO"],
+        "followers": ["CROMPTON"],
+    },
+    "Telecom": {
+        "leaders": ["BHARTIARTL"],
+        "followers": ["IDEA"],
+    },
+    "Chemicals": {
+        "leaders": ["PIDILITIND", "AARTIIND", "DEEPAKNTR"],
+        "followers": [],
+    },
+}
+
+def get_sector(symbol: str) -> str:
+    for sector, data in SECTOR_MAP.items():
+        if symbol in data["leaders"] or symbol in data["followers"]:
+            return sector
+    return "Other"
+
+def get_weight(symbol: str) -> int:
+    for data in SECTOR_MAP.values():
+        if symbol in data["leaders"]:
+            return 2
+        if symbol in data["followers"]:
+            return 1
+    return 1
+
+def compute_sector_signals(scan_results: list) -> dict:
+    """
+    Given list of stock scan results with 'direction' field (BULLISH/BEARISH/NEUTRAL),
+    compute weighted sector signals and return sector_signals dict.
+    """
+    sector_signals = {}
+
+    for r in scan_results:
+        sym = r.get("symbol")
+        direction = r.get("direction", "NEUTRAL")
+        if direction == "NEUTRAL":
+            continue
+        # Scanner uses "UP"/"DOWN"; map to the slot keys used in this dict
+        slot = "BULLISH" if direction in ("UP", "BULLISH") else "BEARISH"
+        sector = get_sector(sym)
+        weight = get_weight(sym)
+        if sector not in sector_signals:
+            sector_signals[sector] = {"BULLISH": 0, "BEARISH": 0, "stocks": []}
+        sector_signals[sector][slot] += weight
+        sector_signals[sector]["stocks"].append({"symbol": sym, "direction": direction})
+
+    # Compute score contribution per sector
+    result = {}
+    for sector, data in sector_signals.items():
+        bull = data["BULLISH"]
+        bear = data["BEARISH"]
+        stocks = data["stocks"]
+
+        dominant = "BULLISH" if bull >= bear else "BEARISH"
+        weighted = max(bull, bear)
+        conflicting = bull > 0 and bear > 0
+
+        score = 0
+        alert = False
+        if not conflicting:
+            if weighted >= 6:
+                score = 3
+                alert = True
+            elif weighted >= 4:
+                score = 2
+            elif weighted >= 2:
+                score = 1
+        # conflicting = 0
+
+        result[sector] = {
+            "direction": dominant if not conflicting else "CONFLICTING",
+            "weighted_count": weighted,
+            "bull_count": bull,
+            "bear_count": bear,
+            "score": score if not conflicting else 0,
+            "alert": alert,
+            "stocks": stocks,
+        }
+    return result
+
+
+# ── FnO Symbol List Management ───────────────────────────────────────────────
+
+def load_fno_symbols() -> list:
+    """Load from fno_symbols.json; fall back to SECTOR_MAP symbols."""
+    if os.path.exists(FNO_SYMBOLS_JSON):
+        with open(FNO_SYMBOLS_JSON) as f:
+            data = json.load(f)
+        return data.get("symbols", [])
+    return _symbols_from_sector_map()
+
+def _symbols_from_sector_map() -> list:
+    syms = []
+    for data in SECTOR_MAP.values():
+        syms.extend(data["leaders"])
+        syms.extend(data["followers"])
+    return list(set(syms))
+
+def refresh_fno_symbols(kite) -> dict:
+    """
+    Fetch current FnO-eligible symbols from Kite instruments API.
+    Returns dict with added/removed lists and updates fno_symbols.json.
+    """
+    try:
+        instruments = kite.instruments("NFO")
+        fno_syms = set()
+        for inst in instruments:
+            if inst.get("instrument_type") == "FUT" and inst.get("exchange") == "NFO":
+                underlying = inst.get("tradingsymbol", "")
+                # Strip expiry suffix — keep underlying name
+                name = "".join([c for c in underlying if not c.isdigit()]).rstrip("FUT").strip()
+                if name:
+                    fno_syms.add(name)
+
+        existing = set(load_fno_symbols())
+        added = list(fno_syms - existing)
+        removed = list(existing - fno_syms)
+
+        if added:
+            log.info(f"FnO list: {len(added)} symbols added: {added}")
+        if removed:
+            log.info(f"FnO list: {len(removed)} symbols removed: {removed}")
+
+        new_symbols = list(fno_syms)
+        payload = {
+            "symbols": new_symbols,
+            "refreshed_at": datetime.now().isoformat(),
+            "added": added,
+            "removed": removed,
+        }
+        with open(FNO_SYMBOLS_JSON, "w") as f:
+            json.dump(payload, f, indent=2)
+
+        return {"success": True, "total": len(new_symbols), "added": added, "removed": removed}
+
+    except Exception as e:
+        log.error(f"Symbol refresh failed: {e}")
+        return {"success": False, "error": str(e)}
+
+def check_symbol_list_freshness() -> dict:
+    """Return freshness status of fno_symbols.json."""
+    if not os.path.exists(FNO_SYMBOLS_JSON):
+        return {"fresh": False, "reason": "File missing"}
+    with open(FNO_SYMBOLS_JSON) as f:
+        data = json.load(f)
+    refreshed_at = data.get("refreshed_at")
+    if not refreshed_at:
+        return {"fresh": False, "reason": "No refresh timestamp"}
+    age_days = (datetime.now() - datetime.fromisoformat(refreshed_at)).days
+    if age_days > 8:
+        return {"fresh": False, "reason": f"Last refreshed {age_days} days ago", "age_days": age_days}
+    return {"fresh": True, "age_days": age_days}

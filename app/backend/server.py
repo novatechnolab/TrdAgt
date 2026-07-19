@@ -2564,6 +2564,7 @@ def stock_analysis():
                     'optionsData':  {},
                     'session_mode': get_session_mode(),
                     'sector':       data.get('sector', ''),
+                    'symbol':       symbol,   # needed by score_options for index vs stock VWAP detection
                     'dailyOhlcv':   _daily_ohlcv,   # None → smcBias omitted from result
                 }
                 eq_score  = scoring_engine.score_equity(_score_data)
@@ -4791,6 +4792,17 @@ def api_ema_crossovers():
     return jsonify(get_ema_crossover_state())
 
 
+@app.route('/api/nifty-candle-analysis')
+def api_nifty_candle_analysis():
+    """
+    Returns the chronological list of analyzed Nifty 5-minute candles
+    showing stock contributions, sector breadths, drivers, and RVOL.
+    """
+    lazy_start_ema_crossover_scanner()
+    from nifty_candle_analyzer import get_historical_analysis
+    return jsonify(get_historical_analysis())
+
+
 @app.route('/api/live-breakouts')
 def api_live_breakouts():
     """
@@ -4800,6 +4812,21 @@ def api_live_breakouts():
     from ema_crossover_scanner import get_live_breakout_state, notify_ema_client
     notify_ema_client()  # keep scanner alive when board is open
     return jsonify(get_live_breakout_state())
+
+
+@app.route('/api/ema-collision-alerts')
+def api_ema_collision_alerts():
+    """
+    Returns all EMA Collision alerts (EMA9/EMA21 coil → confirmed break) triggered today.
+    Response: { "alerts": [...], "count": N }
+    Already included in /api/live-breakouts as collision_alerts — this endpoint
+    is a dedicated fetch for consumers that only need collision data.
+    """
+    lazy_start_ema_crossover_scanner()
+    from ema_crossover_scanner import get_live_breakout_state
+    state = get_live_breakout_state()
+    alerts = state.get('collision_alerts', [])
+    return jsonify({"alerts": alerts, "count": len(alerts)})
 
 
 @app.route('/api/debug-crossover')
@@ -4820,6 +4847,11 @@ def api_debug_crossover():
         'tick_buffers_keys': list(_tick_buffers.keys()),
         'tick_buffers': {str(k): {'symbol': v['symbol'], 'ticks_count': len(v['ticks']), 'last_ltp': v['last_ltp']} for k, v in _tick_buffers.items()}
     })
+
+
+
+
+
 
 
 
@@ -9199,6 +9231,23 @@ def analyze_first_hour_pattern(kite, symbol, or_window=60, gap_threshold=0.3, da
         gap_pct = (curr['or_open'] - prev_close) / prev_close * 100.0
         gap_type = 'gap_up' if gap_pct >= gap_threshold else ('gap_down' if gap_pct <= -gap_threshold else 'flat')
         or_direction = 'bullish' if curr['or_close'] >= curr['or_open'] else 'bearish'
+        try:
+            or_close_time = curr['day_candles'][len(or_c)-1]['date']
+            candles_up_to_or = []
+            for c in candles:
+                candles_up_to_or.append(c)
+                if c['date'] == or_close_time:
+                    break
+            if len(candles_up_to_or) >= 28:  # guard: consensus needs ≥28 bars
+                from indicators import compute_technical_consensus
+                consensus_res = compute_technical_consensus(candles_up_to_or)
+                if consensus_res['consensus'] == 'BULLISH':
+                    or_direction = 'bullish'
+                elif consensus_res['consensus'] == 'BEARISH':
+                    or_direction = 'bearish'
+            # else: < 28 bars — preserve price-action or_direction unchanged
+        except Exception:
+            pass
         or_momentum = abs(curr['or_close'] - curr['or_open']) / curr['or_open'] * 100.0
         
         if or_momentum < 1.5: move_bucket = 'normal'
@@ -9483,6 +9532,683 @@ def first_hour_predictions_history():
         }
     })
 
+
+
+# ── Accumulation Scanner Registration ────────────────────────────────────────
+import sys as _sys
+import os as _os
+# Add accumulation/ subfolder to sys.path so bare imports (from config import …) work
+_accum_path = _os.path.abspath(_os.path.join(_os.path.dirname(__file__), 'accumulation'))
+if _accum_path not in _sys.path:
+    _sys.path.append(_accum_path)
+
+_acc_bg_kite = None
+_acc_bg_kite_time = 0
+
+def _acc_get_kite():
+    """Return active Kite instance for accumulation scanner.
+    Works in both request context and background thread context."""
+    global _acc_bg_kite, _acc_bg_kite_time
+    # Fast path: global _kite already initialised
+    if _kite is not None:
+        return _kite
+    # Request context path
+    from flask import has_request_context
+    if has_request_context():
+        return get_kite()
+    # Background thread: use cached instance (valid for 60s)
+    if _acc_bg_kite is not None and time.time() - _acc_bg_kite_time < 60:
+        return _acc_bg_kite
+    # Last resort: reconstruct from disk token
+    disk_key, disk_token = _load_kite_session()
+    if disk_key and disk_token:
+        try:
+            from kiteconnect import KiteConnect
+            k = KiteConnect(api_key=disk_key)
+            k.set_access_token(disk_token)
+            _acc_bg_kite = k
+            _acc_bg_kite_time = time.time()
+            return k
+        except Exception:
+            pass
+    return None
+
+class _DynamicKiteProxy:
+    """Proxies method calls to the active Kite session so the unmodified
+    accumulation package works without holding a direct reference."""
+    def __getattr__(self, name):
+        k = _acc_get_kite()
+        if not k:
+            raise Exception("Kite session not available")
+        return getattr(k, name)
+
+def _acc_get_vwap(symbol: str) -> float:
+    try:
+        k = _acc_get_kite()
+        return k.quote([f"NSE:{symbol}"])[f"NSE:{symbol}"].get("average_price", 0.0) if k else 0.0
+    except Exception:
+        return 0.0
+
+def _acc_get_ltp(symbol: str) -> float:
+    try:
+        k = _acc_get_kite()
+        return k.ltp([f"NSE:{symbol}"])[f"NSE:{symbol}"]["last_price"] if k else 0.0
+    except Exception:
+        return 0.0
+
+def _acc_india_vix() -> float:
+    try:
+        k = _acc_get_kite()
+        return k.quote(["NSE:INDIA VIX"])["NSE:INDIA VIX"]["last_price"] if k else 15.0
+    except Exception:
+        return 15.0
+
+try:
+    from flask_routes import register_accumulation_routes
+    _proxy_kite = _DynamicKiteProxy()
+    register_accumulation_routes(
+        app,
+        kite=_proxy_kite,
+        get_vwap_fn=_acc_get_vwap,
+        get_ltp_fn=_acc_get_ltp,
+        india_vix_fn=_acc_india_vix,
+        get_gift_nifty_fn=None
+    )
+    print("  [OK] Accumulation Scanner routes registered.")
+except Exception as _accum_err:
+    print(f"  [WARN] Accumulation Scanner registration failed: {_accum_err}")
+
+# ---------------------------------------------------------------------------
+# Nifty Candle Analyzer Integration
+# ---------------------------------------------------------------------------
+# ---------------------------------------------------------------------------
+# SECTOR_CONFIG: Maps Nifty 50 sector categories to their weights and Kite index symbols.
+# NOTE: Dedicated sectoral indices (e.g. NSE:NIFTY OIL AND GAS) are preferred over broad multi-sector indices.
+# ---------------------------------------------------------------------------
+SECTOR_CONFIG = [
+    {"name": "Financial Services",    "wt": 35.5, "symbol": "NSE:NIFTY FIN SERVICE"},
+    {"name": "Information Technology","wt": 12.8, "symbol": "NSE:NIFTY IT"},
+    {"name": "Oil, Gas & Fuels",      "wt": 9.7,  "symbol": "NSE:NIFTY OIL AND GAS"},
+    {"name": "FMCG",                  "wt": 7.8,  "symbol": "NSE:NIFTY FMCG"},
+    {"name": "Automobile",            "wt": 7.2,  "symbol": "NSE:NIFTY AUTO"},
+    {"name": "Healthcare",            "wt": 4.2,  "symbol": "NSE:NIFTY HEALTHCARE"},
+    {"name": "Metals & Mining",       "wt": 3.8,  "symbol": "NSE:NIFTY METAL"},
+    {"name": "Construction",          "wt": 3.6,  "symbol": "NSE:NIFTY INFRA"},
+    {"name": "Consumer Durables",     "wt": 3.0,  "symbol": "NSE:NIFTY CONSR DURBL"},
+    {"name": "Capital Goods",         "wt": 2.9,  "symbol": "NSE:NIFTY CAPITAL MKT"},
+    {"name": "Power",                 "wt": 2.7,  "symbol": "NSE:NIFTY ENERGY"},
+    {"name": "Telecommunication",     "wt": 2.4,  "symbol": "NSE:NIFTY MEDIA"},
+    {"name": "Consumer Services",     "wt": 1.8,  "symbol": "NSE:NIFTY CONSUMPTION"},
+    {"name": "Cement & Products",     "wt": 1.2,  "symbol": "NSE:NIFTY INFRA"},
+    {"name": "Chemicals",             "wt": 1.0,  "symbol": "NSE:NIFTY CHEMICALS"},
+    {"name": "Realty",                "wt": 0.4,  "symbol": "NSE:NIFTY REALTY"},
+]
+
+SECTOR_COLORS = {
+    "Financial Services": "#3FB68C", "Information Technology": "#5C86B8",
+    "Oil, Gas & Fuels": "#D9A44C", "FMCG": "#8B9795", "Automobile": "#3FB68C",
+    "Healthcare": "#E0654A", "Metals & Mining": "#3FB68C", "Construction": "#D9A44C",
+    "Consumer Durables": "#8B9795", "Capital Goods": "#5C86B8", "Power": "#8B9795",
+    "Telecommunication": "#3FB68C", "Consumer Services": "#E0654A",
+    "Cement & Products": "#8B9795", "Chemicals": "#E0654A", "Realty": "#3FB68C",
+}
+
+_nifty_last_call = 0.0
+_nifty_lock = threading.Lock()
+NIFTY_MIN_GAP = 0.35
+
+def nifty_throttled_call(fn, *args, **kwargs):
+    global _nifty_last_call
+    with _nifty_lock:
+        wait = NIFTY_MIN_GAP - (time.time() - _nifty_last_call)
+        if wait > 0:
+            time.sleep(wait)
+        result = fn(*args, **kwargs)
+        _nifty_last_call = time.time()
+        return result
+
+NIFTY_DB_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), "nifty_dashboard.db")
+
+def get_nifty_db():
+    conn = sqlite3.connect(NIFTY_DB_PATH)
+    conn.execute("""
+        CREATE TABLE IF NOT EXISTS cache (
+            key TEXT PRIMARY KEY,
+            payload TEXT,
+            fetched_at TEXT
+        )
+    """)
+    return conn
+
+def nifty_cache_get(key, max_age_seconds):
+    try:
+        conn = get_nifty_db()
+        row = conn.execute("SELECT payload, fetched_at FROM cache WHERE key=?", (key,)).fetchone()
+        conn.close()
+        if not row:
+            return None
+        payload, fetched_at = row
+        if dt.now() - dt.fromisoformat(fetched_at) > timedelta(seconds=max_age_seconds):
+            return None
+        return json.loads(payload)
+    except Exception:
+        return None
+
+def nifty_cache_set(key, payload):
+    try:
+        conn = get_nifty_db()
+        conn.execute(
+            "INSERT OR REPLACE INTO cache (key, payload, fetched_at) VALUES (?, ?, ?)",
+            (key, json.dumps(payload), dt.now().isoformat())
+        )
+        conn.commit()
+        conn.close()
+    except Exception:
+        pass
+
+@app.route("/api/index-quote")
+def index_quote():
+    cached = nifty_cache_get("index_quote", max_age_seconds=5)
+    if cached:
+        return jsonify(cached)
+    try:
+        kite_client = get_kite()
+        if not kite_client:
+            return jsonify({"error": "Kite client not initialized"}), 400
+        q = nifty_throttled_call(kite_client.quote, ["NSE:NIFTY 50"])
+        d = q["NSE:NIFTY 50"]
+        payload = {
+            "ltp": d["last_price"],
+            "change": round(d["last_price"] - d["ohlc"]["close"], 2),
+            "change_pct": round((d["last_price"] - d["ohlc"]["close"]) / d["ohlc"]["close"] * 100, 2),
+            "timestamp": dt.now().isoformat(),
+        }
+        nifty_cache_set("index_quote", payload)
+        return jsonify(payload)
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+@app.route("/api/sector-weights")
+def sector_weights():
+    cached = nifty_cache_get("sector_weights", max_age_seconds=15)
+    if cached:
+        return jsonify(cached)
+    try:
+        from nifty_candle_analyzer import _CONSTITUENTS_RAW
+        
+        sector_mapping = {
+            "Financial Services": "Financial Services",
+            "Oil Gas & Fuels": "Oil, Gas & Fuels",
+            "Information Technology": "Information Technology",
+            "Construction": "Construction",
+            "Fast Moving Consumer Goods": "FMCG",
+            "Telecommunication": "Telecommunication",
+            "Automobile": "Automobile",
+            "Healthcare": "Healthcare",
+            "Power": "Power",
+            "Metals & Mining": "Metals & Mining",
+            "Consumer Durables": "Consumer Durables",
+            "Construction Materials": "Cement & Products",
+            "Services": "Consumer Services",
+        }
+
+        kite_client = get_kite()
+        if not kite_client:
+            return jsonify({"error": "Kite client not initialized"}), 400
+        
+        sector_symbols = [s["symbol"] for s in SECTOR_CONFIG]
+        stock_symbols = [f"NSE:{sym}" for sym in _CONSTITUENTS_RAW.keys()]
+        all_symbols = list(set(sector_symbols + stock_symbols))
+        
+        quotes = None
+        for _attempt in range(2):
+            try:
+                quotes = nifty_throttled_call(kite_client.quote, all_symbols)
+                break
+            except Exception:
+                if _attempt == 0:
+                    import time as _t; _t.sleep(0.5)
+        if quotes is None:
+            stale = nifty_cache_get("sector_weights", max_age_seconds=300)
+            if stale:
+                return jsonify({**stale, "_stale": True})
+            return jsonify({"error": "Kite quote fetch failed after retry"}), 503
+        
+        # Prepare stock data dictionary
+        stock_data = {}
+        for sym, (raw_wt, raw_sec) in _CONSTITUENTS_RAW.items():
+            nsec_name = sector_mapping.get(raw_sec, raw_sec)
+            q = quotes.get(f"NSE:{sym}")
+            chg_pct = 0.0
+            price = 0.0
+            if q:
+                close = q.get("ohlc", {}).get("close")
+                price = q.get("last_price", 0.0)
+                chg_pct = round((price - close) / close * 100, 2) if close else 0.0
+            
+            sitem = {
+                "symbol": sym,
+                "wt": round(raw_wt * 100, 1),
+                "chg": chg_pct,
+                "price": price
+            }
+            if nsec_name not in stock_data:
+                stock_data[nsec_name] = []
+            stock_data[nsec_name].append(sitem)
+
+        result = []
+        for s in SECTOR_CONFIG:
+            s_name = s["name"]
+            s_stocks = sorted(stock_data.get(s_name, []), key=lambda x: x["wt"], reverse=True)
+            
+            chg_pct = 0.0
+            if s_stocks:
+                tot_w = sum(st["wt"] for st in s_stocks)
+                if tot_w > 0:
+                    chg_pct = round(sum(st["wt"] * st["chg"] for st in s_stocks) / tot_w, 2)
+            else:
+                q = quotes.get(s["symbol"])
+                if q:
+                    close = q.get("ohlc", {}).get("close")
+                    last_price = q.get("last_price", 0.0)
+                    chg_pct = round((last_price - close) / close * 100, 2) if close else 0.0
+            
+            result.append({
+                "name": s_name,
+                "wt": s["wt"],
+                "chg": chg_pct,
+                "color": SECTOR_COLORS.get(s_name, "#8B9795"),
+                "stocks": s_stocks
+            })
+        
+        payload = {"sectors": result, "total_weight": round(sum(s["wt"] for s in SECTOR_CONFIG), 1)}
+        nifty_cache_set("sector_weights", payload)
+        return jsonify(payload)
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+def compute_bias_score(pcr, ce_buildup, pe_buildup, or_result):
+    score = 50
+    if pcr > 1.2: score += 10
+    elif pcr < 0.8: score -= 10
+
+    if ce_buildup == "short_covering": score += 15
+    elif ce_buildup == "long_buildup": score += 10
+    elif ce_buildup == "short_buildup": score -= 15
+
+    if pe_buildup == "long_unwinding": score += 8
+    elif pe_buildup == "long_buildup": score -= 12
+    elif pe_buildup == "short_buildup": score += 8
+
+    if or_result == "bullish_break": score += 12
+    elif or_result == "bearish_break": score -= 12
+
+    return max(0, min(100, score))
+
+def zone_for_score(score):
+    if score < 35: return "bearish"
+    if score < 65: return "choppy"
+    return "bullish"
+
+@app.route("/api/bias-score")
+def bias_score():
+    try:
+        cached = nifty_cache_get("bias_score_data", max_age_seconds=10)
+        if cached:
+            return jsonify(cached)
+
+        # Default fallback values (original mocks)
+        pcr, ce_buildup, pe_buildup, or_result = 1.32, "short_covering", "long_unwinding", "bullish_break"
+
+        try:
+            kite = get_kite()
+            from oi_spurt_routes import get_option_chain, compute_pcr, get_ltp_and_pivots
+            
+            ltp, price_change_pct, pivots, pivot_source, prev_close, open_gap_pct, perr = get_ltp_and_pivots(kite, "NIFTY")
+            chain, expiry, futures_oi, futures_oi_prev, futures_ltp, futures_prev_close, cerr = get_option_chain(kite, "NIFTY")
+
+            if chain and ltp:
+                chain_sorted = sorted(chain, key=lambda r: r["strike"])
+                atm_idx      = min(range(len(chain_sorted)), key=lambda i: abs(chain_sorted[i]["strike"] - ltp))
+                start        = max(0, atm_idx - 9)
+                end          = min(len(chain_sorted), atm_idx + 10)
+                raw_slice    = chain_sorted[start:end]
+
+                pcr_val = compute_pcr(raw_slice)
+                if pcr_val is not None:
+                    pcr = round(pcr_val, 2)
+
+                atm_row = chain_sorted[atm_idx]
+
+                def get_buildup_label(oi_chg, cur_ltp, prv_ltp):
+                    if prv_ltp <= 0 or cur_ltp <= 0: return "flat"
+                    if oi_chg == 0: return "flat"
+                    pct_chg = (cur_ltp - prv_ltp) / prv_ltp
+                    THRESHOLD = 0.0025
+                    if abs(pct_chg) <= THRESHOLD:
+                        return "flat"
+                    price_up = pct_chg > THRESHOLD
+                    oi_up    = oi_chg > 0
+                    if oi_up and price_up:      return "long_buildup"
+                    if oi_up and not price_up:  return "short_buildup"
+                    if not oi_up and price_up:  return "short_covering"
+                    return "long_unwinding"
+
+                ce_buildup = get_buildup_label(atm_row.get("ce_oi_chg", 0), atm_row.get("ce_ltp", 0), atm_row.get("ce_prev_ltp", 0))
+                pe_buildup = get_buildup_label(atm_row.get("pe_oi_chg", 0), atm_row.get("pe_ltp", 0), atm_row.get("pe_prev_ltp", 0))
+
+            conn = sqlite3.connect(DB_PATH)
+            today_str = now_ist().date().isoformat()
+            row = conn.execute(
+                "SELECT or_direction FROM first_hour_predictions WHERE date = ? AND symbol = 'NIFTY'",
+                (today_str,)
+            ).fetchone()
+            if not row:
+                row = conn.execute(
+                    "SELECT or_direction FROM first_hour_predictions WHERE symbol = 'NIFTY' ORDER BY date DESC LIMIT 1"
+                ).fetchone()
+            conn.close()
+
+            if row and row[0]:
+                direction = row[0].strip().lower()
+                if "bullish" in direction:
+                    or_result = "bullish_break"
+                elif "bearish" in direction:
+                    or_result = "bearish_break"
+                else:
+                    or_result = "flat"
+        except Exception as inner_ex:
+            print(f"Error computing live Nifty bias score: {inner_ex}")
+
+        score = compute_bias_score(pcr, ce_buildup, pe_buildup, or_result)
+        payload = {
+            "score": score,
+            "zone": zone_for_score(score),
+            "drivers": [
+                {"text": f"CE buildup: {ce_buildup.replace('_',' ')}", "tone": "g" if ce_buildup in ("short_covering","long_buildup") else ("a" if ce_buildup == "flat" else "r")},
+                {"text": f"PE buildup: {pe_buildup.replace('_',' ')}", "tone": "g" if pe_buildup in ("long_unwinding","short_buildup") else ("a" if pe_buildup == "flat" else "r")},
+                {"text": f"PCR (OI): {pcr}", "tone": "g" if pcr > 1.2 else ("r" if pcr < 0.8 else "a")},
+                {"text": f"Opening range: {or_result.replace('_',' ')}", "tone": "g" if or_result == "bullish_break" else ("r" if or_result == "bearish_break" else "a")},
+            ],
+        }
+        nifty_cache_set("bias_score_data", payload)
+        return jsonify(payload)
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+def detect_patterns(candles):
+    tags = []
+    for i in range(1, len(candles)):
+        prev, cur = candles[i - 1], candles[i]
+        if prev["c"] < prev["o"] and cur["c"] > cur["o"] and cur["o"] <= prev["c"] and cur["c"] >= prev["o"]:
+            tags.append({"index": i, "pattern": "Bullish Engulfing", "tone": "bull"})
+        if prev["c"] > prev["o"] and cur["c"] < cur["o"] and cur["o"] >= prev["c"] and cur["c"] <= prev["o"]:
+            tags.append({"index": i, "pattern": "Bearish Engulfing", "tone": "bear"})
+        if cur["h"] <= prev["h"] and cur["l"] >= prev["l"]:
+            tags.append({"index": i, "pattern": "Inside Bar", "tone": "neutral"})
+        body = abs(cur["c"] - cur["o"])
+        upper_wick = cur["h"] - max(cur["o"], cur["c"])
+        if body > 0 and upper_wick > body * 2:
+            tags.append({"index": i, "pattern": "Upper Wick Rejection", "tone": "bear"})
+    return tags
+
+@app.route("/api/candles")
+def candles():
+    cached = nifty_cache_get("candles", max_age_seconds=30)
+    if cached:
+        return jsonify(cached)
+    try:
+        kite_client = get_kite()
+        if not kite_client:
+            return jsonify({"error": "Kite client not initialized"}), 400
+        to_dt = dt.now()
+        from_dt = to_dt - timedelta(hours=3)
+        data = nifty_throttled_call(
+            kite_client.historical_data,
+            instrument_token=256265,  # NIFTY 50 spot
+            from_date=from_dt,
+            to_date=to_dt,
+            interval="5minute",
+        )
+        candle_list = [
+            {"t": c["date"].isoformat(), "o": c["open"], "h": c["high"], "l": c["low"], "c": c["close"]}
+            for c in data[-14:]
+        ]
+        patterns = detect_patterns(candle_list)
+        payload = {"candles": candle_list, "patterns": patterns}
+        nifty_cache_set("candles", payload)
+        return jsonify(payload)
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+PAGE = """<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Nifty Candle Analyzer</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#12181A; --panel:#182022; --panel-2:#1D2628; --border:#2A3739;
+    --text:#E9E6DD; --text-muted:#8B9795; --text-faint:#5C6A68;
+    --green:#3FB68C; --green-dim:#1F3D34; --red:#E0654A; --red-dim:#3D251F;
+    --amber:#D9A44C; --radius:3px;
+  }
+  *{box-sizing:border-box;margin:0;padding:0;}
+  body{background:var(--bg);color:var(--text);font-family:'Inter',sans-serif;padding:20px;min-height:100vh;
+    background-image:linear-gradient(var(--border) 1px,transparent 1px),linear-gradient(90deg,var(--border) 1px,transparent 1px);
+    background-size:44px 44px;background-position:-1px -1px;background-attachment:fixed;}
+  .wrap{max-width:1180px;margin:0 auto;}
+  header{background:var(--panel);border:1px solid var(--border);border-radius:var(--radius);padding:16px 22px;
+    display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px;margin-bottom:14px;}
+  .idx-name{font-family:'IBM Plex Mono',monospace;font-weight:700;font-size:13px;letter-spacing:.12em;color:var(--text-muted);text-transform:uppercase;}
+  .idx-price{font-family:'IBM Plex Mono',monospace;font-weight:700;font-size:30px;margin-top:3px;}
+  .idx-chg{font-family:'IBM Plex Mono',monospace;font-size:14px;font-weight:600;margin-left:12px;}
+  .idx-chg.up{color:var(--green);} .idx-chg.down{color:var(--red);}
+  .idx-meta{text-align:right;font-size:11.5px;color:var(--text-faint);font-family:'IBM Plex Mono',monospace;line-height:1.6;}
+  .live-dot{display:inline-block;width:7px;height:7px;border-radius:50%;background:var(--green);margin-right:6px;animation:pulse 1.8s infinite;}
+  @keyframes pulse{0%,100%{opacity:1;}50%{opacity:.3;}}
+  .gauge-panel{background:var(--panel);border:1px solid var(--border);border-radius:var(--radius);padding:22px 26px 16px;margin-bottom:14px;}
+  .gauge-label-row{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:14px;}
+  .section-title{font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--text-faint);}
+  .bias-readout{font-family:'IBM Plex Mono',monospace;font-weight:700;font-size:20px;}
+  .bias-readout.bullish{color:var(--green);} .bias-readout.bearish{color:var(--red);} .bias-readout.choppy{color:var(--amber);}
+  .gauge-track{position:relative;height:46px;display:flex;border-radius:var(--radius);overflow:visible;margin-bottom:6px;}
+  .gauge-zone{flex:1;position:relative;display:flex;align-items:center;justify-content:center;border-right:1px solid var(--border);}
+  .gauge-zone:last-child{border-right:none;}
+  .gauge-zone::after{content:'';position:absolute;inset:0;opacity:.14;}
+  .zone-bear::after{background:var(--red);} .zone-choppy::after{background:var(--amber);} .zone-bull::after{background:var(--green);}
+  .zone-tag{font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--text-faint);z-index:1;}
+  .needle{position:absolute;top:-8px;bottom:-8px;width:3px;background:var(--text);box-shadow:0 0 10px 1px rgba(233,230,221,.5);transition:left 900ms cubic-bezier(.2,.9,.25,1);z-index:2;}
+  .needle::before{content:'';position:absolute;top:-6px;left:50%;transform:translateX(-50%);width:0;height:0;border-left:6px solid transparent;border-right:6px solid transparent;border-top:7px solid var(--text);}
+  .ticks{display:flex;justify-content:space-between;margin-top:4px;font-family:'IBM Plex Mono',monospace;font-size:9.5px;color:var(--text-faint);}
+  .gauge-drivers{display:flex;gap:18px;flex-wrap:wrap;margin-top:16px;padding-top:14px;border-top:1px dashed var(--border);}
+  .driver{font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--text-muted);display:flex;align-items:center;gap:6px;}
+  .driver .dot{width:6px;height:6px;border-radius:50%;} .dot.g{background:var(--green);} .dot.r{background:var(--red);} .dot.a{background:var(--amber);}
+  .grid{display:grid;grid-template-columns:1.35fr 1fr;gap:14px;}
+  @media (max-width:860px){.grid{grid-template-columns:1fr;}}
+  .panel{background:var(--panel);border:1px solid var(--border);border-radius:var(--radius);padding:20px 22px;}
+  .panel + .panel{margin-top:14px;}
+  .candle-svg-wrap{background:var(--panel-2);border:1px solid var(--border);border-radius:var(--radius);padding:14px 10px 8px;margin-top:12px;}
+  .pattern-tags{display:flex;gap:8px;flex-wrap:wrap;margin-top:14px;}
+  .tag{font-family:'IBM Plex Mono',monospace;font-size:10.5px;padding:5px 9px;border-radius:2px;border:1px solid var(--border);color:var(--text-muted);background:var(--panel-2);}
+  .tag.bull{color:var(--green);border-color:var(--green-dim);background:var(--green-dim);}
+  .tag.bear{color:var(--red);border-color:var(--red-dim);background:var(--red-dim);}
+  .signal-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:12px;}
+  .signal-card{background:var(--panel-2);border:1px solid var(--border);border-radius:var(--radius);padding:12px 14px;}
+  .signal-card .k{font-family:'IBM Plex Mono',monospace;font-size:10px;color:var(--text-faint);text-transform:uppercase;letter-spacing:.08em;}
+  .signal-card .v{font-family:'IBM Plex Mono',monospace;font-size:16px;font-weight:700;margin-top:4px;}
+  .v.green{color:var(--green);} .v.red{color:var(--red);} .v.amber{color:var(--amber);}
+  .stacked-bar{display:flex;width:100%;height:20px;border-radius:2px;overflow:hidden;margin:12px 0 16px;border:1px solid var(--border);}
+  .sector-row{display:flex;align-items:center;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--border);font-family:'IBM Plex Mono',monospace;font-size:12px;}
+  .sector-row:last-child{border-bottom:none;}
+  .sector-left{display:flex;align-items:center;gap:9px;color:var(--text);}
+  .swatch{width:9px;height:9px;border-radius:2px;flex-shrink:0;}
+  .sector-name{color:var(--text-muted);}
+  .sector-right{display:flex;align-items:center;gap:10px;}
+  .sector-chg{font-size:10.5px;width:46px;text-align:right;}
+  .sector-chg.up{color:var(--green);} .sector-chg.down{color:var(--red);}
+  .sector-wt{width:44px;text-align:right;font-weight:600;}
+  .total-row{display:flex;justify-content:space-between;margin-top:10px;padding-top:10px;border-top:1px solid var(--border);font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--text-faint);}
+  .total-row b{color:var(--text);}
+  footer{text-align:center;color:var(--text-faint);font-family:'IBM Plex Mono',monospace;font-size:10.5px;margin-top:18px;letter-spacing:.05em;}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div>
+      <div class="idx-name">NIFTY 50 · SPOT INDEX</div>
+      <div><span class="idx-price" id="idxPrice">—</span><span class="idx-chg mono" id="idxChg"></span></div>
+    </div>
+    <div class="idx-meta">
+      <div><span class="live-dot"></span>LIVE — <span id="idxTime">—</span></div>
+      <div>Timeframe: 5-min · Live via Kite</div>
+    </div>
+  </header>
+
+  <div class="gauge-panel">
+    <div class="gauge-label-row">
+      <span class="section-title">Index Bias — Composite Classifier</span>
+      <span class="bias-readout" id="biasReadout">—</span>
+    </div>
+    <div class="gauge-track">
+      <div class="gauge-zone zone-bear"><span class="zone-tag">Bearish</span></div>
+      <div class="gauge-zone zone-choppy"><span class="zone-tag">Choppy</span></div>
+      <div class="gauge-zone zone-bull"><span class="zone-tag">Bullish</span></div>
+      <div class="needle" id="gaugeNeedle" style="left:50%;"></div>
+    </div>
+    <div class="ticks"><span>0</span><span>35</span><span>65</span><span>100</span></div>
+    <div class="gauge-drivers" id="gaugeDrivers"></div>
+  </div>
+
+  <div class="grid">
+    <div class="col-main">
+      <div class="panel">
+        <span class="section-title">Candle Pattern Analyzer · Last 14 × 5-min</span>
+        <div class="candle-svg-wrap"><svg id="candleSvg" viewBox="0 0 640 190" width="100%" height="190" preserveAspectRatio="none"></svg></div>
+        <div class="pattern-tags" id="patternTags"></div>
+      </div>
+      <div class="panel">
+        <span class="section-title">Supporting Signals</span>
+        <div class="signal-grid" id="signalGrid"></div>
+      </div>
+    </div>
+    <div class="col-side">
+      <div class="panel">
+        <span class="section-title">Sector Weightage — NIFTY 50 (Σ 100%)</span>
+        <div class="stacked-bar" id="stackedBar"></div>
+        <div class="sector-list" id="sectorList"></div>
+        <div class="total-row"><span id="sectorCount">—</span><span>Total weight <b id="totalWt">—</b></span></div>
+      </div>
+    </div>
+  </div>
+  <footer>NIFTY CANDLE ANALYZER · LIVE DATA VIA KITE CONNECT</footer>
+</div>
+
+<script>
+async function loadIndexQuote(){
+  const r = await fetch('/api/index-quote'); const d = await r.json();
+  document.getElementById('idxPrice').textContent = d.ltp.toLocaleString('en-IN', {minimumFractionDigits:2});
+  const chgEl = document.getElementById('idxChg');
+  const up = d.change >= 0;
+  chgEl.className = 'idx-chg ' + (up ? 'up' : 'down');
+  chgEl.textContent = (up?'▲ +':'▼ ') + d.change.toFixed(2) + ' (' + (up?'+':'') + d.change_pct.toFixed(2) + '%)';
+  document.getElementById('idxTime').textContent = new Date(d.timestamp).toLocaleString('en-IN');
+}
+
+async function loadBias(){
+  const r = await fetch('/api/bias-score'); const d = await r.json();
+  const readout = document.getElementById('biasReadout');
+  readout.className = 'bias-readout ' + d.zone;
+  readout.textContent = d.zone.toUpperCase() + ' · Score ' + d.score + '/100';
+  document.getElementById('gaugeNeedle').style.left = d.score + '%';
+  const drivers = document.getElementById('gaugeDrivers');
+  drivers.innerHTML = '';
+  d.drivers.forEach(dr=>{
+    const span = document.createElement('span'); span.className='driver';
+    span.innerHTML = '<span class="dot ' + dr.tone + '"></span>' + dr.text;
+    drivers.appendChild(span);
+  });
+  const grid = document.getElementById('signalGrid'); grid.innerHTML = '';
+  d.drivers.forEach(dr=>{
+    const [k,...rest] = dr.text.split(':'); const v = rest.join(':').trim();
+    const card = document.createElement('div'); card.className='signal-card';
+    const toneClass = dr.tone==='g'?'green':(dr.tone==='r'?'red':'amber');
+    card.innerHTML = '<div class="k">'+k+'</div><div class="v '+toneClass+'">'+v+'</div>';
+    grid.appendChild(card);
+  });
+}
+
+async function loadSectors(){
+  const r = await fetch('/api/sector-weights'); const d = await r.json();
+  const bar = document.getElementById('stackedBar'); bar.innerHTML='';
+  const list = document.getElementById('sectorList'); list.innerHTML='';
+  d.sectors.forEach(s=>{
+    const seg = document.createElement('div');
+    seg.style.width = s.wt + '%'; seg.style.background = s.color; seg.title = s.name+' — '+s.wt+'%';
+    bar.appendChild(seg);
+    const row = document.createElement('div'); row.className='sector-row';
+    row.innerHTML = '<div class="sector-left"><span class="swatch" style="background:'+s.color+'"></span>'
+      + '<span class="sector-name">'+s.name+'</span></div>'
+      + '<div class="sector-right"><span class="sector-chg '+(s.chg>=0?'up':'down')+'">'+(s.chg>=0?'+':'')+s.chg.toFixed(2)+'%</span>'
+      + '<span class="sector-wt">'+s.wt.toFixed(1)+'%</span></div>';
+    list.appendChild(row);
+  });
+  document.getElementById('sectorCount').textContent = d.sectors.length + ' sectors';
+  document.getElementById('totalWt').textContent = d.total_weight.toFixed(1) + '%';
+}
+
+async function loadCandles(){
+  const r = await fetch('/api/candles'); const d = await r.json();
+  const svg = document.getElementById('candleSvg'); svg.innerHTML='';
+  const candles = d.candles;
+  if(!candles.length) return;
+  const min = Math.min(...candles.map(c=>c.l)), max = Math.max(...candles.map(c=>c.h));
+  const pad=12, W=640, H=190, cw=(W-pad*2)/candles.length;
+  const y = v => H - pad - ((v-min)/(max-min))*(H-pad*2);
+  const ns = 'http://www.w3.org/2000/svg';
+  candles.forEach((c,i)=>{
+    const x = pad + i*cw + cw/2;
+    const up = c.c >= c.o; const color = up ? '#3FB68C' : '#E0654A';
+    const wick = document.createElementNS(ns,'line');
+    wick.setAttribute('x1',x); wick.setAttribute('x2',x);
+    wick.setAttribute('y1',y(c.h)); wick.setAttribute('y2',y(c.l));
+    wick.setAttribute('stroke',color); wick.setAttribute('stroke-width','1.4');
+    svg.appendChild(wick);
+    const bodyTop = y(Math.max(c.o,c.c)); const bodyH = Math.max(2, Math.abs(y(c.o)-y(c.c)));
+    const rect = document.createElementNS(ns,'rect');
+    rect.setAttribute('x', x - cw*0.28); rect.setAttribute('y', bodyTop);
+    rect.setAttribute('width', cw*0.56); rect.setAttribute('height', bodyH);
+    rect.setAttribute('fill', color); rect.setAttribute('rx','1');
+    svg.appendChild(rect);
+  });
+  const tagsEl = document.getElementById('patternTags'); tagsEl.innerHTML='';
+  d.patterns.forEach(p=>{
+    const tag = document.createElement('span');
+    tag.className = 'tag ' + (p.tone==='bull'?'bull':(p.tone==='bear'?'bear':''));
+    tag.textContent = p.pattern + ' — candle #' + (p.index+1);
+    tagsEl.appendChild(tag);
+  });
+}
+
+async function refreshAll(){
+  try { await Promise.all([loadIndexQuote(), loadBias(), loadSectors(), loadCandles()]); }
+  catch(e){ console.error('refresh failed', e); }
+}
+refreshAll();
+setInterval(refreshAll, 15000); // poll every 15s
+</script>
+</body>
+</html>"""
+
+@app.route('/nifty-candle-analyzer')
+@app.route('/nifty-analyzer')
+def nifty_candle_analyzer_dashboard():
+    from flask import render_template_string
+    return render_template_string(PAGE)
 
 # ── Run ──
 if __name__ == '__main__':
