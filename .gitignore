@@ -20,5 +20,7 @@ app/backend/prev_close_cache.json
 app/backend/gainers_eod_snapshot_*.json
 app/backend/premium_alerts_eod_snapshot_*.json
 app/backend/ema_eod_snapshot_*.json
+.agents/
+
 
 
