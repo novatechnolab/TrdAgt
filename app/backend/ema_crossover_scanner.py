@@ -62,6 +62,11 @@ _collision_dedup       = {}            # {"SYMBOL_bullish": epoch}
 _collision_watchlist   = {}            # {symbol: {ltp, ema_gap_pct, time}} — in-zone but not yet confirmed
 _collision_wl_lock     = threading.Lock()
 
+# ── Symmetric Alert Safeguard Constants ───────────────────────────────────────
+MIN_ALERT_VOLUME_RATIO  = 2.0   # Mandatory volume ratio (vs baseline or 20-MA) >= 2.0x
+MIN_ALERT_MOVE_PCT_1M   = 0.15  # Mandatory 1-minute candle body move % >= 0.15%
+MIN_ALERT_MOVE_PCT_5M   = 0.20  # Mandatory 5-minute candle body move % >= 0.20%
+
 _fh_rescan_needed   = False    # Set by warm thread to trigger a re-scan with fresh baselines
 
 # ── EMA Crossover Alert globals & dedup ──────────────────────────────────────
@@ -69,11 +74,14 @@ _ema_cross_dedup = {}  # {"SYMBOL_direction": epoch}
 _ema_cross_dedup_lock = threading.Lock()
 EMA_CROSS_DEDUP_SEC = 14400  # 4 hours (14400 seconds)
 
-def _send_telegram_ema_cross(symbol, direction, ltp, vol_ratio, slot_str):
+def _send_telegram_ema_cross(symbol, direction, ltp, vol_ratio, slot_str, move_pct=0.0):
     """Format and send a Telegram alert for a 5m EMA Crossover."""
     try:
         from session_utils import is_market_hours
         if not is_market_hours():
+            return
+
+        if slot_str and slot_str > "15:15":
             return
 
         from server import _send_telegram_message, _telegram_configured
@@ -82,12 +90,14 @@ def _send_telegram_ema_cross(symbol, direction, ltp, vol_ratio, slot_str):
 
         emoji = "🟢 BULLISH CROSS" if direction == "bullish" else "🔴 BEARISH CROSS"
         vol_str = f"{vol_ratio}x" if vol_ratio is not None else "N/A"
+        move_str = f"{move_pct:.2f}%" if move_pct is not None else "0.00%"
 
         msg = (
             f"⚡ [5M] {emoji} — #{symbol}\n"
             f"━━━━━━━━━━━━━━━━━━━━\n"
             f"📈 Stock LTP: ₹{ltp}\n"
             f"📊 Volume  : {vol_str} (vs 20D slot avg)\n"
+            f"📏 2C Move : {move_str}\n"
             f"━━━━━━━━━━━━━━━━━━━━\n"
             f"🕐 Time     : {slot_str} IST"
         )
@@ -96,6 +106,40 @@ def _send_telegram_ema_cross(symbol, direction, ltp, vol_ratio, slot_str):
         logging.info("[EMA Cross Alert] Telegram alert dispatched for %s (%s)", symbol, direction)
     except Exception as e:
         logging.warning("[EMA Cross Alert] Failed to dispatch Telegram alert: %s", e)
+
+
+def _send_telegram_pre_cross_5m(symbol, direction, ltp, vol_ratio, move_pct, slot_str):
+    """Format and send a Telegram alert for a Pre-Cross 5M Momentum Surge."""
+    try:
+        from session_utils import is_market_hours
+        if not is_market_hours():
+            return
+
+        if slot_str and slot_str > "15:15":
+            return
+
+        from server import _send_telegram_message, _telegram_configured
+        if not _telegram_configured():
+            return
+
+        emoji = "🟢 BULLISH PRE-CROSS" if direction == "bullish" else "🔴 BEARISH PRE-CROSS"
+        vol_str = f"{vol_ratio:.2f}x" if vol_ratio is not None else "N/A"
+        move_str = f"{move_pct:.2f}%" if move_pct is not None else "0.00%"
+
+        msg = (
+            f"⚡ [5M PRE-CROSS] {emoji} — #{symbol}\n"
+            f"━━━━━━━━━━━━━━━━━━━━\n"
+            f"📈 Stock LTP: ₹{ltp}\n"
+            f"📊 Volume  : {vol_str} (vs 20D slot avg)\n"
+            f"📏 5M Move : {move_str}\n"
+            f"━━━━━━━━━━━━━━━━━━━━\n"
+            f"🕐 Time     : {slot_str} IST"
+        )
+
+        _send_telegram_message(msg)
+        logging.info("[Pre-Cross 5M Alert] Telegram alert dispatched for %s (%s)", symbol, direction)
+    except Exception as e:
+        logging.warning("[Pre-Cross 5M Alert] Failed to dispatch Telegram alert: %s", e)
 
 
 def _compute_fh_spurt(candles, symbol):
@@ -221,44 +265,37 @@ def _is_active_window(now):
     if now.hour == 15 and now.minute <= 30: return True
     return False
 
-def _detect_ema_crossover(candles, period_short=9, period_long=21):
+def _detect_ema_crossover(candles, period_short=9, period_long=21, require_two_candle_close=False):
     """
-    Computes EMA 9 and EMA 21.
-    Returns (trend_state, crossover_signal, crossover_time_elapsed, crossover_epoch)
-      trend_state: 'bullish' (EMA9 > EMA21), 'bearish' (EMA9 < EMA21), 'neutral'
-      crossover_signal: 'bullish' (crossed above), 'bearish' (crossed below), 'none'
-      crossover_time_elapsed: formatted string (e.g. '15m ago') or None
-      crossover_epoch: int Unix epoch timestamp or 0
+    Computes EMA 9 and EMA 21 and validates crossover quality:
+      - 5M (require_two_candle_close=True): Tracks EMA9 hold duration post-crossover. Requires minimum 10 min hold (2 candles, Y10/N10).
+      - 15M, 1H, Daily (require_two_candle_close=False): Standard single-candle EMA crossover detection.
     """
     if not candles or len(candles) < period_long + 2:
-        return 'neutral', 'none', None, 0, 0.0
+        return 'neutral', 'none', None, 0, 0.0, None
         
     closes = [c['close'] for c in candles]
     ema_short = compute_ema(closes, period_short)
     ema_long = compute_ema(closes, period_long)
     
     if len(ema_short) < 2 or len(ema_long) < 2:
-        return 'neutral', 'none', None, 0, 0.0
+        return 'neutral', 'none', None, 0, 0.0, None
         
     prev_s, curr_s = ema_short[-2], ema_short[-1]
     prev_l, curr_l = ema_long[-2], ema_long[-1]
     
     if prev_s is None or curr_s is None or prev_l is None or curr_l is None:
-        return 'neutral', 'none', None, 0, 0.0
+        return 'neutral', 'none', None, 0, 0.0, None
         
     trend_state = 'bullish' if curr_s > curr_l else 'bearish'
     
-    # 1. Determine if a fresh crossover happened on the current candle
-    crossover = 'none'
-    if prev_s <= prev_l and curr_s > curr_l:
-        crossover = 'bullish'
-    elif prev_s >= prev_l and curr_s < curr_l:
-        crossover = 'bearish'
-        
-    # 2. Find how long ago the *most recent* crossover of any kind occurred in history
     crossover_time_elapsed = None
     crossover_epoch = 0
     crossover_candle_size_pct = 0.0
+    crossover_type = 'none'
+    confirm_idx = -1
+    cross_hold_tag = None
+
     for i in range(len(candles) - 1, 0, -1):
         p_s, c_s = ema_short[i - 1], ema_short[i]
         p_l, c_l = ema_long[i - 1], ema_long[i]
@@ -266,58 +303,177 @@ def _detect_ema_crossover(candles, period_short=9, period_long=21):
         if p_s is None or c_s is None or p_l is None or c_l is None:
             continue
             
-        is_cross = False
-        if p_s <= p_l and c_s > c_l:
-            is_cross = True
-        elif p_s >= p_l and c_s < c_l:
-            is_cross = True
+        is_bull = (p_s <= p_l and c_s > c_l)
+        is_bear = (p_s >= p_l and c_s < c_l)
+        
+        if not (is_bull or is_bear):
+            continue
             
-        if is_cross:
-            o = candles[i].get('open', 0) or 0
-            c = candles[i].get('close', 0) or 0
-            crossover_candle_size_pct = round((abs(c - o) / c) * 100, 2) if c > 0 else 0.0
-            
-            cross_time_str = candles[i]['date']
-            if isinstance(cross_time_str, str):
-                if '+' in cross_time_str:
-                    cross_time_str = cross_time_str.split('+')[0]
+        o = candles[i].get('open', 0.0) or 0.0
+        c = candles[i].get('close', 0.0) or 0.0
+        if c <= 0:
+            continue
+
+        # 1. Close position check for Candle #1 (crossover candle must close above/below EMAs)
+        if is_bull and c <= max(c_s, c_l):
+            continue
+        if is_bear and c >= min(c_s, c_l):
+            continue
+
+        if require_two_candle_close:
+            # 60% Body ratio check for Candle #1 (crossover candle)
+            h1 = candles[i].get('high', 0.0) or 0.0
+            l1 = candles[i].get('low', 0.0) or 0.0
+            range1 = h1 - l1
+            body1 = abs(c - o)
+            body_ratio1 = (body1 / range1) if range1 > 0 else 1.0
+            if body_ratio1 < 0.60:
+                continue
+
+            # 2. Rule of 5M EMA Crossover Confirmation:
+            # Candle #2 (index i+1) must confirm Candle #1 (index i):
+            if i >= len(candles) - 1:
+                # Candle #2 has not closed yet — wait for Candle #2 to close before alerting
+                continue
+
+            next_o = candles[i + 1].get('open', 0.0) or 0.0
+            next_c = candles[i + 1].get('close', 0.0) or 0.0
+            next_h = candles[i + 1].get('high', 0.0) or 0.0
+            next_l = candles[i + 1].get('low', 0.0) or 0.0
+
+            if next_c <= 0:
+                continue
+
+            # 60% Body ratio check for Candle #2 (confirmation candle)
+            range2 = next_h - next_l
+            body2 = abs(next_c - next_o)
+            body_ratio2 = (body2 / range2) if range2 > 0 else 1.0
+            if body_ratio2 < 0.60:
+                continue
+
+            if is_bull:
+                # Bullish confirmation:
+                # 1. 2nd candle must close positive (green: close > open)
+                # 2. 2nd candle must close above 1st candle close (next_c > c)
+                if not (next_c > next_o and next_c > c):
+                    continue
+            elif is_bear:
+                # Bearish confirmation:
+                # 1. 2nd candle must close negative (red: close < open)
+                # 2. 2nd candle must close below 1st candle close (next_c < c)
+                if not (next_c < next_o and next_c < c):
+                    continue
+
+            # Walk forward from crossover candle i (index i+1 to len-1) to count 5m bars holding trend.
+            # Reversal Rule:
+            # Bullish trend reverses ONLY when 2 consecutive bearish candles close below EMA 21 (with 2nd candle closing below 1st candle close).
+            # Bearish trend reverses ONLY when 2 consecutive bullish candles close above EMA 21 (with 2nd candle closing above 1st candle close).
+            consecutive_hold_bars = 0
+            break_streak = 0
+            prev_break_close = None
+            hold_still_active = False
+
+            for j in range(i + 1, len(candles)):
+                oj = candles[j].get('open', 0.0) or 0.0
+                cj = candles[j].get('close', 0.0) or 0.0
+                e21j = ema_long[j] or 0.0
+
+                if is_bull:
+                    # Check if candle j is a bearish breakdown candle below EMA 21
+                    is_bear_break = (cj < oj and cj < e21j)
+                    if is_bear_break:
+                        if break_streak == 1 and prev_break_close is not None and cj < prev_break_close:
+                            # Confirmed bullish trend reversal! (2 consecutive bearish closes below EMA21, 2nd < 1st)
+                            break_streak = 2
+                            break
+                        else:
+                            break_streak = 1
+                            prev_break_close = cj
+                            consecutive_hold_bars += 1
+                            if j == len(candles) - 1:
+                                hold_still_active = True
+                    else:
+                        break_streak = 0
+                        prev_break_close = None
+                        consecutive_hold_bars += 1
+                        if j == len(candles) - 1:
+                            hold_still_active = True
+                elif is_bear:
+                    # Check if candle j is a bullish breakout candle above EMA 21
+                    is_bull_break = (cj > oj and cj > e21j)
+                    if is_bull_break:
+                        if break_streak == 1 and prev_break_close is not None and cj > prev_break_close:
+                            # Confirmed bearish trend reversal! (2 consecutive bullish closes above EMA21, 2nd > 1st)
+                            break_streak = 2
+                            break
+                        else:
+                            break_streak = 1
+                            prev_break_close = cj
+                            consecutive_hold_bars += 1
+                            if j == len(candles) - 1:
+                                hold_still_active = True
+                    else:
+                        break_streak = 0
+                        prev_break_close = None
+                        consecutive_hold_bars += 1
+                        if j == len(candles) - 1:
+                            hold_still_active = True
+
+            # If a confirmed reversal occurred prior to current bar, the crossover hold is no longer active
+            if not hold_still_active or consecutive_hold_bars < 1:
+                continue
+
+            confirm_idx = i + 1
+            hold_mins = (consecutive_hold_bars + 1) * 5
+            cross_hold_tag = f"Y{hold_mins}" if is_bull else f"N{hold_mins}"
+        else:
+            # For 15M, 1H, Daily: standard single crossover candle confirmation
+            confirm_idx = i
+
+        # Valid crossover confirmed!
+        if require_two_candle_close and confirm_idx > i:
+            # Total % move across Candle #1 (crossover bar) and Candle #2 (confirmation bar)
+            next_c = candles[confirm_idx].get('close', 0.0) or 0.0
+            move_pct = (abs(next_c - o) / o) * 100.0 if o > 0 else 0.0
+        else:
+            move_pct = (abs(c - o) / c) * 100.0 if c > 0 else 0.0
+
+        crossover_candle_size_pct = round(move_pct, 2)
+        crossover_type = 'bullish' if is_bull else 'bearish'
+
+        cross_time_str = candles[confirm_idx]['date']
+        if isinstance(cross_time_str, str):
+            if '+' in cross_time_str:
+                cross_time_str = cross_time_str.split('+')[0]
+            try:
+                cross_dt = datetime.strptime(cross_time_str, "%Y-%m-%dT%H:%M:%S")
+            except ValueError:
                 try:
-                    cross_dt = datetime.strptime(cross_time_str, "%Y-%m-%dT%H:%M:%S")
+                    cross_dt = datetime.strptime(cross_time_str, "%Y-%m-%d %H:%M:%S")
                 except ValueError:
-                    try:
-                        cross_dt = datetime.strptime(cross_time_str, "%Y-%m-%d %H:%M:%S")
-                    except ValueError:
-                        crossover_time_elapsed = "just now"
-                        try:
-                            crossover_epoch = int(time.time())
-                        except Exception:
-                            crossover_epoch = 0
-                        break
-            elif hasattr(cross_time_str, 'strftime'):
-                cross_dt = cross_time_str
-            else:
-                crossover_time_elapsed = "just now"
-                try:
-                    crossover_epoch = int(time.time())
-                except Exception:
-                    crossover_epoch = 0
-                break
-                
+                    cross_dt = None
+        elif hasattr(cross_time_str, 'strftime'):
+            cross_dt = cross_time_str
+        else:
+            cross_dt = None
+
+        if cross_dt:
             try:
                 if cross_dt.hour == 0 and cross_dt.minute == 0:
                     crossover_time_elapsed = cross_dt.strftime("%d %b")
                 else:
                     crossover_time_elapsed = cross_dt.strftime("%d %b, %H:%M")
-            except Exception:
-                crossover_time_elapsed = str(cross_time_str)
-                
-            try:
                 crossover_epoch = int(cross_dt.timestamp())
             except Exception:
+                crossover_time_elapsed = str(cross_time_str)
                 crossover_epoch = 0
-            break
-            
-    return trend_state, crossover, crossover_time_elapsed, crossover_epoch, crossover_candle_size_pct
+        break
+
+    crossover_signal = 'none'
+    if confirm_idx == len(candles) - 1:
+        crossover_signal = crossover_type
+
+    return trend_state, crossover_signal, crossover_time_elapsed, crossover_epoch, crossover_candle_size_pct, cross_hold_tag
 
 # ── 1-Minute Live Breakout Helper Methods ────────────────────────────────────
 
@@ -707,13 +863,17 @@ def _send_telegram_collision(alert):
         ltp       = alert.get('ltp', 0.0)
         time_str  = alert.get('time', '')
         gap_pct   = alert.get('gap_pct', 0.0)
+        vol_rat   = alert.get('vol_multiplier', 0.0)
+        move_pct  = alert.get('move_pct', 0.0)
 
         emoji = "\U0001f535 EMA COLLISION \u2014 BULLISH" if direction == 'bullish' else "\U0001f7e0 EMA COLLISION \u2014 BEARISH"
+        vol_info = f"Vol Ratio: {vol_rat:.1f}x | Move: {move_pct:.2f}%" if vol_rat > 0 else f"Move: {move_pct:.2f}%"
         msg = (
             f"\u26a1 {emoji}\n"
             f"\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\n"
             f"\U0001f4cc Symbol  : #{symbol}\n"
             f"\U0001f4c8 LTP     : \u20b9{ltp}\n"
+            f"\U0001f4ca Metrics : {vol_info}\n"
             f"\U0001f4ca EMA Gap : {gap_pct:.3f}% of LTP\n"
             f"\U0001f4ca Signal  : EMA9/EMA21 Coil \u2192 Confirmed Break\n"
             f"\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\n"
@@ -725,7 +885,7 @@ def _send_telegram_collision(alert):
         logging.warning("[EMA Collision] Telegram failed: %s", e)
 
 
-def _emit_collision_alert(symbol, direction, ltp):
+def _emit_collision_alert(symbol, direction, ltp, vol_ratio=0.0, move_pct=0.0):
     """
     Emit a confirmed EMA collision alert via SocketIO + Telegram.
     60-min dedup per symbol+direction pair.
@@ -746,13 +906,15 @@ def _emit_collision_alert(symbol, direction, ltp):
         gap_pct = _collision_watchlist.get(symbol, {}).get('ema_gap_pct', 0.0)
 
     alert = {
-        "type":          "ema_collision",
-        "symbol":        symbol,
-        "direction":     direction,
-        "ltp":           round(ltp, 2),
-        "gap_pct":       round(gap_pct, 3),
-        "time":          now_ist().strftime("%H:%M:%S"),
-        "trigger_epoch": now_epoch,
+        "type":           "ema_collision",
+        "symbol":         symbol,
+        "direction":      direction,
+        "ltp":            round(ltp, 2),
+        "gap_pct":        round(gap_pct, 3),
+        "vol_multiplier": round(vol_ratio, 2),
+        "move_pct":       round(move_pct, 2),
+        "time":           now_ist().strftime("%H:%M:%S"),
+        "trigger_epoch":  now_epoch,
     }
 
     with _collision_alerts_lock:
@@ -809,8 +971,8 @@ def _evaluate_1m_candle_close(snapshot):
 
     # Compare 1M volume surge against average 1M volume (avg_5m_volume / 5.0)
     avg_1m_volume = avg_5m_volume / 5.0
-    vol_surge   = (candle_volume > 1.5 * avg_1m_volume)
-    strong_body = (body_pct > 0.15)
+    vol_surge   = (avg_1m_volume > 0 and candle_volume >= MIN_ALERT_VOLUME_RATIO * avg_1m_volume)
+    strong_body = (body_pct >= MIN_ALERT_MOVE_PCT_1M)
 
     if (is_bullish_break or is_bearish_break) and vol_surge and strong_body:
         direction = "bullish" if is_bullish_break else "bearish"
@@ -1040,17 +1202,21 @@ def _scan_single_symbol(kite, symbol):
     res = {}
     for label, interval, days_back, limit in intervals:
         candles = get_historical_candles(kite, fetch_symbol, interval, days_back=days_back, limit=limit)
-        trend, cross, elapsed, epoch, size_pct = _detect_ema_crossover(candles)
+        is_5m = (label == '5m')
+        trend, cross, elapsed, epoch, size_pct, cross_hold = _detect_ema_crossover(candles, require_two_candle_close=is_5m)
         res[f"state_{label}"] = trend
         res[f"cross_{label}"] = cross
         res[f"cross_time_{label}"] = elapsed
         res[f"cross_epoch_{label}"] = epoch
         res[f"cross_candle_size_{label}"] = size_pct
+        if is_5m:
+            res["cross_hold_5m"] = cross_hold
 
-        # New 5m crossover volume baseline integration & Telegram alerting
-        if label == '5m' and cross != 'none' and candles:
+        # New 5m crossover & pre-cross momentum volume baseline integration & Telegram alerting
+        if label == '5m' and candles:
             last_c = candles[-1]
-            ltp_now = last_c.get('close', 0)
+            ltp_now = last_c.get('close', 0) or 0
+            open_now = last_c.get('open', 0) or 0
             dt_val = last_c.get('date')
             slot_str = None
             if isinstance(dt_val, str):
@@ -1058,45 +1224,99 @@ def _scan_single_symbol(kite, symbol):
             elif hasattr(dt_val, 'strftime'):
                 slot_str = dt_val.strftime("%H:%M")
 
-            if slot_str:
+            if slot_str and ltp_now > 0:
                 import volume_baseline
                 vol_ratio, base_val = volume_baseline.get_vol_ratio(symbol, '5m', slot_str, last_c.get('volume', 0) or 0)
                 res["cross_5m_vol_ratio"] = vol_ratio
                 res["cross_5m_vol_baseline"] = base_val
 
-                # Telegram alert logic with 4-hour dedup (EMA 5m cross only)
-                key = f"{symbol}_{cross}"
                 now_epoch = int(time.time())
-                with _ema_cross_dedup_lock:
-                    last_time = _ema_cross_dedup.get(key, 0)
-                    if now_epoch - last_time >= EMA_CROSS_DEDUP_SEC:
-                        # Only alert if volume ratio is at least 2.0x
-                        if vol_ratio is not None and vol_ratio >= 2.0:
-                            _ema_cross_dedup[key] = now_epoch
-                            _send_telegram_ema_cross(symbol, cross, round(ltp_now, 2), vol_ratio, slot_str)
+                current_hm = now_ist().strftime("%H:%M")
 
-                            # Append to Live Breakouts dashboard alert list
-                            alert = {
-                                "symbol":           symbol,
-                                "direction":        cross,
-                                "time":             now_ist().strftime("%H:%M:%S"),
-                                "ltp":              round(ltp_now, 2),
-                                "grade":            "5M Cross",
-                                "vol_multiplier":   vol_ratio,
-                                "trigger_epoch":    now_epoch,
-                                "candles_5m_elapsed": 1,
-                            }
-                            with _alerts_lock:
-                                _clear_stale_alerts_under_lock()
-                                if not any(a["symbol"] == symbol and a["grade"] == "5M Cross" for a in _triggered_alerts):
-                                    _triggered_alerts.append(alert)
+                # Case 1: Confirmed 5M EMA Crossover Alert
+                if cross != 'none':
+                    key = f"{symbol}_{cross}_{slot_str}"
+                    with _ema_cross_dedup_lock:
+                        already_alerted_for_slot = key in _ema_cross_dedup
+                        if not already_alerted_for_slot:
+                            if len(_ema_cross_dedup) > 1000:
+                                cutoff = now_epoch - 86400
+                                to_del = [k for k, t in _ema_cross_dedup.items() if t < cutoff]
+                                for k in to_del:
+                                    _ema_cross_dedup.pop(k, None)
 
-                            # Emit socket event for real-time dashboard updates
-                            try:
-                                from server import socketio
-                                socketio.emit('live_breakout_alert', alert)
-                            except Exception:
-                                pass
+                            if slot_str <= "15:15" and current_hm <= "15:15":
+                                _ema_cross_dedup[key] = now_epoch
+                                _send_telegram_ema_cross(symbol, cross, round(ltp_now, 2), vol_ratio or 1.0, slot_str, move_pct=size_pct)
+
+                                alert = {
+                                    "symbol":           symbol,
+                                    "direction":        cross,
+                                    "time":             now_ist().strftime("%H:%M:%S"),
+                                    "ltp":              round(ltp_now, 2),
+                                    "grade":            "5M Cross",
+                                    "vol_multiplier":   vol_ratio,
+                                    "move_pct":          size_pct,
+                                    "trigger_epoch":    now_epoch,
+                                    "candles_5m_elapsed": 1,
+                                }
+                                with _alerts_lock:
+                                    _clear_stale_alerts_under_lock()
+                                    if not any(a["symbol"] == symbol and a["grade"] == "5M Cross" for a in _triggered_alerts):
+                                        _triggered_alerts.append(alert)
+
+                                try:
+                                    from server import socketio
+                                    socketio.emit('live_breakout_alert', alert)
+                                except Exception:
+                                    pass
+
+                # Case 2: Pre-Cross 5M Volume & Move % Momentum Alert (Near EMA Cross)
+                elif vol_ratio and vol_ratio >= 2.5 and open_now > 0:
+                    move_pct_5m = (abs(ltp_now - open_now) / open_now) * 100.0
+                    if move_pct_5m >= 0.30:
+                        closes_5m = [c.get('close', 0) for c in candles]
+                        ema9_5m = compute_ema(closes_5m, 9)
+                        ema21_5m = compute_ema(closes_5m, 21)
+                        if ema9_5m and ema21_5m and len(ema9_5m) == len(closes_5m) and len(ema21_5m) == len(closes_5m):
+                            e9_last = ema9_5m[-1]
+                            e21_last = ema21_5m[-1]
+                            if e9_last is not None and e21_last is not None:
+                                gap_pct = (abs(e9_last - e21_last) / ltp_now) * 100.0
+                                if gap_pct <= 0.30:
+                                    pre_dir = "bullish" if ltp_now >= open_now else "bearish"
+                                    pre_key = f"{symbol}_precross_{slot_str}"
+                                    with _ema_cross_dedup_lock:
+                                        already_pre_alerted = pre_key in _ema_cross_dedup
+                                        if not already_pre_alerted:
+                                            if slot_str <= "15:15" and current_hm <= "15:15":
+                                                _ema_cross_dedup[pre_key] = now_epoch
+                                                _send_telegram_pre_cross_5m(
+                                                    symbol, pre_dir, round(ltp_now, 2),
+                                                    vol_ratio, round(move_pct_5m, 2), slot_str
+                                                )
+
+                                                alert = {
+                                                    "symbol":           symbol,
+                                                    "direction":        pre_dir,
+                                                    "time":             now_ist().strftime("%H:%M:%S"),
+                                                    "ltp":              round(ltp_now, 2),
+                                                    "grade":            "Pre-Cross 5M",
+                                                    "vol_multiplier":   round(vol_ratio, 2),
+                                                    "move_pct":          round(move_pct_5m, 2),
+                                                    "trigger_epoch":    now_epoch,
+                                                    "candles_5m_elapsed": 1,
+                                                }
+                                                with _alerts_lock:
+                                                    _clear_stale_alerts_under_lock()
+                                                    if not any(a["symbol"] == symbol and a["grade"] == "Pre-Cross 5M" for a in _triggered_alerts):
+                                                        _triggered_alerts.append(alert)
+
+                                                try:
+                                                    from server import socketio
+                                                    socketio.emit('live_breakout_alert', alert)
+                                                except Exception:
+                                                    pass
         
         # Compute intraday session linearity on 15m candles
         if label == '15m':
@@ -1124,9 +1344,34 @@ def _scan_single_symbol(kite, symbol):
                     else:
                         _collision_watchlist.pop(symbol, None)  # confirmed or exited zone
 
-                # Phase 2: emit alert on confirmation
+                # Phase 2: emit alert on confirmation (requires vol_ratio >= 2.0x and move_pct >= 0.20%)
                 if collision_dir:
-                    _emit_collision_alert(symbol, collision_dir, ltp_now)
+                    last_c = candles[-1] if candles else {}
+                    c_open = last_c.get('open', 0.0) or 0.0
+                    c_close = last_c.get('close', 0.0) or 0.0
+                    c_vol = last_c.get('volume', 0.0) or 0.0
+                    move_pct_5m = (abs(c_close - c_open) / c_close * 100.0) if c_close > 0 else 0.0
+
+                    v_ratio = None
+                    if slot_str:
+                        try:
+                            import volume_baseline
+                            v_ratio, _ = volume_baseline.get_vol_ratio(symbol, '5m', slot_str, c_vol)
+                        except Exception:
+                            v_ratio = None
+                    if v_ratio is None and len(candles) >= 20:
+                        v_20_avg = sum([c.get('volume', 0.0) or 0.0 for c in candles[-21:-1]]) / 20.0
+                        if v_20_avg > 0:
+                            v_ratio = c_vol / v_20_avg
+
+                    effective_vol_ratio = v_ratio if v_ratio is not None else 0.0
+
+                    current_hm = now_ist().strftime("%H:%M")
+                    if slot_str and slot_str <= "15:15" and current_hm <= "15:15" and effective_vol_ratio >= MIN_ALERT_VOLUME_RATIO and move_pct_5m >= MIN_ALERT_MOVE_PCT_5M:
+                        _emit_collision_alert(symbol, collision_dir, ltp_now, effective_vol_ratio, move_pct_5m)
+                    else:
+                        logging.info("[EMA Collision Filtered] %s %s confirmed break ignored (vol_ratio=%.2fx, move_pct=%.2f%%)",
+                                     symbol, collision_dir, effective_vol_ratio, move_pct_5m)
             except Exception:
                 res["ema_collision"] = None
 

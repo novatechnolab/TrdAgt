@@ -3051,19 +3051,46 @@
       let bullKeys = [];
       let bearKeys = [];
 
+      const isTodayEpoch = (ep) => {
+        if (!ep || ep <= 0) return false;
+        const d = new Date(ep * 1000);
+        const now = new Date();
+        return d.toDateString() === now.toDateString();
+      };
+
+      const get5mCrossDirection = (item) => {
+        if (!item) return 'none';
+        if (item.cross_hold_5m) {
+          if (item.cross_hold_5m.startsWith('Y')) return 'bullish';
+          if (item.cross_hold_5m.startsWith('N')) return 'bearish';
+        }
+        if (item.cross_5m === 'bullish') return 'bullish';
+        if (item.cross_5m === 'bearish') return 'bearish';
+        if (item.cross_epoch_5m > 0 && isTodayEpoch(item.cross_epoch_5m)) {
+          if (item.state_5m === 'bullish') return 'bullish';
+          if (item.state_5m === 'bearish') return 'bearish';
+        }
+        return 'none';
+      };
+
       allKeys.forEach(k => {
         const item = crossovers[k];
         const states = [item.state_5m, item.state_15m, item.state_1h, item.state_day];
         const bullCount = states.filter(s => s === 'bullish').length;
         const bearCount = states.filter(s => s === 'bearish').length;
 
-        const hasBullCross = item.cross_5m === 'bullish' || item.cross_15m === 'bullish' || item.cross_1h === 'bullish' || item.cross_day === 'bullish';
-        const hasBearCross = item.cross_5m === 'bearish' || item.cross_15m === 'bearish' || item.cross_1h === 'bearish' || item.cross_day === 'bearish';
+        const crossDir = get5mCrossDirection(item);
+        const hasBullCross = crossDir === 'bullish';
+        const hasBearCross = crossDir === 'bearish';
 
         let isBull = false;
-        if (item.alignment === 'bullish' || hasBullCross) {
+        if (hasBullCross) {
           isBull = true;
-        } else if (item.alignment === 'bearish' || hasBearCross) {
+        } else if (hasBearCross) {
+          isBull = false;
+        } else if (item.alignment === 'bullish') {
+          isBull = true;
+        } else if (item.alignment === 'bearish') {
           isBull = false;
         } else {
           isBull = bullCount > bearCount;
@@ -3076,18 +3103,18 @@
         }
       });
 
-      // Apply Button Filters to Bulls
+      // Apply Button Filters to Bulls (strictly 5M Cross from today)
       if (crossoverFilterBulls === 'aligned') {
         bullKeys = bullKeys.filter(k => crossovers[k].alignment === 'bullish');
       } else if (crossoverFilterBulls === 'cross') {
-        bullKeys = bullKeys.filter(k => crossovers[k].cross_5m === 'bullish' || crossovers[k].cross_15m === 'bullish' || crossovers[k].cross_1h === 'bullish' || crossovers[k].cross_day === 'bullish');
+        bullKeys = bullKeys.filter(k => get5mCrossDirection(crossovers[k]) === 'bullish');
       }
 
-      // Apply Button Filters to Bears
+      // Apply Button Filters to Bears (strictly 5M Cross from today)
       if (crossoverFilterBears === 'aligned') {
         bearKeys = bearKeys.filter(k => crossovers[k].alignment === 'bearish');
       } else if (crossoverFilterBears === 'cross') {
-        bearKeys = bearKeys.filter(k => crossovers[k].cross_5m === 'bearish' || crossovers[k].cross_15m === 'bearish' || crossovers[k].cross_1h === 'bearish' || crossovers[k].cross_day === 'bearish');
+        bearKeys = bearKeys.filter(k => get5mCrossDirection(crossovers[k]) === 'bearish');
       }
 
       const sortKeys = (keysList) => {
@@ -3095,42 +3122,29 @@
           const cA = crossovers[a];
           const cB = crossovers[b];
 
-          // Helper to get timeframe group priority and candle size
-          const getTimeframeGroup = (item) => {
-            if (item.cross_5m === 'bullish' || item.cross_5m === 'bearish') {
-              return { rank: 4, size: item.cross_candle_size_5m || 0 };
-            }
-            if (item.cross_15m === 'bullish' || item.cross_15m === 'bearish') {
-              return { rank: 3, size: item.cross_candle_size_15m || 0 };
-            }
-            if (item.cross_1h === 'bullish' || item.cross_1h === 'bearish') {
-              return { rank: 2, size: item.cross_candle_size_1h || 0 };
-            }
-            if (item.cross_day === 'bullish' || item.cross_day === 'bearish') {
-              return { rank: 1, size: item.cross_candle_size_day || 0 };
-            }
-            return { rank: 0, size: 0 };
-          };
+          const dirA = get5mCrossDirection(cA);
+          const dirB = get5mCrossDirection(cB);
+          const isCrossA = (dirA === 'bullish' || dirA === 'bearish');
+          const isCrossB = (dirB === 'bullish' || dirB === 'bearish');
 
-          const gA = getTimeframeGroup(cA);
-          const gB = getTimeframeGroup(cB);
-
-          // Tier 1: Group by timeframe priority (5M first, then 15M, then 1H, then Daily)
-          if (gA.rank !== gB.rank) {
-            return gB.rank - gA.rank;
+          // Priority 1: 5M Crossovers grouped at top
+          if (isCrossA !== isCrossB) {
+            return isCrossB ? 1 : -1;
           }
 
-          // Tier 2: Within the same timeframe group, sort by candle strength (largest first)
-          if (gA.rank > 0) {
-            if (Math.abs(gA.size - gB.size) > 0.01) {
-              return gB.size - gA.size;
-            }
+          // Priority 2: Sort by most recent crossover epoch timestamp (newest on top)
+          const epochA = cA.cross_epoch_5m || 0;
+          const epochB = cB.cross_epoch_5m || 0;
+          if (epochA !== epochB) {
+            return epochB - epochA;
           }
 
-          // Tier 3: Fallback to existing order (most recent epoch timestamp first)
-          const epochA = Math.max(cA.cross_epoch_5m || 0, cA.cross_epoch_15m || 0, cA.cross_epoch_1h || 0, cA.cross_epoch_day || 0);
-          const epochB = Math.max(cB.cross_epoch_5m || 0, cB.cross_epoch_15m || 0, cB.cross_epoch_1h || 0, cB.cross_epoch_day || 0);
-          if (epochA !== epochB) return epochB - epochA;
+          // Priority 3: Candle size (largest first)
+          const sizeA = cA.cross_candle_size_5m || 0;
+          const sizeB = cB.cross_candle_size_5m || 0;
+          if (Math.abs(sizeA - sizeB) > 0.01) {
+            return sizeB - sizeA;
+          }
 
           return a.localeCompare(b);
         });
@@ -3197,59 +3211,26 @@
             alignmentText = '❄️ Bearish';
           }
 
-          // Dynamic Fresh Crossover Badge & New live flag
+          // Dynamic Fresh Crossover Badge & New live flag (strictly 5M Cross)
+          const crossDir = get5mCrossDirection(item);
           let crossBadge = '';
-          let activeCrossTime = '';
-          if (item.cross_5m === 'bullish') {
-            crossBadge = '<span class="cross-pill bullish">▲ 5M Cross</span>';
-            activeCrossTime = item.cross_time_5m;
-          } else if (item.cross_15m === 'bullish') {
-            crossBadge = '<span class="cross-pill bullish">▲ 15M Cross</span>';
-            activeCrossTime = item.cross_time_15m;
-          } else if (item.cross_1h === 'bullish') {
-            crossBadge = '<span class="cross-pill bullish">▲ 1H Cross</span>';
-            activeCrossTime = item.cross_time_1h;
-          } else if (item.cross_day === 'bullish') {
-            crossBadge = '<span class="cross-pill bullish">▲ Daily Cross</span>';
-            activeCrossTime = item.cross_time_day;
-          } else if (item.cross_5m === 'bearish') {
-            crossBadge = '<span class="cross-pill bearish">▼ 5M Cross</span>';
-            activeCrossTime = item.cross_time_5m;
-          } else if (item.cross_15m === 'bearish') {
-            crossBadge = '<span class="cross-pill bearish">▼ 15M Cross</span>';
-            activeCrossTime = item.cross_time_15m;
-          } else if (item.cross_1h === 'bearish') {
-            crossBadge = '<span class="cross-pill bearish">▼ 1H Cross</span>';
-            activeCrossTime = item.cross_time_1h;
-          } else if (item.cross_day === 'bearish') {
-            crossBadge = '<span class="cross-pill bearish">▼ Daily Cross</span>';
-            activeCrossTime = item.cross_time_day;
+          let activeCrossTime = item.cross_time_5m || '';
+          const holdStr = item.cross_hold_5m ? ` ${item.cross_hold_5m}` : '';
+          if (crossDir === 'bullish') {
+            crossBadge = `<span class="cross-pill bullish">▲ 5M Cross${holdStr}</span>`;
+          } else if (crossDir === 'bearish') {
+            crossBadge = `<span class="cross-pill bearish">▼ 5M Cross${holdStr}</span>`;
           }
 
-          // Crossover occurred in the last 5 minutes (300 seconds)
-          const itemEpoch = Math.max(item.cross_epoch_5m || 0, item.cross_epoch_15m || 0, item.cross_epoch_1h || 0, item.cross_epoch_day || 0);
+          // Crossover occurred in today's session
+          const itemEpoch = item.cross_epoch_5m || 0;
           const diffSecs = nowSecs - itemEpoch;
-          // A fresh 5M cross on the current candle = always flagged NEW (intraday entry signal)
-          const has5mFreshCross = item.cross_5m === 'bullish' || item.cross_5m === 'bearish';
-          const isNewCrossover = has5mFreshCross || (itemEpoch > 0 && diffSecs >= 0 && diffSecs <= 300);
+          const isFresh5m = crossDir !== 'none';
+          const isNewCrossover = isFresh5m && (itemEpoch > 0 && diffSecs >= 0 && diffSecs <= 3600);
           const flagMarkup = isNewCrossover ? '<span class="flag-badge">🚩 NEW</span>' : '';
           const itemClass = isNewCrossover ? 'crossover-item new-entry' : 'crossover-item';
 
-          // Find the crossover timeframe that is the most recent (has the largest epoch timestamp)
-          const crossoverEpochs = [
-            { time: item.cross_time_5m, epoch: item.cross_epoch_5m || 0 },
-            { time: item.cross_time_15m, epoch: item.cross_epoch_15m || 0 },
-            { time: item.cross_time_1h, epoch: item.cross_epoch_1h || 0 },
-            { time: item.cross_time_day, epoch: item.cross_epoch_day || 0 }
-          ];
-          crossoverEpochs.sort((a, b) => b.epoch - a.epoch);
-
-          let cross_desc = '';
-          if (crossoverEpochs[0].epoch > 0) {
-            cross_desc = crossoverEpochs[0].time;
-          } else {
-            cross_desc = item.cross_time_5m || item.cross_time_15m || item.cross_time_1h || item.cross_time_day || '';
-          }
+          let cross_desc = activeCrossTime;
           const sub_desc = cross_desc ? `<span class="cross-time-sub" title="Crossover Time">${cross_desc}</span>` : '';
 
           const pill_5m = item.state_5m === 'bullish' ? 'bullish' : (item.state_5m === 'bearish' ? 'bearish' : '');
@@ -3402,58 +3383,60 @@
         squeezeWatchlistSub.textContent = `Squeeze: ${bbSqueezes.length} · EMA Coil: ${emaCoils.length}`;
       }
 
-      // Render alert vertical cards
-      if (alerts.length === 0) {
+      // Combine all live alerts (breakouts + EMA collisions) and sort strictly by trigger_epoch descending (newest on top)
+      const combinedAlerts = [
+        ...alerts.map(a => ({ ...a, _kind: 'breakout' })),
+        ...collisions.map(c => ({ ...c, _kind: 'collision' }))
+      ];
+      combinedAlerts.sort((a, b) => (b.trigger_epoch || 0) - (a.trigger_epoch || 0));
+
+      if (alertCount) alertCount.textContent = combinedAlerts.length;
+
+      if (combinedAlerts.length === 0) {
         alertList.innerHTML = `<div style="font-size:0.56rem; color:var(--text-muted); padding:3px 0;">⏳ Waiting for breakouts…</div>`;
       } else {
-        alertList.innerHTML = [...alerts].reverse().map(a => {
-          const isBull = a.direction === 'bullish';
-          const isA = a.grade === 'Grade A';
-          const pillCls = isA ? (isBull ? 'grade-a' : 'grade-a bearish') : (isBull ? 'grade-b' : 'grade-b bearish');
-          const arrow = isBull ? '▲' : '▼';
-          const gradeStar = isA ? '★ ' : '';
-          return `
-            <div class="breakout-alert-pill horizontal ${pillCls}" style="display:flex; justify-content:space-between; width:100%; padding:6px 10px; border-radius:6px; margin:0; box-sizing:border-box;" title="LTP: ₹${a.ltp} · Vol: ×${a.vol_multiplier} · Time: ${a.time}">
-              <div style="display:flex; align-items:center; gap:5px;">
-                <span style="font-weight:800; color:${isBull ? '#3fb950' : '#ff7b72'}; font-size:0.65rem;">${arrow} ${a.symbol}</span>
-                <span style="opacity:0.85; font-size:0.52rem; background:rgba(255,255,255,0.06); padding:1px 3.5px; border-radius:3px; font-weight:700; color:${isBull ? '#3fb950' : '#ff7b72'};">${gradeStar}${a.grade}</span>
-              </div>
-              <div style="display:flex; align-items:center; gap:6px;">
-                <span style="font-family:var(--mono); font-weight:700; color:var(--text); font-size:0.62rem;">₹${a.ltp}</span>
-                <span style="opacity:0.65; font-size:0.52rem; color:var(--text-muted); font-weight:600;">×${a.vol_multiplier}</span>
-                <span style="opacity:0.5; font-size:0.52rem; color:var(--text-muted); font-family:var(--mono);">${a.time}</span>
-              </div>
-            </div>`;
-        }).join('');
-      }
-
-      // Append EMA Collision confirmed alerts to the same feed (blue/orange pills)
-      if (collisions.length > 0) {
-        const collisionHtml = [...collisions].reverse().map(c => {
-          const isBull = c.direction === 'bullish';
-          const arrow  = isBull ? '▲' : '▼';
-          const color  = isBull ? '#388bfd' : '#e09400';
-          const bg     = isBull ? 'rgba(56,139,253,0.10)' : 'rgba(224,148,0,0.10)';
-          const gapStr = c.gap_pct ? ` · Δ${Number(c.gap_pct).toFixed(3)}%` : '';
-          return `
-            <div class="breakout-alert-pill horizontal" style="display:flex; justify-content:space-between; width:100%; padding:6px 10px; border-radius:6px; margin:0; box-sizing:border-box; background:${bg}; border-left:2px solid ${color};" title="EMA9/EMA21 Coil Breakout${gapStr} · LTP: ₹${c.ltp} · ${c.time}">
-              <div style="display:flex; align-items:center; gap:5px;">
-                <span style="font-weight:800; color:${color}; font-size:0.65rem;">${arrow} ${c.symbol}</span>
-                <span style="opacity:0.85; font-size:0.50rem; background:${bg}; padding:1px 4px; border-radius:3px; font-weight:700; color:${color}; border:1px solid ${color}40; letter-spacing:0.3px;">EMA COLLISION</span>
-              </div>
-              <div style="display:flex; align-items:center; gap:6px;">
-                <span style="font-family:var(--mono); font-weight:700; color:var(--text); font-size:0.62rem;">₹${c.ltp}</span>
-                <span style="opacity:0.5; font-size:0.52rem; color:var(--text-muted); font-family:var(--mono);">${c.time}</span>
-              </div>
-            </div>`;
-        }).join('');
-        if (alertList) {
-          if (alertList.innerHTML.includes('Waiting for breakouts')) {
-            alertList.innerHTML = collisionHtml;
+        alertList.innerHTML = combinedAlerts.map(item => {
+          if (item._kind === 'breakout') {
+            const isBull = item.direction === 'bullish';
+            const isA = item.grade === 'Grade A' || item.grade === '5M Cross';
+            const pillCls = isA ? (isBull ? 'grade-a' : 'grade-a bearish') : (isBull ? 'grade-b' : 'grade-b bearish');
+            const arrow = isBull ? '▲' : '▼';
+            const gradeStar = item.grade === 'Grade A' ? '★ ' : '';
+            const volStr = item.vol_multiplier ? `×${item.vol_multiplier}` : '';
+            return `
+              <div class="breakout-alert-pill horizontal ${pillCls}" style="display:flex; justify-content:space-between; width:100%; padding:6px 10px; border-radius:6px; margin:0; box-sizing:border-box;" title="LTP: ₹${item.ltp} · Vol: ${volStr} · Time: ${item.time}">
+                <div style="display:flex; align-items:center; gap:5px;">
+                  <span style="font-weight:800; color:${isBull ? '#3fb950' : '#ff7b72'}; font-size:0.65rem;">${arrow} ${item.symbol}</span>
+                  <span style="opacity:0.85; font-size:0.52rem; background:rgba(255,255,255,0.06); padding:1px 3.5px; border-radius:3px; font-weight:700; color:${isBull ? '#3fb950' : '#ff7b72'};">${gradeStar}${item.grade}</span>
+                </div>
+                <div style="display:flex; align-items:center; gap:6px;">
+                  <span style="font-family:var(--mono); font-weight:700; color:var(--text); font-size:0.62rem;">₹${item.ltp}</span>
+                  ${volStr ? `<span style="opacity:0.65; font-size:0.52rem; color:var(--text-muted); font-weight:600;">${volStr}</span>` : ''}
+                  <span style="opacity:0.5; font-size:0.52rem; color:var(--text-muted); font-family:var(--mono);">${item.time}</span>
+                </div>
+              </div>`;
           } else {
-            alertList.innerHTML += collisionHtml;
+            // Collision alert (EMA Collision)
+            const isBull = item.direction === 'bullish';
+            const arrow  = isBull ? '▲' : '▼';
+            const color  = isBull ? '#388bfd' : '#e09400';
+            const bg     = isBull ? 'rgba(56,139,253,0.10)' : 'rgba(224,148,0,0.10)';
+            const gapStr = item.gap_pct ? ` · Δ${Number(item.gap_pct).toFixed(3)}%` : '';
+            const volStr = item.vol_multiplier ? `×${item.vol_multiplier}` : '';
+            return `
+              <div class="breakout-alert-pill horizontal" style="display:flex; justify-content:space-between; width:100%; padding:6px 10px; border-radius:6px; margin:0; box-sizing:border-box; background:${bg}; border-left:2px solid ${color};" title="EMA9/EMA21 Coil Breakout${gapStr} · LTP: ₹${item.ltp} · ${item.time}">
+                <div style="display:flex; align-items:center; gap:5px;">
+                  <span style="font-weight:800; color:${color}; font-size:0.65rem;">${arrow} ${item.symbol}</span>
+                  <span style="opacity:0.85; font-size:0.50rem; background:${bg}; padding:1px 4px; border-radius:3px; font-weight:700; color:${color}; border:1px solid ${color}40; letter-spacing:0.3px;">EMA COLLISION</span>
+                </div>
+                <div style="display:flex; align-items:center; gap:6px;">
+                  <span style="font-family:var(--mono); font-weight:700; color:var(--text); font-size:0.62rem;">₹${item.ltp}</span>
+                  ${volStr ? `<span style="opacity:0.65; font-size:0.52rem; color:var(--text-muted); font-weight:600;">${volStr}</span>` : ''}
+                  <span style="opacity:0.5; font-size:0.52rem; color:var(--text-muted); font-family:var(--mono);">${item.time}</span>
+                </div>
+              </div>`;
           }
-        }
+        }).join('');
       }
 
       // Render BB Squeeze watchlist (gold pills)
