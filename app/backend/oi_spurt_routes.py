@@ -674,6 +674,203 @@ def top_strikes(chain, ltp, n=5):
     }
 
 
+def compute_atm_5_analysis(chain_sorted, atm_idx, ltp):
+    """Computes dynamic ATM +- 5 immediate support/resistance levels, level strength,
+    multi-strike cluster buildup velocity, and dynamic risk flags.
+    Handles irregular strike steps (e.g. TVSMOTOR 10/20/40 steps) safely.
+    """
+    if not chain_sorted or atm_idx is None or ltp <= 0:
+        return None
+
+    # Array-index window for 11 strikes around ATM (5 below, ATM, 5 above)
+    start_idx = max(0, atm_idx - 5)
+    end_idx = min(len(chain_sorted), atm_idx + 6)
+    atm_5_slice = chain_sorted[start_idx:end_idx]
+
+    if not atm_5_slice:
+        return None
+
+    # Candidate strikes: CE > LTP (first immediate resistance above spot), PE <= LTP (first immediate support at/below spot)
+    ce_candidates = [r for r in atm_5_slice if r["strike"] >= ltp] or [chain_sorted[atm_idx]]
+    pe_candidates = [r for r in atm_5_slice if r["strike"] <= ltp] or [chain_sorted[atm_idx]]
+
+    ce_above = [r for r in atm_5_slice if r["strike"] > ltp]
+    pe_below = [r for r in atm_5_slice if r["strike"] <= ltp]
+
+    # Immediate Resistance = first strike directly above LTP (very next strike spot encounters)
+    imm_res_row = min(ce_above, key=lambda r: r["strike"]) if ce_above else (ce_candidates[0] if ce_candidates else chain_sorted[atm_idx])
+    imm_res_strike = imm_res_row["strike"]
+    imm_res_oi = imm_res_row.get("ce_oi", 0) or 0
+
+    # Immediate Support = first strike directly at or below LTP (very next strike spot encounters on downside)
+    imm_sup_row = max(pe_below, key=lambda r: r["strike"]) if pe_below else (pe_candidates[0] if pe_candidates else chain_sorted[atm_idx])
+    imm_sup_strike = imm_sup_row["strike"]
+    imm_sup_oi = imm_sup_row.get("pe_oi", 0) or 0
+
+    # Static Dominance Ratios
+    res_pe_oi = imm_res_row.get("pe_oi", 0) or 0
+    res_tot_oi = (imm_res_oi + res_pe_oi) or 1
+    static_res_dom = imm_res_oi / res_tot_oi  # 0 to 1.0
+
+    sup_ce_oi = imm_sup_row.get("ce_oi", 0) or 0
+    sup_tot_oi = (imm_sup_oi + sup_ce_oi) or 1
+    static_sup_dom = imm_sup_oi / sup_tot_oi  # 0 to 1.0
+
+    # Helper to calculate 4-way buildup vector
+    def _bld_vec(oi_chg, cur_ltp, prv_ltp):
+        if prv_ltp <= 0 or cur_ltp <= 0 or oi_chg == 0:
+            return 0.0, "–"
+        pct_chg = (cur_ltp - prv_ltp) / prv_ltp
+        if abs(pct_chg) <= 0.0025:
+            return 0.0, "Flat"
+        price_up = pct_chg > 0.0025
+        oi_up = oi_chg > 0
+        if oi_up and price_up:
+            return +0.5, "Long Buildup"
+        if oi_up and not price_up:
+            return +1.0, "Short Buildup"
+        if not oi_up and price_up:
+            return -1.0, "Short Covering"
+        return -0.5, "Long Unwinding"
+
+    # Multi-strike cluster buildup velocity calculation
+    # For CE cluster (resistance side)
+    ce_abs_oi_chg_sum = sum(abs(r.get("ce_oi_chg", 0) or 0) for r in ce_candidates)
+    if ce_abs_oi_chg_sum > 0:
+        v_ce_cluster = 0.0
+        for r in ce_candidates:
+            val, _ = _bld_vec(r.get("ce_oi_chg", 0), r.get("ce_ltp", 0), r.get("ce_prev_ltp", 0))
+            weight = abs(r.get("ce_oi_chg", 0)) / ce_abs_oi_chg_sum
+            v_ce_cluster += weight * val
+    else:
+        v_ce_cluster = 0.0
+
+    # For PE cluster (support side)
+    pe_abs_oi_chg_sum = sum(abs(r.get("pe_oi_chg", 0) or 0) for r in pe_candidates)
+    if pe_abs_oi_chg_sum > 0:
+        v_pe_cluster = 0.0
+        for r in pe_candidates:
+            val, _ = _bld_vec(r.get("pe_oi_chg", 0), r.get("pe_ltp", 0), r.get("pe_prev_ltp", 0))
+            weight = abs(r.get("pe_oi_chg", 0)) / pe_abs_oi_chg_sum
+            v_pe_cluster += weight * val
+    else:
+        v_pe_cluster = 0.0
+
+    # Cold-Start Gate: If no intraday OI change across clusters, fall back 100% to static dominance
+    if ce_abs_oi_chg_sum == 0:
+        res_strength = round(static_res_dom * 100)
+    else:
+        res_strength = round((static_res_dom * 40) + (((v_ce_cluster + 1.0) / 2.0) * 60))
+
+    if pe_abs_oi_chg_sum == 0:
+        sup_strength = round(static_sup_dom * 100)
+    else:
+        sup_strength = round((static_sup_dom * 40) + (((v_pe_cluster + 1.0) / 2.0) * 60))
+
+    res_strength = max(0, min(100, res_strength))
+    sup_strength = max(0, min(100, sup_strength))
+
+    # Helper ratings
+    def _rating(score):
+        if score >= 80:
+            return "STRONG", "var(--green)"
+        if score >= 50:
+            return "MODERATE", "var(--yellow)"
+        return "WEAK", "var(--red)"
+
+    res_rating, res_color = _rating(res_strength)
+    sup_rating, sup_color = _rating(sup_strength)
+
+    imm_res_vec, imm_res_buildup = _bld_vec(imm_res_row.get("ce_oi_chg", 0), imm_res_row.get("ce_ltp", 0), imm_res_row.get("ce_prev_ltp", 0))
+    imm_sup_vec, imm_sup_buildup = _bld_vec(imm_sup_row.get("pe_oi_chg", 0), imm_sup_row.get("pe_ltp", 0), imm_sup_row.get("pe_prev_ltp", 0))
+
+    # ── Symmetrical Air Pocket & Resistance Vacuum Detection ──
+    # Downside Air Pocket: Nearest 2-3 PE strikes below immediate support
+    pe_below_imm = [r for r in atm_5_slice if r["strike"] < imm_sup_strike]
+    pe_air_pocket_rows = sorted(pe_below_imm, key=lambda r: r["strike"], reverse=True)[:3]
+    pe_air_pocket_oi_sum = sum(r.get("pe_oi", 0) or 0 for r in pe_air_pocket_rows)
+    total_pe_oi_window = sum(r.get("pe_oi", 0) or 0 for r in atm_5_slice) or 1
+    pe_density_ratio = pe_air_pocket_oi_sum / total_pe_oi_window
+
+    # Upside Resistance Vacuum: Nearest 2-3 CE strikes above immediate resistance
+    ce_above_imm = [r for r in atm_5_slice if r["strike"] > imm_res_strike]
+    ce_vacuum_rows = sorted(ce_above_imm, key=lambda r: r["strike"])[:3]
+    ce_vacuum_oi_sum = sum(r.get("ce_oi", 0) or 0 for r in ce_vacuum_rows)
+    total_ce_oi_window = sum(r.get("ce_oi", 0) or 0 for r in atm_5_slice) or 1
+    ce_density_ratio = ce_vacuum_oi_sum / total_ce_oi_window
+
+    has_pe_air_pocket = len(pe_air_pocket_rows) > 0 and (pe_density_ratio < 0.18 or pe_air_pocket_oi_sum < (imm_sup_oi * 0.30))
+    has_ce_vacuum = len(ce_vacuum_rows) > 0 and (ce_density_ratio < 0.18 or ce_vacuum_oi_sum < (imm_res_oi * 0.30))
+
+    # Determine Combination Risk Flag
+    if sup_strength < 50 and has_pe_air_pocket:
+        flag_code = "AIR_POCKET_DOWNSIDE"
+        alert_title = "💀 DOWNSIDE AIR POCKET RISK"
+        short_desc = f"Weak support at {imm_sup_strike} ({sup_strength}/100) with thin PE backing for 2-3 strikes below. High flush risk."
+        flag_cls = "tag-red"
+    elif res_strength < 50 and has_ce_vacuum:
+        flag_code = "RESISTANCE_VACUUM_UPSIDE"
+        alert_title = "⚡ RESISTANCE VACUUM SQUEEZE"
+        short_desc = f"Weak resistance at {imm_res_strike} ({res_strength}/100) with thin CE writing for 2-3 strikes above. Squeeze risk."
+        flag_cls = "tag-green"
+    elif v_ce_cluster < -0.20 and v_pe_cluster > +0.10:
+        flag_code = "RISK_UPSIDE_SQUEEZE"
+        alert_title = "⚡ UPSIDE SQUEEZE RISK"
+        short_desc = f"Call Writers unwinding at {imm_res_strike} ({res_strength}/100) while Put Writers add support at {imm_sup_strike} ({sup_strength}/100)."
+        flag_cls = "tag-green"
+    elif v_pe_cluster < -0.20 and v_ce_cluster > +0.10:
+        flag_code = "RISK_DOWNSIDE_FLUSH"
+        alert_title = "💀 DOWNSIDE FLUSH RISK"
+        short_desc = f"Put Floor crumbling at {imm_sup_strike} ({sup_strength}/100) while Call Writers press resistance at {imm_res_strike} ({res_strength}/100)."
+        flag_cls = "tag-red"
+    elif v_ce_cluster > +0.20 and v_pe_cluster > +0.20:
+        flag_code = "RANGE_LOCK_STABLE"
+        alert_title = "🛡️ INSTITUTIONAL RANGE LOCK"
+        short_desc = f"Writers actively defending both sides between {imm_sup_strike} – {imm_res_strike}."
+        flag_cls = "tag-blue"
+    elif v_ce_cluster < -0.20 and v_pe_cluster < -0.20:
+        flag_code = "DUAL_UNWIND_VOLATILITY"
+        alert_title = "⚠️ DUAL UNWINDING VOLATILITY"
+        short_desc = "Writers abandoning both sides. Rapid price expansion expected."
+        flag_cls = "tag-yellow"
+    else:
+        flag_code = "NEUTRAL_BALANCED"
+        alert_title = "⚖️ BALANCED ATM BOUNDS"
+        short_desc = f"Immediate bounds: Support at {imm_sup_strike} ({sup_rating}) | Resistance at {imm_res_strike} ({res_rating})."
+        flag_cls = "tag-blue"
+
+    return {
+        "atm_strike": chain_sorted[atm_idx]["strike"],
+        "immediate_resistance": {
+            "strike": imm_res_strike,
+            "oi": imm_res_oi,
+            "buildup": imm_res_buildup,
+            "strength_score": res_strength,
+            "strength_rating": res_rating,
+            "color": res_color,
+        },
+        "immediate_support": {
+            "strike": imm_sup_strike,
+            "oi": imm_sup_oi,
+            "buildup": imm_sup_buildup,
+            "strength_score": sup_strength,
+            "strength_rating": sup_rating,
+            "color": sup_color,
+        },
+        "cluster_velocity": {
+            "v_ce": round(v_ce_cluster, 2),
+            "v_pe": round(v_pe_cluster, 2),
+        },
+        "risk_analysis": {
+            "flag_code": flag_code,
+            "alert_title": alert_title,
+            "short_desc": short_desc,
+            "flag_cls": flag_cls,
+        }
+    }
+
+
+
 def compute_pivots(high, low, close):
     p = (high + low + close) / 3
     return {
@@ -941,6 +1138,8 @@ def api_symbol(symbol):
 
         atm_row  = chain_sorted[atm_idx]
         straddle = round(atm_row["ce_ltp"] + atm_row["pe_ltp"], 2)
+        if strikes is not None:
+            strikes["atm_window_5"] = compute_atm_5_analysis(chain_sorted, atm_idx, ltp)
 
     # ── Retail Action & HAction Logic ──
     final_retail_action = ""
@@ -1507,9 +1706,9 @@ def ai_analyze_heatmap(symbol):
         raise last_err if last_err else Exception("All models failed to respond")
 
     except ImportError:
-
         return jsonify({"ok": False, "error": "google-genai not installed. Run: pip install google-genai"}), 500
     except Exception as e:
         logging.error(f"[AI-HEATMAP] Gemini error: {str(e)}")
         return jsonify({"ok": False, "error": f"Gemini API error: {str(e)}"}), 500
+
 

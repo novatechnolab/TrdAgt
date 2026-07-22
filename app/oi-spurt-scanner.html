@@ -799,6 +799,30 @@
       background: var(--red);
     }
 
+    /* 2-Row Layer Analytics Layout & ATM +- 5 Engine Subgrid */
+    .layer-row1-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 6px;
+      margin-bottom: 6px;
+    }
+
+    .layer3-subgrid {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 6px;
+      margin-top: 4px;
+    }
+
+    @media (max-width: 768px) {
+      .layer-row1-grid {
+        grid-template-columns: 1fr !important;
+      }
+      .layer3-subgrid {
+        grid-template-columns: 1fr !important;
+      }
+    }
+
     .layer-title {
       font-size: 10px;
       text-transform: uppercase;
@@ -2067,27 +2091,52 @@
         </div>
       </div>`;
 
+      const atm5 = strikes.atm_window_5 || {};
+      const immRes = atm5.immediate_resistance || {};
+      const immSup = atm5.immediate_support || {};
+      const risk = atm5.risk_analysis || {};
+
+      const riskPill = risk.alert_title ? `
+        <div style="background: rgba(255,255,255,0.035); border: 1px solid ${risk.flag_cls === 'tag-red' ? 'var(--red)' : risk.flag_cls === 'tag-green' ? 'var(--green)' : risk.flag_cls === 'tag-yellow' ? 'var(--yellow)' : 'var(--accent)'}; border-radius: 4px; padding: 4px 8px; margin: 4px 0 6px 0; font-size: 9.5px; font-weight: 700; color: ${risk.flag_cls === 'tag-red' ? 'var(--red)' : risk.flag_cls === 'tag-green' ? 'var(--green)' : risk.flag_cls === 'tag-yellow' ? 'var(--yellow)' : 'var(--accent)'}; display: flex; justify-content: space-between; align-items: center;">
+          <span>${risk.alert_title}: ${risk.short_desc || ''}</span>
+          <span class="tag ${risk.flag_cls || 'tag-blue'}" style="font-size: 8px;">ATM ± 5 ENGINE</span>
+        </div>` : '';
+
       const layer3Html = `
       <div class="layer-card l3" style="margin-bottom: 0;">
-        <div class="layer-title">
-          LAYER 3 — KEY TRADING BARRIERS
-          <span>STRIKE OI WALLS</span>
+        <div class="layer-title" style="display: flex; justify-content: space-between; align-items: center;">
+          <span>LAYER 3 — KEY TRADING BARRIERS &amp; ATM ± 5 ENGINE</span>
+          <span style="font-size: 8px; color: var(--muted2);">INTRADAY FLOW ANALYSIS</span>
         </div>
-        <div class="kv">
-          <span class="kv-k">CE Wall (Resistance)</span>
-          <span class="kv-v kv-res" style="font-weight: 600;">${strikes.ce_wall ? fmt(strikes.ce_wall, 0) : '–'}</span>
-        </div>
-        <div class="kv">
-          <span class="kv-k">PE Wall (Support)</span>
-          <span class="kv-v kv-sup" style="font-weight: 600;">${strikes.pe_wall ? fmt(strikes.pe_wall, 0) : '–'}</span>
-        </div>
-        <div class="kv" style="border-top: 1px solid rgba(128,128,128,0.15); padding-top: 6px;">
-          <span class="kv-k">Max Pain Strike</span>
-          <span class="kv-v kv-pivot" style="font-weight: 600;">${d.max_pain ? fmt(d.max_pain, 0) : '–'}</span>
-        </div>
-        <div class="kv">
-          <span class="kv-k">Max Pain vs LTP</span>
-          <span class="kv-v ${d.max_pain && ltp ? (d.max_pain > ltp ? 'pos' : 'neg') : 'neu'}">${d.max_pain && ltp ? (d.max_pain > ltp ? '▲ Above LTP' : '▼ Below LTP') : '–'}</span>
+        ${riskPill}
+        <div class="layer3-subgrid">
+          <!-- Col 1: Immediate Resistance (ATM+5) -->
+          <div style="background: rgba(255,255,255,0.025); padding: 6px 8px; border-radius: 5px; border-left: 3px solid var(--red);">
+            <div style="font-size: 8.5px; color: var(--muted2); font-weight: 600;">IMM RESISTANCE (ATM+5)</div>
+            <div style="font-size: 14px; font-weight: 700; color: var(--red); margin: 2px 0;">${immRes.strike ? fmt(immRes.strike, 0) : '–'}</div>
+            <div style="font-size: 9px; font-weight: 600; color: ${immRes.color || 'var(--text)'};">
+              Strength: ${immRes.strength_score != null ? immRes.strength_score : '–'}/100 <span style="font-size: 7.5px;">(${immRes.strength_rating || '–'})</span>
+            </div>
+            <div style="font-size: 8px; color: var(--muted); margin-top: 1px;">Flow: ${immRes.buildup || '–'}</div>
+          </div>
+
+          <!-- Col 2: Immediate Support (ATM-5) -->
+          <div style="background: rgba(255,255,255,0.025); padding: 6px 8px; border-radius: 5px; border-left: 3px solid var(--green);">
+            <div style="font-size: 8.5px; color: var(--muted2); font-weight: 600;">IMM SUPPORT (ATM-5)</div>
+            <div style="font-size: 14px; font-weight: 700; color: var(--green); margin: 2px 0;">${immSup.strike ? fmt(immSup.strike, 0) : '–'}</div>
+            <div style="font-size: 9px; font-weight: 600; color: ${immSup.color || 'var(--text)'};">
+              Strength: ${immSup.strength_score != null ? immSup.strength_score : '–'}/100 <span style="font-size: 7.5px;">(${immSup.strength_rating || '–'})</span>
+            </div>
+            <div style="font-size: 8px; color: var(--muted); margin-top: 1px;">Flow: ${immSup.buildup || '–'}</div>
+          </div>
+
+          <!-- Col 3: Global Walls & Max Pain -->
+          <div style="background: rgba(255,255,255,0.025); padding: 6px 8px; border-radius: 5px;">
+            <div style="font-size: 8.5px; color: var(--muted2); font-weight: 600; margin-bottom: 2px;">GLOBAL WALLS &amp; MAX PAIN</div>
+            <div class="kv" style="padding: 1px 0;"><span class="kv-k" style="font-size: 8.5px;">CE Wall (Res)</span><span class="kv-v kv-res" style="font-size: 9px; font-weight: 600;">${strikes.ce_wall ? fmt(strikes.ce_wall, 0) : '–'}</span></div>
+            <div class="kv" style="padding: 1px 0;"><span class="kv-k" style="font-size: 8.5px;">PE Wall (Sup)</span><span class="kv-v kv-sup" style="font-size: 9px; font-weight: 600;">${strikes.pe_wall ? fmt(strikes.pe_wall, 0) : '–'}</span></div>
+            <div class="kv" style="padding: 1px 0; border-top: 1px solid rgba(128,128,128,0.15); margin-top: 2px; padding-top: 2px;"><span class="kv-k" style="font-size: 8.5px;">Max Pain</span><span class="kv-v kv-pivot" style="font-size: 9px; font-weight: 600;">${d.max_pain ? fmt(d.max_pain, 0) : '–'}</span></div>
+          </div>
         </div>
       </div>`;
 
@@ -2347,9 +2396,11 @@
       <div style="display: flex; flex-direction: column; gap: 7px;">
         <!-- 1) F&O 3-Layer Analytics in 3 Columns -->
         <div class="sec-head" style="margin-top: 0; margin-bottom: 4px;">📊 F&amp;O 3-Layer Analytics</div>
-        <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 5px; margin-bottom: 4px;">
+        <div class="layer-row1-grid">
           ${layer1Html}
           ${layer2Html}
+        </div>
+        <div style="margin-bottom: 4px;">
           ${layer3Html}
         </div>
 
