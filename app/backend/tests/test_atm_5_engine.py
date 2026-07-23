@@ -61,3 +61,26 @@ def test_compute_atm_5_air_pocket_risk():
     assert result is not None
     assert result["risk_analysis"]["flag_code"] == "AIR_POCKET_DOWNSIDE"
 
+def test_compute_atm_5_zero_oi_skipping():
+    # TVSMOTOR scenario: LTP is 3949.70. Intermediate strikes 3940 and 3920 have 0 PE OI.
+    # Nearest PE strike with positive OI is 3900 (PE OI: 307000).
+    mock_chain = [
+        {"strike": 3800, "ce_oi": 233000, "ce_oi_chg": 0, "ce_ltp": 156.4, "ce_prev_ltp": 156.4, "pe_oi": 320000, "pe_oi_chg": -23450, "pe_ltp": 6.2, "pe_prev_ltp": 6.2},
+        {"strike": 3850, "ce_oi": 39000, "ce_oi_chg": 0, "ce_ltp": 120.6, "ce_prev_ltp": 120.6, "pe_oi": 178000, "pe_oi_chg": 12600, "pe_ltp": 12.1, "pe_prev_ltp": 12.1},
+        {"strike": 3900, "ce_oi": 234000, "ce_oi_chg": 0, "ce_ltp": 75.8, "ce_prev_ltp": 75.8, "pe_oi": 307000, "pe_oi_chg": 52900, "pe_ltp": 24.3, "pe_prev_ltp": 24.3},
+        {"strike": 3920, "ce_oi": 93300, "ce_oi_chg": 0, "ce_ltp": 59.8, "ce_prev_ltp": 59.8, "pe_oi": 0, "pe_oi_chg": 0, "pe_ltp": 0.0, "pe_prev_ltp": 0.0},
+        {"strike": 3940, "ce_oi": 162000, "ce_oi_chg": 0, "ce_ltp": 49.7, "ce_prev_ltp": 49.7, "pe_oi": 0, "pe_oi_chg": 0, "pe_ltp": 0.0, "pe_prev_ltp": 0.0},
+        {"strike": 3950, "ce_oi": 188000, "ce_oi_chg": 0, "ce_ltp": 44.7, "ce_prev_ltp": 44.7, "pe_oi": 74900, "pe_oi_chg": 17800, "pe_ltp": 45.6, "pe_prev_ltp": 45.6},
+        {"strike": 3960, "ce_oi": 123000, "ce_oi_chg": 0, "ce_ltp": 39.7, "ce_prev_ltp": 39.7, "pe_oi": 42900, "pe_oi_chg": 8200, "pe_ltp": 50.1, "pe_prev_ltp": 50.1},
+        {"strike": 4000, "ce_oi": 501000, "ce_oi_chg": 0, "ce_ltp": 25.0, "ce_prev_ltp": 25.0, "pe_oi": 52500, "pe_oi_chg": 14300, "pe_ltp": 75.1, "pe_prev_ltp": 75.1},
+    ]
+    ltp = 3949.70
+    atm_idx = 5  # 3950 strike
+
+    result = compute_atm_5_analysis(mock_chain, atm_idx, ltp)
+    assert result is not None
+    # Immediate support must skip 3940 and 3920 (0 PE OI) and pick 3900!
+    assert result["immediate_support"]["strike"] == 3900
+    assert result["immediate_support"]["oi"] == 307000
+
+

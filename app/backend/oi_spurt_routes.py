@@ -486,6 +486,7 @@ def get_option_chain(kite, symbol: str):
     futures_oi_prev = 0
     futures_ltp = 0
     futures_prev_close = 0
+    today_str = datetime.date.today().isoformat()
     if fut_symbol and fut_symbol in quotes:
         fq = quotes[fut_symbol]
         futures_oi = int(fq.get("oi", 0) or 0)
@@ -495,7 +496,20 @@ def get_option_chain(kite, symbol: str):
         futures_ltp = float(fq.get("last_price", 0) or 0)
         futures_prev_close = float(fq.get("ohlc", {}).get("close", futures_ltp) or futures_ltp)
 
-    today_str = datetime.date.today().isoformat()
+        # Retrieve true Previous Day EOD baseline for Futures
+        if fut_candidates and nearest_fut.get("instrument_token"):
+            fut_ts = nearest_fut["tradingsymbol"]
+            cached_fut_eod = get_cached_baseline(today_str, fut_ts)
+            if cached_fut_eod is not None:
+                futures_oi_prev = cached_fut_eod
+            else:
+                try:
+                    _fetch_and_cache_baseline_sync(kite, today_str, nearest_fut["instrument_token"], fut_ts, futures_oi)
+                    fetched_fut_eod = get_cached_baseline(today_str, fut_ts)
+                    if fetched_fut_eod is not None:
+                        futures_oi_prev = fetched_fut_eod
+                except Exception:
+                    pass
     by_strike = defaultdict(dict)
     for instr in chain_instr:
         ts      = f"{exchange}:{instr['tradingsymbol']}"
@@ -694,16 +708,24 @@ def compute_atm_5_analysis(chain_sorted, atm_idx, ltp):
     ce_candidates = [r for r in atm_5_slice if r["strike"] >= ltp] or [chain_sorted[atm_idx]]
     pe_candidates = [r for r in atm_5_slice if r["strike"] <= ltp] or [chain_sorted[atm_idx]]
 
-    ce_above = [r for r in atm_5_slice if r["strike"] > ltp]
-    pe_below = [r for r in atm_5_slice if r["strike"] <= ltp]
+    ce_above_with_oi = [r for r in chain_sorted if r["strike"] > ltp and (r.get("ce_oi", 0) or 0) > 0]
+    pe_below_with_oi = [r for r in chain_sorted if r["strike"] <= ltp and (r.get("pe_oi", 0) or 0) > 0]
 
-    # Immediate Resistance = first strike directly above LTP (very next strike spot encounters)
-    imm_res_row = min(ce_above, key=lambda r: r["strike"]) if ce_above else (ce_candidates[0] if ce_candidates else chain_sorted[atm_idx])
+    # Immediate Resistance = first strike directly above LTP with valid CE OI (> 0)
+    if ce_above_with_oi:
+        imm_res_row = min(ce_above_with_oi, key=lambda r: r["strike"])
+    else:
+        ce_above_all = [r for r in atm_5_slice if r["strike"] > ltp]
+        imm_res_row = min(ce_above_all, key=lambda r: r["strike"]) if ce_above_all else (ce_candidates[0] if ce_candidates else chain_sorted[atm_idx])
     imm_res_strike = imm_res_row["strike"]
     imm_res_oi = imm_res_row.get("ce_oi", 0) or 0
 
-    # Immediate Support = first strike directly at or below LTP (very next strike spot encounters on downside)
-    imm_sup_row = max(pe_below, key=lambda r: r["strike"]) if pe_below else (pe_candidates[0] if pe_candidates else chain_sorted[atm_idx])
+    # Immediate Support = first strike directly at or below LTP with valid PE OI (> 0)
+    if pe_below_with_oi:
+        imm_sup_row = max(pe_below_with_oi, key=lambda r: r["strike"])
+    else:
+        pe_below_all = [r for r in atm_5_slice if r["strike"] <= ltp]
+        imm_sup_row = max(pe_below_all, key=lambda r: r["strike"]) if pe_below_all else (pe_candidates[0] if pe_candidates else chain_sorted[atm_idx])
     imm_sup_strike = imm_sup_row["strike"]
     imm_sup_oi = imm_sup_row.get("pe_oi", 0) or 0
 
