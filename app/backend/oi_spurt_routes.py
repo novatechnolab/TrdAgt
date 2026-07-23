@@ -729,14 +729,34 @@ def compute_atm_5_analysis(chain_sorted, atm_idx, ltp):
     imm_sup_strike = imm_sup_row["strike"]
     imm_sup_oi = imm_sup_row.get("pe_oi", 0) or 0
 
-    # Static Dominance Ratios
+    # Strike PCR Calculations & PCR-Based Static Strength Scoring
     res_pe_oi = imm_res_row.get("pe_oi", 0) or 0
-    res_tot_oi = (imm_res_oi + res_pe_oi) or 1
-    static_res_dom = imm_res_oi / res_tot_oi  # 0 to 1.0
+    res_pcr = round(res_pe_oi / imm_res_oi, 2) if imm_res_oi > 0 else 0.0
 
     sup_ce_oi = imm_sup_row.get("ce_oi", 0) or 0
-    sup_tot_oi = (imm_sup_oi + sup_ce_oi) or 1
-    static_sup_dom = imm_sup_oi / sup_tot_oi  # 0 to 1.0
+    sup_pcr = round(imm_sup_oi / sup_ce_oi, 2) if sup_ce_oi > 0 else 99.0
+
+    # 1. Resistance PCR Rules (Strike Above Spot):
+    #    PCR < 0.4   → Strong Resistance (Heavy Call writing capping upside)
+    #    PCR 0.4–0.8 → Moderate Resistance
+    #    PCR > 0.8   → Weak / Unusual Resistance (Put activity dilutes wall)
+    if res_pcr < 0.4:
+        static_res_score = 90
+    elif 0.4 <= res_pcr <= 0.8:
+        static_res_score = 65
+    else:
+        static_res_score = 30
+
+    # 2. Support PCR Rules (Strike Below Spot):
+    #    PCR >= 1.5  → Strong Support (Heavy Put writing relative to Calls)
+    #    PCR 1.0–1.5 → Moderate Support
+    #    PCR < 1.0   → Weak / Unreliable Support (Lack of Put conviction)
+    if sup_pcr >= 1.5:
+        static_sup_score = 90
+    elif 1.0 <= sup_pcr < 1.5:
+        static_sup_score = 65
+    else:
+        static_sup_score = 30
 
     # Helper to calculate 4-way buildup vector
     def _bld_vec(oi_chg, cur_ltp, prv_ltp):
@@ -778,16 +798,16 @@ def compute_atm_5_analysis(chain_sorted, atm_idx, ltp):
     else:
         v_pe_cluster = 0.0
 
-    # Cold-Start Gate: If no intraday OI change across clusters, fall back 100% to static dominance
+    # Combine static PCR score (50%) with intraday cluster velocity (50%)
     if ce_abs_oi_chg_sum == 0:
-        res_strength = round(static_res_dom * 100)
+        res_strength = static_res_score
     else:
-        res_strength = round((static_res_dom * 40) + (((v_ce_cluster + 1.0) / 2.0) * 60))
+        res_strength = round((static_res_score * 0.50) + (((v_ce_cluster + 1.0) / 2.0) * 50))
 
     if pe_abs_oi_chg_sum == 0:
-        sup_strength = round(static_sup_dom * 100)
+        sup_strength = static_sup_score
     else:
-        sup_strength = round((static_sup_dom * 40) + (((v_pe_cluster + 1.0) / 2.0) * 60))
+        sup_strength = round((static_sup_score * 0.50) + (((v_pe_cluster + 1.0) / 2.0) * 50))
 
     res_strength = max(0, min(100, res_strength))
     sup_strength = max(0, min(100, sup_strength))
@@ -866,6 +886,7 @@ def compute_atm_5_analysis(chain_sorted, atm_idx, ltp):
         "immediate_resistance": {
             "strike": imm_res_strike,
             "oi": imm_res_oi,
+            "pcr": res_pcr,
             "buildup": imm_res_buildup,
             "strength_score": res_strength,
             "strength_rating": res_rating,
@@ -874,6 +895,7 @@ def compute_atm_5_analysis(chain_sorted, atm_idx, ltp):
         "immediate_support": {
             "strike": imm_sup_strike,
             "oi": imm_sup_oi,
+            "pcr": sup_pcr,
             "buildup": imm_sup_buildup,
             "strength_score": sup_strength,
             "strength_rating": sup_rating,

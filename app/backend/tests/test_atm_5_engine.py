@@ -43,9 +43,28 @@ def test_compute_atm_5_analysis_cold_start():
     assert result is not None
     assert result["immediate_resistance"]["strike"] == 110
     assert result["immediate_support"]["strike"] == 100
-    # Cold start relies on static dominance: 500/(500+1000) = 33%, 200/(200+1000) = 17%
-    assert result["immediate_resistance"]["strength_score"] == 33
-    assert result["immediate_support"]["strength_score"] == 17
+    # PCR values: Resistance PCR = 1000/500 = 2.0 (>0.8 -> Weak, score 30), Support PCR = 200/1000 = 0.2 (<1.0 -> Weak, score 30)
+    assert result["immediate_resistance"]["pcr"] == 2.0
+    assert result["immediate_support"]["pcr"] == 0.2
+    assert result["immediate_resistance"]["strength_score"] == 30
+    assert result["immediate_support"]["strength_score"] == 30
+
+def test_compute_atm_5_pcr_tiers():
+    # Strong Resistance (PCR < 0.4: PE 100 / CE 1000 = 0.1) & Strong Support (PCR >= 1.5: PE 3000 / CE 1000 = 3.0)
+    mock_chain = [
+        {"strike": 100, "ce_oi": 1000, "ce_oi_chg": 0, "ce_ltp": 10, "ce_prev_ltp": 10, "pe_oi": 3000, "pe_oi_chg": 0, "pe_ltp": 5, "pe_prev_ltp": 5},
+        {"strike": 110, "ce_oi": 1000, "ce_oi_chg": 0, "ce_ltp": 5, "ce_prev_ltp": 5, "pe_oi": 100, "pe_oi_chg": 0, "pe_ltp": 10, "pe_prev_ltp": 10},
+    ]
+    result = compute_atm_5_analysis(mock_chain, 0, 102.0)
+    assert result is not None
+    assert result["immediate_resistance"]["pcr"] == 0.1
+    assert result["immediate_resistance"]["strength_score"] == 90
+    assert result["immediate_resistance"]["strength_rating"] == "STRONG"
+
+    assert result["immediate_support"]["pcr"] == 3.0
+    assert result["immediate_support"]["strength_score"] == 90
+    assert result["immediate_support"]["strength_rating"] == "STRONG"
+
 
 def test_compute_atm_5_air_pocket_risk():
     # Air pocket scenario: Weak PE support at 3900 and almost 0 PE OI for 2-3 strikes below (3880, 3860)
