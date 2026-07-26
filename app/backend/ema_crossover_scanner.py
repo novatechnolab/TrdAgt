@@ -18,6 +18,7 @@ import sqlite3
 from datetime import datetime
 from session_utils import now_ist
 from indicators import compute_ema, check_ema9_respect
+from cpr_utils import get_cpr_pivots
 
 try:
     from kiteconnect import KiteTicker
@@ -1271,52 +1272,97 @@ def _scan_single_symbol(kite, symbol):
                                 except Exception:
                                     pass
 
-                # Case 2: Pre-Cross 5M Volume & Move % Momentum Alert (Near EMA Cross)
-                elif vol_ratio and vol_ratio >= 2.5 and open_now > 0:
-                    move_pct_5m = (abs(ltp_now - open_now) / open_now) * 100.0
-                    if move_pct_5m >= 0.30:
+                # Case 2: Pre-Cross 5M Alert — 2-candle + CPR boundary validation
+                # Logic mirrors scan_pre_ema_cross.py (validated; vol logged only, no vol gate)
+                # ISOLATED: only fires to _triggered_alerts / live_breakout_alert
+                # NO impact to res[state_5m], res[alignment], res[cross_5m] — Bulls/Bears count safe
+                elif cross == 'none' and len(candles) >= 2 and open_now > 0:
+                    prev_c   = candles[-2]
+                    o1       = float(prev_c.get('open',  0.0) or 0.0)
+                    c1_close = float(prev_c.get('close', 0.0) or 0.0)
+                    o2       = float(open_now)
+                    c2_close = float(ltp_now)
+
+                    move_pct_c1 = (abs(c1_close - o1) / o1 * 100.0) if o1 > 0 else 0.0
+                    move_pct_c2 = (abs(c2_close - o2) / o2 * 100.0) if o2 > 0 else 0.0
+
+                    # Both candles must have meaningful bodies (C1 ≥ 0.20%, C2 ≥ 0.30%)
+                    if move_pct_c1 >= 0.20 and move_pct_c2 >= 0.30:
                         closes_5m = [c.get('close', 0) for c in candles]
-                        ema9_5m = compute_ema(closes_5m, 9)
+                        ema9_5m  = compute_ema(closes_5m, 9)
                         ema21_5m = compute_ema(closes_5m, 21)
                         if ema9_5m and ema21_5m and len(ema9_5m) == len(closes_5m) and len(ema21_5m) == len(closes_5m):
-                            e9_last = ema9_5m[-1]
+                            e9_last  = ema9_5m[-1]
                             e21_last = ema21_5m[-1]
-                            if e9_last is not None and e21_last is not None:
-                                gap_pct = (abs(e9_last - e21_last) / ltp_now) * 100.0
+                            if e9_last is not None and e21_last is not None and c2_close > 0:
+                                gap_pct = (abs(e9_last - e21_last) / c2_close) * 100.0
                                 if gap_pct <= 0.30:
-                                    pre_dir = "bullish" if ltp_now >= open_now else "bearish"
-                                    pre_key = f"{symbol}_precross_{slot_str}"
-                                    with _ema_cross_dedup_lock:
-                                        already_pre_alerted = pre_key in _ema_cross_dedup
-                                        if not already_pre_alerted:
-                                            if slot_str <= "15:15" and current_hm <= "15:15":
-                                                _ema_cross_dedup[pre_key] = now_epoch
-                                                _send_telegram_pre_cross_5m(
-                                                    symbol, pre_dir, round(ltp_now, 2),
-                                                    vol_ratio, round(move_pct_5m, 2), slot_str
-                                                )
+                                    # --- CPR boundary (graceful: fire without CPR if cache cold) ---
+                                    cpr_bottom = None
+                                    try:
+                                        cpr = get_cpr_pivots(symbol)
+                                        if cpr:
+                                            cpr_bottom = min(cpr['bc'], cpr['tc'])
+                                    except Exception:
+                                        cpr_bottom = None
 
-                                                alert = {
-                                                    "symbol":           symbol,
-                                                    "direction":        pre_dir,
-                                                    "time":             now_ist().strftime("%H:%M:%S"),
-                                                    "ltp":              round(ltp_now, 2),
-                                                    "grade":            "Pre-Cross 5M",
-                                                    "vol_multiplier":   round(vol_ratio, 2),
-                                                    "move_pct":          round(move_pct_5m, 2),
-                                                    "trigger_epoch":    now_epoch,
-                                                    "candles_5m_elapsed": 1,
-                                                }
-                                                with _alerts_lock:
-                                                    _clear_stale_alerts_under_lock()
-                                                    if not any(a["symbol"] == symbol and a["grade"] == "Pre-Cross 5M" for a in _triggered_alerts):
-                                                        _triggered_alerts.append(alert)
+                                    # 2-candle color + extension + EMA-side checks
+                                    is_bull = (
+                                        (c1_close > o1) and          # C1 green
+                                        (c2_close > o2) and          # C2 green
+                                        (c2_close > c1_close) and    # C2 extends above C1
+                                        (e9_last < e21_last)         # EMA9 below EMA21 (pre-cross)
+                                    )
+                                    is_bear = (
+                                        (c1_close < o1) and          # C1 red
+                                        (c2_close < o2) and          # C2 red
+                                        (c2_close < c1_close) and    # C2 extends below C1
+                                        (e9_last > e21_last)         # EMA9 above EMA21 (pre-cross)
+                                    )
 
-                                                try:
-                                                    from server import socketio
-                                                    socketio.emit('live_breakout_alert', alert)
-                                                except Exception:
-                                                    pass
+                                    # Apply CPR filter only when data is available
+                                    if cpr_bottom is not None:
+                                        if is_bull:
+                                            is_bull = is_bull and (c2_close > cpr_bottom)
+                                        if is_bear:
+                                            is_bear = is_bear and (c2_close < cpr_bottom)
+
+                                    pre_dir = "bullish" if is_bull else ("bearish" if is_bear else None)
+
+                                    if pre_dir:
+                                        pre_key = f"{symbol}_precross_{slot_str}"
+                                        with _ema_cross_dedup_lock:
+                                            already_pre_alerted = pre_key in _ema_cross_dedup
+                                            if not already_pre_alerted:
+                                                if slot_str <= "15:15" and current_hm <= "15:15":
+                                                    _ema_cross_dedup[pre_key] = now_epoch
+                                                    _send_telegram_pre_cross_5m(
+                                                        symbol, pre_dir, round(c2_close, 2),
+                                                        vol_ratio, round(move_pct_c2, 2), slot_str
+                                                    )
+
+                                                    alert = {
+                                                        "symbol":             symbol,
+                                                        "direction":          pre_dir,
+                                                        "time":               now_ist().strftime("%H:%M:%S"),
+                                                        "ltp":                round(c2_close, 2),
+                                                        "grade":              "Pre-Cross 5M",
+                                                        "vol_multiplier":     round(vol_ratio, 2) if vol_ratio else 0.0,
+                                                        "move_pct":           round(move_pct_c2, 2),
+                                                        "trigger_epoch":      now_epoch,
+                                                        "candles_5m_elapsed": 1,
+                                                        "cpr_bottom":         round(cpr_bottom, 2) if cpr_bottom else None,
+                                                    }
+                                                    with _alerts_lock:
+                                                        _clear_stale_alerts_under_lock()
+                                                        if not any(a["symbol"] == symbol and a["grade"] == "Pre-Cross 5M" for a in _triggered_alerts):
+                                                            _triggered_alerts.append(alert)
+
+                                                    try:
+                                                        from server import socketio
+                                                        socketio.emit('live_breakout_alert', alert)
+                                                    except Exception:
+                                                        pass
         
         # Compute intraday session linearity on 15m candles
         if label == '15m':
@@ -1615,11 +1661,12 @@ def _ema_crossover_loop():
                 except Exception as e:
                     logging.warning(f"[EMA Crossover Scanner] Spot change fetch failed: {e}")
 
-                # Trigger Nifty index candle analysis (uses 5m candle details captured above)
+                # Trigger Nifty index candle analysis — DISABLED (board integration removed)
+                # To re-enable: uncomment the 3 lines below
                 try:
-                    import nifty_candle_analyzer
-                    nifty_time_str = now.strftime("%Y-%m-%d %H:%M:%S")
-                    nifty_candle_analyzer.analyze_and_store_candle(kite, temp_crossovers, nifty_time_str)
+                    pass  # import nifty_candle_analyzer
+                    # nifty_time_str = now.strftime("%Y-%m-%d %H:%M:%S")
+                    # nifty_candle_analyzer.analyze_and_store_candle(kite, temp_crossovers, nifty_time_str)
                 except Exception as ex:
                     logging.warning(f"[Nifty Analyzer] Execution failed during scan: {ex}")
 

@@ -1408,114 +1408,75 @@
 
     /* Keep all columns visible, no media query hiding col-linearity or col-points */
 
-    /* ── Collapsible Panel Header (shared: Nifty Analyzer) ──────────────── */
-    .accum-panel-header {
-      background: var(--bg-card2);
+
+    /* ── Futures Buildup Section ──────────────────────────────────────────────── */
+    .futbld-panel {
+      margin: 10px 0 0;
       border: 1px solid var(--border);
       border-radius: var(--radius);
-      padding: 10px 16px;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      cursor: pointer;
-      user-select: none;
-      margin-top: 4px;
-      transition: border-color 0.2s;
-    }
-    .accum-panel-header:hover { border-color: var(--border2); }
-
-    /* ── Nifty Analyzer ──────────────────────────────────────────────────── */
-    .nifty-body {
       background: var(--bg-card);
-      border: 1px solid var(--border);
-      border-top: none;
-      border-radius: 0 0 var(--radius) var(--radius);
       overflow: hidden;
-      padding: 14px 16px;
     }
-    .nifty-header-strip {
+    .futbld-panel-header {
       display: flex; justify-content: space-between; align-items: center;
-      padding: 10px 0 12px;
-      border-bottom: 1px solid var(--border);
-      margin-bottom: 12px;
-      flex-wrap: wrap; gap: 8px;
+      padding: 10px 16px; cursor: pointer; user-select: none;
+      background: var(--bg-card2); border-bottom: 1px solid var(--border);
+      transition: background 0.15s;
     }
-    .nifty-price { font-family: var(--mono); font-size: 1.45rem; font-weight: 700; color: var(--text); }
-    .nifty-chg   { font-family: var(--mono); font-size: 0.8rem; font-weight: 600; margin-left: 8px; }
-    .nifty-chg.up { color: var(--green); } .nifty-chg.dn { color: var(--red); }
-    .nifty-meta  { font-family: var(--mono); font-size: 0.65rem; color: var(--text-muted); text-align: right; line-height: 1.5; }
-    .nifty-live-dot { display:inline-block; width:6px; height:6px; border-radius:50%; background:var(--green); margin-right:5px; animation: pulse 1.8s infinite; }
-    @keyframes pulse { 0%,100%{opacity:1;} 50%{opacity:0.3;} }
+    .futbld-panel-header:hover { background: rgba(255,255,255,0.03); }
+    .futbld-body { display: none; padding: 12px 16px 16px; }
+    .futbld-body.open { display: block; }
+    .futbld-group { margin-bottom: 14px; }
+    .futbld-group:last-child { margin-bottom: 0; }
+    .futbld-group-hdr {
+      display: flex; align-items: center; justify-content: space-between;
+      cursor: pointer; user-select: none; padding: 6px 8px;
+      background: rgba(255,255,255,0.03); border: 1px solid var(--border);
+      border-radius: var(--radius) var(--radius) 0 0;
+      font-family: var(--mono); font-size: 0.65rem; font-weight: 700;
+      color: var(--text-muted); letter-spacing: 0.08em; text-transform: uppercase;
+    }
+    .futbld-group-hdr:hover { background: rgba(255,255,255,0.05); }
+    .futbld-tbl-wrap { border: 1px solid var(--border); border-top: none; border-radius: 0 0 var(--radius) var(--radius); overflow: hidden; }
+    .futbld-tbl { width: 100%; border-collapse: collapse; font-family: var(--mono); font-size: 0.65rem; }
+    .futbld-tbl th {
+      background: rgba(14,17,23,0.7); color: var(--text-muted); font-size: 0.58rem;
+      font-weight: 700; padding: 6px 10px; border-bottom: 1px solid var(--border);
+      text-align: left; letter-spacing: 0.05em; text-transform: uppercase;
+      white-space: nowrap;
+    }
+    .futbld-tbl th.sortable { cursor: pointer; }
+    .futbld-tbl th.sortable:hover { color: var(--text); }
+    .futbld-tbl td { padding: 5px 10px; border-bottom: 1px solid var(--border); color: var(--text); white-space: nowrap; }
+    .futbld-tbl tr:last-child td { border-bottom: none; }
+    .futbld-tbl tr:hover td { background: rgba(255,255,255,0.025); }
+    .futbld-sym { font-weight: 700; color: var(--text); }
+    .futbld-chg.up  { color: var(--green); font-weight: 600; }
+    .futbld-chg.dn  { color: var(--red);   font-weight: 600; }
+    .futbld-chg.flat { color: var(--text-muted); }
+    .futbld-badge {
+      display: inline-block; font-family: var(--mono); font-size: 0.58rem;
+      font-weight: 700; padding: 2px 7px; border-radius: 3px; letter-spacing: 0.04em;
+    }
+    .futbld-badge.long-buildup   { background: rgba(63,185,80,0.15);  color: var(--green); border: 1px solid rgba(63,185,80,0.3);  }
+    .futbld-badge.short-buildup  { background: rgba(248,81,73,0.15);  color: var(--red);   border: 1px solid rgba(248,81,73,0.3);  }
+    .futbld-badge.long-unwinding { background: rgba(210,153,34,0.15); color: var(--amber); border: 1px solid rgba(210,153,34,0.3); }
+    .futbld-badge.short-covering { background: rgba(56,139,253,0.15); color: var(--blue);  border: 1px solid rgba(56,139,253,0.3); }
+    .futbld-badge.flat           { background: transparent; color: var(--text-muted); border: 1px solid var(--border); }
+    .futbld-cap-tag {
+      display: inline-block; font-family: var(--mono); font-size: 0.55rem;
+      font-weight: 700; padding: 1px 5px; border-radius: 3px; letter-spacing: 0.04em;
+      background: rgba(255,255,255,0.06); color: var(--text-muted); border: 1px solid var(--border);
+    }
+    .futbld-cap-tag.large { color: var(--blue); background: rgba(56,139,253,0.12); border-color: rgba(56,139,253,0.25); }
+    .futbld-cap-tag.mid   { color: var(--amber); background: rgba(210,153,34,0.12); border-color: rgba(210,153,34,0.25); }
+    .futbld-cap-tag.small { color: var(--text-muted); }
+    .futbld-updated { font-family: var(--mono); font-size: 0.58rem; color: var(--text-muted); }
+    .futbld-count-pill { background: rgba(56,139,253,0.15); color: var(--blue); font-size: 0.65rem; padding: 2px 8px; border-radius: 12px; font-weight: 600; font-family: var(--mono); }
 
-    /* Gauge */
-    .nifty-gauge-panel { margin-bottom: 12px; }
-    .nifty-gauge-label { display:flex; justify-content:space-between; align-items:baseline; margin-bottom:10px; }
-    .nifty-section-title { font-family:var(--mono); font-size:0.6rem; letter-spacing:0.12em; text-transform:uppercase; color:var(--text-muted); }
-    .nifty-bias-readout { font-family:var(--mono); font-weight:700; font-size:0.9rem; }
-    .nifty-bias-readout.bullish { color:var(--green); } .nifty-bias-readout.bearish { color:var(--red); } .nifty-bias-readout.choppy { color:var(--amber); }
-    .nifty-gauge-track { position:relative; height:32px; display:flex; border-radius:3px; overflow:visible; margin-bottom:4px; }
-    .nifty-gauge-zone { flex:1; position:relative; display:flex; align-items:center; justify-content:center; border-right:1px solid var(--border); }
-    .nifty-gauge-zone:last-child { border-right:none; }
-    .nifty-gauge-zone::after { content:''; position:absolute; inset:0; opacity:0.12; }
-    .nifty-zone-bear::after { background:var(--red); } .nifty-zone-choppy::after { background:var(--amber); } .nifty-zone-bull::after { background:var(--green); }
-    .nifty-zone-tag { font-family:var(--mono); font-size:0.58rem; letter-spacing:0.08em; text-transform:uppercase; color:var(--text-muted); z-index:1; }
-    .nifty-needle { position:absolute; top:-6px; bottom:-6px; width:2px; background:var(--text); box-shadow:0 0 8px 1px rgba(233,230,221,0.4); transition:left 900ms cubic-bezier(.2,.9,.25,1); z-index:2; }
-    .nifty-ticks { display:flex; justify-content:space-between; font-family:var(--mono); font-size:0.58rem; color:var(--text-muted); margin-top:3px; }
-    .nifty-drivers { display:flex; gap:14px; flex-wrap:wrap; margin-top:10px; padding-top:10px; border-top:1px dashed var(--border); }
-    .nifty-driver { font-family:var(--mono); font-size:0.62rem; color:var(--text-muted); display:flex; align-items:center; gap:5px; }
-    .nifty-driver .ndot { width:5px; height:5px; border-radius:50%; flex-shrink:0; }
-    .ndot.g { background:var(--green); } .ndot.r { background:var(--red); } .ndot.a { background:var(--amber); }
-
-    /* Grid */
-    .nifty-grid { display:grid; grid-template-columns:1.3fr 1fr; gap:12px; margin-top:12px; }
-    .nifty-panel { background:var(--bg-card2); border:1px solid var(--border); border-radius:var(--radius); padding:14px 16px; }
-    .nifty-candle-wrap { background:rgba(14,17,23,0.5); border:1px solid var(--border); border-radius:var(--radius); padding:10px 8px 6px; margin-top:10px; }
-    .nifty-pattern-tags { display:flex; gap:6px; flex-wrap:wrap; margin-top:10px; }
-    .nifty-tag { font-family:var(--mono); font-size:0.6rem; padding:3px 7px; border-radius:2px; border:1px solid var(--border); color:var(--text-muted); background:var(--bg-card2); }
-    .nifty-tag.bull { color:var(--green); border-color:rgba(63,185,80,0.3); background:rgba(63,185,80,0.06); }
-    .nifty-tag.bear { color:var(--red);   border-color:rgba(248,81,73,0.3);  background:rgba(248,81,73,0.06); }
-    .nifty-signal-grid { display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-top:10px; }
-    .nifty-signal-card { background:rgba(14,17,23,0.5); border:1px solid var(--border); border-radius:var(--radius); padding:9px 12px; }
-    .nifty-signal-card .sk { font-family:var(--mono); font-size:0.58rem; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.06em; }
-    .nifty-signal-card .sv { font-family:var(--mono); font-size:0.82rem; font-weight:700; margin-top:3px; }
-    .sv.green { color:var(--green); } .sv.red { color:var(--red); } .sv.amber { color:var(--amber); }
-
-    /* Sector */
-    .nifty-stacked-bar { display:flex; width:100%; height:14px; border-radius:2px; overflow:hidden; margin:10px 0 10px; border:1px solid var(--border); }
-    .nifty-sector-col-header { display:flex; align-items:center; justify-content:space-between; padding:4px 4px 6px; border-bottom:1px solid var(--border); font-family:var(--mono); font-size:0.58rem; font-weight:700; color:var(--text-muted); letter-spacing:0.06em; text-transform:uppercase; }
-    .nifty-sector-list { display:flex; flex-direction:column; }
-    .nifty-sector-row { display:flex; align-items:center; justify-content:space-between; padding:6px 4px; border-bottom:1px solid var(--border); font-family:var(--mono); font-size:0.65rem; cursor:pointer; user-select:none; transition:background 0.15s; }
-    .nifty-sector-row:hover { background:rgba(255,255,255,0.03); }
-    .nifty-sector-arrow { font-size:0.55rem; color:var(--text-muted); width:10px; display:inline-block; }
-    .nifty-sector-left { display:flex; align-items:center; gap:6px; flex:1; overflow:hidden; white-space:nowrap; text-overflow:ellipsis; }
-    .nifty-swatch { width:7px; height:7px; border-radius:1px; flex-shrink:0; }
-    .nifty-sector-name { color:var(--text-muted); overflow:hidden; text-overflow:ellipsis; }
-    .nifty-sector-right { display:flex; align-items:center; }
-    .nifty-sector-chg { font-size:0.6rem; width:50px; text-align:right; }
-    .nifty-sector-chg.up { color:var(--green); } .nifty-sector-chg.dn { color:var(--red); }
-    .nifty-sector-impact { font-size:0.6rem; width:55px; text-align:right; font-weight:600; }
-    .nifty-sector-impact.up { color:var(--green); } .nifty-sector-impact.dn { color:var(--red); }
-    .nifty-sector-wt { width:42px; text-align:right; font-weight:600; color:var(--text); }
-
-    /* Stock Subrow */
-    .nifty-stock-container { background:rgba(14,17,23,0.4); border-bottom:1px solid var(--border); padding:2px 0 4px 16px; }
-    .nifty-stock-row { display:flex; align-items:center; justify-content:space-between; padding:3px 4px 3px 0; font-family:var(--mono); font-size:0.6rem; color:var(--text-muted); }
-    .nifty-stock-name { color:var(--text); font-weight:500; flex:1; }
-    .nifty-stock-right { display:flex; align-items:center; }
-    .nifty-total-row { display:flex; justify-content:space-between; margin-top:8px; padding-top:8px; border-top:1px solid var(--border); font-family:var(--mono); font-size:0.6rem; color:var(--text-muted); }
-
-    /* OI Chain Heatmap */
-    .nifty-oi-metrics-bar { display:flex; gap:16px; align-items:center; flex-wrap:wrap; font-family:var(--mono); font-size:0.65rem; color:var(--text-muted); padding:6px 12px; background:rgba(14,17,23,0.5); border:1px solid var(--border); border-radius:3px; }
-    .nifty-oi-metrics-bar b { font-weight:700; }
-    .nifty-oi-tbl { width:100%; border-collapse:collapse; font-family:var(--mono); font-size:0.62rem; text-align:center; }
-    .nifty-oi-tbl th { background:rgba(14,17,23,0.7); color:var(--text-muted); font-size:0.58rem; font-weight:700; padding:6px 4px; border:1px solid var(--border); letter-spacing:0.04em; }
-    .nifty-oi-tbl td { padding:5px 4px; border:1px solid var(--border); color:var(--text); white-space:nowrap; }
-    .nifty-oi-tbl tr.atm-row { background:rgba(56,139,253,0.08) !important; font-weight:700; }
-    .nifty-oi-tbl tr.maxpain-row { background:rgba(210,153,34,0.08) !important; }
-    .nifty-badge-atm { background:rgba(56,139,253,0.2); color:var(--blue); font-size:0.55rem; padding:1px 4px; border-radius:2px; font-weight:700; margin-right:4px; }
-    .nifty-badge-mp { background:rgba(210,153,34,0.2); color:var(--amber); font-size:0.55rem; padding:1px 4px; border-radius:2px; font-weight:700; margin-right:4px; }
   </style>
 </head>
+
 
 <body>
 
@@ -1607,7 +1568,7 @@
     </div>
   </div>
 
-  <!-- Toast -->
+
   <div class="toast" id="toast"></div>
 
   <script>
@@ -2157,116 +2118,18 @@
           ${cardsHtml}
         </div>
 
-        <!-- ── Nifty Analyzer (collapsible) ── -->
-        <div class="accum-panel-header" onclick="toggleNiftySection()">
-          <div style="font-weight: 700; font-size: 0.88rem; color: var(--text); display: flex; align-items: center; gap: 8px;">
-            <span>📈 Nifty Analyzer</span>
-            <span id="nifty-bias-pill" style="background: rgba(56, 139, 253, 0.15); color: var(--blue); font-size: 0.68rem; padding: 2px 8px; border-radius: 12px; font-weight: 600; font-family: var(--mono);">—</span>
+        <!-- Futures Buildup Panel (inside stock-cards-grid) -->
+        <div class="futbld-panel">
+          <div class="futbld-panel-header" onclick="toggleFutbldPanel()">
+            <div style="display:flex;align-items:center;gap:8px;">
+              <span style="font-weight:700;font-size:0.88rem;color:var(--text);">📊 Futures Buildup</span>
+              <span class="futbld-count-pill" id="futbld-count-pill">${_futbldData ? _futbldData.count + ' Stocks' : '—'}</span>
+              <span class="futbld-updated" id="futbld-updated-at">${_futbldData && _futbldData.updated_at ? '· ' + _futbldData.updated_at : ''}</span>
+            </div>
+            <span id="futbld-arrow" style="font-size:0.75rem;color:var(--text-muted);font-weight:bold;">${_futbldOpen ? '▲' : '▼'}</span>
           </div>
-          <span id="nifty-toggle-arrow" style="font-size: 0.75rem; color: var(--text-muted); font-weight: bold;">▼</span>
-        </div>
-        <div id="nifty-body" class="nifty-body" style="display:none">
-          <!-- Price header strip -->
-          <div class="nifty-header-strip">
-            <div>
-              <div style="font-family:var(--mono);font-size:0.65rem;font-weight:700;letter-spacing:0.1em;color:var(--text-muted);text-transform:uppercase;">NIFTY 50 · SPOT INDEX</div>
-              <div style="margin-top:3px;">
-                <span class="nifty-price" id="nifty-price">—</span><span class="nifty-chg" id="nifty-chg"></span>
-              </div>
-            </div>
-            <div class="nifty-meta">
-              <div><span class="nifty-live-dot"></span>LIVE — <span id="nifty-time">—</span></div>
-              <div>Timeframe: 5-min · Live via Kite</div>
-            </div>
-          </div>
-
-          <!-- Bias Gauge -->
-          <div class="nifty-gauge-panel">
-            <div class="nifty-gauge-label">
-              <span class="nifty-section-title">Index Bias — Composite Classifier</span>
-              <span class="nifty-bias-readout" id="nifty-bias-readout">—</span>
-            </div>
-            <div class="nifty-gauge-track">
-              <div class="nifty-gauge-zone nifty-zone-bear"><span class="nifty-zone-tag">Bearish</span></div>
-              <div class="nifty-gauge-zone nifty-zone-choppy"><span class="nifty-zone-tag">Choppy</span></div>
-              <div class="nifty-gauge-zone nifty-zone-bull"><span class="nifty-zone-tag">Bullish</span></div>
-              <div class="nifty-needle" id="nifty-needle" style="left:50%;"></div>
-            </div>
-            <div class="nifty-ticks"><span>0</span><span>35</span><span>65</span><span>100</span></div>
-            <div class="nifty-drivers" id="nifty-drivers"></div>
-          </div>
-
-          <!-- 2-col grid -->
-          <div class="nifty-grid">
-            <!-- Left col: Candles + Signals -->
-            <div>
-              <div class="nifty-panel">
-                <span class="nifty-section-title">Candle Pattern Analyzer · Last 14 × 5-min</span>
-                <div class="nifty-candle-wrap">
-                  <svg id="nifty-candle-svg" viewBox="0 0 640 160" width="100%" height="160" preserveAspectRatio="none"></svg>
-                </div>
-                <div class="nifty-pattern-tags" id="nifty-pattern-tags"></div>
-              </div>
-              <div class="nifty-panel" style="margin-top:10px;">
-                <span class="nifty-section-title">Supporting Signals</span>
-                <div class="nifty-signal-grid" id="nifty-signal-grid"></div>
-              </div>
-            </div>
-            <!-- Right col: Sector Weightage -->
-            <div class="nifty-panel">
-              <span class="nifty-section-title">Sector Weightage — NIFTY 50 (Σ 100%)</span>
-              <div class="nifty-stacked-bar" id="nifty-stacked-bar"></div>
-              <div class="nifty-sector-col-header">
-                <span style="flex:1;">Sector</span>
-                <span style="width:50px; text-align:right;">Gain</span>
-                <span style="width:55px; text-align:right;">Impact</span>
-                <span style="width:42px; text-align:right;">Wt</span>
-              </div>
-              <div class="nifty-sector-list" id="nifty-sector-list"></div>
-              <div class="nifty-total-row"><span id="nifty-sector-count">—</span><span>Total weight <b id="nifty-total-wt" style="color:var(--text);">—</b></span></div>
-            </div>
-          </div>
-
-          <!-- 📊 OI Chain Heatmap (collapsible) -->
-          <div class="accum-panel-header" onclick="toggleNiftyOiSection()" style="margin-top:12px;">
-            <div style="font-weight: 700; font-size: 0.8rem; color: var(--text); display: flex; align-items: center; gap: 8px;">
-              <span>📊 OI Chain Heatmap</span>
-              <span id="nifty-oi-summary-pill" style="background: rgba(56, 139, 253, 0.15); color: var(--blue); font-size: 0.65rem; padding: 2px 8px; border-radius: 12px; font-weight: 600; font-family: var(--mono);">—</span>
-            </div>
-            <span id="nifty-oi-toggle-arrow" style="font-size: 0.75rem; color: var(--text-muted); font-weight: bold;">▼</span>
-          </div>
-          <div id="nifty-oi-body" style="display:none; padding:12px; background:var(--bg-card2); border:1px solid var(--border); border-top:none; border-radius:0 0 var(--radius) var(--radius);">
-            <!-- Metrics Bar -->
-            <div class="nifty-oi-metrics-bar" id="nifty-oi-metrics-bar">
-              <span>Expiry: <b id="nifty-oi-exp">—</b></span>
-              <span>Max Pain: <b id="nifty-oi-mp" style="color:var(--amber);">—</b></span>
-              <span>Spot: <b id="nifty-oi-spot" style="color:var(--text);">—</b></span>
-              <span>Straddle: <b id="nifty-oi-straddle" style="color:var(--blue);">—</b></span>
-              <span>PCR: <b id="nifty-oi-pcr" style="color:var(--green);">—</b></span>
-            </div>
-            <!-- Heatmap Table Wrap -->
-            <div class="nifty-oi-tbl-wrap" style="overflow-x:auto; margin-top:8px;">
-              <table class="nifty-oi-tbl">
-                <thead>
-                  <tr>
-                    <th>CE OI</th>
-                    <th>CE BUILDUP</th>
-                    <th>ΔOI</th>
-                    <th>CE LTP</th>
-                    <th>STRIKE</th>
-                    <th>PE LTP</th>
-                    <th>ΔOI</th>
-                    <th>PE BUILDUP</th>
-                    <th>PE OI</th>
-                    <th>PCR</th>
-                    <th>ACTION</th>
-                  </tr>
-                </thead>
-                <tbody id="nifty-oi-tbody">
-                  <tr><td colspan="11" style="text-align:center; padding:15px; color:var(--text-muted);">Loading OI Chain...</td></tr>
-                </tbody>
-              </table>
-            </div>
+          <div class="futbld-body${_futbldOpen ? ' open' : ''}" id="futbld-body">
+            ${_buildFutbldGroupsHtml()}
           </div>
         </div>
 
@@ -2392,6 +2255,14 @@
 
       showBoard(html);
 
+      // Re-populate Futures Buildup data (DOM was re-created by innerHTML)
+      if (_futbldData) {
+        renderFuturesBuildup(_futbldData);
+      } else if (!_futbldFetchedOnce) {
+        _futbldFetchedOnce = true;
+        fetchFuturesBuildup();
+      }
+
       // Update filters active buttons
       document.querySelectorAll('.bulls-card .filter-btn').forEach(btn => btn.classList.remove('active'));
       const activeBullsBtn = document.getElementById(`crossover-filter-${crossoverFilterBulls}-bulls`);
@@ -2408,20 +2279,7 @@
       renderLiveBreakouts();
 
 
-      // Restore Nifty Analyzer pill & inner content
-      const niftyPillEl = document.getElementById('nifty-bias-pill');
-      if (niftyPillEl) {
-        niftyPillEl.textContent = _lastNiftyBiasPill;
-        niftyPillEl.style.background = _lastNiftyPillBg;
-        niftyPillEl.style.color = _lastNiftyPillColor;
-      }
-      if (_niftyQuoteData) renderNiftyQuote(_niftyQuoteData);
-      if (_niftyBiasData) renderNiftyBias(_niftyBiasData);
-      if (_niftyCandlesData) renderNiftyCandles(_niftyCandlesData);
-      if (_niftySectorsData) renderNiftySectors(_niftySectorsData);
-      if (_niftyOiData) renderNiftyOiChain(_niftyOiData);
-      _niftyRestoreState();
-      _niftyOiRestoreState();
+
 
       // Restore scroll tops
       const newListBullsEl = document.getElementById('crossover-list-bulls');
@@ -3075,370 +2933,246 @@
       if (inMarket) fetchLiveBreakouts();
     }, 15000);
 
-    // ── Nifty Analyzer ────────────────────────────────────────────────────
-    let _niftyCollapsed = true;
-    let _lastNiftyBiasPill = '—';
-    let _lastNiftyPillBg   = 'rgba(56,139,253,0.15)';
-    let _lastNiftyPillColor = 'var(--blue)';
 
-    let _niftyQuoteData = null;
-    let _niftyBiasData = null;
-    let _niftyCandlesData = null;
-    let _niftySectorsData = null;
+    // ── Futures Buildup Section ──────────────────────────────────────────────
+    let _futbldOpen = false;
+    let _futbldData = null;
+    let _futbldFetchedOnce = false;
+    const FUTBLD_GROUPS = [
+      { key: 'lb', label: 'Long Buildup',    emoji: '🟢', cls: 'long-buildup',   desc: ': Bullish Forceful/aggressive :Long Buildup (fresh conviction buying)' },
+      { key: 'sc', label: 'Short Covering',  emoji: '🔵', cls: 'short-covering', desc: ': Bullish(Gentle):Short Covering (forced buy-back)' },
+      { key: 'fl', label: 'Flat',            emoji: '⚪', cls: 'flat',           desc: '' },
+      { key: 'lu', label: 'Long Unwinding',  emoji: '🟡', cls: 'long-unwinding', desc: ': Bearish(Gentle):Long Unwinding (voluntary exit)' },
+      { key: 'sb', label: 'Short Buildup',   emoji: '🔴', cls: 'short-buildup',  desc: ': Bearish Forceful/aggressive:Short Buildup (fresh conviction selling)' },
+    ];
+    const _futbldGroupOpen = {};
+    const _futbldSort      = {};   // {grp: {col: 'chg'|'ltp'|'rvol'|..., dir: 'asc'|'desc'}}
+    FUTBLD_GROUPS.forEach(g => { _futbldGroupOpen[g.key] = true; _futbldSort[g.key] = {col: null, dir: null}; });
+    const CAP_ORDER = { 'Large Cap': 0, 'Mid Cap': 1, 'Small Cap': 2 };
+    const CAP_SHORT = { 'Large Cap': 'L', 'Mid Cap': 'M', 'Small Cap': 'S' };
+    const CAP_CSS   = { 'Large Cap': 'large', 'Mid Cap': 'mid', 'Small Cap': 'small' };
 
-    function toggleNiftySection() {
-      _niftyCollapsed = !_niftyCollapsed;
-      _niftyRestoreState();
+    function _fbArrow(grp, col) {
+      const s = _futbldSort[grp];
+      if (s.col === col) return s.dir === 'asc' ? ' ▴' : ' ▾';
+      return '<span style="opacity:0.25;"> ⇅</span>';
     }
 
-    function _niftyRestoreState() {
-      const body  = document.getElementById('nifty-body');
-      const arrow = document.getElementById('nifty-toggle-arrow');
-      if (body)  body.style.display  = _niftyCollapsed ? 'none' : 'block';
-      if (arrow) arrow.textContent   = _niftyCollapsed ? '▼' : '▲';
+    function _buildFutbldGroupsHtml() {
+      return FUTBLD_GROUPS.map(g => {
+        const open = _futbldGroupOpen[g.key];
+        const k = g.key;
+        return `<div class="futbld-group" id="futbld-grp-${k}">
+              <div class="futbld-group-hdr" onclick="toggleFutbldGroup('${k}')">
+                <span>${g.emoji} ${g.label} <span id="futbld-${k}-count" style="font-size:0.6rem;font-weight:400;margin-left:4px;"></span></span>
+                <span id="futbld-${k}-arrow">${open ? '▼' : '▶'}</span>
+              </div>
+              <div id="futbld-${k}-wrap" class="futbld-tbl-wrap" style="${open ? '' : 'display:none'}">
+                <table class="futbld-tbl"><thead><tr>
+                  <th>Fut Buildup</th>
+                  <th class="sortable" id="futbld-${k}-th-sym"  onclick="sortFutbldCol('${k}','sym')">Symbol${_fbArrow(k,'sym')}</th>
+                  <th class="sortable" id="futbld-${k}-th-ltp"  onclick="sortFutbldCol('${k}','ltp')">Spot LTP${_fbArrow(k,'ltp')}</th>
+                  <th class="sortable" id="futbld-${k}-th-chg"  onclick="sortFutbldCol('${k}','chg')">Chg %${_fbArrow(k,'chg')}</th>
+                  <th class="sortable" id="futbld-${k}-th-cap"  onclick="sortFutbldCol('${k}','cap')">Cap${_fbArrow(k,'cap')}</th>
+                  <th class="sortable" id="futbld-${k}-th-rvol" onclick="sortFutbldCol('${k}','rvol')">RVOL${_fbArrow(k,'rvol')}</th>
+                  <th class="sortable" id="futbld-${k}-th-lin"  onclick="sortFutbldCol('${k}','lin')">Linearity${_fbArrow(k,'lin')}</th>
+                  <th class="sortable" id="futbld-${k}-th-gap"  onclick="sortFutbldCol('${k}','gap')">Gap${_fbArrow(k,'gap')}</th>
+                  <th class="sortable" id="futbld-${k}-th-fhv"  onclick="sortFutbldCol('${k}','fhv')">FH VOL${_fbArrow(k,'fhv')}</th>
+                  <th class="sortable" id="futbld-${k}-th-tc"   onclick="sortFutbldCol('${k}','tc')">TC${_fbArrow(k,'tc')}</th>
+                  <th class="sortable" id="futbld-${k}-th-piv"  onclick="sortFutbldCol('${k}','piv')">Pivot${_fbArrow(k,'piv')}</th>
+                  <th class="sortable" id="futbld-${k}-th-bc"   onclick="sortFutbldCol('${k}','bc')">BC${_fbArrow(k,'bc')}</th>
+                </tr></thead><tbody id="futbld-${k}-tbody"></tbody></table>
+              </div>
+            </div>`;
+      }).join('');
     }
 
-    function renderNiftyQuote(d) {
-      if (!d) return;
-      const priceEl = document.getElementById('nifty-price');
-      if (priceEl && d.ltp !== undefined) priceEl.textContent = d.ltp.toLocaleString('en-IN', {minimumFractionDigits:2});
-      const chgEl = document.getElementById('nifty-chg');
-      if (chgEl && d.change !== undefined && d.change_pct !== undefined) {
-        const up = d.change >= 0;
-        chgEl.className = 'nifty-chg ' + (up ? 'up' : 'dn');
-        chgEl.textContent = (up ? '▲ +' : '▼ ') + d.change.toFixed(2) + ' (' + (up ? '+' : '') + d.change_pct.toFixed(2) + '%)';
-      }
-      const timeEl = document.getElementById('nifty-time');
-      if (timeEl && d.timestamp) timeEl.textContent = new Date(d.timestamp).toLocaleString('en-IN');
+    function toggleFutbldPanel() {
+      _futbldOpen = !_futbldOpen;
+      document.getElementById('futbld-body').classList.toggle('open', _futbldOpen);
+      document.getElementById('futbld-arrow').textContent = _futbldOpen ? '▲' : '▼';
+      if (_futbldOpen && !_futbldData) fetchFuturesBuildup();
     }
 
-    function renderNiftyBias(d) {
-      if (!d) return;
-      const readout = document.getElementById('nifty-bias-readout');
-      if (readout && d.zone) {
-        readout.className = 'nifty-bias-readout ' + d.zone;
-        readout.textContent = d.zone.toUpperCase() + ' · Score ' + d.score + '/100';
-      }
-      const needle = document.getElementById('nifty-needle');
-      if (needle && d.score !== undefined) needle.style.left = d.score + '%';
-
-      // Update pill with zone info
-      if (d.zone) {
-        const zoneColors = { bullish: ['rgba(63,185,80,0.15)', 'var(--green)'], bearish: ['rgba(248,81,73,0.15)', 'var(--red)'], choppy: ['rgba(210,153,34,0.15)', 'var(--amber)'] };
-        const zc = zoneColors[d.zone] || ['rgba(56,139,253,0.15)', 'var(--blue)'];
-        _lastNiftyBiasPill  = d.zone.toUpperCase() + ' ' + d.score + '/100';
-        _lastNiftyPillBg    = zc[0];
-        _lastNiftyPillColor = zc[1];
-        const pillEl = document.getElementById('nifty-bias-pill');
-        if (pillEl) { pillEl.textContent = _lastNiftyBiasPill; pillEl.style.background = _lastNiftyPillBg; pillEl.style.color = _lastNiftyPillColor; }
-      }
-
-      const driversEl = document.getElementById('nifty-drivers');
-      if (driversEl) {
-        driversEl.innerHTML = '';
-        (d.drivers || []).forEach(dr => {
-          const sp = document.createElement('span');
-          sp.className = 'nifty-driver';
-          sp.innerHTML = '<span class="ndot ' + dr.tone + '"></span>' + dr.text;
-          driversEl.appendChild(sp);
-        });
-      }
-
-      const sigGrid = document.getElementById('nifty-signal-grid');
-      if (sigGrid) {
-        sigGrid.innerHTML = '';
-        (d.drivers || []).forEach(dr => {
-          const parts = dr.text.split(':');
-          const k = parts[0];
-          const v = parts.slice(1).join(':').trim();
-          const card = document.createElement('div');
-          card.className = 'nifty-signal-card';
-          const toneClass = dr.tone === 'g' ? 'green' : dr.tone === 'r' ? 'red' : 'amber';
-          card.innerHTML = '<div class="sk">' + k + '</div><div class="sv ' + toneClass + '">' + v + '</div>';
-          sigGrid.appendChild(card);
-        });
-      }
+    function toggleFutbldGroup(grp) {
+      _futbldGroupOpen[grp] = !_futbldGroupOpen[grp];
+      const open = _futbldGroupOpen[grp];
+      document.getElementById(`futbld-${grp}-wrap`).style.display = open ? '' : 'none';
+      document.getElementById(`futbld-${grp}-arrow`).textContent = open ? '▼' : '▶';
     }
 
-    function renderNiftyCandles(d) {
-      if (!d) return;
-      const svg = document.getElementById('nifty-candle-svg');
-      if (!svg) return;
-      svg.innerHTML = '';
-      const candles = d.candles || [];
-      if (!candles.length) return;
-      const min = Math.min(...candles.map(c => c.l)), max = Math.max(...candles.map(c => c.h));
-      const pad=10, W=640, H=160, cw=(W-pad*2)/candles.length;
-      const y = v => H - pad - ((v-min)/(max-min||1))*(H-pad*2);
-      const ns = 'http://www.w3.org/2000/svg';
-      candles.forEach((c, i) => {
-        const x = pad + i*cw + cw/2;
-        const up = c.c >= c.o;
-        const color = up ? '#3FB950' : '#F85149';
-        const wick = document.createElementNS(ns, 'line');
-        wick.setAttribute('x1',x); wick.setAttribute('x2',x);
-        wick.setAttribute('y1',y(c.h)); wick.setAttribute('y2',y(c.l));
-        wick.setAttribute('stroke', color); wick.setAttribute('stroke-width','1.2');
-        svg.appendChild(wick);
-        const bTop = y(Math.max(c.o,c.c));
-        const bH   = Math.max(2, Math.abs(y(c.o)-y(c.c)));
-        const rect = document.createElementNS(ns, 'rect');
-        rect.setAttribute('x', x - cw*0.3); rect.setAttribute('y', bTop);
-        rect.setAttribute('width', cw*0.6); rect.setAttribute('height', bH);
-        rect.setAttribute('fill', color); rect.setAttribute('rx','1');
-        svg.appendChild(rect);
-      });
-      const tagsEl = document.getElementById('nifty-pattern-tags');
-      if (tagsEl) {
-        tagsEl.innerHTML = '';
-        (d.patterns || []).forEach(p => {
-          const tag = document.createElement('span');
-          tag.className = 'nifty-tag ' + (p.tone === 'bull' ? 'bull' : p.tone === 'bear' ? 'bear' : '');
-          tag.textContent = p.pattern + ' — candle #' + (p.index+1);
-          tagsEl.appendChild(tag);
-        });
-      }
-    }
-
-    // Set to track expanded sector accordions across board refreshes
-    let _expandedSectors = new Set();
-
-    function toggleNiftySector(sectorName) {
-      if (_expandedSectors.has(sectorName)) {
-        _expandedSectors.delete(sectorName);
+    function sortFutbldCol(grp, col) {
+      const s = _futbldSort[grp];
+      if (s.col === col) {
+        s.dir = s.dir === 'desc' ? 'asc' : 'desc';  // toggle
       } else {
-        _expandedSectors.add(sectorName);
+        s.col = col;
+        s.dir = col === 'sym' ? 'asc' : 'desc';     // default: desc for numbers, asc for symbol
       }
-      if (_niftySectorsData) renderNiftySectors(_niftySectorsData);
+      if (_futbldData) renderFutbldGroup(grp, _futbldData.stocks);
     }
 
-    /**
-     * Renders Nifty 50 Sector Weightage multi-column table and collapsible constituent stocks.
-     * Columns: SECTOR | GAIN | IMPACT | WT
-     * Rationale:
-     * - GAIN: Sector Index % change (constituent-weighted).
-     * - IMPACT: Weighted contribution of sector to Nifty 50 overall movement: (Sector Gain % * Sector Wt %) / 100
-     * - WT: Total Sector weight in Nifty 50.
-     */
-    function renderNiftySectors(d) {
-      if (!d) return;
-      const bar = document.getElementById('nifty-stacked-bar');
-      if (bar) { bar.innerHTML = ''; (d.sectors||[]).forEach(s => { const seg=document.createElement('div'); seg.style.width=s.wt+'%'; seg.style.background=s.color; seg.title=s.name+' — '+s.wt+'%'; bar.appendChild(seg); }); }
-      const list = document.getElementById('nifty-sector-list');
-      if (list) {
-        list.innerHTML = '';
-        (d.sectors||[]).forEach(s => {
-          const isExp = _expandedSectors.has(s.name);
-          const hasStocks = s.stocks && s.stocks.length > 0;
-          const arrow = hasStocks ? (isExp ? '▼' : '▶') : '';
-          // Weighted Impact: contribution of this sector to Nifty 50 overall move %
-          const impact = (s.chg * s.wt) / 100.0;
-
-          const rowWrap = document.createElement('div');
-
-          const row = document.createElement('div');
-          row.className = 'nifty-sector-row';
-          if (hasStocks) row.onclick = () => toggleNiftySector(s.name);
-          row.innerHTML = '<div class="nifty-sector-left">'
-            + '<span class="nifty-sector-arrow">' + arrow + '</span>'
-            + '<span class="nifty-swatch" style="background:' + s.color + '"></span>'
-            + '<span class="nifty-sector-name">' + s.name + '</span>'
-            + '</div>'
-            + '<div class="nifty-sector-right">'
-            + '<span class="nifty-sector-chg ' + (s.chg >= 0 ? 'up' : 'dn') + '">' + (s.chg >= 0 ? '+' : '') + s.chg.toFixed(2) + '%</span>'
-            + '<span class="nifty-sector-impact ' + (impact >= 0 ? 'up' : 'dn') + '">' + (impact >= 0 ? '+' : '') + impact.toFixed(2) + '%</span>'
-            + '<span class="nifty-sector-wt">' + s.wt.toFixed(1) + '%</span>'
-            + '</div>';
-          rowWrap.appendChild(row);
-
-          if (hasStocks && isExp) {
-            const stockContainer = document.createElement('div');
-            stockContainer.className = 'nifty-stock-container';
-            s.stocks.forEach(st => {
-              const stRow = document.createElement('div');
-              stRow.className = 'nifty-stock-row';
-              stRow.innerHTML = '<span class="nifty-stock-name">' + st.symbol + '</span>'
-                + '<div class="nifty-stock-right">'
-                + '<span class="nifty-sector-chg ' + (st.chg >= 0 ? 'up' : 'dn') + '">' + (st.chg >= 0 ? '+' : '') + st.chg.toFixed(2) + '%</span>'
-                + '<span class="nifty-sector-impact" style="color:var(--text-faint);">—</span>'
-                + '<span class="nifty-sector-wt" style="color:var(--text-muted);">' + st.wt.toFixed(1) + '%</span>'
-                + '</div>';
-              stockContainer.appendChild(stRow);
-            });
-            rowWrap.appendChild(stockContainer);
-          }
-
-          list.appendChild(rowWrap);
-        });
-      }
-      const cnt = document.getElementById('nifty-sector-count');
-      if (cnt) cnt.textContent = (d.sectors||[]).length + ' sectors';
-      const tot = document.getElementById('nifty-total-wt');
-      if (tot) tot.textContent = (d.total_weight||0).toFixed(1) + '%';
+    function _buildupBadgeClass(buildup) {
+      return buildup.toLowerCase().replace(/ /g, '-');
     }
 
-    async function fetchNiftyQuote() {
-      try {
-        const r = await fetch('/api/index-quote');
-        _niftyQuoteData = await r.json();
-        renderNiftyQuote(_niftyQuoteData);
-      } catch(e) {}
-    }
+    function renderFutbldGroup(grp, stocks) {
+      const grpCfg = FUTBLD_GROUPS.find(g => g.key === grp);
+      if (!grpCfg) return;
+      let rows = stocks.filter(s => s.buildup === grpCfg.label);
 
-    async function fetchNiftyBias() {
-      try {
-        const r = await fetch('/api/bias-score');
-        _niftyBiasData = await r.json();
-        renderNiftyBias(_niftyBiasData);
-      } catch(e) {}
-    }
+      const { col, dir } = _futbldSort[grp];
+      const asc = dir === 'asc';
+      const nullLast = (v) => v == null ? (asc ? Infinity : -Infinity) : v;
 
-    async function fetchNiftyCandles() {
-      try {
-        const r = await fetch('/api/candles');
-        _niftyCandlesData = await r.json();
-        renderNiftyCandles(_niftyCandlesData);
-      } catch(e) {}
-    }
-
-    async function fetchNiftySectors() {
-      try {
-        const r = await fetch('/api/sector-weights');
-        _niftySectorsData = await r.json();
-        renderNiftySectors(_niftySectorsData);
-      } catch(e) {}
-    }
-
-    async function refreshNifty() {
-      await Promise.all([fetchNiftyQuote(), fetchNiftyBias(), fetchNiftyCandles(), fetchNiftySectors()]);
-    }
-
-    // Initial load + 15s poll
-    refreshNifty();
-    setInterval(refreshNifty, 15000);
-
-    // ── OI Chain Heatmap ───────────────────────────────────────────────────
-    let _niftyOiCollapsed = true;
-    let _niftyOiData = null;
-
-    function toggleNiftyOiSection() {
-      _niftyOiCollapsed = !_niftyOiCollapsed;
-      _niftyOiRestoreState();
-    }
-
-    function _niftyOiRestoreState() {
-      const body  = document.getElementById('nifty-oi-body');
-      const arrow = document.getElementById('nifty-oi-toggle-arrow');
-      if (body)  body.style.display  = _niftyOiCollapsed ? 'none' : 'block';
-      if (arrow) arrow.textContent   = _niftyOiCollapsed ? '▼' : '▲';
-    }
-
-    function formatOiNum(n) {
-      if (n === undefined || n === null) return '—';
-      const abs = Math.abs(n);
-      if (abs >= 10000000) return (n / 10000000).toFixed(2) + ' Cr';
-      if (abs >= 100000) return (n / 100000).toFixed(2) + ' L';
-      if (abs >= 1000) return (n / 1000).toFixed(1) + 'K';
-      return n.toString();
-    }
-
-    function formatOiChg(n) {
-      if (n === undefined || n === null || n === 0) return '+-';
-      const formatted = formatOiNum(n);
-      return (n > 0 ? '+' : '') + formatted;
-    }
-
-    /**
-     * Renders full-width 11-column OI Chain Heatmap table inside Nifty Analyzer.
-     * Features:
-     * - Descending Strike Order (highest strike at top down to lowest strike at bottom).
-     * - Dynamic heat-map background tints for Call OI (green) and Put OI (red/pink).
-     * - ATM (blue) and MAX PAIN (orange) strike row badging.
-     */
-    function renderNiftyOiChain(d) {
-      if (!d) return;
-      const expEl = document.getElementById('nifty-oi-exp');
-      if (expEl) expEl.textContent = d.expiry || '—';
-      const mpEl = document.getElementById('nifty-oi-mp');
-      if (mpEl) mpEl.textContent = d.max_pain !== undefined ? d.max_pain.toLocaleString('en-IN') : '—';
-      const spotEl = document.getElementById('nifty-oi-spot');
-      if (spotEl) spotEl.textContent = d.spot_ltp !== undefined ? d.spot_ltp.toLocaleString('en-IN', {minimumFractionDigits:2}) : '—';
-      const strdEl = document.getElementById('nifty-oi-straddle');
-      if (strdEl) strdEl.textContent = d.straddle !== undefined ? '₹' + d.straddle.toFixed(1) : '—';
-      const pcrEl = document.getElementById('nifty-oi-pcr');
-      if (pcrEl) pcrEl.textContent = d.pcr !== undefined ? d.pcr.toFixed(2) : '—';
-
-      // Summary Pill
-      const pillEl = document.getElementById('nifty-oi-summary-pill');
-      if (pillEl) {
-        pillEl.textContent = 'MP: ' + (d.max_pain || '—') + ' · PCR: ' + (d.pcr !== undefined ? d.pcr.toFixed(2) : '—');
+      if (col === 'sym') {
+        rows.sort((a, b) => asc ? a.symbol.localeCompare(b.symbol) : b.symbol.localeCompare(a.symbol));
+      } else if (col === 'ltp') {
+        rows.sort((a, b) => asc ? a.ltp - b.ltp : b.ltp - a.ltp);
+      } else if (col === 'chg') {
+        rows.sort((a, b) => asc ? a.spot_chg_pct - b.spot_chg_pct : b.spot_chg_pct - a.spot_chg_pct);
+      } else if (col === 'cap') {
+        rows.sort((a, b) => asc
+          ? (CAP_ORDER[a.cap] ?? 9) - (CAP_ORDER[b.cap] ?? 9)
+          : (CAP_ORDER[b.cap] ?? 9) - (CAP_ORDER[a.cap] ?? 9));
+      } else if (col === 'rvol') {
+        rows.sort((a, b) => asc ? nullLast(a.rvol) - nullLast(b.rvol) : nullLast(b.rvol) - nullLast(a.rvol));
+      } else if (col === 'lin') {
+        rows.sort((a, b) => asc ? nullLast(a.linearity) - nullLast(b.linearity) : nullLast(b.linearity) - nullLast(a.linearity));
+      } else if (col === 'gap') {
+        rows.sort((a, b) => asc ? nullLast(a.gap_pct) - nullLast(b.gap_pct) : nullLast(b.gap_pct) - nullLast(a.gap_pct));
+      } else if (col === 'fhv') {
+        rows.sort((a, b) => asc ? nullLast(a.fh_spurt) - nullLast(b.fh_spurt) : nullLast(b.fh_spurt) - nullLast(a.fh_spurt));
+      } else if (col === 'tc' || col === 'piv' || col === 'bc') {
+        const pairScore = (pairStr) => {
+          if (!pairStr) return null;
+          const [t, b] = pairStr.split('/');
+          let s = 0;
+          if (t === 'Y') s += 2;
+          if (b === 'Y') s += 1;
+          return s;
+        };
+        const getScore = (s) => s.cpr ? pairScore(s.cpr[col]) : null;
+        rows.sort((a, b) => asc ? nullLast(getScore(a)) - nullLast(getScore(b)) : nullLast(getScore(b)) - nullLast(getScore(a)));
+      } else {
+        // Default: cap-size order (L→M→S)
+        rows.sort((a, b) => (CAP_ORDER[a.cap] ?? 9) - (CAP_ORDER[b.cap] ?? 9));
       }
 
-      const tbody = document.getElementById('nifty-oi-tbody');
+      const countEl = document.getElementById(`futbld-${grp}-count`);
+      if (countEl) countEl.innerHTML = `(${rows.length})${grpCfg.desc ? `<span style="font-weight:400;opacity:0.85;">${grpCfg.desc}</span>` : ''}`;
+
+      // Update all sortable column header arrows
+      const COLS = ['sym','ltp','chg','cap','rvol','lin','gap','fhv','tc','piv','bc'];
+      const LABELS = {sym:'Symbol',ltp:'Spot LTP',chg:'Chg %',cap:'Cap',rvol:'RVOL',lin:'Linearity',gap:'Gap',fhv:'FH VOL',tc:'TC',piv:'Pivot',bc:'BC'};
+      COLS.forEach(c => {
+        const th = document.getElementById(`futbld-${grp}-th-${c}`);
+        if (!th) return;
+        const arrow = col === c ? (dir === 'asc' ? ' ▴' : ' ▾') : '<span style="opacity:0.25;"> ⇅</span>';
+        th.innerHTML = `${LABELS[c]}${arrow}`;
+        th.onclick = () => sortFutbldCol(grp, c);
+      });
+
+      const tbody = document.getElementById(`futbld-${grp}-tbody`);
       if (!tbody) return;
 
-      // Sort strikes in descending order (highest strike at top, e.g. 24,800 -> 23,900)
-      const rows = (d.chain_data || []).slice().sort((a, b) => b.strike - a.strike);
       if (!rows.length) {
-        tbody.innerHTML = '<tr><td colspan="11" style="text-align:center; padding:15px; color:var(--text-muted);">No OI Chain data available</td></tr>';
+        tbody.innerHTML = `<tr><td colspan="12" style="text-align:center;padding:10px;color:var(--text-muted);font-size:0.62rem;">No data</td></tr>`;
         return;
       }
 
-      const maxCeOi = Math.max(...rows.map(r => r.ce_oi || 0));
-      const maxPeOi = Math.max(...rows.map(r => r.pe_oi || 0));
-      const atmStrike = d.atm;
-      const maxPainStrike = d.max_pain;
+        tbody.innerHTML = rows.map(s => {
+        const chgCls  = s.spot_chg_pct > 0 ? 'up' : s.spot_chg_pct < 0 ? 'dn' : 'flat';
+        const chgSign = s.spot_chg_pct > 0 ? '+' : '';
+        const ltpFmt  = s.ltp >= 1000 ? s.ltp.toLocaleString('en-IN', {maximumFractionDigits: 1}) : s.ltp.toFixed(2);
+        const badge   = _buildupBadgeClass(s.buildup);
+        const capShort = CAP_SHORT[s.cap] || '?';
+        const capCss   = CAP_CSS[s.cap] || '';
 
-      tbody.innerHTML = '';
-      rows.forEach(r => {
-        const tr = document.createElement('tr');
-        if (r.strike === atmStrike) tr.classList.add('atm-row');
-        else if (r.strike === maxPainStrike) tr.classList.add('maxpain-row');
+        // RVOL badge
+        let rvolHtml = '<span style="color:var(--text-muted);font-size:0.68rem;">—</span>';
+        if (s.rvol != null) {
+          const rc = s.rvol >= 3 ? '#ff7b72' : s.rvol >= 2 ? '#3fb950' : s.rvol >= 1 ? '#e3b341' : '#8b949e';
+          const rp = s.rvol >= 3 ? '🔥' : s.rvol >= 2 ? '⚡' : s.rvol >= 1 ? '▲' : '▽';
+          rvolHtml = `<span style="font-size:0.68rem;font-weight:700;color:${rc};">${rp} ${s.rvol}x</span>`;
+        }
 
-        const ceAlpha = maxCeOi > 0 ? (0.05 + 0.35 * (r.ce_oi / maxCeOi)) : 0.05;
-        const peAlpha = maxPeOi > 0 ? (0.05 + 0.35 * (r.pe_oi / maxPeOi)) : 0.05;
-        const ceBg = 'background:rgba(63,185,80,' + ceAlpha.toFixed(2) + ');';
-        const peBg = 'background:rgba(248,81,73,' + peAlpha.toFixed(2) + ');';
+        // Linearity badge
+        let linHtml = '<span style="color:var(--text-muted);font-size:0.68rem;">—</span>';
+        if (s.linearity != null) {
+          linHtml = `<span style="font-size:0.68rem;color:var(--text-muted);">📏 ${s.linearity}%</span>`;
+        }
 
-        let strikeBadge = '';
-        if (r.strike === atmStrike) strikeBadge += '<span class="nifty-badge-atm">ATM</span>';
-        if (r.strike === maxPainStrike) strikeBadge += '<span class="nifty-badge-mp">MAX PAIN</span>';
+        // Gap badge
+        let gapHtml = '<span style="color:var(--text-muted);font-size:0.68rem;">—</span>';
+        if (s.gap_pct != null) {
+          const gc = s.gap_pct > 0 ? 'var(--green)' : s.gap_pct < 0 ? 'var(--red)' : 'var(--text-muted)';
+          const gs = s.gap_pct > 0 ? '+' : '';
+          gapHtml = `<span style="font-size:0.68rem;font-weight:600;color:${gc};">${gs}${s.gap_pct.toFixed(2)}%</span>`;
+        }
 
-        const strikeStyle = (r.strike === atmStrike) ? 'color:var(--blue);font-weight:700;' : ((r.strike === maxPainStrike) ? 'color:var(--amber);font-weight:700;' : 'font-weight:700;');
+        // FH VOL badge
+        let fhHtml = '<span style="color:var(--text-muted);font-size:0.68rem;">—</span>';
+        if (s.fh_spurt != null && s.fh_cumul != null) {
+          let fhColor = '#8b949e';
+          if (s.fh_tag === 'Abnormal')     fhColor = '#3fb950';
+          else if (s.fh_tag === 'Elevated') fhColor = '#e3b341';
+          else if (s.fh_tag === 'Weak')     fhColor = '#ff7b72';
+          fhHtml = `<span style="font-size:0.68rem;color:${fhColor};" title="Slot: ${s.fh_spurt}x | 1H Pace: ${s.fh_cumul}x">${s.fh_spurt}x<br><span style='font-size:0.6rem;opacity:0.7;'>${s.fh_cumul}x</span></span>`;
+        }
 
-        const ceBuildupColor = r.ce_buildup === 'Short Covering' || r.ce_buildup === 'Long Buildup' ? 'color:var(--green);' : (r.ce_buildup === 'Short Buildup' ? 'color:var(--red);' : 'color:var(--text-muted);');
-        const peBuildupColor = r.pe_buildup === 'Short Covering' || r.pe_buildup === 'Long Buildup' ? 'color:var(--green);' : (r.pe_buildup === 'Short Buildup' ? 'color:var(--red);' : 'color:var(--text-muted);');
+        // Helper to format Top/Bottom Y/N pairs
+        const fmtPair = (pairStr) => {
+          if (!pairStr) return '<span style="color:var(--text-muted);font-size:0.68rem;">—</span>';
+          const parts = pairStr.split('/');
+          const t = parts[0] || 'N', b = parts[1] || 'N';
+          const tCls = t === 'Y' ? 'color:#3fb950;font-weight:700;' : 'color:#7d8590;';
+          const bCls = b === 'Y' ? 'color:#3fb950;font-weight:700;' : 'color:#7d8590;';
+          return `<span style="font-size:0.68rem;"><span style="${tCls}">${t}</span>/<span style="${bCls}">${b}</span></span>`;
+        };
 
-        const rowPcr = (r.ce_oi && r.ce_oi > 0) ? (r.pe_oi / r.ce_oi).toFixed(2) : '—';
-        const pcrColor = rowPcr >= 1.0 ? 'color:var(--green);' : 'color:var(--red);';
-
-        tr.innerHTML = '<td style="' + ceBg + '">' + formatOiNum(r.ce_oi) + '</td>'
-          + '<td style="' + ceBuildupColor + '">' + (r.ce_buildup || 'Flat') + '</td>'
-          + '<td style="color:var(--text-muted);">' + formatOiChg(r.ce_oi_chg) + '</td>'
-          + '<td>₹' + (r.ce_ltp !== undefined ? r.ce_ltp.toFixed(1) : '—') + '</td>'
-          + '<td style="' + strikeStyle + '">' + strikeBadge + r.strike.toLocaleString('en-IN') + '</td>'
-          + '<td>₹' + (r.pe_ltp !== undefined ? r.pe_ltp.toFixed(1) : '—') + '</td>'
-          + '<td style="color:var(--text-muted);">' + formatOiChg(r.pe_oi_chg) + '</td>'
-          + '<td style="' + peBuildupColor + '">' + (r.pe_buildup || 'Flat') + '</td>'
-          + '<td style="' + peBg + '">' + formatOiNum(r.pe_oi) + '</td>'
-          + '<td style="' + pcrColor + '">' + rowPcr + '</td>'
-          + '<td style="color:var(--text-muted);">' + (r.ce_action || r.pe_action || '–') + '</td>';
-
-        tbody.appendChild(tr);
-      });
+        return `<tr>
+          <td><span class="futbld-badge ${badge}">${s.buildup}</span></td>
+          <td class="futbld-sym">${s.symbol}</td>
+          <td>₹${ltpFmt}</td>
+          <td class="futbld-chg ${chgCls}">${chgSign}${s.spot_chg_pct.toFixed(2)}%</td>
+          <td><span class="futbld-cap-tag ${capCss}">${capShort}</span></td>
+          <td>${rvolHtml}</td>
+          <td>${linHtml}</td>
+          <td>${gapHtml}</td>
+          <td>${fhHtml}</td>
+          <td>${fmtPair(s.cpr ? s.cpr.tc : null)}</td>
+          <td>${fmtPair(s.cpr ? s.cpr.piv : null)}</td>
+          <td>${fmtPair(s.cpr ? s.cpr.bc : null)}</td>
+        </tr>`;
+      }).join('');
     }
 
-    async function fetchNiftyOiChain() {
+    function renderFuturesBuildup(data) {
+      _futbldData = data;
+      const countPill = document.getElementById('futbld-count-pill');
+      if (countPill) countPill.textContent = `${data.count} Stocks`;
+      const updEl = document.getElementById('futbld-updated-at');
+      if (updEl) updEl.textContent = data.updated_at ? `· ${data.updated_at}` : '';
+
+      FUTBLD_GROUPS.forEach(g => renderFutbldGroup(g.key, data.stocks));
+    }
+
+    async function fetchFuturesBuildup() {
       try {
-        const r = await fetch('/api/oi/symbol/NIFTY');
-        _niftyOiData = await r.json();
-        renderNiftyOiChain(_niftyOiData);
-      } catch(e) {}
+        const res = await fetch('/api/futures-buildup');
+        if (!res.ok) return;
+        const data = await res.json();
+        if (data.error) return;
+        renderFuturesBuildup(data);
+      } catch (e) {}
     }
 
-    // Initial load + 30s poll for OI Chain Heatmap
-    fetchNiftyOiChain();
-    setInterval(fetchNiftyOiChain, 30000);
+    // Poll every 60s when panel is open
+    setInterval(() => {
+      if (_futbldOpen) fetchFuturesBuildup();
+    }, 60000);
+
   </script>
 </body>
 

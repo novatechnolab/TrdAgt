@@ -49,6 +49,33 @@ _scanner_thread  = None
 
 _cpr_cache       = {}
 _cpr_cache_lock  = threading.Lock()
+CPR_CACHE_FILE   = os.path.join(os.path.dirname(__file__), "cpr_cache.json")
+
+def _load_cpr_cache_from_disk():
+    global _cpr_cache
+    if os.path.exists(CPR_CACHE_FILE):
+        try:
+            import json
+            with open(CPR_CACHE_FILE, "r") as f:
+                data = json.load(f)
+                if isinstance(data, dict):
+                    with _cpr_cache_lock:
+                        _cpr_cache.update(data)
+                    log.info(f"[Synergy] Loaded {len(data)} CPR pivots from disk cache.")
+        except Exception as e:
+            log.warning(f"[Synergy] Failed to load CPR cache from disk: {e}")
+
+def _save_cpr_cache_to_disk():
+    try:
+        import json
+        with _cpr_cache_lock:
+            data = dict(_cpr_cache)
+        with open(CPR_CACHE_FILE, "w") as f:
+            json.dump(data, f)
+    except Exception as e:
+        log.warning(f"[Synergy] Failed to save CPR cache to disk: {e}")
+
+_load_cpr_cache_from_disk()
 
 _last_computed_ltp = {}  # {symbol: spot_ltp}
 _last_cross_time   = {}  # {symbol: timestamp_float}
@@ -976,6 +1003,7 @@ def _fetch_all_cpr_pivots(kite, spot_tokens_map):
             time.sleep(1.0)
         
     log.info(f"[Synergy] CPR pivots successfully cached for {len(_cpr_cache)} symbols.")
+    _save_cpr_cache_to_disk()
 
 
 # ── Scanner Lifecycle ─────────────────────────────────────────────────────────

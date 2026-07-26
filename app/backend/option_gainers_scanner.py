@@ -476,9 +476,14 @@ def _run_eod_snapshot_bg():
                     "spot_change_pct": spot_change_map.get(sym),
                     "gap_pct":         gap_map_eod.get(sym, 0.0),
                     "rvol_ratio":      rvol_eod_map.get(sym),   # EOD: full_day_vol / 20D avg
-                    "linearity_score": ema_state.get(sym, {}).get("linearity_score", 0.0),
-                    "net_movement":    ema_state.get(sym, {}).get("net_movement", 0.0),
-                    "contracts":       sorted(contracts, key=lambda x: x["gain_pct"]),
+                    "linearity_score":     ema_state.get(sym, {}).get("linearity_score", 0.0),
+                    "net_movement":        ema_state.get(sym, {}).get("net_movement", 0.0),
+                    "ema9_hold":           ema_state.get(sym, {}).get("ema9_hold"),
+                    "ema9_hold_minutes":   ema_state.get(sym, {}).get("ema9_hold_minutes", 0),
+                    "fh_spurt_ratio":      ema_state.get(sym, {}).get("fh_spurt_ratio"),
+                    "fh_cumulative_ratio": ema_state.get(sym, {}).get("fh_cumulative_ratio"),
+                    "fh_spurt_tag":        ema_state.get(sym, {}).get("fh_spurt_tag"),
+                    "contracts":           sorted(contracts, key=lambda x: x["gain_pct"]),
                 }
                 for sym, contracts in ranked_stocks
             ],

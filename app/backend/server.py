@@ -1609,15 +1609,14 @@ def kite_auth_session():
 
 @app.route('/kite/auth/status', methods=['GET'])
 def kite_auth_status():
+    """Local-only session check — no Zerodha API call, zero rate-limit risk."""
     kite = get_kite()
     if not kite:
         return jsonify({'status': 'no_token', 'message': 'No access_token configured.'})
-    try:
-        profile = kite.profile()
-        return jsonify({'status': 'ok', 'user': profile.get('user_name', ''),
-                        'user_id': profile.get('user_id', ''), 'broker': profile.get('broker', 'ZERODHA')})
-    except Exception as e:
-        return jsonify({'status': 'error', 'message': str(e)}), 502
+    token = getattr(kite, 'access_token', None)
+    if not token:
+        return jsonify({'status': 'no_token', 'message': 'Session object exists but has no access_token.'})
+    return jsonify({'status': 'ok', 'user': '', 'user_id': '', 'broker': 'ZERODHA'})
 
 
 @app.route('/kite/historical', methods=['GET'])
@@ -4558,13 +4557,13 @@ def option_gainers_board():
                     ema_state_eod = get_ema_crossover_state().get("crossovers", {})
                     for s in snapshot.get("stocks", []):
                         s["inst_holding"] = inst_holding_map.get(s["symbol"], 0.0)
-                        s["ema9_hold"] = ema_state_eod.get(s["symbol"], {}).get("ema9_hold")
-                        s["ema9_hold_minutes"] = ema_state_eod.get(s["symbol"], {}).get("ema9_hold_minutes", 0)
-                        s["fh_spurt_ratio"] = ema_state_eod.get(s["symbol"], {}).get("fh_spurt_ratio")
-                        s["fh_cumulative_ratio"] = ema_state_eod.get(s["symbol"], {}).get("fh_cumulative_ratio")
-                        s["fh_spurt_tag"] = ema_state_eod.get(s["symbol"], {}).get("fh_spurt_tag")
-                        s["linearity_score"] = ema_state_eod.get(s["symbol"], {}).get("linearity_score", 0.0)
-                        s["net_movement"] = ema_state_eod.get(s["symbol"], {}).get("net_movement", 0.0)
+                        s["ema9_hold"] = s.get("ema9_hold") if s.get("ema9_hold") is not None else ema_state_eod.get(s["symbol"], {}).get("ema9_hold")
+                        s["ema9_hold_minutes"] = s.get("ema9_hold_minutes") if s.get("ema9_hold_minutes") is not None else ema_state_eod.get(s["symbol"], {}).get("ema9_hold_minutes", 0)
+                        s["fh_spurt_ratio"] = s.get("fh_spurt_ratio") if s.get("fh_spurt_ratio") is not None else ema_state_eod.get(s["symbol"], {}).get("fh_spurt_ratio")
+                        s["fh_cumulative_ratio"] = s.get("fh_cumulative_ratio") if s.get("fh_cumulative_ratio") is not None else ema_state_eod.get(s["symbol"], {}).get("fh_cumulative_ratio")
+                        s["fh_spurt_tag"] = s.get("fh_spurt_tag") if s.get("fh_spurt_tag") is not None else ema_state_eod.get(s["symbol"], {}).get("fh_spurt_tag")
+                        s["linearity_score"] = s.get("linearity_score", 0.0) or ema_state_eod.get(s["symbol"], {}).get("linearity_score", 0.0)
+                        s["net_movement"] = s.get("net_movement", 0.0) or ema_state_eod.get(s["symbol"], {}).get("net_movement", 0.0)
                     return jsonify(snapshot)
                 else:
                     return jsonify({
@@ -10115,8 +10114,53 @@ async function refreshAll(){
   try { await Promise.all([loadIndexQuote(), loadBias(), loadSectors(), loadCandles()]); }
   catch(e){ console.error('refresh failed', e); }
 }
-refreshAll();
-setInterval(refreshAll, 15000); // poll every 15s
+
+// ── Kite session guard ───────────────────────────────────────────────────────
+let _kiteReady = false;
+let _banner = null;
+
+function showBanner(msg){
+  if(!_banner){
+    _banner = document.createElement('div');
+    _banner.id = 'kiteBanner';
+    Object.assign(_banner.style, {
+      position:'fixed', top:'0', left:'0', width:'100%', zIndex:'9999',
+      background:'#D9A44C', color:'#12181A', textAlign:'center',
+      padding:'10px 16px', fontFamily:"'Inter',sans-serif",
+      fontSize:'14px', fontWeight:'600', letterSpacing:'.02em'
+    });
+    document.body.prepend(_banner);
+  }
+  _banner.textContent = msg;
+}
+
+function clearBanner(){
+  if(_banner){ _banner.remove(); _banner = null; }
+}
+
+async function checkKiteAndRefresh(){
+  try {
+    const r = await fetch('/kite/auth/status');
+    const d = await r.json();
+    if(d.status === 'ok'){
+      if(!_kiteReady){
+        _kiteReady = true;
+        clearBanner();
+      }
+      await refreshAll();
+    } else {
+      _kiteReady = false;
+      showBanner('⚠  Kite session not connected — open Settings → Kite API to log in. Retrying…');
+    }
+  } catch(e){
+    _kiteReady = false;
+    showBanner('⚠  Cannot reach backend. Retrying…');
+    console.error('kite check failed', e);
+  }
+}
+
+checkKiteAndRefresh();
+setInterval(checkKiteAndRefresh, 10000); // check + refresh every 10s
 </script>
 </body>
 </html>"""
@@ -10127,7 +10171,286 @@ def nifty_candle_analyzer_dashboard():
     from flask import render_template_string
     return render_template_string(PAGE)
 
+
+# ── Futures Buildup Board ──────────────────────────────────────────────────────
+_fut_buildup_cache = {"data": None, "ts": 0.0}
+_fut_buildup_lock  = threading.Lock()
+
+# Static cap categorization — Nifty 50 = Large, Nifty Midcap 150 F&O = Mid, rest = Small
+_CAP_CATEGORY = {
+    # ── Large Cap (Nifty 50) ──────────────────────────────────────────────────
+    "ADANIENT": "Large Cap", "ADANIPORTS": "Large Cap", "APOLLOHOSP": "Large Cap",
+    "ASIANPAINT": "Large Cap", "AXISBANK": "Large Cap", "BAJAJ-AUTO": "Large Cap",
+    "BAJAJFINSV": "Large Cap", "BAJFINANCE": "Large Cap", "BHARTIARTL": "Large Cap",
+    "BPCL": "Large Cap", "BRITANNIA": "Large Cap", "CIPLA": "Large Cap",
+    "COALINDIA": "Large Cap", "DRREDDY": "Large Cap", "EICHERMOT": "Large Cap",
+    "GRASIM": "Large Cap", "HCLTECH": "Large Cap", "HDFCBANK": "Large Cap",
+    "HDFCLIFE": "Large Cap", "HEROMOTOCO": "Large Cap", "HINDALCO": "Large Cap",
+    "HINDUNILVR": "Large Cap", "ICICIBANK": "Large Cap", "INDUSINDBK": "Large Cap",
+    "INFY": "Large Cap", "ITC": "Large Cap", "JSWSTEEL": "Large Cap",
+    "KOTAKBANK": "Large Cap", "LT": "Large Cap", "M&M": "Large Cap",
+    "MARUTI": "Large Cap", "NESTLEIND": "Large Cap", "NTPC": "Large Cap",
+    "ONGC": "Large Cap", "POWERGRID": "Large Cap", "RELIANCE": "Large Cap",
+    "SBIN": "Large Cap", "SHRIRAMFIN": "Large Cap", "SBILIFE": "Large Cap",
+    "SUNPHARMA": "Large Cap", "TATAMOTORS": "Large Cap", "TATASTEEL": "Large Cap",
+    "TATACONSUM": "Large Cap", "TCS": "Large Cap", "TECHM": "Large Cap",
+    "TITAN": "Large Cap", "TRENT": "Large Cap", "ULTRACEMCO": "Large Cap",
+    "WIPRO": "Large Cap",
+    # ── Mid Cap ───────────────────────────────────────────────────────────────
+    "ABCAPITAL": "Mid Cap", "ABFRL": "Mid Cap", "ACC": "Mid Cap",
+    "ADANIGREEN": "Mid Cap", "ALKEM": "Mid Cap", "AMBUJACEM": "Mid Cap",
+    "APLAPOLLO": "Mid Cap", "ASHOKLEY": "Mid Cap", "ASTRAL": "Mid Cap",
+    "AUBANK": "Mid Cap", "AUROPHARMA": "Mid Cap", "BALKRISIND": "Mid Cap",
+    "BANDHANBNK": "Mid Cap", "BANKBARODA": "Mid Cap", "BATAINDIA": "Mid Cap",
+    "BEL": "Mid Cap", "BERGEPAINT": "Mid Cap", "BHARATFORG": "Mid Cap",
+    "BHEL": "Mid Cap", "BIOCON": "Mid Cap", "BOSCHLTD": "Mid Cap",
+    "CANBK": "Mid Cap", "CHOLAFIN": "Mid Cap", "COFORGE": "Mid Cap",
+    "COLPAL": "Mid Cap", "CONCOR": "Mid Cap", "COROMANDEL": "Mid Cap",
+    "CROMPTON": "Mid Cap", "CUMMINSIND": "Mid Cap", "DABUR": "Mid Cap",
+    "DALBHARAT": "Mid Cap", "DEEPAKNTR": "Mid Cap", "DELHIVERY": "Mid Cap",
+    "DIVISLAB": "Mid Cap", "DIXON": "Mid Cap", "DLF": "Mid Cap",
+    "DMART": "Mid Cap", "ESCORTS": "Mid Cap", "EXIDEIND": "Mid Cap",
+    "FEDERALBNK": "Mid Cap", "GAIL": "Mid Cap", "GLENMARK": "Mid Cap",
+    "GMRINFRA": "Mid Cap", "GODREJCP": "Mid Cap", "GODREJPROP": "Mid Cap",
+    "GRANULES": "Mid Cap", "HAL": "Mid Cap", "HAVELLS": "Mid Cap",
+    "HDFCAMC": "Mid Cap", "HINDPETRO": "Mid Cap", "HINDZINC": "Mid Cap",
+    "ICICIPRULI": "Mid Cap", "IDEA": "Mid Cap", "IDFCFIRSTB": "Mid Cap",
+    "IEX": "Mid Cap", "INDUSTOWER": "Mid Cap", "IOC": "Mid Cap",
+    "IRCTC": "Mid Cap", "IRFC": "Mid Cap", "JINDALSTEL": "Mid Cap",
+    "JUBLFOOD": "Mid Cap", "KAJARIACER": "Mid Cap", "KAYNES": "Mid Cap",
+    "L&TFH": "Mid Cap", "LICHSGFIN": "Mid Cap", "LICI": "Mid Cap",
+    "LUPIN": "Mid Cap", "M&MFIN": "Mid Cap", "MANAPPURAM": "Mid Cap",
+    "MARICO": "Mid Cap", "MAXHEALTH": "Mid Cap", "MCX": "Mid Cap",
+    "MFSL": "Mid Cap", "MOTHERSON": "Mid Cap", "MPHASIS": "Mid Cap",
+    "MRF": "Mid Cap", "MUTHOOTFIN": "Mid Cap", "NAUKRI": "Mid Cap",
+    "NAVINFLUOR": "Mid Cap", "NBCC": "Mid Cap", "NHPC": "Mid Cap",
+    "NMDC": "Mid Cap", "NYKAA": "Mid Cap", "OBEROIRLTY": "Mid Cap",
+    "OIL": "Mid Cap", "PAYTM": "Mid Cap", "PEL": "Mid Cap",
+    "PERSISTENT": "Mid Cap", "PETRONET": "Mid Cap", "PFC": "Mid Cap",
+    "PNB": "Mid Cap", "POLYCAB": "Mid Cap", "PVRINOX": "Mid Cap",
+    "RAMCOCEM": "Mid Cap", "RECLTD": "Mid Cap", "SAIL": "Mid Cap",
+    "SIEMENS": "Mid Cap", "SRF": "Mid Cap", "SYNGENE": "Mid Cap",
+    "TATACHEM": "Mid Cap", "TATACOMM": "Mid Cap", "TATAELXSI": "Mid Cap",
+    "TATAPOWER": "Mid Cap", "TORNTPHARM": "Mid Cap", "TORNTPOWER": "Mid Cap",
+    "TVSMOTOR": "Mid Cap", "UBL": "Mid Cap", "UNIONBANK": "Mid Cap",
+    "UPL": "Mid Cap", "VEDL": "Mid Cap", "VOLTAS": "Mid Cap",
+    "ZOMATO": "Mid Cap", "ZYDUSLIFE": "Mid Cap",
+}
+
+def _classify_fut_buildup(oi_chg_pct: float, price_chg_pct: float) -> str:
+    """Classify futures position buildup from OI% change and price% change."""
+    if abs(oi_chg_pct) < 1.0:
+        return "Flat"
+    oi_up    = oi_chg_pct > 0
+    price_up = price_chg_pct > 0
+    if oi_up and price_up:
+        return "Long Buildup"
+    elif oi_up and not price_up:
+        return "Short Buildup"
+    elif not oi_up and not price_up:
+        return "Long Unwinding"
+    else:
+        return "Short Covering"
+
+
+@app.route("/api/futures-buildup")
+def futures_buildup_board():
+    """
+    Returns futures buildup data for all F&O stocks, grouped by cap category.
+    Cost: 2 bulk kite.quote() calls (futures + spot). Cached 60s.
+    """
+    import time as _time
+
+    # Serve from cache if fresh
+    with _fut_buildup_lock:
+        cached = _fut_buildup_cache.get("data")
+        age    = _time.time() - _fut_buildup_cache.get("ts", 0.0)
+        if cached is not None and age < 60:
+            return jsonify(cached)
+
+    kite = get_kite()
+    if not kite:
+        return jsonify({"error": "Kite not connected", "stocks": []}), 400
+
+    try:
+        from oi_spurt_routes import get_instruments, BFO_SYMBOLS, _chunks
+
+        today = datetime.date.today()
+
+        # ── Build near-month futures map from cached NFO instruments ──────────
+        instruments = get_instruments(kite, "NFO")
+        fut_map = {}  # symbol -> nearest inst
+        for inst in instruments:
+            if inst.get("instrument_type") != "FUT":
+                continue
+            name   = inst.get("name", "")
+            expiry = inst.get("expiry")
+            if not name or not expiry or expiry < today:
+                continue
+            existing = fut_map.get(name)
+            if existing is None or expiry < existing["expiry"]:
+                fut_map[name] = inst
+
+        if not fut_map:
+            return jsonify({"error": "No futures instruments found", "stocks": []}), 500
+
+        # Build quote key lists
+        symbol_to_fut_key  = {}
+        symbol_to_spot_key = {}
+        for name, inst in fut_map.items():
+            exchange = "BFO" if name.upper() in BFO_SYMBOLS else "NFO"
+            symbol_to_fut_key[name]  = f"{exchange}:{inst['tradingsymbol']}"
+            symbol_to_spot_key[name] = f"NSE:{name}"
+
+        fut_keys  = list(symbol_to_fut_key.values())
+        spot_keys = list(symbol_to_spot_key.values())
+
+        # ── Kite Call 1: All near-month futures (OI, LTP, prev close) ────────
+        fut_quotes = {}
+        for batch in _chunks(fut_keys, 250):
+            try:
+                fut_quotes.update(kite.quote(batch))
+            except Exception as e:
+                logging.warning(f"[FutBuildup] Futures quote batch failed: {e}")
+
+        # ── Kite Call 2: All spot underlyings (LTP, prev close) ──────────────
+        spot_quotes = {}
+        for batch in _chunks(spot_keys, 250):
+            try:
+                spot_quotes.update(kite.quote(batch))
+            except Exception as e:
+                logging.warning(f"[FutBuildup] Spot quote batch failed: {e}")
+
+        # ── Lazy-load supplementary in-memory state (zero extra Kite calls) ────
+        try:
+            from option_gainers_scanner import get_avg_volume, _avg_volume_cache, _last_day_volume_cache, _avg_volume_lock
+            _ogs_available = True
+        except Exception:
+            _ogs_available = False
+
+        try:
+            from ema_crossover_scanner import get_ema_crossover_state
+            _ema_state = get_ema_crossover_state().get("crossovers", {})
+        except Exception:
+            _ema_state = {}
+
+        try:
+            from cpr_utils import get_cpr_pivots, compute_cpr_flags, warm_cpr_pivots_bg
+            _cpr_available = True
+        except Exception:
+            _cpr_available = False
+
+        # ── Classify each symbol ──────────────────────────────────────────────
+        stocks = []
+        for symbol, fut_key in symbol_to_fut_key.items():
+            fq = fut_quotes.get(fut_key)
+            if not fq:
+                continue
+
+            curr_oi       = int(fq.get("oi") or 0)
+            prev_oi       = int(fq.get("oi_day_low") or 0)
+            fut_ltp       = float(fq.get("last_price") or 0)
+            fut_prev_cls  = float((fq.get("ohlc") or {}).get("close") or fut_ltp or 1)
+            fut_price_chg = ((fut_ltp - fut_prev_cls) / fut_prev_cls * 100) if fut_prev_cls else 0.0
+            oi_chg_pct    = ((curr_oi - prev_oi) / prev_oi * 100) if prev_oi > 0 else 0.0
+
+            # Spot
+            sq            = spot_quotes.get(symbol_to_spot_key.get(symbol, "")) or {}
+            spot_ltp      = float(sq.get("last_price") or fut_ltp)
+            spot_ohlc     = sq.get("ohlc") or {}
+            spot_prev_cls = float(spot_ohlc.get("close") or spot_ltp or 1)
+            spot_open     = float(spot_ohlc.get("open") or 0)
+            spot_chg_pct  = ((spot_ltp - spot_prev_cls) / spot_prev_cls * 100) if spot_prev_cls else 0.0
+
+            # Gap % = (today open - prev close) / prev close
+            gap_pct = round(((spot_open - spot_prev_cls) / spot_prev_cls * 100), 2) if spot_prev_cls and spot_open else None
+
+            # RVOL — from shared avg-volume cache (no Kite call)
+            rvol = None
+            if _ogs_available:
+                try:
+                    day_vol = sq.get("volume") or 0
+                    if not day_vol:
+                        with _avg_volume_lock:
+                            day_vol = _last_day_volume_cache.get(symbol, 0)
+                    avg_vol = get_avg_volume(symbol)
+                    if avg_vol and avg_vol > 0 and day_vol > 0:
+                        rvol = round(day_vol / avg_vol, 1)
+                except Exception:
+                    pass
+
+            # Linearity + FH VOL — from EMA crossover scanner in-memory state
+            sym_ema = _ema_state.get(symbol, {})
+            linearity  = sym_ema.get("linearity_score")   # int 0–100 or None
+            fh_spurt   = sym_ema.get("fh_spurt_ratio")    # float or None
+            fh_cumul   = sym_ema.get("fh_cumulative_ratio")  # float or None
+            fh_tag     = sym_ema.get("fh_spurt_tag")      # str or None
+
+            # Auto-warm CPR pivots in background if any symbols are missing from cache
+            if _cpr_available and _time.time() - getattr(futures_buildup_board, '_last_cpr_warm', 0) > 300:
+                futures_buildup_board._last_cpr_warm = _time.time()
+                missing_cpr = {}
+                for sym, spot_key in symbol_to_spot_key.items():
+                    sq_val = spot_quotes.get(spot_key)
+                    if sq_val and not get_cpr_pivots(sym):
+                        tok = sq_val.get("instrument_token")
+                        if tok:
+                            missing_cpr[tok] = sym
+                if missing_cpr:
+                    warm_cpr_pivots_bg(kite, missing_cpr)
+
+            # CPR Pivots (TC, Pivot, BC) — Top/Bottom flags
+            cpr_flags = None
+            if _cpr_available:
+                cpr_info = get_cpr_pivots(symbol)
+                if cpr_info:
+                    cpr_flags = compute_cpr_flags(
+                        spot_open=spot_open,
+                        spot_ltp=spot_ltp,
+                        tc=cpr_info.get("tc"),
+                        pivot=cpr_info.get("pivot"),
+                        bc=cpr_info.get("bc")
+                    )
+
+            buildup = _classify_fut_buildup(oi_chg_pct, fut_price_chg)
+            cap     = _CAP_CATEGORY.get(symbol.upper(), "Small Cap")
+
+            stocks.append({
+                "symbol":       symbol,
+                "ltp":          round(spot_ltp, 2),
+                "spot_chg_pct": round(spot_chg_pct, 2),
+                "buildup":      buildup,
+                "cap":          cap,
+                "oi_chg_pct":   round(oi_chg_pct, 2),
+                "gap_pct":      gap_pct,
+                "rvol":         rvol,
+                "linearity":    linearity,
+                "fh_spurt":     fh_spurt,
+                "fh_cumul":     fh_cumul,
+                "fh_tag":       fh_tag,
+                "cpr":          cpr_flags,
+            })
+
+        stocks.sort(key=lambda x: x["symbol"])
+        payload = {
+            "stocks":     stocks,
+            "count":      len(stocks),
+            "updated_at": dt.now().strftime("%H:%M:%S"),
+        }
+
+        with _fut_buildup_lock:
+            _fut_buildup_cache["data"] = payload
+            _fut_buildup_cache["ts"]   = _time.time()
+
+        return jsonify(payload)
+
+    except Exception as e:
+        logging.exception("[FutBuildup] Unhandled error")
+        return jsonify({"error": str(e), "stocks": []}), 500
+
+
 # ── Run ──
+
 if __name__ == '__main__':
     # Start the Twisted reactor once globally to prevent background thread startup collisions
     from twisted.internet import reactor
