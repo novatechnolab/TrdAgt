@@ -34,6 +34,14 @@
           <span class="nav-icon">📈</span>
           <span>Historical Analysis</span>
         </div>
+        <a href="/fno-res-analyzer" target="_blank" rel="noopener"
+          style="display:flex;align-items:center;gap:10px;padding:10px 16px;color:#ffffff;text-decoration:none;border-radius:8px;transition:all .2s;font-size:0.85rem;"
+          onmouseover="this.style.background='var(--bg-hover,rgba(255,255,255,.04))';this.style.color='#ffffff'"
+          onmouseout="this.style.background='';this.style.color='#ffffff'" id="nav-fno-res-analyzer">
+          <span class="nav-icon">📑</span>
+          <span>F&O ResAnalyzer</span>
+          <span style="font-size:0.6rem;margin-left:auto;opacity:.5">↗</span>
+        </a>
         <a href="/nifty-candle-analyzer" target="_blank" rel="noopener"
           style="display:flex;align-items:center;gap:10px;padding:10px 16px;color:#ffffff;text-decoration:none;border-radius:8px;transition:all .2s;font-size:0.85rem;"
           onmouseover="this.style.background='var(--bg-hover,rgba(255,255,255,.04))';this.style.color='#ffffff'"
@@ -486,7 +494,7 @@
             <div id="ha-bulk-panel"
               style="display:none; padding-top:12px; border-top:1px solid var(--border); margin-top:12px;">
               <p style="font-size:0.78rem; color:var(--text-secondary); margin-bottom:12px;">
-                Enter up to 100 stock symbols (comma or newline separated). The engine will run full historical
+                Enter stock symbols (comma or newline separated). The engine will run full historical
                 analytics on each and produce a downloadable CSV report.
               </p>
               <div style="display:grid; grid-template-columns:1fr auto; gap:12px; align-items:flex-start;">
@@ -575,25 +583,79 @@
                   <table class="table" style="width:100%; font-size:0.75rem; white-space:nowrap;">
                     <thead>
                       <tr style="background:rgba(255,255,255,0.06); border-bottom:1.5px solid var(--border);">
-                        <th style="padding:8px 12px; text-align:left; color:var(--text-secondary);">Symbol</th>
-                        <th style="padding:8px 10px; text-align:center; color:var(--text-secondary);">Score</th>
-                        <th style="padding:8px 10px; text-align:center; color:var(--text-secondary);">Direction</th>
-                        <th style="padding:8px 10px; text-align:center; color:var(--text-secondary);">Upcoming Bias</th>
-                        <th style="padding:8px 10px; text-align:right; color:var(--text-secondary);">LTP</th>
-                        <th style="padding:8px 10px; text-align:center; color:var(--text-secondary);">RSI</th>
-                        <th style="padding:8px 10px; text-align:center; color:var(--text-secondary);">MACD</th>
-                        <th style="padding:8px 10px; text-align:center; color:var(--text-secondary);">CHOP</th>
-                        <th style="padding:8px 10px; text-align:center; color:var(--text-secondary);">EMA Cross</th>
-                        <th style="padding:8px 10px; text-align:center; color:var(--text-secondary);">EMA Str.</th>
-                        <th style="padding:8px 10px; text-align:center; color:var(--text-secondary);">Gap↑ Fade</th>
-                        <th style="padding:8px 10px; text-align:center; color:var(--text-secondary);">Gap↓ Fade</th>
-                        <th style="padding:8px 10px; text-align:center; color:var(--text-secondary);">Bull WR%</th>
-                        <th style="padding:8px 10px; text-align:center; color:var(--text-secondary);">Bear WR%</th>
-                        <th style="padding:8px 10px; text-align:center; color:var(--text-secondary);">Streak</th>
-                        <th style="padding:8px 10px; text-align:center; color:var(--text-secondary);">Daily Trend</th>
-                        <th style="padding:8px 10px; text-align:center; color:var(--text-secondary);">Hourly Trend</th>
-                        <th style="padding:8px 10px; text-align:center; color:var(--text-secondary);">15m Trend</th>
-                        <th style="padding:8px 10px; text-align:center; color:var(--text-secondary);">Status</th>
+                        <th
+                          style="padding:8px 12px; text-align:left; color:var(--text-secondary); cursor:pointer; user-select:none;"
+                          onclick="window.haBulkSort('symbol')">Symbol <span id="ha-sort-icon-symbol">↕</span></th>
+                        <th
+                          style="padding:8px 10px; text-align:center; color:var(--text-secondary); cursor:pointer; user-select:none;"
+                          onclick="window.haBulkSort('score')">Score <span id="ha-sort-icon-score">↕</span></th>
+                        <th
+                          style="padding:8px 10px; text-align:center; color:var(--text-secondary); cursor:pointer; user-select:none;"
+                          onclick="window.haBulkSort('direction')">Direction <span id="ha-sort-icon-direction">↕</span>
+                        </th>
+                        <th
+                          style="padding:8px 10px; text-align:center; color:var(--text-secondary); cursor:pointer; user-select:none;"
+                          onclick="window.haBulkSort('upcoming_prediction')">Upcoming Bias <span
+                            id="ha-sort-icon-upcoming_prediction">↕</span></th>
+                        <th
+                          style="padding:8px 10px; text-align:right; color:var(--text-secondary); cursor:pointer; user-select:none;"
+                          onclick="window.haBulkSort('ltp')">LTP <span id="ha-sort-icon-ltp">↕</span></th>
+                        <th
+                          style="padding:8px 10px; text-align:right; color:var(--text-secondary); cursor:pointer; user-select:none;"
+                          onclick="window.haBulkSort('cum_movement_pct')">Cum. Move % <span
+                            id="ha-sort-icon-cum_movement_pct">↕</span></th>
+                        <th
+                          style="padding:8px 10px; text-align:center; color:var(--text-secondary); cursor:pointer; user-select:none;"
+                          onclick="window.haBulkSort('rsi')">RSI <span id="ha-sort-icon-rsi">↕</span></th>
+                        <th
+                          style="padding:8px 10px; text-align:center; color:var(--text-secondary); cursor:pointer; user-select:none;"
+                          onclick="window.haBulkSort('macd_signal')">MACD <span id="ha-sort-icon-macd_signal">↕</span>
+                        </th>
+                        <th
+                          style="padding:8px 10px; text-align:center; color:var(--text-secondary); cursor:pointer; user-select:none;"
+                          onclick="window.haBulkSort('chop')">CHOP <span id="ha-sort-icon-chop">↕</span></th>
+                        <th
+                          style="padding:8px 10px; text-align:center; color:var(--text-secondary); cursor:pointer; user-select:none;"
+                          onclick="window.haBulkSort('ema_cross_status')">EMA Cross <span
+                            id="ha-sort-icon-ema_cross_status">↕</span></th>
+                        <th
+                          style="padding:8px 10px; text-align:center; color:var(--text-secondary); cursor:pointer; user-select:none;"
+                          onclick="window.haBulkSort('ema_strength')">EMA Str. <span
+                            id="ha-sort-icon-ema_strength">↕</span></th>
+                        <th
+                          style="padding:8px 10px; text-align:center; color:var(--text-secondary); cursor:pointer; user-select:none;"
+                          onclick="window.haBulkSort('gap_up_fade_pct')">Gap↑ Fade <span
+                            id="ha-sort-icon-gap_up_fade_pct">↕</span></th>
+                        <th
+                          style="padding:8px 10px; text-align:center; color:var(--text-secondary); cursor:pointer; user-select:none;"
+                          onclick="window.haBulkSort('gap_down_fade_pct')">Gap↓ Fade <span
+                            id="ha-sort-icon-gap_down_fade_pct">↕</span></th>
+                        <th
+                          style="padding:8px 10px; text-align:center; color:var(--text-secondary); cursor:pointer; user-select:none;"
+                          onclick="window.haBulkSort('bull_backtest_win_rate')">Bull WR% <span
+                            id="ha-sort-icon-bull_backtest_win_rate">↕</span></th>
+                        <th
+                          style="padding:8px 10px; text-align:center; color:var(--text-secondary); cursor:pointer; user-select:none;"
+                          onclick="window.haBulkSort('bear_backtest_win_rate')">Bear WR% <span
+                            id="ha-sort-icon-bear_backtest_win_rate">↕</span></th>
+                        <th
+                          style="padding:8px 10px; text-align:center; color:var(--text-secondary); cursor:pointer; user-select:none;"
+                          onclick="window.haBulkSort('streak')">Streak <span id="ha-sort-icon-streak">↕</span></th>
+                        <th
+                          style="padding:8px 10px; text-align:center; color:var(--text-secondary); cursor:pointer; user-select:none;"
+                          onclick="window.haBulkSort('daily_trend')">Daily Trend <span
+                            id="ha-sort-icon-daily_trend">↕</span></th>
+                        <th
+                          style="padding:8px 10px; text-align:center; color:var(--text-secondary); cursor:pointer; user-select:none;"
+                          onclick="window.haBulkSort('hourly_trend')">Hourly Trend <span
+                            id="ha-sort-icon-hourly_trend">↕</span></th>
+                        <th
+                          style="padding:8px 10px; text-align:center; color:var(--text-secondary); cursor:pointer; user-select:none;"
+                          onclick="window.haBulkSort('m15_trend')">15m Trend <span id="ha-sort-icon-m15_trend">↕</span>
+                        </th>
+                        <th
+                          style="padding:8px 10px; text-align:center; color:var(--text-secondary); cursor:pointer; user-select:none;"
+                          onclick="window.haBulkSort('status')">Status <span id="ha-sort-icon-status">↕</span></th>
                       </tr>
                     </thead>
                     <tbody id="ha-bulk-rows"></tbody>
@@ -607,27 +669,32 @@
           <div class="card"
             style="background:var(--bg-glass); backdrop-filter:blur(8px); margin-bottom:16px; position:relative; z-index:1;">
             <div class="card-header"
-              style="display:flex; justify-content:space-between; align-items:center; cursor:pointer;"
-              id="ha-fh-toggle" onclick="window.haFHToggle()">
+              style="display:flex; justify-content:space-between; align-items:center; cursor:pointer;" id="ha-fh-toggle"
+              onclick="window.haFHToggle()">
               <h3
                 style="font-family:var(--font-display); font-weight:700; color:var(--primary-dark); display:flex; align-items:center; gap:8px; margin:0;">
                 <span>⏱️ First-Hour Pattern Continuation/Reversal Analyzer</span>
                 <span class="badge"
-                  style="background:rgba(156,39,176,0.1); color:#9C27B0; font-size:0.7rem; padding:3px 8px; border-radius:8px;">OR Patterns</span>
+                  style="background:rgba(156,39,176,0.1); color:#9C27B0; font-size:0.7rem; padding:3px 8px; border-radius:8px;">OR
+                  Patterns</span>
               </h3>
-              <span id="ha-fh-toggle-icon" style="color:var(--text-secondary); font-size:0.8rem; font-weight:600;">▼ Expand</span>
+              <span id="ha-fh-toggle-icon" style="color:var(--text-secondary); font-size:0.8rem; font-weight:600;">▼
+                Expand</span>
             </div>
 
             <div id="ha-fh-panel"
               style="display:none; padding-top:12px; border-top:1px solid var(--border); margin-top:12px;">
               <p style="font-size:0.78rem; color:var(--text-secondary); margin-bottom:12px;">
-                Enter symbols to classify opening behavior (gap type, move direction, speed) and check historical continuation/reversal probabilities.
+                Enter symbols to classify opening behavior (gap type, move direction, speed) and check historical
+                continuation/reversal probabilities.
               </p>
-              
+
               <div style="display:grid; grid-template-columns:1fr auto; gap:12px; align-items:flex-start;">
                 <div>
                   <div style="display:flex; gap:8px; margin-bottom:8px; flex-wrap:wrap;">
-                    <span style="font-size:0.75rem; font-weight:600; color:var(--text-secondary); align-self:center; white-space:nowrap;">Quick Fill:</span>
+                    <span
+                      style="font-size:0.75rem; font-weight:600; color:var(--text-secondary); align-self:center; white-space:nowrap;">Quick
+                      Fill:</span>
                     <button onclick="window.haFHFillCap('large')"
                       style="padding:4px 12px; border-radius:20px; border:1.5px solid rgba(30,136,229,0.4); background:rgba(30,136,229,0.08); color:#1E88E5; font-size:0.72rem; font-weight:700; cursor:pointer; transition:all 0.15s;">
                       🔵 Large Cap
@@ -641,23 +708,26 @@
                       🟢 Small Cap
                     </button>
                     <button onclick="document.getElementById('ha-fh-symbols').value=''"
-                      style="padding:4px 10px; border-radius:20px; border:1px solid var(--border); background:transparent; color:var(--text-muted); font-size:0.72rem; cursor:pointer;">✕ Clear</button>
+                      style="padding:4px 10px; border-radius:20px; border:1px solid var(--border); background:transparent; color:var(--text-muted); font-size:0.72rem; cursor:pointer;">✕
+                      Clear</button>
                   </div>
-                  <textarea id="ha-fh-symbols"
-                    placeholder="e.g. RELIANCE, TCS, INFY, HDFCBANK, WIPRO"
+                  <textarea id="ha-fh-symbols" placeholder="e.g. RELIANCE, TCS, INFY, HDFCBANK, WIPRO"
                     style="width:100%; min-height:90px; border-radius:var(--radius-md); border:1px solid var(--border); background:rgba(255,255,255,0.05); color:var(--text-primary); padding:10px 12px; font-size:0.85rem; font-family:var(--font-mono, monospace); resize:vertical; box-sizing:border-box; outline:none;"></textarea>
                 </div>
                 <div style="display:flex; flex-direction:column; gap:8px; min-width:180px;">
                   <div class="form-group mb-0">
                     <label style="font-size:0.75rem; font-weight:600; color:var(--text-secondary);">OR Window:</label>
-                    <select class="form-select" id="ha-fh-window" style="border-radius:var(--radius-md); margin-top:4px;">
+                    <select class="form-select" id="ha-fh-window"
+                      style="border-radius:var(--radius-md); margin-top:4px;">
                       <option value="45" selected>45 Minutes</option>
                       <option value="60">60 Minutes</option>
                     </select>
                   </div>
                   <div class="form-group mb-0">
-                    <label style="font-size:0.75rem; font-weight:600; color:var(--text-secondary);">Gap Threshold %:</label>
-                    <input type="number" class="form-control" id="ha-fh-gap-threshold" value="0.3" step="0.1" min="0.1" style="border-radius:var(--radius-md); margin-top:4px; padding:6px 12px; background:rgba(255,255,255,0.05); color:var(--text-primary); border:1px solid var(--border);">
+                    <label style="font-size:0.75rem; font-weight:600; color:var(--text-secondary);">Gap Threshold
+                      %:</label>
+                    <input type="number" class="form-control" id="ha-fh-gap-threshold" value="0.3" step="0.1" min="0.1"
+                      style="border-radius:var(--radius-md); margin-top:4px; padding:6px 12px; background:rgba(255,255,255,0.05); color:var(--text-primary); border:1px solid var(--border);">
                   </div>
                   <button class="btn btn-primary" id="btn-ha-fh-run" onclick="window.haFHRun()"
                     style="padding:10px 16px; font-weight:700; border-radius:var(--radius-md); border:none; background:linear-gradient(135deg,#9C27B0,#7B1FA2); width:100%;">
@@ -669,7 +739,8 @@
               <!-- Progress -->
               <div id="ha-fh-progress-wrap" style="display:none; margin-top:14px;">
                 <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
-                  <span style="font-size:0.78rem; font-weight:600; color:var(--text-secondary);" id="ha-fh-progress-label">Analyzing...</span>
+                  <span style="font-size:0.78rem; font-weight:600; color:var(--text-secondary);"
+                    id="ha-fh-progress-label">Analyzing...</span>
                   <span style="font-size:0.72rem; color:var(--text-muted);" id="ha-fh-progress-count"></span>
                 </div>
                 <div style="background:rgba(255,255,255,0.08); border-radius:20px; height:6px; overflow:hidden;">
@@ -682,9 +753,12 @@
               <!-- Today's Results Table -->
               <div id="ha-fh-results" style="display:none; margin-top:16px;">
                 <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
-                  <span style="font-size:0.82rem; font-weight:700; color:var(--text-primary);">Today's Pattern &amp; Predictions</span>
+                  <span style="font-size:0.82rem; font-weight:700; color:var(--text-primary);">Today's Pattern &amp;
+                    Predictions</span>
                   <div style="display:flex; gap:8px; align-items:center;">
-                    <button class="btn btn-sm btn-secondary" onclick="window.haFHExportResultsCSV()" style="font-size:0.7rem; padding:3px 8px; border-radius:4px; border:1px solid var(--border); background:rgba(255,255,255,0.05); color:var(--text-primary); cursor:pointer;">📥 Export CSV</button>
+                    <button class="btn btn-sm btn-secondary" onclick="window.haFHExportResultsCSV()"
+                      style="font-size:0.7rem; padding:3px 8px; border-radius:4px; border:1px solid var(--border); background:rgba(255,255,255,0.05); color:var(--text-primary); cursor:pointer;">📥
+                      Export CSV</button>
                     <span style="font-size:0.7rem; color:var(--text-muted);" id="ha-fh-results-ts"></span>
                   </div>
                 </div>
@@ -695,11 +769,14 @@
                         <th style="padding:8px 12px; text-align:left; color:var(--text-secondary);">Symbol</th>
                         <th style="padding:8px 10px; text-align:center; color:var(--text-secondary);">Date</th>
                         <th style="padding:8px 10px; text-align:center; color:var(--text-secondary);">Pattern Key</th>
-                        <th style="padding:8px 10px; text-align:center; color:var(--text-secondary);">Predicted Outcome</th>
+                        <th style="padding:8px 10px; text-align:center; color:var(--text-secondary);">Predicted Outcome
+                        </th>
                         <th style="padding:8px 10px; text-align:center; color:var(--text-secondary);">Confidence</th>
-                        <th style="padding:8px 10px; text-align:center; color:var(--text-secondary);">Actual Outcome</th>
+                        <th style="padding:8px 10px; text-align:center; color:var(--text-secondary);">Actual Outcome
+                        </th>
                         <th style="padding:8px 10px; text-align:center; color:var(--text-secondary);">Validation</th>
-                        <th style="padding:8px 10px; text-align:center; color:var(--text-secondary);">Details (Cont / Rev / Chop)</th>
+                        <th style="padding:8px 10px; text-align:center; color:var(--text-secondary);">Details (Cont /
+                          Rev / Chop)</th>
                       </tr>
                     </thead>
                     <tbody id="ha-fh-rows"></tbody>
@@ -710,33 +787,46 @@
               <!-- Predictions Ledger -->
               <div style="margin-top:20px; border-top:1px solid var(--border-light); padding-top:16px;">
                 <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
-                  <h4 style="margin:0; font-family:var(--font-display); font-weight:700; color:var(--text-primary);">📈 Prediction Ledger &amp; Scorecard</h4>
+                  <h4 style="margin:0; font-family:var(--font-display); font-weight:700; color:var(--text-primary);">📈
+                    Prediction Ledger &amp; Scorecard</h4>
                   <div style="display:flex; gap:8px;">
-                    <button class="btn btn-sm btn-secondary" onclick="window.haFHExportHistoryCSV()" style="font-size:0.72rem; padding:4px 10px; border:1px solid var(--border); background:rgba(255,255,255,0.05); color:var(--text-primary); cursor:pointer;">📥 Export CSV</button>
-                    <button class="btn btn-sm btn-secondary" onclick="window.haFHFetchHistory()" style="font-size:0.72rem; padding:4px 10px;">🔄 Refresh History</button>
-                  </div>
-                </div>
-                
-                <div style="display:grid; grid-template-columns: repeat(4, 1fr); gap:12px; margin-bottom:16px;">
-                  <div style="background:rgba(255,255,255,0.03); border:1px solid var(--border); padding:10px; border-radius:6px; text-align:center;">
-                    <div style="font-size:0.7rem; color:var(--text-secondary); font-weight:600;">Total Logged</div>
-                    <div style="font-size:1.4rem; font-weight:800; color:var(--text-primary); margin-top:2px;" id="fh-card-total">0</div>
-                  </div>
-                  <div style="background:rgba(255,255,255,0.03); border:1px solid var(--border); padding:10px; border-radius:6px; text-align:center;">
-                    <div style="font-size:0.7rem; color:var(--text-secondary); font-weight:600;">Validated</div>
-                    <div style="font-size:1.4rem; font-weight:800; color:var(--text-primary); margin-top:2px;" id="fh-card-validated">0</div>
-                  </div>
-                  <div style="background:rgba(76,175,80,0.05); border:1px solid rgba(76,175,80,0.2); padding:10px; border-radius:6px; text-align:center;">
-                    <div style="font-size:0.7rem; color:var(--green); font-weight:600;">Correct</div>
-                    <div style="font-size:1.4rem; font-weight:800; color:var(--green); margin-top:2px;" id="fh-card-correct">0</div>
-                  </div>
-                  <div style="background:rgba(30,136,229,0.05); border:1px solid rgba(30,136,229,0.2); padding:10px; border-radius:6px; text-align:center;">
-                    <div style="font-size:0.7rem; color:#1E88E5; font-weight:600;">Accuracy Rate</div>
-                    <div style="font-size:1.4rem; font-weight:800; color:#1E88E5; margin-top:2px;" id="fh-card-accuracy">0%</div>
+                    <button class="btn btn-sm btn-secondary" onclick="window.haFHExportHistoryCSV()"
+                      style="font-size:0.72rem; padding:4px 10px; border:1px solid var(--border); background:rgba(255,255,255,0.05); color:var(--text-primary); cursor:pointer;">📥
+                      Export CSV</button>
+                    <button class="btn btn-sm btn-secondary" onclick="window.haFHFetchHistory()"
+                      style="font-size:0.72rem; padding:4px 10px;">🔄 Refresh History</button>
                   </div>
                 </div>
 
-                <div style="max-height:220px; overflow-y:auto; border-radius:var(--radius-md); border:1px solid var(--border);">
+                <div style="display:grid; grid-template-columns: repeat(4, 1fr); gap:12px; margin-bottom:16px;">
+                  <div
+                    style="background:rgba(255,255,255,0.03); border:1px solid var(--border); padding:10px; border-radius:6px; text-align:center;">
+                    <div style="font-size:0.7rem; color:var(--text-secondary); font-weight:600;">Total Logged</div>
+                    <div style="font-size:1.4rem; font-weight:800; color:var(--text-primary); margin-top:2px;"
+                      id="fh-card-total">0</div>
+                  </div>
+                  <div
+                    style="background:rgba(255,255,255,0.03); border:1px solid var(--border); padding:10px; border-radius:6px; text-align:center;">
+                    <div style="font-size:0.7rem; color:var(--text-secondary); font-weight:600;">Validated</div>
+                    <div style="font-size:1.4rem; font-weight:800; color:var(--text-primary); margin-top:2px;"
+                      id="fh-card-validated">0</div>
+                  </div>
+                  <div
+                    style="background:rgba(76,175,80,0.05); border:1px solid rgba(76,175,80,0.2); padding:10px; border-radius:6px; text-align:center;">
+                    <div style="font-size:0.7rem; color:var(--green); font-weight:600;">Correct</div>
+                    <div style="font-size:1.4rem; font-weight:800; color:var(--green); margin-top:2px;"
+                      id="fh-card-correct">0</div>
+                  </div>
+                  <div
+                    style="background:rgba(30,136,229,0.05); border:1px solid rgba(30,136,229,0.2); padding:10px; border-radius:6px; text-align:center;">
+                    <div style="font-size:0.7rem; color:#1E88E5; font-weight:600;">Accuracy Rate</div>
+                    <div style="font-size:1.4rem; font-weight:800; color:#1E88E5; margin-top:2px;"
+                      id="fh-card-accuracy">0%</div>
+                  </div>
+                </div>
+
+                <div
+                  style="max-height:220px; overflow-y:auto; border-radius:var(--radius-md); border:1px solid var(--border);">
                   <table class="table" style="width:100%; font-size:0.72rem; white-space:nowrap;">
                     <thead id="ha-fh-history-thead">
                       <tr style="background:rgba(255,255,255,0.04); border-bottom:1px solid var(--border);">
@@ -752,7 +842,8 @@
                     </thead>
                     <tbody id="ha-fh-history-rows">
                       <tr>
-                        <td colspan="8" style="text-align:center; padding:15px; color:var(--text-muted);">No predictions logged yet. Run predictions above to start tracking performance.</td>
+                        <td colspan="8" style="text-align:center; padding:15px; color:var(--text-muted);">No predictions
+                          logged yet. Run predictions above to start tracking performance.</td>
                       </tr>
                     </tbody>
                   </table>
@@ -888,6 +979,42 @@
                     </tbody>
                   </table>
                 </div>
+
+                <!-- Period Total Movement Summary Panel -->
+                <div id="ha-total-movement-summary"
+                  style="margin-top:10px; padding:12px; border-radius:var(--radius-md); background:rgba(255,255,255,0.4); border:1px solid var(--border); display:flex; flex-direction:column; gap:8px;">
+                  <div
+                    style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:6px;">
+                    <span
+                      style="font-size:0.75rem; font-weight:700; color:var(--text-secondary); text-transform:uppercase; letter-spacing:0.04em;"
+                      id="ha-summary-title">📊 Total Period Performance (Selected Days)</span>
+                    <span id="ha-summary-badge"
+                      style="font-size:0.85rem; font-weight:800; padding:3px 10px; border-radius:12px; background:rgba(255,255,255,0.6); color:var(--text-primary);">--</span>
+                  </div>
+                  <div
+                    style="display:grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap:8px; font-size:0.75rem; border-top:1px solid var(--border-light); padding-top:8px;">
+                    <div style="display:flex; flex-direction:column;">
+                      <span style="color:var(--text-muted); font-weight:600; font-size:0.7rem;">Net Movement</span>
+                      <strong id="ha-summary-net-change" style="color:var(--text-primary); font-weight:700;">--</strong>
+                    </div>
+                    <div style="display:flex; flex-direction:column;">
+                      <span style="color:var(--text-muted); font-weight:600; font-size:0.7rem;">Up vs Down
+                        Sessions</span>
+                      <strong id="ha-summary-up-down-days"
+                        style="color:var(--text-primary); font-weight:700;">--</strong>
+                    </div>
+                    <div style="display:flex; flex-direction:column;">
+                      <span style="color:var(--text-muted); font-weight:600; font-size:0.7rem;">Cum. Gain / Loss</span>
+                      <strong id="ha-summary-up-down-pct"
+                        style="color:var(--text-primary); font-weight:700;">--</strong>
+                    </div>
+                    <div style="display:flex; flex-direction:column;">
+                      <span style="color:var(--text-muted); font-weight:600; font-size:0.7rem;">Period High / Low</span>
+                      <strong id="ha-summary-range" style="color:var(--text-primary); font-weight:700;">--</strong>
+                    </div>
+                  </div>
+                </div>
+
                 <div style="font-size:0.72rem; color:var(--text-secondary); margin-top:8px;">
                   <span>💡 Colors represent positive/negative performance relative to the previous close.</span>
                 </div>
@@ -2961,10 +3088,10 @@
 
   <!-- ═══ Mobile Sidebar Toggle Script ═══ -->
   <script>
-    (function() {
-      const sidebar    = document.querySelector('.sidebar');
-      const overlay    = document.getElementById('sidebar-overlay');
-      const menuBtn    = document.getElementById('mobile-menu-btn');
+    (function  () {
+      const sideba document.querySelector('.sidebar');
+      const overlay = ument.getElementById('sidebar-overlay');
+      const menuBtn = do nt.getElementById('mobile-menu-btn');
       const bottomTabs = document.querySelectorAll('.mobile-tab-btn[data-page]');
 
       function openSidebar() {
@@ -2984,29 +3111,29 @@
 
       // Close drawer when any sidebar nav item is clicked on mobile
       if (sidebar) {
-        sidebar.querySelectorAll('.nav-item').forEach(function(item) {
-          item.addEventListener('click', function() {
-            if (window.innerWidth <= 767) closeSidebar();
+        sidebar.querySelectorAll('.nav-item').forEach(function (item)  {
+          item.addEventListener('click', function () {
+             if (window.innerWidth <= 767) closeSidebar();
           });
         });
       }
 
       // Sync bottom tab active state with main nav
-      bottomTabs.forEach(function(btn) {
-        btn.addEventListener('click', function() {
+      bottomTabs.forEach(function (btn)  {
+        btn.addEventListener('click', function () { 
           const page = btn.dataset.page;
           if (page && window.switchPage) window.switchPage(page);
-          bottomTabs.forEach(function(b) { b.classList.remove('active'); });
+          bottomTabs.forEach(function (b)  { b.classList.remove('active'); });
           btn.classList.add('active');
           if (window.innerWidth <= 767) closeSidebar();
         });
       });
 
       // Sync active bottom tab when desktop nav is used
-      document.querySelectorAll('.nav-item[data-page]').forEach(function(item) {
-        item.addEventListener('click', function() {
+      document.querySelectorAll('.nav-item[data-page]').forEach(function (i tem) {
+        item.addEventListener('click', function ( ) {
           const page = item.dataset.page;
-          bottomTabs.forEach(function(b) {
+          bottomTabs.forEach(function  (b) {
             b.classList.toggle('active', b.dataset.page === page);
           });
         });

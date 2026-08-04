@@ -40,9 +40,11 @@ import logging
 from collections import Counter
 from session_utils import now_ist
 
+import sqlite3
+
 _gainers_thread = None
 
-MIN_OPEN_PREMIUM = 1.0   # Min opening premium (₹) — filters dead/untouched strikes
+MIN_OPEN_PREMIUM = 0.10  # Min opening premium (₹) — allows low-priced OTM breakout options down to ₹0.10
 TOP_N            = 25    # Max gainers shown per report
 POLL_INTERVAL    = 300   # 5 minutes between reports (seconds)
 
@@ -55,6 +57,71 @@ _board_state = {
     "open_premiums":   {},     # {token_int: open_prem} — daily baseline
     "board_contracts": {},     # {token_int: {symbol, opt_type, strike, is_opening}}
 }
+
+
+def _get_db_conn():
+    db_path = os.path.join(os.path.dirname(__file__), "tradesignal_cache.db")
+    conn = sqlite3.connect(db_path, timeout=10.0)
+    conn.execute("PRAGMA journal_mode=WAL;")
+    return conn
+
+
+def _init_gainers_db():
+    try:
+        conn = _get_db_conn()
+        cursor = conn.cursor()
+        cursor.execute("""
+            CREATE TABLE IF NOT EXISTS fno_gainers_snapshots (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                snapshot_date TEXT UNIQUE NOT NULL,
+                snapshot_json TEXT NOT NULL,
+                updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            )
+        """)
+        cursor.execute("CREATE INDEX IF NOT EXISTS idx_fgs_date ON fno_gainers_snapshots(snapshot_date)")
+        cursor.execute("DELETE FROM fno_gainers_snapshots WHERE snapshot_date < date('now', '-30 days')")
+        conn.commit()
+        conn.close()
+    except Exception as e:
+        logging.warning(f"[Gainers DB] Init failed: {e}")
+
+
+_init_gainers_db()
+
+
+def _save_snapshot_to_db(snapshot_data):
+    if not snapshot_data:
+        return
+    try:
+        snap_date = snapshot_data.get("date") or now_ist().strftime("%Y-%m-%d")
+        snap_json = json.dumps(snapshot_data)
+        conn = _get_db_conn()
+        cursor = conn.cursor()
+        cursor.execute("DELETE FROM fno_gainers_snapshots WHERE snapshot_date < date('now', '-30 days')")
+        cursor.execute("""
+            INSERT OR REPLACE INTO fno_gainers_snapshots (snapshot_date, snapshot_json, updated_at)
+            VALUES (?, ?, CURRENT_TIMESTAMP)
+        """, (snap_date, snap_json))
+        conn.commit()
+        conn.close()
+        logging.info(f"[Gainers DB] Saved EOD snapshot for {snap_date} to SQLite (30-day retention).")
+    except Exception as e:
+        logging.warning(f"[Gainers DB] Save to DB failed: {e}")
+
+
+def get_gainers_snapshot_from_db(date_str):
+    try:
+        _init_gainers_db()
+        conn = _get_db_conn()
+        cursor = conn.cursor()
+        cursor.execute("SELECT snapshot_json FROM fno_gainers_snapshots WHERE snapshot_date = ?", (date_str,))
+        row = cursor.fetchone()
+        conn.close()
+        if row and row[0]:
+            return json.loads(row[0])
+    except Exception as e:
+        logging.warning(f"[Gainers DB] Fetch by date failed: {e}")
+    return None
 
 
 def get_board_state():
@@ -192,9 +259,9 @@ def _build_atm_otm2_contracts(nfo_data, spot_prices, mode):
         atm_strike = round(spot / step) * step
 
         expiries = [i["expiry"] for i in insts if i.get("expiry")]
-        import datetime
-        today = datetime.date.today()
-        active_expiries = [e for e in expiries if e >= today]
+        from session_utils import now_ist
+        ref_date = _get_expected_trading_date(now_ist())
+        active_expiries = [e for e in expiries if e >= ref_date]
         if not active_expiries:
             continue
         near_expiry = min(active_expiries)
@@ -414,11 +481,21 @@ def _run_eod_snapshot_bg():
             if avg_vol and avg_vol > 0 and day_vol > 0:
                 rvol_eod_map[sym] = round(day_vol / avg_vol, 1)
 
-        # ── 3. Build contracts (opening + running + prev_close, deduplicated) ──
+        # ── 3. Build contracts (opening + running + prev_close + intermediate steps) ──
         opening_contracts = _build_atm_otm2_contracts(nfo_data, opening_spot, mode="opening")
         running_contracts = _build_atm_otm2_contracts(nfo_data, current_spot, mode="running")
         prev_close_spot = {sym: val for sym, val in _prev_close_cache.items() if val > 0}
         prev_close_contracts = _build_atm_otm2_contracts(nfo_data, prev_close_spot, mode="prev_close")
+
+        # Interpolate intermediate spot levels for trending stocks to capture intermediate breakout strikes
+        for sym, open_px in opening_spot.items():
+            curr_px = current_spot.get(sym, open_px)
+            if open_px > 0 and curr_px > 0 and abs(curr_px - open_px) / open_px >= 0.01:
+                for factor in [0.2, 0.4, 0.6, 0.8]:
+                    mid_px = open_px + (curr_px - open_px) * factor
+                    mid_contracts = _build_atm_otm2_contracts(nfo_data, {sym: mid_px}, mode="running")
+                    running_contracts.update(mid_contracts)
+
         board = {}
         board.update(prev_close_contracts)
         board.update(running_contracts)
@@ -465,28 +542,50 @@ def _run_eod_snapshot_bg():
         now_str  = now_val.strftime("%Y-%m-%dT%H:%M:%S")
         date_str = _get_expected_trading_date(now_val).strftime("%Y-%m-%d")
 
-        from ema_crossover_scanner import get_ema_crossover_state
+        from ema_crossover_scanner import get_ema_crossover_state, get_daily_dxcnt_map, _compute_ema9_hold
+        from server import get_historical_candles
         ema_state = get_ema_crossover_state().get("crossovers", {})
+        dxcnt_map = get_daily_dxcnt_map()
+
+        stocks_list = []
+        for sym, contracts in ranked_stocks:
+            # First try in-memory crossover state
+            sym_ema = ema_state.get(sym, {})
+            e9h_state = sym_ema.get("ema9_hold")
+            e9h_mins = sym_ema.get("ema9_hold_minutes", 0)
+
+            # If unpopulated or missing, fetch 5m candles directly via Kite API
+            if e9h_state is None or e9h_mins == 0:
+                try:
+                    candles_5m = get_historical_candles(kite, sym, "5minute", days_back=7, limit=500)
+                    if candles_5m:
+                        candles_today = [c for c in candles_5m if c.get('date', '')[:10] == date_str] or candles_5m
+                        st, mins = _compute_ema9_hold(candles_today)
+                        if st is not None:
+                            e9h_state = st
+                            e9h_mins = mins
+                except Exception as ex:
+                    logging.warning(f"[EOD Snapshot] Direct Kite API fetch for {sym} E9H failed: {ex}")
+
+            stocks_list.append({
+                "symbol":              sym,
+                "best_gain":           round(max(r["gain_pct"] for r in contracts), 2),
+                "spot_change_pct":     spot_change_map.get(sym),
+                "gap_pct":             gap_map_eod.get(sym, 0.0),
+                "rvol_ratio":          rvol_eod_map.get(sym),   # EOD: full_day_vol / 20D avg
+                "linearity_score":     sym_ema.get("linearity_score", 0.0),
+                "net_movement":        sym_ema.get("net_movement", 0.0),
+                "dxcnt":               dxcnt_map.get(sym, 0),
+                "ema9_hold":           e9h_state,
+                "ema9_hold_minutes":   e9h_mins,
+                "fh_spurt_ratio":      sym_ema.get("fh_spurt_ratio"),
+                "fh_cumulative_ratio": sym_ema.get("fh_cumulative_ratio"),
+                "fh_spurt_tag":        sym_ema.get("fh_spurt_tag"),
+                "contracts":           sorted(contracts, key=lambda x: x["gain_pct"]),
+            })
 
         _eod_snapshot_cache["result"] = {
-            "stocks": [
-                {
-                    "symbol":          sym,
-                    "best_gain":       round(max(r["gain_pct"] for r in contracts), 2),
-                    "spot_change_pct": spot_change_map.get(sym),
-                    "gap_pct":         gap_map_eod.get(sym, 0.0),
-                    "rvol_ratio":      rvol_eod_map.get(sym),   # EOD: full_day_vol / 20D avg
-                    "linearity_score":     ema_state.get(sym, {}).get("linearity_score", 0.0),
-                    "net_movement":        ema_state.get(sym, {}).get("net_movement", 0.0),
-                    "ema9_hold":           ema_state.get(sym, {}).get("ema9_hold"),
-                    "ema9_hold_minutes":   ema_state.get(sym, {}).get("ema9_hold_minutes", 0),
-                    "fh_spurt_ratio":      ema_state.get(sym, {}).get("fh_spurt_ratio"),
-                    "fh_cumulative_ratio": ema_state.get(sym, {}).get("fh_cumulative_ratio"),
-                    "fh_spurt_tag":        ema_state.get(sym, {}).get("fh_spurt_tag"),
-                    "contracts":           sorted(contracts, key=lambda x: x["gain_pct"]),
-                }
-                for sym, contracts in ranked_stocks
-            ],
+            "stocks":          stocks_list,
             "total_tracked":   len(open_premiums),
             "total_positive":  len(results),
             "n_stocks":        len(ranked_stocks),
@@ -495,6 +594,7 @@ def _run_eod_snapshot_bg():
             "is_eod_snapshot": True,
         }
         _eod_snapshot_cache["ts"] = time.time()
+        _save_snapshot_to_db(_eod_snapshot_cache["result"])
         # Persist to disk so server restarts don't trigger a full re-fetch
         try:
             expected_date = _get_expected_trading_date(now_val)

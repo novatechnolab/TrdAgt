@@ -1417,63 +1417,225 @@
       background: var(--bg-card);
       overflow: hidden;
     }
+
     .futbld-panel-header {
-      display: flex; justify-content: space-between; align-items: center;
-      padding: 10px 16px; cursor: pointer; user-select: none;
-      background: var(--bg-card2); border-bottom: 1px solid var(--border);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 10px 16px;
+      cursor: pointer;
+      user-select: none;
+      background: var(--bg-card2);
+      border-bottom: 1px solid var(--border);
       transition: background 0.15s;
     }
-    .futbld-panel-header:hover { background: rgba(255,255,255,0.03); }
-    .futbld-body { display: none; padding: 12px 16px 16px; }
-    .futbld-body.open { display: block; }
-    .futbld-group { margin-bottom: 14px; }
-    .futbld-group:last-child { margin-bottom: 0; }
-    .futbld-group-hdr {
-      display: flex; align-items: center; justify-content: space-between;
-      cursor: pointer; user-select: none; padding: 6px 8px;
-      background: rgba(255,255,255,0.03); border: 1px solid var(--border);
-      border-radius: var(--radius) var(--radius) 0 0;
-      font-family: var(--mono); font-size: 0.65rem; font-weight: 700;
-      color: var(--text-muted); letter-spacing: 0.08em; text-transform: uppercase;
+
+    .futbld-panel-header:hover {
+      background: rgba(255, 255, 255, 0.03);
     }
-    .futbld-group-hdr:hover { background: rgba(255,255,255,0.05); }
-    .futbld-tbl-wrap { border: 1px solid var(--border); border-top: none; border-radius: 0 0 var(--radius) var(--radius); overflow: hidden; }
-    .futbld-tbl { width: 100%; border-collapse: collapse; font-family: var(--mono); font-size: 0.65rem; }
+
+    .futbld-body {
+      display: none;
+      padding: 12px 16px 16px;
+    }
+
+    .futbld-body.open {
+      display: block;
+    }
+
+    .futbld-group {
+      margin-bottom: 14px;
+    }
+
+    .futbld-group:last-child {
+      margin-bottom: 0;
+    }
+
+    .futbld-group-hdr {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      cursor: pointer;
+      user-select: none;
+      padding: 6px 8px;
+      background: rgba(255, 255, 255, 0.03);
+      border: 1px solid var(--border);
+      border-radius: var(--radius) var(--radius) 0 0;
+      font-family: var(--mono);
+      font-size: 0.65rem;
+      font-weight: 700;
+      color: var(--text-muted);
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+
+    .futbld-group-hdr:hover {
+      background: rgba(255, 255, 255, 0.05);
+    }
+
+    .futbld-tbl-wrap {
+      border: 1px solid var(--border);
+      border-top: none;
+      border-radius: 0 0 var(--radius) var(--radius);
+      overflow: hidden;
+    }
+
+    .futbld-tbl {
+      width: 100%;
+      border-collapse: collapse;
+      font-family: var(--mono);
+      font-size: 0.65rem;
+    }
+
     .futbld-tbl th {
-      background: rgba(14,17,23,0.7); color: var(--text-muted); font-size: 0.58rem;
-      font-weight: 700; padding: 6px 10px; border-bottom: 1px solid var(--border);
-      text-align: left; letter-spacing: 0.05em; text-transform: uppercase;
+      background: rgba(14, 17, 23, 0.7);
+      color: var(--text-muted);
+      font-size: 0.58rem;
+      font-weight: 700;
+      padding: 6px 10px;
+      border-bottom: 1px solid var(--border);
+      text-align: left;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
       white-space: nowrap;
     }
-    .futbld-tbl th.sortable { cursor: pointer; }
-    .futbld-tbl th.sortable:hover { color: var(--text); }
-    .futbld-tbl td { padding: 5px 10px; border-bottom: 1px solid var(--border); color: var(--text); white-space: nowrap; }
-    .futbld-tbl tr:last-child td { border-bottom: none; }
-    .futbld-tbl tr:hover td { background: rgba(255,255,255,0.025); }
-    .futbld-sym { font-weight: 700; color: var(--text); }
-    .futbld-chg.up  { color: var(--green); font-weight: 600; }
-    .futbld-chg.dn  { color: var(--red);   font-weight: 600; }
-    .futbld-chg.flat { color: var(--text-muted); }
-    .futbld-badge {
-      display: inline-block; font-family: var(--mono); font-size: 0.58rem;
-      font-weight: 700; padding: 2px 7px; border-radius: 3px; letter-spacing: 0.04em;
-    }
-    .futbld-badge.long-buildup   { background: rgba(63,185,80,0.15);  color: var(--green); border: 1px solid rgba(63,185,80,0.3);  }
-    .futbld-badge.short-buildup  { background: rgba(248,81,73,0.15);  color: var(--red);   border: 1px solid rgba(248,81,73,0.3);  }
-    .futbld-badge.long-unwinding { background: rgba(210,153,34,0.15); color: var(--amber); border: 1px solid rgba(210,153,34,0.3); }
-    .futbld-badge.short-covering { background: rgba(56,139,253,0.15); color: var(--blue);  border: 1px solid rgba(56,139,253,0.3); }
-    .futbld-badge.flat           { background: transparent; color: var(--text-muted); border: 1px solid var(--border); }
-    .futbld-cap-tag {
-      display: inline-block; font-family: var(--mono); font-size: 0.55rem;
-      font-weight: 700; padding: 1px 5px; border-radius: 3px; letter-spacing: 0.04em;
-      background: rgba(255,255,255,0.06); color: var(--text-muted); border: 1px solid var(--border);
-    }
-    .futbld-cap-tag.large { color: var(--blue); background: rgba(56,139,253,0.12); border-color: rgba(56,139,253,0.25); }
-    .futbld-cap-tag.mid   { color: var(--amber); background: rgba(210,153,34,0.12); border-color: rgba(210,153,34,0.25); }
-    .futbld-cap-tag.small { color: var(--text-muted); }
-    .futbld-updated { font-family: var(--mono); font-size: 0.58rem; color: var(--text-muted); }
-    .futbld-count-pill { background: rgba(56,139,253,0.15); color: var(--blue); font-size: 0.65rem; padding: 2px 8px; border-radius: 12px; font-weight: 600; font-family: var(--mono); }
 
+    .futbld-tbl th.sortable {
+      cursor: pointer;
+    }
+
+    .futbld-tbl th.sortable:hover {
+      color: var(--text);
+    }
+
+    .futbld-tbl td {
+      padding: 5px 10px;
+      border-bottom: 1px solid var(--border);
+      color: var(--text);
+      white-space: nowrap;
+    }
+
+    .futbld-tbl tr:last-child td {
+      border-bottom: none;
+    }
+
+    .futbld-tbl tr:hover td {
+      background: rgba(255, 255, 255, 0.025);
+    }
+
+    .futbld-sym {
+      font-weight: 700;
+      color: var(--text);
+    }
+
+    .futbld-chg.up {
+      color: var(--green);
+      font-weight: 600;
+    }
+
+    .futbld-chg.dn {
+      color: var(--red);
+      font-weight: 600;
+    }
+
+    .futbld-chg.flat {
+      color: var(--text-muted);
+    }
+
+    .futbld-badge {
+      display: inline-block;
+      font-family: var(--mono);
+      font-size: 0.58rem;
+      font-weight: 700;
+      padding: 2px 7px;
+      border-radius: 3px;
+      letter-spacing: 0.04em;
+    }
+
+    .futbld-badge.long-buildup {
+      background: rgba(63, 185, 80, 0.15);
+      color: var(--green);
+      border: 1px solid rgba(63, 185, 80, 0.3);
+    }
+
+    .futbld-badge.short-buildup {
+      background: rgba(248, 81, 73, 0.15);
+      color: var(--red);
+      border: 1px solid rgba(248, 81, 73, 0.3);
+    }
+
+    .futbld-badge.long-unwinding {
+      background: rgba(210, 153, 34, 0.15);
+      color: var(--amber);
+      border: 1px solid rgba(210, 153, 34, 0.3);
+    }
+
+    .futbld-badge.short-covering {
+      background: rgba(56, 139, 253, 0.15);
+      color: var(--blue);
+      border: 1px solid rgba(56, 139, 253, 0.3);
+    }
+
+    .futbld-badge.flat {
+      background: transparent;
+      color: var(--text-muted);
+      border: 1px solid var(--border);
+    }
+
+    /* CE SC above ATM double-confirmation row highlight */
+    .futbld-row-ce-sc {
+      background: rgba(240, 192, 64, 0.09) !important;
+      border-left: 3px solid #f0c040;
+    }
+
+    .futbld-row-ce-sc:hover {
+      background: rgba(240, 192, 64, 0.18) !important;
+    }
+
+    .futbld-cap-tag {
+      display: inline-block;
+      font-family: var(--mono);
+      font-size: 0.55rem;
+      font-weight: 700;
+      padding: 1px 5px;
+      border-radius: 3px;
+      letter-spacing: 0.04em;
+      background: rgba(255, 255, 255, 0.06);
+      color: var(--text-muted);
+      border: 1px solid var(--border);
+    }
+
+    .futbld-cap-tag.large {
+      color: var(--blue);
+      background: rgba(56, 139, 253, 0.12);
+      border-color: rgba(56, 139, 253, 0.25);
+    }
+
+    .futbld-cap-tag.mid {
+      color: var(--amber);
+      background: rgba(210, 153, 34, 0.12);
+      border-color: rgba(210, 153, 34, 0.25);
+    }
+
+    .futbld-cap-tag.small {
+      color: var(--text-muted);
+    }
+
+    .futbld-updated {
+      font-family: var(--mono);
+      font-size: 0.58rem;
+      color: var(--text-muted);
+    }
+
+    .futbld-count-pill {
+      background: rgba(56, 139, 253, 0.15);
+      color: var(--blue);
+      font-size: 0.65rem;
+      padding: 2px 8px;
+      border-radius: 12px;
+      font-weight: 600;
+      font-family: var(--mono);
+    }
   </style>
 </head>
 
@@ -1854,6 +2016,9 @@
             const filtB = filterContracts(b.contracts);
             valA = filtA.length > 0 ? Math.max(...filtA.map(c => c.gain_pct)) : a.best_gain;
             valB = filtB.length > 0 ? Math.max(...filtB.map(c => c.gain_pct)) : b.best_gain;
+          } else if (currentSortColumn === 'dxcnt') {
+            valA = a.dxcnt != null ? a.dxcnt : 0;
+            valB = b.dxcnt != null ? b.dxcnt : 0;
           } else if (currentSortColumn === 'gap') {
             valA = a.gap_pct != null ? a.gap_pct : 0;
             valB = b.gap_pct != null ? b.gap_pct : 0;
@@ -2029,9 +2194,9 @@
               📏 ${s.linearity_score != null ? s.linearity_score : 100}%
             </div>
             
-            <!-- Column 5: Up/Down Points -->
-            <div class="col-points" style="color:${(s.net_movement != null ? s.net_movement : 0) >= 0 ? 'var(--green)' : 'var(--red)'};">
-              Δ ${(s.net_movement != null ? s.net_movement : 0) >= 0 ? '+' : ''}${(s.net_movement != null ? s.net_movement : 0).toFixed(1)} pts
+            <!-- Column 5: DXCNT (Daily EMA9/21 Crossover Count) -->
+            <div class="col-points" style="color:${(s.dxcnt != null ? s.dxcnt : 0) >= 0 ? 'var(--green)' : 'var(--red)'}; font-family: var(--mono); font-weight: 700;">
+              ${(s.dxcnt != null ? s.dxcnt : 0) >= 0 ? '+' : ''}${s.dxcnt != null ? s.dxcnt : 0}D
             </div>
             
             <!-- Column 6: Highest Option Gain % -->
@@ -2072,9 +2237,7 @@
             <!-- Column 11: Confluence Badges & Expand Arrow -->
             <div class="col-timeframes">
               <div class="conf-row" id="conf-${s.symbol}">
-                <span class="conf-pill conf-loading">D</span>
-                <span class="conf-pill conf-loading">1H</span>
-                <span class="conf-pill conf-loading">15M</span>
+                ${getInitialConfluenceHtml(s.symbol)}
               </div>
               <span class="expand-arrow">▼</span>
             </div>
@@ -2105,7 +2268,7 @@
             <div class="col-spot">% ▲/▼</div>
             <div class="col-rvol sortable" onclick="handleHeaderSort('rvol')">RVOL${getSortArrow('rvol')}</div>
             <div class="col-linearity sortable" onclick="handleHeaderSort('linearity')">Linearity${getSortArrow('linearity')}</div>
-            <div class="col-points">Points</div>
+            <div class="col-points sortable" onclick="handleHeaderSort('dxcnt')">DXCNT${getSortArrow('dxcnt')}</div>
             <div class="col-highest sortable" onclick="handleHeaderSort('gain')">Gain${getSortArrow('gain')}</div>
             <div class="col-gap sortable" onclick="handleHeaderSort('gap')">GAP${getSortArrow('gap')}</div>
             <div class="col-inst sortable" onclick="handleHeaderSort('inst')">Inst Hold${getSortArrow('inst')}</div>
@@ -2329,6 +2492,23 @@
 
     function showBoard(html) {
       document.getElementById('board').innerHTML = html;
+    }
+
+    function getInitialConfluenceHtml(symbol) {
+      const item = (crossoverData && crossoverData.crossovers) ? crossoverData.crossovers[symbol] : null;
+      if (!item) {
+        return `<span class="conf-pill conf-loading">D</span><span class="conf-pill conf-loading">1H</span><span class="conf-pill conf-loading">15M</span>`;
+      }
+      const getConfClass = (st) => st === 'bullish' ? 'conf-bullish' : (st === 'bearish' ? 'conf-bearish' : 'conf-neutral');
+      const dC = getConfClass(item.state_day);
+      const h1C = getConfClass(item.state_1h);
+      const m15C = getConfClass(item.state_15m);
+
+      const dT = `Daily Trend: ${item.state_day || 'none'}${item.cross_time_day ? ' · Cross: ' + item.cross_time_day : ''}`;
+      const h1T = `1H Trend: ${item.state_1h || 'none'}${item.cross_time_1h ? ' · Cross: ' + item.cross_time_1h : ''}`;
+      const m15T = `15M Trend: ${item.state_15m || 'none'}${item.cross_time_15m ? ' · Cross: ' + item.cross_time_15m : ''}`;
+
+      return `<span class="conf-pill ${dC}" title="${dT}">D</span><span class="conf-pill ${h1C}" title="${h1T}">1H</span><span class="conf-pill ${m15C}" title="${m15T}">15M</span>`;
     }
 
     // ── Confluence ────────────────────────────────────────────────────
@@ -2690,6 +2870,17 @@
 
       renderList(bullKeys, listBulls);
       renderList(bearKeys, listBears);
+
+      // Synchronize main table confluence pills using fresh crossover scanner cache
+      if (crossoverData && crossoverData.crossovers) {
+        document.querySelectorAll('[id^="conf-"]').forEach(row => {
+          const sym = row.id.replace('conf-', '');
+          const html = getInitialConfluenceHtml(sym);
+          if (html && !html.includes('conf-loading')) {
+            row.innerHTML = html;
+          }
+        });
+      }
     }
 
     // ── Countdown ─────────────────────────────────────────────────────────────
@@ -2778,16 +2969,16 @@
 
       if (!alertList || !squeezeList) return;
 
-      const alerts     = data.triggered_alerts  || [];
-      const watches    = data.squeeze_watchlist  || [];
-      const collisions = data.collision_alerts   || [];
-      const bbSqueezes = data.bb_squeezes        || [];
-      const emaCoils   = data.ema_coils          || [];
+      const alerts = data.triggered_alerts || [];
+      const watches = data.squeeze_watchlist || [];
+      const collisions = data.collision_alerts || [];
+      const bbSqueezes = data.bb_squeezes || [];
+      const emaCoils = data.ema_coils || [];
 
       // Update counts
-      if (alertCount)   alertCount.textContent   = alerts.length;
-      if (squeezeCount) squeezeCount.textContent  = bbSqueezes.length;
-      if (coilCount)    coilCount.textContent     = emaCoils.length;
+      if (alertCount) alertCount.textContent = alerts.length;
+      if (squeezeCount) squeezeCount.textContent = bbSqueezes.length;
+      if (coilCount) coilCount.textContent = emaCoils.length;
 
       const totalCount = document.getElementById('live-total-count');
       if (totalCount) totalCount.textContent = alerts.length + watches.length;
@@ -2832,9 +3023,9 @@
           } else {
             // Collision alert (EMA Collision)
             const isBull = item.direction === 'bullish';
-            const arrow  = isBull ? '▲' : '▼';
-            const color  = isBull ? '#388bfd' : '#e09400';
-            const bg     = isBull ? 'rgba(56,139,253,0.10)' : 'rgba(224,148,0,0.10)';
+            const arrow = isBull ? '▲' : '▼';
+            const color = isBull ? '#388bfd' : '#e09400';
+            const bg = isBull ? 'rgba(56,139,253,0.10)' : 'rgba(224,148,0,0.10)';
             const gapStr = item.gap_pct ? ` · Δ${Number(item.gap_pct).toFixed(3)}%` : '';
             const volStr = item.vol_multiplier ? `×${item.vol_multiplier}` : '';
             return `
@@ -2939,18 +3130,18 @@
     let _futbldData = null;
     let _futbldFetchedOnce = false;
     const FUTBLD_GROUPS = [
-      { key: 'lb', label: 'Long Buildup',    emoji: '🟢', cls: 'long-buildup',   desc: ': Bullish Forceful/aggressive :Long Buildup (fresh conviction buying)' },
-      { key: 'sc', label: 'Short Covering',  emoji: '🔵', cls: 'short-covering', desc: ': Bullish(Gentle):Short Covering (forced buy-back)' },
-      { key: 'fl', label: 'Flat',            emoji: '⚪', cls: 'flat',           desc: '' },
-      { key: 'lu', label: 'Long Unwinding',  emoji: '🟡', cls: 'long-unwinding', desc: ': Bearish(Gentle):Long Unwinding (voluntary exit)' },
-      { key: 'sb', label: 'Short Buildup',   emoji: '🔴', cls: 'short-buildup',  desc: ': Bearish Forceful/aggressive:Short Buildup (fresh conviction selling)' },
+      { key: 'lb', label: 'Long Buildup', emoji: '🟢', cls: 'long-buildup', desc: ': Bullish Forceful/aggressive :Long Buildup (fresh conviction buying)' },
+      { key: 'sc', label: 'Short Covering', emoji: '🔵', cls: 'short-covering', desc: ': Bullish(Gentle):Short Covering (forced buy-back)' },
+      { key: 'fl', label: 'Flat', emoji: '⚪', cls: 'flat', desc: '' },
+      { key: 'lu', label: 'Long Unwinding', emoji: '🟡', cls: 'long-unwinding', desc: ': Bearish(Gentle):Long Unwinding (voluntary exit)' },
+      { key: 'sb', label: 'Short Buildup', emoji: '🔴', cls: 'short-buildup', desc: ': Bearish Forceful/aggressive:Short Buildup (fresh conviction selling)' },
     ];
     const _futbldGroupOpen = {};
-    const _futbldSort      = {};   // {grp: {col: 'chg'|'ltp'|'rvol'|..., dir: 'asc'|'desc'}}
-    FUTBLD_GROUPS.forEach(g => { _futbldGroupOpen[g.key] = true; _futbldSort[g.key] = {col: null, dir: null}; });
+    const _futbldSort = {};   // {grp: {col: 'chg'|'ltp'|'rvol'|..., dir: 'asc'|'desc'}}
+    FUTBLD_GROUPS.forEach(g => { _futbldGroupOpen[g.key] = true; _futbldSort[g.key] = { col: null, dir: null }; });
     const CAP_ORDER = { 'Large Cap': 0, 'Mid Cap': 1, 'Small Cap': 2 };
     const CAP_SHORT = { 'Large Cap': 'L', 'Mid Cap': 'M', 'Small Cap': 'S' };
-    const CAP_CSS   = { 'Large Cap': 'large', 'Mid Cap': 'mid', 'Small Cap': 'small' };
+    const CAP_CSS = { 'Large Cap': 'large', 'Mid Cap': 'mid', 'Small Cap': 'small' };
 
     function _fbArrow(grp, col) {
       const s = _futbldSort[grp];
@@ -2970,17 +3161,17 @@
               <div id="futbld-${k}-wrap" class="futbld-tbl-wrap" style="${open ? '' : 'display:none'}">
                 <table class="futbld-tbl"><thead><tr>
                   <th>Fut Buildup</th>
-                  <th class="sortable" id="futbld-${k}-th-sym"  onclick="sortFutbldCol('${k}','sym')">Symbol${_fbArrow(k,'sym')}</th>
-                  <th class="sortable" id="futbld-${k}-th-ltp"  onclick="sortFutbldCol('${k}','ltp')">Spot LTP${_fbArrow(k,'ltp')}</th>
-                  <th class="sortable" id="futbld-${k}-th-chg"  onclick="sortFutbldCol('${k}','chg')">Chg %${_fbArrow(k,'chg')}</th>
-                  <th class="sortable" id="futbld-${k}-th-cap"  onclick="sortFutbldCol('${k}','cap')">Cap${_fbArrow(k,'cap')}</th>
-                  <th class="sortable" id="futbld-${k}-th-rvol" onclick="sortFutbldCol('${k}','rvol')">RVOL${_fbArrow(k,'rvol')}</th>
-                  <th class="sortable" id="futbld-${k}-th-lin"  onclick="sortFutbldCol('${k}','lin')">Linearity${_fbArrow(k,'lin')}</th>
-                  <th class="sortable" id="futbld-${k}-th-gap"  onclick="sortFutbldCol('${k}','gap')">Gap${_fbArrow(k,'gap')}</th>
-                  <th class="sortable" id="futbld-${k}-th-fhv"  onclick="sortFutbldCol('${k}','fhv')">FH VOL${_fbArrow(k,'fhv')}</th>
-                  <th class="sortable" id="futbld-${k}-th-tc"   onclick="sortFutbldCol('${k}','tc')">TC${_fbArrow(k,'tc')}</th>
-                  <th class="sortable" id="futbld-${k}-th-piv"  onclick="sortFutbldCol('${k}','piv')">Pivot${_fbArrow(k,'piv')}</th>
-                  <th class="sortable" id="futbld-${k}-th-bc"   onclick="sortFutbldCol('${k}','bc')">BC${_fbArrow(k,'bc')}</th>
+                  <th class="sortable" id="futbld-${k}-th-sym"  onclick="sortFutbldCol('${k}','sym')">Symbol${_fbArrow(k, 'sym')}</th>
+                  <th class="sortable" id="futbld-${k}-th-ltp"  onclick="sortFutbldCol('${k}','ltp')">Spot LTP${_fbArrow(k, 'ltp')}</th>
+                  <th class="sortable" id="futbld-${k}-th-chg"  onclick="sortFutbldCol('${k}','chg')">Chg %${_fbArrow(k, 'chg')}</th>
+                  <th class="sortable" id="futbld-${k}-th-cap"  onclick="sortFutbldCol('${k}','cap')">Cap${_fbArrow(k, 'cap')}</th>
+                  <th class="sortable" id="futbld-${k}-th-rvol" onclick="sortFutbldCol('${k}','rvol')">RVOL${_fbArrow(k, 'rvol')}</th>
+                  <th class="sortable" id="futbld-${k}-th-lin"  onclick="sortFutbldCol('${k}','lin')">Linearity${_fbArrow(k, 'lin')}</th>
+                  <th class="sortable" id="futbld-${k}-th-gap"  onclick="sortFutbldCol('${k}','gap')">Gap${_fbArrow(k, 'gap')}</th>
+                  <th class="sortable" id="futbld-${k}-th-fhv"  onclick="sortFutbldCol('${k}','fhv')">FH VOL${_fbArrow(k, 'fhv')}</th>
+                  <th class="sortable" id="futbld-${k}-th-tc"   onclick="sortFutbldCol('${k}','tc')">TC${_fbArrow(k, 'tc')}</th>
+                  <th class="sortable" id="futbld-${k}-th-piv"  onclick="sortFutbldCol('${k}','piv')">Pivot${_fbArrow(k, 'piv')}</th>
+                  <th class="sortable" id="futbld-${k}-th-bc"   onclick="sortFutbldCol('${k}','bc')">BC${_fbArrow(k, 'bc')}</th>
                 </tr></thead><tbody id="futbld-${k}-tbody"></tbody></table>
               </div>
             </div>`;
@@ -3014,6 +3205,14 @@
 
     function _buildupBadgeClass(buildup) {
       return buildup.toLowerCase().replace(/ /g, '-');
+    }
+
+    const _futbldCapOpen = {};
+
+    function toggleFutbldCapSection(grp, capKey) {
+      const k = `${grp}_${capKey}`;
+      _futbldCapOpen[k] = _futbldCapOpen[k] === false ? true : false;
+      if (_futbldData) renderFutbldGroup(grp, _futbldData.stocks);
     }
 
     function renderFutbldGroup(grp, stocks) {
@@ -3063,8 +3262,8 @@
       if (countEl) countEl.innerHTML = `(${rows.length})${grpCfg.desc ? `<span style="font-weight:400;opacity:0.85;">${grpCfg.desc}</span>` : ''}`;
 
       // Update all sortable column header arrows
-      const COLS = ['sym','ltp','chg','cap','rvol','lin','gap','fhv','tc','piv','bc'];
-      const LABELS = {sym:'Symbol',ltp:'Spot LTP',chg:'Chg %',cap:'Cap',rvol:'RVOL',lin:'Linearity',gap:'Gap',fhv:'FH VOL',tc:'TC',piv:'Pivot',bc:'BC'};
+      const COLS = ['sym', 'ltp', 'chg', 'cap', 'rvol', 'lin', 'gap', 'fhv', 'tc', 'piv', 'bc'];
+      const LABELS = { sym: 'Symbol', ltp: 'Spot LTP', chg: 'Chg %', cap: 'Cap', rvol: 'RVOL', lin: 'Linearity', gap: 'Gap', fhv: 'FH VOL', tc: 'TC', piv: 'Pivot', bc: 'BC' };
       COLS.forEach(c => {
         const th = document.getElementById(`futbld-${grp}-th-${c}`);
         if (!th) return;
@@ -3081,13 +3280,21 @@
         return;
       }
 
-        tbody.innerHTML = rows.map(s => {
-        const chgCls  = s.spot_chg_pct > 0 ? 'up' : s.spot_chg_pct < 0 ? 'dn' : 'flat';
+      const getCapCategoryKey = (capStr) => {
+        if (!capStr) return 'small';
+        const c = String(capStr).toLowerCase();
+        if (c.includes('large') || c === 'l') return 'large';
+        if (c.includes('mid') || c === 'm') return 'mid';
+        return 'small';
+      };
+
+      const renderStockRow = (s) => {
+        const chgCls = s.spot_chg_pct > 0 ? 'up' : s.spot_chg_pct < 0 ? 'dn' : 'flat';
         const chgSign = s.spot_chg_pct > 0 ? '+' : '';
-        const ltpFmt  = s.ltp >= 1000 ? s.ltp.toLocaleString('en-IN', {maximumFractionDigits: 1}) : s.ltp.toFixed(2);
-        const badge   = _buildupBadgeClass(s.buildup);
+        const ltpFmt = s.ltp >= 1000 ? s.ltp.toLocaleString('en-IN', { maximumFractionDigits: 1 }) : s.ltp.toFixed(2);
+        const badge = _buildupBadgeClass(s.buildup);
         const capShort = CAP_SHORT[s.cap] || '?';
-        const capCss   = CAP_CSS[s.cap] || '';
+        const capCss = CAP_CSS[s.cap] || '';
 
         // RVOL badge
         let rvolHtml = '<span style="color:var(--text-muted);font-size:0.68rem;">—</span>';
@@ -3115,9 +3322,9 @@
         let fhHtml = '<span style="color:var(--text-muted);font-size:0.68rem;">—</span>';
         if (s.fh_spurt != null && s.fh_cumul != null) {
           let fhColor = '#8b949e';
-          if (s.fh_tag === 'Abnormal')     fhColor = '#3fb950';
+          if (s.fh_tag === 'Abnormal') fhColor = '#3fb950';
           else if (s.fh_tag === 'Elevated') fhColor = '#e3b341';
-          else if (s.fh_tag === 'Weak')     fhColor = '#ff7b72';
+          else if (s.fh_tag === 'Weak') fhColor = '#ff7b72';
           fhHtml = `<span style="font-size:0.68rem;color:${fhColor};" title="Slot: ${s.fh_spurt}x | 1H Pace: ${s.fh_cumul}x">${s.fh_spurt}x<br><span style='font-size:0.6rem;opacity:0.7;'>${s.fh_cumul}x</span></span>`;
         }
 
@@ -3131,9 +3338,20 @@
           return `<span style="font-size:0.68rem;"><span style="${tCls}">${t}</span>/<span style="${bCls}">${b}</span></span>`;
         };
 
-        return `<tr>
-          <td><span class="futbld-badge ${badge}">${s.buildup}</span></td>
-          <td class="futbld-sym">${s.symbol}</td>
+        const ceSC = (grp === 'sc' || grp === 'lb') && s.ce_sc_above_atm === true;
+        let symStyle = '';
+        let symTitle = '';
+        if (s.open_vs_pdh_pdl === 'above_pdh') {
+          symStyle = 'color: #3fb950; font-weight: 700;';
+          symTitle = `Opened Above PDH (Open ₹${s.spot_open ?? '—'} vs PDH ₹${s.pdh ?? '—'})`;
+        } else if (s.open_vs_pdh_pdl === 'below_pdl') {
+          symStyle = 'color: #ff7b72; font-weight: 700;';
+          symTitle = `Opened Below PDL (Open ₹${s.spot_open ?? '—'} vs PDL ₹${s.pdl ?? '—'})`;
+        }
+
+        return `<tr class="${ceSC ? 'futbld-row-ce-sc' : ''}">
+          <td><span class="futbld-badge ${badge}"${ceSC ? ' title="CE writers covering above ATM — double confirmation"' : ''}>${s.buildup}${ceSC ? ' ⚡' : ''}</span></td>
+          <td class="futbld-sym"${symStyle ? ` style="${symStyle}"` : ''}${symTitle ? ` title="${symTitle}"` : ''}>${s.symbol}</td>
           <td>₹${ltpFmt}</td>
           <td class="futbld-chg ${chgCls}">${chgSign}${s.spot_chg_pct.toFixed(2)}%</td>
           <td><span class="futbld-cap-tag ${capCss}">${capShort}</span></td>
@@ -3145,7 +3363,44 @@
           <td>${fmtPair(s.cpr ? s.cpr.piv : null)}</td>
           <td>${fmtPair(s.cpr ? s.cpr.bc : null)}</td>
         </tr>`;
-      }).join('');
+      };
+
+      // If user sorted by a specific column (e.g. Chg %, RVOL), show flat list
+      if (col && col !== 'cap') {
+        tbody.innerHTML = rows.map(renderStockRow).join('');
+        return;
+      }
+
+      // Group into sub-sections by Market Cap: Large Cap, Mid Cap, Small Cap
+      const capGroups = [
+        { key: 'large', label: 'LARGE CAP', css: 'large' },
+        { key: 'mid',   label: 'MID CAP',   css: 'mid' },
+        { key: 'small', label: 'SMALL CAP', css: 'small' }
+      ];
+
+      let subSectionHtml = '';
+      capGroups.forEach(cg => {
+        const bucketRows = rows.filter(r => getCapCategoryKey(r.cap) === cg.key);
+        if (bucketRows.length > 0) {
+          const secKey = `${grp}_${cg.key}`;
+          const isOpen = _futbldCapOpen[secKey] !== false; // default open
+          const arrow = isOpen ? '▼' : '▶';
+
+          subSectionHtml += `<tr class="futbld-cap-subrow" onclick="toggleFutbldCapSection('${grp}', '${cg.key}')" style="cursor:pointer;user-select:none;" title="Click to ${isOpen ? 'collapse' : 'expand'} ${cg.label} section">
+            <td colspan="12" style="background:rgba(255,255,255,0.035);border-top:1px solid rgba(255,255,255,0.1);border-bottom:1px solid rgba(255,255,255,0.05);padding:6px 12px;font-size:0.65rem;font-weight:700;letter-spacing:0.04em;">
+              <span style="font-size:0.6rem;margin-right:6px;color:var(--text-muted);display:inline-block;width:10px;">${arrow}</span>
+              <span class="futbld-cap-tag ${cg.css}" style="margin-right:8px;font-size:0.62rem;padding:3px 9px;font-weight:700;">${cg.label}</span>
+              <span style="color:var(--text-muted);font-weight:500;font-size:0.65rem;">(${bucketRows.length} ${bucketRows.length === 1 ? 'Stock' : 'Stocks'})</span>
+            </td>
+          </tr>`;
+
+          if (isOpen) {
+            subSectionHtml += bucketRows.map(renderStockRow).join('');
+          }
+        }
+      });
+
+      tbody.innerHTML = subSectionHtml || rows.map(renderStockRow).join('');
     }
 
     function renderFuturesBuildup(data) {
@@ -3165,7 +3420,7 @@
         const data = await res.json();
         if (data.error) return;
         renderFuturesBuildup(data);
-      } catch (e) {}
+      } catch (e) { }
     }
 
     // Poll every 60s when panel is open

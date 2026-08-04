@@ -570,6 +570,87 @@ class HistoricalAnalysis {
 
     const countEl = document.getElementById('ha-table-count');
     if (countEl) countEl.textContent = `Showing Last ${data.rows ? data.rows.length : 0} Sessions`;
+
+    // 8. Render Period Total Movement Summary Box
+    this.renderPeriodSummary(data);
+  }
+
+  renderPeriodSummary(data) {
+    const summaryTitleEl = document.getElementById('ha-summary-title');
+    const summaryBadgeEl = document.getElementById('ha-summary-badge');
+    const summaryNetEl = document.getElementById('ha-summary-net-change');
+    const summaryUpDownDaysEl = document.getElementById('ha-summary-up-down-days');
+    const summaryUpDownPctEl = document.getElementById('ha-summary-up-down-pct');
+    const summaryRangeEl = document.getElementById('ha-summary-range');
+
+    if (!summaryTitleEl || !summaryBadgeEl || !summaryNetEl) return;
+
+    let ps = data.period_summary;
+
+    // Client-side fallback computation if period_summary wasn't returned by backend
+    if (!ps && data.rows && data.rows.length > 0) {
+      const rows = data.rows;
+      const startPrice = rows[rows.length - 1].price;
+      const latestPrice = rows[0].price;
+      const netAbs = latestPrice - startPrice;
+      const netPct = startPrice > 0 ? (netAbs / startPrice) * 100 : 0;
+
+      let upDays = 0;
+      let downDays = 0;
+      let totalUpPct = 0;
+      let totalDownPct = 0;
+      let pHigh = -Infinity;
+      let pLow = Infinity;
+
+      rows.forEach(r => {
+        if (r.change > 0) {
+          upDays++;
+          totalUpPct += r.change;
+        } else if (r.change < 0) {
+          downDays++;
+          totalDownPct += Math.abs(r.change);
+        }
+        if (r.high > pHigh) pHigh = r.high;
+        if (r.low < pLow) pLow = r.low;
+      });
+
+      ps = {
+        days_requested: this.days || 30,
+        total_sessions: rows.length,
+        start_price: startPrice,
+        latest_price: latestPrice,
+        net_change_abs: netAbs,
+        net_change_pct: netPct,
+        up_days_count: upDays,
+        down_days_count: downDays,
+        total_up_pct: totalUpPct,
+        total_down_pct: totalDownPct,
+        period_high: pHigh === -Infinity ? latestPrice : pHigh,
+        period_low: pLow === Infinity ? latestPrice : pLow
+      };
+    }
+
+    if (!ps) return;
+
+    const daysCount = ps.total_sessions || ps.days_requested || 30;
+    summaryTitleEl.textContent = `📊 TOTAL MOVEMENT SUMMARY (${daysCount} SESSIONS / ${ps.days_requested || daysCount} DAYS)`;
+
+    const isUp = ps.net_change_pct >= 0;
+    const sign = isUp ? '+' : '';
+    const color = isUp ? 'var(--green)' : 'var(--red)';
+    const bg = isUp ? 'rgba(76, 175, 80, 0.15)' : 'rgba(244, 67, 54, 0.15)';
+
+    summaryBadgeEl.textContent = `${sign}${ps.net_change_pct.toFixed(2)}% (₹${sign}${ps.net_change_abs.toFixed(2)})`;
+    summaryBadgeEl.style.color = color;
+    summaryBadgeEl.style.background = bg;
+
+    summaryNetEl.innerHTML = `<span style="color:${color}; font-weight:700;">${sign}${ps.net_change_pct.toFixed(2)}%</span> <span style="font-size:0.7rem; color:var(--text-secondary);">(₹${ps.start_price.toFixed(2)} → ₹${ps.latest_price.toFixed(2)})</span>`;
+
+    summaryUpDownDaysEl.innerHTML = `<span style="color:var(--green); font-weight:700;">${ps.up_days_count} Up</span> <span style="color:var(--text-secondary);">|</span> <span style="color:var(--red); font-weight:700;">${ps.down_days_count} Down</span>`;
+
+    summaryUpDownPctEl.innerHTML = `<span style="color:var(--green);">+${ps.total_up_pct.toFixed(1)}%</span> <span style="color:var(--text-secondary);">/</span> <span style="color:var(--red);">-${ps.total_down_pct.toFixed(1)}%</span>`;
+
+    summaryRangeEl.innerHTML = `<span style="color:var(--text-primary); font-size:0.7rem;">H: ₹${ps.period_high.toFixed(2)} | L: ₹${ps.period_low.toFixed(2)}</span>`;
   }
 }
 
@@ -581,6 +662,68 @@ window.historicalAnalysis = new HistoricalAnalysis();
 // ─────────────────────────────────────────────
 
 let _haBulkResults = [];   // persisted for CSV download
+let _haBulkSortKey = null;
+let _haBulkSortAsc = false;
+
+/** Sort bulk results by column key */
+window.haBulkSort = function (key) {
+  if (!_haBulkResults || !_haBulkResults.length) return;
+
+  if (_haBulkSortKey === key) {
+    _haBulkSortAsc = !_haBulkSortAsc;
+  } else {
+    _haBulkSortKey = key;
+    _haBulkSortAsc = key === 'symbol';
+  }
+
+  const parseVal = (r, k) => {
+    if (!r) return '';
+    if (k === 'upcoming_prediction') {
+      return r.upcoming_prediction ? r.upcoming_prediction.consensus_bias : '';
+    }
+    if (k === 'streak') {
+      return r.current_streak_dir === 'climb' ? (r.current_streak_days || 0) : r.current_streak_dir === 'drop' ? -(r.current_streak_days || 0) : 0;
+    }
+    if (k === 'ema_strength') {
+      return parseFloat(r.ema_strength) || 0;
+    }
+    if (k.endsWith('_pct') || k.endsWith('_rate')) {
+      const val = r[k];
+      if (typeof val === 'number') return val;
+      if (typeof val === 'string') return parseFloat(val.replace('%', '')) || 0;
+    }
+    return r[k] ?? '';
+  };
+
+  _haBulkResults.sort((a, b) => {
+    let va = parseVal(a, key);
+    let vb = parseVal(b, key);
+
+    if (typeof va === 'string' && typeof vb === 'string') {
+      return _haBulkSortAsc ? va.localeCompare(vb) : vb.localeCompare(va);
+    }
+    if (va < vb) return _haBulkSortAsc ? -1 : 1;
+    if (va > vb) return _haBulkSortAsc ? 1 : -1;
+    return 0;
+  });
+
+  const keys = ['symbol', 'score', 'direction', 'upcoming_prediction', 'ltp', 'cum_movement_pct', 'rsi', 'macd_signal', 'chop', 'ema_cross_status', 'ema_strength', 'gap_up_fade_pct', 'gap_down_fade_pct', 'bull_backtest_win_rate', 'bear_backtest_win_rate', 'streak', 'daily_trend', 'hourly_trend', 'm15_trend', 'status'];
+  keys.forEach(k => {
+    const el = document.getElementById(`ha-sort-icon-${k}`);
+    if (el) {
+      if (k === key) {
+        el.textContent = _haBulkSortAsc ? '▲' : '▼';
+        el.style.color = 'var(--primary)';
+      } else {
+        el.textContent = '↕';
+        el.style.color = 'var(--text-muted)';
+      }
+    }
+  });
+
+  const days = parseInt(document.getElementById('ha-bulk-days')?.value || '90', 10);
+  _renderBulkTable(_haBulkResults, days);
+};
 
 /** Toggle the bulk panel open/closed */
 window.haBulkToggle = function () {
@@ -661,7 +804,6 @@ window.haBulkRun = async function () {
 
   const symbols = _parseBulkSymbols(rawInput);
   if (symbols.length === 0) { alert('No valid symbols found.'); return; }
-  if (symbols.length > 100) { alert('Maximum 100 symbols allowed.'); return; }
 
   // UI — start state
   const runBtn = document.getElementById('btn-ha-bulk-run');
@@ -675,35 +817,52 @@ window.haBulkRun = async function () {
   if (runBtn) { runBtn.disabled = true; runBtn.textContent = '⏳ Scanning…'; }
   if (csvBtn) { csvBtn.disabled = true; csvBtn.style.opacity = '0.5'; csvBtn.style.cursor = 'not-allowed'; }
   if (progWrap) progWrap.style.display = 'block';
-  if (progBar) progBar.style.width = '5%';
+  if (progBar) progBar.style.width = '2%';
   if (progLbl) progLbl.textContent = `Scanning ${symbols.length} stocks…`;
   if (progCnt) progCnt.textContent = `0 / ${symbols.length}`;
   if (resultEl) resultEl.style.display = 'none';
 
+  _haBulkResults = [];
+  const BATCH_SIZE = 10;
+  const totalSymbols = symbols.length;
+
   try {
-    const resp = await fetch('/api/historical-analytics-bulk', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      credentials: 'include',
-      body: JSON.stringify({ symbols, days })
-    });
+    for (let i = 0; i < totalSymbols; i += BATCH_SIZE) {
+      const batchSymbols = symbols.slice(i, i + BATCH_SIZE);
 
-    if (progBar) progBar.style.width = '90%';
+      if (progLbl) progLbl.textContent = `Scanning stocks (${i + 1} to ${Math.min(i + BATCH_SIZE, totalSymbols)} of ${totalSymbols})…`;
 
-    if (!resp.ok) {
-      const err = await resp.json().catch(() => ({}));
-      alert(`Bulk scan failed: ${err.error || resp.statusText}`);
-      return;
+      const resp = await fetch('/api/historical-analytics-bulk', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({ symbols: batchSymbols, days })
+      });
+
+      if (!resp.ok) {
+        const err = await resp.json().catch(() => ({}));
+        console.error(`Batch scan error:`, err);
+        batchSymbols.forEach(sym => {
+          _haBulkResults.push({ symbol: sym, status: `ERROR: ${err.error || resp.statusText}` });
+        });
+      } else {
+        const data = await resp.json();
+        const batchResults = data.results || [];
+        _haBulkResults.push(...batchResults);
+      }
+
+      const processedCount = _haBulkResults.length;
+      const pct = Math.min(100, Math.round((processedCount / totalSymbols) * 100));
+
+      if (progBar) progBar.style.width = `${pct}%`;
+      if (progCnt) progCnt.textContent = `${processedCount} / ${totalSymbols}`;
+
+      // Live incremental table update
+      _renderBulkTable(_haBulkResults, days);
     }
 
-    const data = await resp.json();
-    _haBulkResults = data.results || [];
-
     if (progBar) progBar.style.width = '100%';
-    if (progCnt) progCnt.textContent = `${_haBulkResults.length} / ${symbols.length}`;
     if (progLbl) progLbl.textContent = `Scan complete — ${_haBulkResults.length} stocks processed`;
-
-    _renderBulkTable(_haBulkResults, days);
 
     // Enable CSV
     if (csvBtn) {
@@ -736,7 +895,7 @@ function _renderBulkTable(results, days) {
     if (r.status && r.status.startsWith('ERROR')) {
       return `<tr style="border-bottom:1px solid rgba(255,255,255,0.05);">
         <td style="padding:8px 12px;font-weight:700;">${r.symbol}</td>
-        <td colspan="18" style="padding:8px;text-align:center;color:#EF5350;font-size:0.72rem;">${r.status}</td>
+        <td colspan="19" style="padding:8px;text-align:center;color:#EF5350;font-size:0.72rem;">${r.status}</td>
       </tr>`;
     }
 
@@ -759,12 +918,18 @@ function _renderBulkTable(results, days) {
       ? tag(`${r.upcoming_prediction.consensus_bias} (${r.upcoming_prediction.confidence_score}%)`, r.upcoming_prediction.consensus_bias)
       : '—';
 
+    const cumVal = r.cum_movement_pct != null ? r.cum_movement_pct : 0;
+    const cumIsUp = cumVal >= 0;
+    const cumSign = cumIsUp ? '+' : '';
+    const cumColor = cumIsUp ? '#26A69A' : '#EF5350';
+
     return `<tr style="border-bottom:1px solid rgba(255,255,255,0.05);" id="ha-bulk-row-${r.symbol}">
       <td style="padding:8px 12px;font-weight:800;color:var(--text-primary);">${r.symbol}</td>
       <td style="padding:8px 10px;text-align:center;"><span style="font-weight:800;color:${scoreColor};">${r.score}</span></td>
       <td style="padding:8px 10px;text-align:center;">${tag(r.direction, r.direction)}</td>
       <td style="padding:8px 10px;text-align:center;">${upcomingPredictionTag}</td>
       <td style="padding:8px 10px;text-align:right;font-weight:600;">₹${(r.ltp || 0).toLocaleString('en-IN')}</td>
+      <td style="padding:8px 10px;text-align:right;font-weight:700;color:${cumColor};">${cumSign}${cumVal.toFixed(2)}%</td>
       <td style="padding:8px 10px;text-align:center;color:${r.rsi > 60 ? '#26A69A' : r.rsi < 40 ? '#EF5350' : '#FFA726'};">${r.rsi}</td>
       <td style="padding:8px 10px;text-align:center;">${tag(r.macd_signal, r.macd_signal)}</td>
       <td style="padding:8px 10px;text-align:center;color:${r.chop_state === 'TRENDING' ? '#AB47BC' : '#78909C'};">${r.chop} <span style="font-size:0.65rem;">${r.chop_state}</span></td>

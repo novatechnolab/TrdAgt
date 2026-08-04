@@ -322,15 +322,6 @@ def _detect_ema_crossover(candles, period_short=9, period_long=21, require_two_c
             continue
 
         if require_two_candle_close:
-            # 60% Body ratio check for Candle #1 (crossover candle)
-            h1 = candles[i].get('high', 0.0) or 0.0
-            l1 = candles[i].get('low', 0.0) or 0.0
-            range1 = h1 - l1
-            body1 = abs(c - o)
-            body_ratio1 = (body1 / range1) if range1 > 0 else 1.0
-            if body_ratio1 < 0.60:
-                continue
-
             # 2. Rule of 5M EMA Crossover Confirmation:
             # Candle #2 (index i+1) must confirm Candle #1 (index i):
             if i >= len(candles) - 1:
@@ -339,17 +330,8 @@ def _detect_ema_crossover(candles, period_short=9, period_long=21, require_two_c
 
             next_o = candles[i + 1].get('open', 0.0) or 0.0
             next_c = candles[i + 1].get('close', 0.0) or 0.0
-            next_h = candles[i + 1].get('high', 0.0) or 0.0
-            next_l = candles[i + 1].get('low', 0.0) or 0.0
 
             if next_c <= 0:
-                continue
-
-            # 60% Body ratio check for Candle #2 (confirmation candle)
-            range2 = next_h - next_l
-            body2 = abs(next_c - next_o)
-            body_ratio2 = (body2 / range2) if range2 > 0 else 1.0
-            if body_ratio2 < 0.60:
                 continue
 
             if is_bull:
@@ -1098,56 +1080,62 @@ def _get_active_trading_date(now):
 
 def _compute_ema9_hold(candles, max_body_penetration_pct=20):
     """
-    Computes EMA9 Respect and EMA21 Trend Alignment from 5-minute candles.
+    Computes EMA9 Hold state from 5-minute candles using 2-candle hysteresis.
 
     Rules:
-      1. Trend filter: EMA9 must remain on the correct side of EMA21 (EMA9 > EMA21 for Y, EMA9 < EMA21 for N).
-      2. Penetration filter: Candle body penetration across EMA9 must not exceed 20%.
-      3. Walk backward from the last candle to count consecutive valid bars.
+      - Price closing ABOVE EMA9 -> Y (holding above)
+      - Price closing BELOW EMA9 -> N (holding below)
+      - Flip requires minimum 2 consecutive 5m candle closes on opposite side (hysteresis filter to avoid noise)
+
+    Returns:
+      (state, hold_minutes)
+        state: 'Y' (above EMA9) or 'N' (below EMA9) or None
+        hold_minutes: how many minutes the current confirmed state has persisted
     """
-    if not candles or len(candles) < 21:
+    if not candles or len(candles) < 12:
         return None, 0
 
     closes = [c.get('close', 0) or 0 for c in candles]
     ema9 = compute_ema(closes, 9)
-    ema21 = compute_ema(closes, 21)
 
-    if not ema9 or not ema21 or len(ema9) != len(closes) or len(ema21) != len(closes):
+    if not ema9 or len(ema9) != len(closes):
         return None, 0
 
-    # Determine trend side on latest bar
-    direction = "bullish" if ema9[-1] > ema21[-1] else "bearish"
-    confirmed_state = "Y" if direction == "bullish" else "N"
+    # Walk candles to determine confirmed state with 2-candle hysteresis
+    confirmed_state = None   # 'Y' or 'N'
+    consecutive_opposite = 0
+    state_start_idx = 0
 
-    # Walk backward to find the number of consecutive aligned candles
-    consecutive_bars = 0
-    for i in range(len(closes) - 1, -1, -1):
-        if ema9[i] is None or ema21[i] is None:
-            break
+    for i in range(len(closes)):
+        if ema9[i] is None or ema9[i] <= 0 or closes[i] <= 0:
+            continue
 
-        # 1. Trend Filter Check
-        if direction == "bullish" and ema9[i] <= ema21[i]:
-            break
-        elif direction == "bearish" and ema9[i] >= ema21[i]:
-            break
+        above = closes[i] > ema9[i]
 
-        # 2. Body Penetration Check using clean library helper
-        respect_res = check_ema9_respect(
-            [candles[i]], 
-            [ema9[i]], 
-            direction=direction, 
-            max_body_penetration_pct=max_body_penetration_pct, 
-            min_consecutive=1
-        )
-        if respect_res["state"] != "CONFIRMED":
-            break
+        if confirmed_state is None:
+            # First valid candle sets the initial state
+            confirmed_state = 'Y' if above else 'N'
+            state_start_idx = i
+            consecutive_opposite = 0
+            continue
 
-        consecutive_bars += 1
+        current_is_same = (confirmed_state == 'Y' and above) or \
+                          (confirmed_state == 'N' and not above)
 
-    if consecutive_bars == 0:
-        return None, 0
+        if current_is_same:
+            consecutive_opposite = 0
+        else:
+            consecutive_opposite += 1
+            if consecutive_opposite >= 2:  # 2 consecutive closes confirm flip
+                confirmed_state = 'Y' if above else 'N'
+                state_start_idx = i - 1  # Flip started 1 candle ago
+                consecutive_opposite = 0
 
-    return confirmed_state, consecutive_bars * 5
+    # Calculate hold duration from state_start_idx to last candle
+    hold_candles = max(0, len(closes) - 1 - state_start_idx)
+    hold_minutes = hold_candles * 5   # Each candle = 5 minutes
+
+    return confirmed_state, hold_minutes
 
 
 def _calculate_intraday_linearity(candles, today_str):
@@ -1893,3 +1881,130 @@ def start_ema_crossover_scanner():
         print("[EMA Crossover Scanner] Spawning background thread...")
         _ema_thread = threading.Thread(target=_ema_crossover_loop, daemon=True)
         _ema_thread.start()
+
+
+# ── Daily EMA 9 vs EMA 21 Crossover Count (DXCNT) Cache ──────────────────────
+_dxcnt_cache = {}
+_dxcnt_date = None
+_dxcnt_lock = threading.Lock()
+
+def get_daily_dxcnt_map():
+    """
+    Returns cached dict of {symbol: dxcnt_int} for all F&O stocks.
+    dxcnt_int > 0: Bullish state (EMA9 > EMA21) count of daily candles (+N).
+    dxcnt_int < 0: Bearish state (EMA9 < EMA21) count of daily candles (-N).
+    Persisted in SQLite database for instant (<5ms) startup loading.
+    """
+    global _dxcnt_cache, _dxcnt_date
+    import datetime as _dt
+    import sqlite3
+    today = _dt.date.today()
+    today_str = today.strftime('%Y-%m-%d')
+
+    with _dxcnt_lock:
+        if _dxcnt_cache and _dxcnt_date == today:
+            return dict(_dxcnt_cache)
+
+    db_path = os.path.join(os.path.dirname(__file__), "tradesignal_cache.db")
+
+    # 1. Try reading from SQLite cache first
+    try:
+        conn = sqlite3.connect(db_path, timeout=5.0)
+        cursor = conn.cursor()
+        cursor.execute("""
+            CREATE TABLE IF NOT EXISTS dxcnt_daily_cache (
+                date TEXT PRIMARY KEY,
+                data_json TEXT,
+                updated_at TEXT
+            )
+        """)
+        cursor.execute("SELECT data_json FROM dxcnt_daily_cache WHERE date = ?", (today_str,))
+        row = cursor.fetchone()
+        conn.close()
+        if row and row[0]:
+            loaded_map = json.loads(row[0])
+            with _dxcnt_lock:
+                _dxcnt_cache = loaded_map
+                _dxcnt_date = today
+            return dict(_dxcnt_cache)
+    except Exception as e:
+        logging.warning(f"[DXCNT Cache] SQLite read failed: {e}")
+
+    # 2. Build via Kite API if not yet cached in SQLite today
+    try:
+        from db_instruments import get_fno_symbols
+        from indicators import compute_ema
+        from server import get_kite, get_historical_candles
+        kite = get_kite()
+        if not kite:
+            return dict(_dxcnt_cache) if _dxcnt_cache else {}
+
+        symbols = get_fno_symbols()
+        indices = {"NIFTY", "BANKNIFTY", "FINNIFTY", "MIDCPNIFTY", "NIFTYNXT50"}
+        stock_symbols = [s for s in symbols if s not in indices]
+
+        new_map = {}
+        for sym in stock_symbols:
+            try:
+                candles = get_historical_candles(kite, sym, "day", days_back=300)
+                if not candles or len(candles) < 21:
+                    continue
+                closes = [c['close'] for c in candles if c.get('close') is not None]
+                if len(closes) < 21:
+                    continue
+
+                ema9 = compute_ema(closes, 9)
+                ema21 = compute_ema(closes, 21)
+                if not ema9 or not ema21 or len(ema9) != len(closes) or len(ema21) != len(closes):
+                    continue
+
+                e9_last = round(float(ema9[-1]), 2)
+                e21_last = round(float(ema21[-1]), 2)
+
+                is_bullish = e9_last > e21_last
+                streak = 0
+                for i in range(len(closes) - 1, -1, -1):
+                    if ema9[i] is None or ema21[i] is None:
+                        break
+                    e9 = float(ema9[i])
+                    e21 = float(ema21[i])
+                    if is_bullish and (e9 > e21):
+                        streak += 1
+                    elif (not is_bullish) and (e9 < e21):
+                        streak += 1
+                    else:
+                        break
+
+                new_map[sym] = streak if is_bullish else -streak
+            except Exception:
+                continue
+
+        if new_map:
+            # Save to SQLite for sub-millisecond future reads
+            try:
+                conn = sqlite3.connect(db_path, timeout=5.0)
+                cursor = conn.cursor()
+                cursor.execute("""
+                    CREATE TABLE IF NOT EXISTS dxcnt_daily_cache (
+                        date TEXT PRIMARY KEY,
+                        data_json TEXT,
+                        updated_at TEXT
+                    )
+                """)
+                cursor.execute(
+                    "INSERT OR REPLACE INTO dxcnt_daily_cache (date, data_json, updated_at) VALUES (?, ?, ?)",
+                    (today_str, json.dumps(new_map), now_ist().strftime("%Y-%m-%d %H:%M:%S"))
+                )
+                conn.commit()
+                conn.close()
+            except Exception as ex:
+                logging.warning(f"[DXCNT Cache] SQLite save failed: {ex}")
+
+        with _dxcnt_lock:
+            _dxcnt_cache = new_map
+            _dxcnt_date = today
+        return dict(_dxcnt_cache)
+    except Exception as e:
+        logging.warning(f"[DXCNT Cache] Failed to build DXCNT map: {e}")
+        return dict(_dxcnt_cache) if _dxcnt_cache else {}
+

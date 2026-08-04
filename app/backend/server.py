@@ -3375,11 +3375,23 @@ def historical():
         source = 'cache'
 
         if is_intraday:
-            # Out of market hours: return cached data from the DB immediately to avoid timeouts
+            # Out of market hours: return cached data from DB immediately if it includes the active session date.
+            # If the cache is missing the active session date, fall through to fetch fresh data from Kite API.
             if is_market_closed() and not force_refresh:
                 stale = cache_get_ohlcv(db, token, from_date_str, to_date_str, interval)
                 if stale:
-                    return jsonify({'candles': stale, 'source': 'db_cache_closed_hours'})
+                    from ema_crossover_scanner import _get_active_trading_date
+                    active_session_date = _get_active_trading_date(now_ist())
+                    has_active_session = any(
+                        isinstance(r, dict) and str(r.get('date', '')).startswith(active_session_date)
+                        for r in stale
+                    )
+                    if has_active_session:
+                        return jsonify({'candles': stale, 'source': 'db_cache_closed_hours'})
+                    else:
+                        logging.info(
+                            f"[API Historical] Cache miss for active session date {active_session_date} (token {token}); fetching fresh from Kite API..."
+                        )
 
             # 1. Check TTL cache for synthetic index candles (Nifty50, Sensex, etc.)
             if token in SYNTHETIC_VOLUME_INDICES:
@@ -4048,10 +4060,10 @@ def historical_analytics():
         climax_nodes.reverse()
         climax_nodes = climax_nodes[:5]  # limit to top 5 newest spikes
 
-        # 7. Format Top 30 Rows for Table Display
+        # 7. Format Top Rows for Table Display
         formatted_rows = []
         candles.sort(key=lambda x: x.get('date', ''), reverse=True)
-        table_candles = candles[:30]
+        table_candles = candles[:min(days, len(candles))]
 
         for idx in range(len(table_candles)):
             c = table_candles[idx]
@@ -4072,6 +4084,53 @@ def historical_analytics():
                 'vol': f"{round(float(c.get('volume', 0.0)) / 1000.0, 2)}K" if float(c.get('volume', 0.0)) < 1000000.0 else f"{round(float(c.get('volume', 0.0)) / 1000000.0, 2)}M",
                 'change': round(change_pct, 2)
             })
+
+        # 8. Compute Total Period Movement Metrics (for selected days)
+        period_df = df.tail(min(days, len(df)))
+        p_start_close = float(period_df.iloc[0]['close'])
+        p_end_close = float(period_df.iloc[-1]['close'])
+        p_net_abs = round(p_end_close - p_start_close, 2)
+        p_net_pct = round(((p_end_close - p_start_close) / p_start_close * 100.0), 2) if p_start_close > 0 else 0.0
+
+        p_diffs = period_df['close'].diff()
+        p_prev_close = period_df['close'].shift(1)
+        p_pct_changes = (p_diffs / p_prev_close * 100.0).dropna()
+
+        up_changes = p_pct_changes[p_pct_changes > 0]
+        down_changes = p_pct_changes[p_pct_changes < 0]
+
+        up_days_count = len(up_changes)
+        down_days_count = len(down_changes)
+        total_up_pct = round(float(up_changes.sum()), 2)
+        total_down_pct = round(float(abs(down_changes.sum())), 2)
+        avg_up_pct = round(float(up_changes.mean()), 2) if up_days_count > 0 else 0.0
+        avg_down_pct = round(float(abs(down_changes.mean())), 2) if down_days_count > 0 else 0.0
+
+        p_high = round(float(period_df['high'].max()), 2)
+        p_low = round(float(period_df['low'].min()), 2)
+        gain_from_low = round(((p_end_close - p_low) / p_low * 100.0), 2) if p_low > 0 else 0.0
+        drawdown_from_high = round(((p_end_close - p_high) / p_high * 100.0), 2) if p_high > 0 else 0.0
+
+        period_summary = {
+            'days_requested': days,
+            'total_sessions': len(period_df),
+            'start_date': str(period_df.iloc[0]['date']).split('T')[0],
+            'end_date': str(period_df.iloc[-1]['date']).split('T')[0],
+            'start_price': p_start_close,
+            'latest_price': p_end_close,
+            'net_change_abs': p_net_abs,
+            'net_change_pct': p_net_pct,
+            'up_days_count': up_days_count,
+            'down_days_count': down_days_count,
+            'total_up_pct': total_up_pct,
+            'total_down_pct': total_down_pct,
+            'avg_up_pct': avg_up_pct,
+            'avg_down_pct': avg_down_pct,
+            'period_high': p_high,
+            'period_low': p_low,
+            'gain_from_low_pct': gain_from_low,
+            'drawdown_from_high_pct': drawdown_from_high
+        }
 
         return jsonify({
             'symbol': symbol,
@@ -4109,7 +4168,8 @@ def historical_analytics():
             'backtest_bearish': backtest_bear,
             'ema_crossover': ema_crossover,
             'prediction_telemetry': calculate_upcoming_prediction(df, len(df) - 1),
-            'rows': formatted_rows
+            'rows': formatted_rows,
+            'period_summary': period_summary
         })
 
     except Exception as e:
@@ -4136,9 +4196,6 @@ def historical_analytics_bulk():
 
         symbols = [str(s).upper().strip() for s in symbols if str(s).strip()]
         symbols = list(dict.fromkeys(symbols))  # deduplicate while preserving order
-
-        if len(symbols) > 100:
-            return jsonify({'error': 'Maximum 100 symbols allowed per bulk scan'}), 400
 
         db = get_db()
         kite = get_kite()
@@ -4328,12 +4385,21 @@ def historical_analytics_bulk():
                 else:
                     streak_dir = 'none'
 
+                # ── Cumulative Period Movement ──
+                df_slice = df_b.tail(min(days, len(df_b)))
+                p_start_close = float(df_slice.iloc[0]['close'])
+                p_end_close = float(df_slice.iloc[-1]['close'])
+                cum_movement_abs = round(p_end_close - p_start_close, 2)
+                cum_movement_pct = round(((p_end_close - p_start_close) / p_start_close * 100.0), 2) if p_start_close > 0 else 0.0
+
                 # ── Assemble row ──
                 row.update({
                     'days_analysed':      days,
                     'score':              score,
                     'direction':          direction,
                     'ltp':                round(last_close, 2),
+                    'cum_movement_pct':   cum_movement_pct,
+                    'cum_movement_abs':   cum_movement_abs,
                     'rsi':                round(last_rsi, 1),
                     'macd_signal':        'BULLISH' if last_macd > last_macd_sig else 'BEARISH',
                     'chop':               round(last_chop, 1),
@@ -4525,7 +4591,18 @@ def option_gainers_board():
     """
     lazy_start_option_scanners()
     try:
-        from option_gainers_scanner import get_board_state
+        from option_gainers_scanner import get_board_state, get_gainers_snapshot_from_db
+        date_str = request.args.get('date')
+        if date_str:
+            db_snap = get_gainers_snapshot_from_db(date_str)
+            if db_snap:
+                return jsonify(db_snap)
+            return jsonify({
+                "stocks": [], "total_tracked": 0, "total_positive": 0,
+                "n_stocks": 0, "last_updated": None, "date": date_str,
+                "status": "not_found", "message": f"No board snapshot found for date {date_str}"
+            })
+
         state = get_board_state()
 
         open_premiums   = state.get("open_premiums", {})
@@ -4553,10 +4630,12 @@ def option_gainers_board():
                 snapshot = get_eod_snapshot()
                 if snapshot is not None:
                     # Inject on the fly
-                    from ema_crossover_scanner import get_ema_crossover_state
+                    from ema_crossover_scanner import get_ema_crossover_state, get_daily_dxcnt_map
                     ema_state_eod = get_ema_crossover_state().get("crossovers", {})
+                    dxcnt_map_eod = get_daily_dxcnt_map()
                     for s in snapshot.get("stocks", []):
                         s["inst_holding"] = inst_holding_map.get(s["symbol"], 0.0)
+                        s["dxcnt"] = s.get("dxcnt") if s.get("dxcnt") is not None else dxcnt_map_eod.get(s["symbol"], 0)
                         s["ema9_hold"] = s.get("ema9_hold") if s.get("ema9_hold") is not None else ema_state_eod.get(s["symbol"], {}).get("ema9_hold")
                         s["ema9_hold_minutes"] = s.get("ema9_hold_minutes") if s.get("ema9_hold_minutes") is not None else ema_state_eod.get(s["symbol"], {}).get("ema9_hold_minutes", 0)
                         s["fh_spurt_ratio"] = s.get("fh_spurt_ratio") if s.get("fh_spurt_ratio") is not None else ema_state_eod.get(s["symbol"], {}).get("fh_spurt_ratio")
@@ -4691,9 +4770,10 @@ def option_gainers_board():
                     if expected > 0:
                         rvol_map[sym] = round(curr_vol / expected, 1)
 
-        # Get the cached crossover state for this symbol
-        from ema_crossover_scanner import get_ema_crossover_state
+        # Get the cached crossover state and daily DXCNT map for this symbol
+        from ema_crossover_scanner import get_ema_crossover_state, get_daily_dxcnt_map
         ema_state = get_ema_crossover_state().get("crossovers", {})
+        dxcnt_map = get_daily_dxcnt_map()
 
         stocks_out = [
             {
@@ -4704,6 +4784,7 @@ def option_gainers_board():
                 "rvol_ratio":      rvol_map.get(sym),
                 "linearity_score": ema_state.get(sym, {}).get("linearity_score", 0.0),
                 "net_movement":    ema_state.get(sym, {}).get("net_movement", 0.0),
+                "dxcnt":           dxcnt_map.get(sym, 0),
                 "inst_holding":    inst_holding_map.get(sym, 0.0),
                 "ema9_hold":       ema_state.get(sym, {}).get("ema9_hold"),
                 "ema9_hold_minutes": ema_state.get(sym, {}).get("ema9_hold_minutes", 0),
@@ -4738,7 +4819,17 @@ def option_gainers_alerts():
     """
     lazy_start_option_gainers_alerts()
     try:
-        from option_gainers_alerts import get_alerts
+        from option_gainers_alerts import get_alerts, get_alerts_from_db_by_date
+        date_str = request.args.get('date')
+        if date_str:
+            db_alerts = get_alerts_from_db_by_date(date_str)
+            return jsonify({
+                "alerts": db_alerts,
+                "trade_date": date_str,
+                "total_alerts": len(db_alerts),
+                "is_historical": True
+            })
+
         after = request.args.get('after', type=int)
         if after is None and not is_market_hours() and not is_premarket():
             from option_gainers_alerts import get_eod_snapshot, is_eod_snapshot_running
@@ -10172,9 +10263,907 @@ def nifty_candle_analyzer_dashboard():
     return render_template_string(PAGE)
 
 
+# ── F&O Quarterly Results Analyzer (F&O ResAnalyzer) ───────────────────────
+
+RES_DB_PATH = os.path.join(os.path.dirname(__file__), "results_cache.db")
+
+_RES_HEADERS = {
+    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 "
+                  "(KHTML, like Gecko) Chrome/124.0 Safari/537.36",
+    "Accept-Language": "en-US,en;q=0.9",
+}
+
+_FNO_RES_SYMBOLS = {
+    "AARTIIND","ABB","ABCAPITAL","ABFRL","ACC","ADANIENSOL","ADANIENT","ADANIGREEN",
+    "ADANIPORTS","ALKEM","AMBER","AMBUJACEM","ANGELONE","APLAPOLLO","APOLLOHOSP",
+    "APOLLOTYRE","ASHOKLEY","ASIANPAINT","ASTRAL","ATUL","AUBANK","AUROPHARMA",
+    "AXISBANK","BAJAJ-AUTO","BAJAJFINSV","BAJFINANCE","BALKRISIND","BANDHANBNK",
+    "BANKBARODA","BANKINDIA","BATAINDIA","BEL","BERGEPAINT","BHARATFORG","BHARTIARTL",
+    "BHEL","BIOCON","BOSCHLTD","BPCL","BRITANNIA","BSE","BSOFT","CAMS","CANBK",
+    "CANFINHOME","CDSL","CESC","CGPOWER","CHAMBLFERT","CHOLAFIN","CIPLA","COALINDIA",
+    "COFORGE","COLPAL","CONCOR","COROMANDEL","CROMPTON","CUB","CUMMINSIND","CYIENT",
+    "DABUR","DALBHARAT","DEEPAKNTR","DELHIVERY","DIVISLAB","DIXON","DLF","DMART",
+    "DRREDDY","EICHERMOT","ESCORTS","EXIDEIND","FEDERALBNK","GAIL","GLENMARK",
+    "GMRAIRPORT","GNFC","GODREJCP","GODREJPROP","GRANULES","GRASIM","GUJGASLTD",
+    "HAL","HAVELLS","HCLTECH","HDFCAMC","HDFCBANK","HDFCLIFE","HEROMOTOCO",
+    "HFCL","HINDALCO","HINDCOPPER","HINDPETRO","HINDUNILVR","HUDCO","IBULHSGFIN",
+    "ICICIBANK","ICICIGI","ICICIPRULI","IDEA","IDFCFIRSTB","IEX","IGL","INDHOTEL",
+    "INDIACEM","INDIAMART","INDIGO","INDUSINDBK","INDUSTOWER","INFY","INOXWIND",
+    "IOC","IPCALAB","IRB","IRCTC","IRFC","ITC","JINDALSTEL","JIOFIN","JKCEMENT",
+    "JSWENERGY","JSWSTEEL","JUBLFOOD","KALYANKJIL","KEI","KOTAKBANK","KPITTECH",
+    "LALPATHLAB","LAURUSLABS","LICHSGFIN","LICI","LODHA","LT","LTF","LTIM","LTTS",
+    "LUPIN","M&M","M&MFIN","MANAPPURAM","MARICO","MARUTI","MAXHEALTH","MCX",
+    "METROPOLIS","MFSL","MGL","MOTHERSON","MPHASIS","MRF","MUTHOOTFIN","NATIONALUM",
+    "NAUKRI","NAVINFLUOR","NBCC","NCC","NESTLEIND","NHPC","NMDC","NTPC","NYKAA",
+    "OBEROIRLTY","OFSS","OIL","ONGC","PAGEIND","PATANJALI","PAYTM","PEL","PERSISTENT",
+    "PETRONET","PFC","PHOENIXLTD","PIDILITIND","PIIND","PNB","PNBHOUSING","POLICYBZR",
+    "POLYCAB","POONAWALLA","POWERGRID","PRESTIGE","PVRINOX","RAMCOCEM","RBLBANK",
+    "RECLTD","RELIANCE","SAIL","SBICARD","SBILIFE","SBIN","SHREECEM","SHRIRAMFIN",
+    "SIEMENS","SJVN","SOLARINDS","SONACOMS","SRF","STAR","SUNPHARMA","SUNTV",
+    "SUPREMEIND","SYNGENE","TATACHEM","TATACOMM","TATACONSUM","TATAELXSI",
+    "TATAMOTORS","TATAPOWER","TATASTEEL","TATATECH","TCS","TECHM","TIINDIA",
+    "TITAGARH","TITAN","TORNTPHARM","TORNTPOWER","TRENT","TVSMOTOR","UBL",
+    "ULTRACEMCO","UNIONBANK","UNITDSPR","UPL","VBL","VEDL","VOLTAS","WIPRO",
+    "YESBANK","ZEEL","ZYDUSLIFE","TI"
+}
+
+def _init_res_db():
+    """Safe schema migration for results_cache and results_annotations.
+    Uses CREATE TABLE IF NOT EXISTS + ALTER TABLE for forward-compat.
+    Never drops data on restart."""
+    conn = sqlite3.connect(RES_DB_PATH)
+    # Safe create — does NOT drop existing data
+    conn.execute("""
+        CREATE TABLE IF NOT EXISTS results_cache (
+            symbol               TEXT PRIMARY KEY,
+            quarter_label        TEXT,
+            revenue              REAL,
+            revenue_yoy          REAL,
+            revenue_qoq          REAL,
+            net_profit           REAL,
+            profit_yoy           REAL,
+            profit_qoq           REAL,
+            opm                  REAL,
+            opm_yoy_delta        REAL,
+            opm_qoq_delta        REAL,
+            pat_margin           REAL,
+            pat_margin_yoy       REAL,
+            other_income         REAL,
+            other_income_pct     REAL,
+            finance_cost         REAL,
+            finance_cost_yoy     REAL,
+            eps                  REAL,
+            eps_yoy              REAL,
+            depreciation         REAL,
+            exceptional_items    REAL,
+            normalized_pat       REAL,
+            icr                  REAL,
+            est_pat_consensus    REAL,
+            est_revenue_consensus REAL,
+            est_eps_consensus    REAL,
+            n_analysts           INTEGER,
+            verdict              TEXT,
+            reasons              TEXT,
+            quality_flags        TEXT,
+            fetched_at           TEXT,
+            raw_status           TEXT
+        )
+    """)
+    # Forward-compat: add any columns that may be missing from older DB files
+    _new_cols = [
+        ("opm_qoq_delta",          "REAL"),
+        ("pat_margin",             "REAL"),
+        ("pat_margin_yoy",         "REAL"),
+        ("other_income",           "REAL"),
+        ("other_income_pct",       "REAL"),
+        ("finance_cost",           "REAL"),
+        ("finance_cost_yoy",       "REAL"),
+        ("eps",                    "REAL"),
+        ("eps_yoy",                "REAL"),
+        ("depreciation",           "REAL"),
+        ("quality_flags",          "TEXT"),
+        ("raw_status",             "TEXT"),
+        # Phase 1 additions
+        ("exceptional_items",      "REAL"),
+        ("normalized_pat",         "REAL"),
+        ("icr",                    "REAL"),
+        ("est_pat_consensus",      "REAL"),
+        ("est_revenue_consensus",  "REAL"),
+        ("est_eps_consensus",      "REAL"),
+        ("n_analysts",             "INTEGER"),
+    ]
+    existing = {row[1] for row in conn.execute("PRAGMA table_info(results_cache)")}
+    for col, typ in _new_cols:
+        if col not in existing:
+            conn.execute(f"ALTER TABLE results_cache ADD COLUMN {col} {typ}")
+    # Annotations table: user-entered Estimate PAT + Guidance, persisted
+    conn.execute("""
+        CREATE TABLE IF NOT EXISTS results_annotations (
+            symbol      TEXT PRIMARY KEY,
+            est_pat     REAL,
+            guidance    TEXT,
+            updated_at  TEXT
+        )
+    """)
+    # Trendlyne ID cache — symbol → numeric ID, resolved once and reused
+    conn.execute("""
+        CREATE TABLE IF NOT EXISTS trendlyne_id_cache (
+            symbol      TEXT PRIMARY KEY,
+            tl_id       TEXT,
+            tl_slug     TEXT,
+            resolved_at TEXT
+        )
+    """)
+    conn.commit()
+    conn.close()
+
+def _resolve_trendlyne_id(symbol):
+    """Resolve NSE symbol to Trendlyne numeric ID + slug.
+    Primary: DB cache (populated by _seed_trendlyne_from_sitemap on startup).
+    Fallback: live lookup via equity-sitemap-stocks.xml.
+    Returns (tl_id, tl_slug) or (None, None) on failure."""
+    import re as _re, requests as _req
+    # DB cache first
+    try:
+        conn = sqlite3.connect(RES_DB_PATH)
+        row = conn.execute(
+            "SELECT tl_id, tl_slug FROM trendlyne_id_cache WHERE symbol=?", (symbol,)
+        ).fetchone()
+        conn.close()
+        if row and row[0]:
+            return row[0], row[1]
+    except Exception:
+        pass
+
+    # Live fallback: fetch sitemap and extract for this one symbol
+    try:
+        resp = _req.get(
+            "https://trendlyne.com/equity-sitemap-stocks.xml",
+            headers=_TL_HEADERS, timeout=15
+        )
+        if resp.status_code == 200:
+            m = _re.search(
+                rf"/equity/(\d+)/({_re.escape(symbol)})/([^/]+)/",
+                resp.text, _re.IGNORECASE
+            )
+            if m:
+                tl_id, sym_found, slug = m.group(1), m.group(2), m.group(3)
+                _tl_cache_id(symbol, tl_id, slug)
+                return tl_id, slug
+    except Exception as e:
+        logging.debug(f"[TL] Sitemap lookup failed for {symbol}: {e}")
+
+    # Cache the failure ONLY if no valid entry already exists — avoids corrupting
+    # valid rows on transient DB read errors or sitemap timeouts.
+    try:
+        conn = sqlite3.connect(RES_DB_PATH)
+        existing = conn.execute(
+            "SELECT tl_id FROM trendlyne_id_cache WHERE symbol=?", (symbol,)
+        ).fetchone()
+        conn.close()
+        if not existing or not existing[0]:
+            _tl_cache_id(symbol, None, None)
+    except Exception:
+        pass
+    return None, None
+
+
+def _seed_trendlyne_from_sitemap():
+    """One-time seeder: fetch equity-sitemap-stocks.xml and bulk-populate
+    trendlyne_id_cache for all F&O symbols. Called once at startup in a thread.
+    Safe to run repeatedly — uses INSERT OR REPLACE to refresh stale/null rows."""
+    import re as _re
+    import requests
+    _headers = {
+        "User-Agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+        "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+        "Accept-Language": "en-US,en;q=0.5",
+        "Referer": "https://trendlyne.com/",
+    }
+    try:
+        resp = requests.get(
+            "https://trendlyne.com/equity-sitemap-stocks.xml",
+            headers=_headers, timeout=20
+        )
+        if resp.status_code != 200:
+            logging.debug(f"[TL-SEED] Sitemap returned {resp.status_code}")
+            return
+        # Parse all /equity/{id}/{symbol}/{slug}/ URLs
+        pairs = _re.findall(r"/equity/(\d+)/([A-Z0-9&-]+)/([^/]+)/", resp.text)
+        if not pairs:
+            logging.debug("[TL-SEED] No URLs found in sitemap")
+            return
+        # Build symbol→(id, slug) map
+        sitemap_map = {sym: (tl_id, slug) for tl_id, sym, slug in pairs}
+        # Insert for all F&O symbols that have matches
+        resolved, skipped = 0, 0
+        conn = sqlite3.connect(RES_DB_PATH)
+        ts = dt.now(datetime.timezone.utc).isoformat()
+        for sym in _FNO_RES_SYMBOLS:
+            if sym in sitemap_map:
+                tl_id, slug = sitemap_map[sym]
+                conn.execute(
+                    "INSERT OR REPLACE INTO trendlyne_id_cache VALUES (?,?,?,?)",
+                    (sym, tl_id, slug, ts)
+                )
+                resolved += 1
+            else:
+                skipped += 1
+        conn.commit()
+        conn.close()
+        logging.info(f"[TL-SEED] Seeded {resolved} F&O symbols, {skipped} not found in sitemap")
+    except Exception as e:
+        logging.warning(f"[TL-SEED] Seeder failed: {e}")
+
+try:
+    _init_res_db()
+except Exception as _e:
+    logging.error(f"[RES-DB] Failed to initialise results DB: {_e}")
+
+
+
+def _clean_res_num(text):
+    if text is None: return None
+    t = text.strip().replace(",", "").replace("%", "")
+    if t in ("", "-", "--"): return None
+    neg = t.startswith("(") and t.endswith(")")
+    t = t.strip("()")
+    try:
+        val = float(t)
+        return -val if neg else val
+    except ValueError:
+        return None
+
+def _res_pct_change(curr, prev):
+    if curr is None or prev is None or prev == 0: return None
+    return round(((curr - prev) / abs(prev)) * 100, 2)
+
+def _fetch_screener_quarterly(symbol):
+    """Fetch quarterly P&L rows from screener.in.
+    Returns all rows needed for Tier 1-4 institutional analysis."""
+    import requests
+    from bs4 import BeautifulSoup
+    for variant in ("consolidated", ""):
+        url = f"https://www.screener.in/company/{symbol}/{variant}/".rstrip("/") + "/"
+        try:
+            resp = requests.get(url, headers=_RES_HEADERS, timeout=15)
+        except Exception:
+            continue
+        if resp.status_code != 200: continue
+        soup = BeautifulSoup(resp.text, "lxml")
+        section = soup.find("section", {"id": "quarters"})
+        if not section: continue
+        table = section.find("table")
+        if not table: continue
+        headers_row = table.find("thead").find_all("th")
+        quarter_labels = [th.get_text(strip=True) for th in headers_row[1:]]
+        rows = {}
+        for tr in table.find("tbody").find_all("tr"):
+            cells = tr.find_all("td")
+            if not cells: continue
+            label = cells[0].get_text(strip=True).replace("+", "").strip()
+            values = [_clean_res_num(td.get_text(strip=True)) for td in cells[1:]]
+            rows[label] = values
+        sales_row    = rows.get("Sales") or rows.get("Revenue") or rows.get("Sales ")
+        profit_row   = rows.get("Net Profit") or rows.get("Net Profit ")
+        opm_row      = (rows.get("OPM %") or rows.get("OPM%")
+                        or rows.get("EBITDA %") or rows.get("EBITDA Margin")
+                        or rows.get("Operating Profit Margin") or rows.get("Operating Margin %")
+                        or rows.get("EBITDA Margin %") or rows.get("Operating Profit Margin (%)"))
+        if not sales_row or not profit_row: continue
+        # Extended rows for Tier 3 & 4
+        other_income_row  = (rows.get("Other Income") or rows.get("Other Income ")
+                             or rows.get("Other income"))
+        finance_cost_row  = (rows.get("Finance Cost") or rows.get("Finance Costs")
+                             or rows.get("Interest") or rows.get("Interest Expense"))
+        depreciation_row  = (rows.get("Depreciation") or rows.get("Depreciation ")
+                             or rows.get("Depreciation & Amortization")
+                             or rows.get("D&A"))
+        # EPS: try diluted first, then basic
+        eps_row = (rows.get("EPS in Rs") or rows.get("EPS") or rows.get("Diluted EPS")
+                   or rows.get("Basic EPS") or rows.get("EPS (Rs)"))
+        # Exceptional Items (Tier 3 quality filter)
+        exceptional_row = (rows.get("Exceptional Items") or rows.get("Exceptional Item")
+                           or rows.get("Extraordinary Items") or rows.get("Extra-Ordinary Items")
+                           or rows.get("Exceptional items"))
+        return {
+            "url": url,
+            "quarter_labels":  quarter_labels,
+            "sales":           sales_row,
+            "net_profit":      profit_row,
+            "opm":             opm_row,
+            "other_income":    other_income_row,
+            "finance_cost":    finance_cost_row,
+            "depreciation":    depreciation_row,
+            "eps":             eps_row,
+            "exceptional_items": exceptional_row,
+        }
+    return None
+
+# ── Trendlyne consensus estimate helpers ─────────────────────────────────────
+
+_TL_HEADERS = {
+    "User-Agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+    "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+    "Accept-Language": "en-US,en;q=0.5",
+    "Referer": "https://trendlyne.com/",
+}
+
+# Seed Trendlyne ID cache once at startup — background thread, non-blocking
+threading.Thread(target=_seed_trendlyne_from_sitemap, daemon=True, name="tl-seed").start()
+
+
+def _tl_cache_id(symbol, tl_id, tl_slug):
+    """Persist Trendlyne ID resolution result to DB cache."""
+    try:
+        conn = sqlite3.connect(RES_DB_PATH)
+        conn.execute(
+            "INSERT OR REPLACE INTO trendlyne_id_cache VALUES (?,?,?,?)",
+            (symbol, tl_id, tl_slug, dt.now(datetime.timezone.utc).isoformat())
+        )
+        conn.commit()
+        conn.close()
+    except Exception as e:
+        logging.debug(f"[TL] Failed to cache ID for {symbol}: {e}")
+
+
+def _fetch_trendlyne_estimates(symbol):
+    """Fetch consensus PAT, Revenue, EPS from Trendlyne SSR HTML JSON blob.
+    Data is Capital IQ analyst pool, server-side rendered — no JS required.
+    Returns dict with est_pat_consensus, est_revenue_consensus, est_eps_consensus,
+    n_analysts, tl_quarter or None on failure."""
+    import requests, html as _html_mod, re as _re
+    tl_id, slug = _resolve_trendlyne_id(symbol)
+    if not tl_id:
+        logging.debug(f"[TL] {symbol}: no tl_id resolved")
+        return None
+    url = f"https://trendlyne.com/equity/consensus-estimates/{tl_id}/{symbol}/{slug}/"
+    try:
+        resp = requests.get(url, headers=_TL_HEADERS, timeout=15)
+    except Exception as e:
+        logging.warning(f"[TL] {symbol}: request failed: {type(e).__name__}: {e}")
+        return None
+    if resp.status_code != 200:
+        logging.warning(f"[TL] {symbol}: HTTP {resp.status_code}")
+        return None
+
+    try:
+        unescaped = _html_mod.unescape(resp.text)
+        start = unescaped.find('{"TARGET_PRICE"')
+        if start < 0:
+            logging.debug(f"[TL] {symbol}: TARGET_PRICE blob not found ({len(resp.text)}B)")
+            return None
+        # Walk to find matching closing brace
+        depth, end = 0, start
+        for i, c in enumerate(unescaped[start:start + 300000]):
+            if c == '{':   depth += 1
+            elif c == '}': depth -= 1
+            if depth == 0: end = start + i + 1; break
+        if end == start:
+            logging.debug(f"[TL] {symbol}: could not find closing brace")
+            return None
+        data = json.loads(unescaped[start:end])
+    except Exception as e:
+        logging.warning(f"[TL] {symbol}: JSON parse failed: {type(e).__name__}: {e}")
+        return None
+
+    def _pick_quarter(key):
+        """Return the current quarter dict, fallback to most-recent past."""
+        quarters = data.get(key, {}).get("QUARTER", [])
+        for q in quarters:
+            if q.get("is_current"):
+                return q
+        past = [q for q in quarters if q.get("is_past")]
+        return past[-1] if past else None
+
+    ni  = _pick_quarter("NET_INCOME")
+    rev = _pick_quarter("REVENUE")
+    eps = _pick_quarter("EPS")
+
+    if not ni:
+        logging.debug(f"[TL] {symbol}: NET_INCOME quarter not found (keys: {list(data.keys())})")
+        return None
+
+    def _median_or_avg(q):
+        return q.get("MEDIAN") or q.get("AVG")
+
+    return {
+        "est_pat_consensus":      round(_median_or_avg(ni), 2),
+        "est_revenue_consensus":  round(_median_or_avg(rev), 2) if rev else None,
+        "est_eps_consensus":      round(_median_or_avg(eps), 2) if eps else None,
+        "n_analysts":             int(ni.get("NUMBER_OF_ANALYSTS") or 0),
+        "tl_quarter":             ni.get("periodtype"),
+    }
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+
+def _analyze_res_quarterly(symbol, data, est_pat_consensus=None, guidance=None, n_analysts=0):
+    """4-Tier institutional scoring engine.
+
+    Tier 1 (primary sentiment drivers): OPM margin trajectory, PAT margin %
+    Tier 2 (core quality checks):       Revenue YoY, PAT YoY
+    Tier 3 (quality filter):            Other Income %, Finance Cost trend
+    Tier 4 (context, lower weight):     EPS, Depreciation
+    """
+    labels            = data["quarter_labels"]
+    sales             = data["sales"]
+    profit            = data["net_profit"]
+    opm               = data.get("opm")               or [None] * len(labels)
+    other_income      = data.get("other_income")      or [None] * len(labels)
+    finance_cost      = data.get("finance_cost")      or [None] * len(labels)
+    depreciation      = data.get("depreciation")      or [None] * len(labels)
+    eps_data          = data.get("eps")               or [None] * len(labels)
+    exceptional_items = data.get("exceptional_items") or [None] * len(labels)
+
+    n = len(labels)
+    if n < 5:
+        return {"verdict": "Insufficient Data", "reasons": ["Not enough quarters returned"]}
+
+    latest_q = labels[-1]
+
+    # --- Raw values (latest, prior quarter, year-ago) ---
+    curr_sales,  prev_q_sales,  yoy_sales  = sales[-1],             sales[-2],             sales[-5]
+    curr_profit, prev_q_profit, yoy_profit = profit[-1],            profit[-2],            profit[-5]
+    curr_opm,    prev_q_opm,    yoy_opm    = opm[-1],               opm[-2],               opm[-5]
+    curr_oi,     yoy_oi                    = other_income[-1],       other_income[-5]
+    curr_fc,     yoy_fc                    = finance_cost[-1],       finance_cost[-5]
+    curr_dep                               = depreciation[-1]
+    curr_eps,    yoy_eps                   = eps_data[-1],           eps_data[-5]
+    curr_exc                               = exceptional_items[-1]
+
+    # --- Derived metrics ---
+    rev_yoy       = _res_pct_change(curr_sales,  yoy_sales)
+    rev_qoq       = _res_pct_change(curr_sales,  prev_q_sales)
+    profit_yoy    = _res_pct_change(curr_profit, yoy_profit)
+    profit_qoq    = _res_pct_change(curr_profit, prev_q_profit)
+    opm_yoy_delta = round(curr_opm - yoy_opm, 2)     if (curr_opm    is not None and yoy_opm    is not None) else None
+    opm_qoq_delta = round(curr_opm - prev_q_opm, 2)  if (curr_opm    is not None and prev_q_opm is not None) else None
+    eps_yoy       = _res_pct_change(curr_eps,    yoy_eps)
+    fc_yoy        = _res_pct_change(curr_fc,     yoy_fc)
+
+    # PAT margin % = net_profit / sales * 100
+    pat_margin     = round((curr_profit / curr_sales) * 100, 2) if (curr_profit is not None and curr_sales and curr_sales != 0) else None
+    yoy_pat_margin = round((yoy_profit  / yoy_sales)  * 100, 2) if (yoy_profit  is not None and yoy_sales  and yoy_sales  != 0) else None
+    pat_margin_yoy = round(pat_margin - yoy_pat_margin, 2)       if (pat_margin is not None and yoy_pat_margin is not None) else None
+
+    # Other Income as % of revenue
+    total_income     = (curr_sales or 0) + (curr_oi or 0)
+    other_income_pct = round((curr_oi / total_income) * 100, 2) if (curr_oi is not None and total_income > 0) else None
+
+    # Normalized PAT: strip Other Income + Exceptional Items (institutional standard)
+    normalized_pat = curr_profit
+    if normalized_pat is not None:
+        if curr_oi  is not None: normalized_pat -= curr_oi
+        if curr_exc is not None: normalized_pat -= curr_exc
+        normalized_pat = round(normalized_pat, 2)
+
+    # Interest Coverage Ratio: EBITDA / Finance Cost
+    icr = None
+    if curr_opm is not None and curr_sales and curr_fc and curr_fc > 0:
+        ebitda_approx = curr_sales * (curr_opm / 100)
+        icr = round(ebitda_approx / curr_fc, 1)
+
+    # ── Scoring ──────────────────────────────────────────────────────────────
+    reasons       = []   # human-readable, shown in UI
+    quality_flags = []   # ⚠ warnings for low-quality beats
+    score         = 0
+
+    # TIER 1A — OPM/EBITDA Margin trajectory (highest institutional weight)
+    if opm_yoy_delta is not None:
+        if opm_yoy_delta >= 2:
+            score += 3; reasons.append(f"[T1] EBITDA margin expanded strongly YoY (+{opm_yoy_delta} pts)")
+        elif opm_yoy_delta >= 0.5:
+            score += 2; reasons.append(f"[T1] EBITDA margin expanded YoY (+{opm_yoy_delta} pts)")
+        elif opm_yoy_delta >= -0.5:
+            reasons.append(f"[T1] EBITDA margin flat YoY ({opm_yoy_delta:+.1f} pts)")
+        elif opm_yoy_delta >= -2:
+            score -= 2; reasons.append(f"[T1] EBITDA margin contracted YoY ({opm_yoy_delta} pts)")
+        else:
+            score -= 3; reasons.append(f"[T1] EBITDA margin compressed significantly YoY ({opm_yoy_delta} pts)")
+
+    # TIER 1B — PAT Margin trajectory
+    if pat_margin_yoy is not None:
+        if pat_margin_yoy >= 1.5:
+            score += 2; reasons.append(f"[T1] PAT margin expanded YoY (+{pat_margin_yoy} pts \u2192 {pat_margin}%)")
+        elif pat_margin_yoy <= -1.5:
+            score -= 2; reasons.append(f"[T1] PAT margin compressed YoY ({pat_margin_yoy} pts \u2192 {pat_margin}%)")
+        else:
+            reasons.append(f"[T1] PAT margin broadly stable ({pat_margin}%, \u0394{pat_margin_yoy:+.1f} pts)")
+
+    # TIER 1C — Beat/Miss vs consensus (highest institutional signal)
+    if est_pat_consensus and curr_profit:
+        beat_pct = (curr_profit - est_pat_consensus) / abs(est_pat_consensus) * 100
+        analyst_tag = f"{n_analysts}-analyst consensus" if n_analysts else "consensus"
+        if   beat_pct >  10: score += 3; reasons.append(f"[T1] Strong PAT beat (+{beat_pct:.1f}% vs {analyst_tag})")
+        elif beat_pct >   3: score += 2; reasons.append(f"[T1] PAT beat (+{beat_pct:.1f}% vs {analyst_tag})")
+        elif beat_pct >  -3: pass;       reasons.append(f"[T1] PAT in-line with {analyst_tag} ({beat_pct:+.1f}%)")
+        elif beat_pct > -10: score -= 2; reasons.append(f"[T1] PAT miss ({beat_pct:.1f}% vs {analyst_tag})")
+        else:                score -= 3; reasons.append(f"[T1] Strong PAT miss ({beat_pct:.1f}% vs {analyst_tag})")
+
+    # TIER 1D — Management guidance revision
+    if guidance == "CUT":
+        score -= 2
+        reasons.append("[T1] Mgmt guidance cut \u2014 forward model downgrade risk")
+    elif guidance == "UP":
+        score += 2
+        reasons.append("[T1] Mgmt guidance raised \u2014 earnings upgrade cycle")
+
+    # TIER 2A — Revenue YoY (preferred over QoQ — strips seasonality)
+    if rev_yoy is not None:
+        if rev_yoy >= 15:
+            score += 2; reasons.append(f"[T2] Strong revenue growth YoY (+{rev_yoy}%)")
+        elif rev_yoy >= 5:
+            score += 1; reasons.append(f"[T2] Moderate revenue growth YoY (+{rev_yoy}%)")
+        elif rev_yoy >= 0:
+            reasons.append(f"[T2] Flat revenue YoY ({rev_yoy}%)")
+        else:
+            score -= 2; reasons.append(f"[T2] Revenue declined YoY ({rev_yoy}%)")
+
+    # TIER 2B — PAT YoY (cross-checked against Other Income before trusting)
+    if profit_yoy is not None:
+        if profit_yoy >= 20:
+            score += 2; reasons.append(f"[T2] Strong PAT growth YoY (+{profit_yoy}%)")
+        elif profit_yoy >= 5:
+            score += 1; reasons.append(f"[T2] Moderate PAT growth YoY (+{profit_yoy}%)")
+        elif profit_yoy >= 0:
+            reasons.append(f"[T2] Flat PAT YoY ({profit_yoy}%)")
+        else:
+            score -= 2; reasons.append(f"[T2] PAT declined YoY ({profit_yoy}%)")
+
+    # TIER 3A — Other Income quality filter
+    if other_income_pct is not None:
+        if other_income_pct > 20:
+            score -= 1
+            quality_flags.append(f"\u26a0 Other Income is {other_income_pct}% of revenue \u2014 PAT quality suspect")
+            reasons.append(f"[T3] High other income ({other_income_pct}% of revenue) \u2014 normalized PAT may be lower")
+        elif other_income_pct > 10:
+            quality_flags.append(f"\u26a0 Other Income elevated ({other_income_pct}% of revenue) \u2014 check for one-off gains")
+            reasons.append(f"[T3] Elevated other income ({other_income_pct}% of revenue)")
+
+    # TIER 3B — Finance Cost trend
+    if fc_yoy is not None:
+        if fc_yoy > 20 and profit_yoy is not None and profit_yoy > 0:
+            quality_flags.append(f"\u26a0 Finance cost rising sharply YoY (+{fc_yoy}%) despite PAT growth \u2014 check interest coverage")
+            reasons.append(f"[T3] Finance cost up {fc_yoy}% YoY \u2014 rising leverage eating into PAT")
+            score -= 1
+        elif fc_yoy > 10:
+            reasons.append(f"[T3] Finance cost up {fc_yoy}% YoY \u2014 monitor leverage")
+        elif fc_yoy < -5:
+            reasons.append(f"[T3] Finance cost reduced YoY ({fc_yoy}%) \u2014 deleveraging positive")
+            score += 1
+
+    # TIER 3C — Interest Coverage Ratio
+    if icr is not None:
+        if   icr < 1.5: score -= 2; quality_flags.append(f"\u26a0 ICR critically low ({icr}x) \u2014 debt servicing risk")
+        elif icr < 3.0: score -= 1; quality_flags.append(f"\u26a0 ICR below comfortable range ({icr}x) \u2014 monitor leverage")
+        elif icr > 8.0: score += 1; reasons.append(f"[T3] Strong interest coverage ({icr}x)")
+
+    # TIER 3D — Exceptional Items flag
+    if curr_exc is not None and curr_profit and abs(curr_exc) > abs(curr_profit) * 0.1:
+        quality_flags.append(f"\u26a0 Exceptional item Rs.{curr_exc} Cr \u2014 normalized PAT differs from reported")
+        reasons.append(f"[T3] Exceptional item of Rs.{curr_exc} Cr \u2014 check normalized PAT")
+
+    # TIER 4 — EPS (display only, derived \u2014 no separate scoring weight)
+    if eps_yoy is not None:
+        reasons.append(f"[T4] EPS YoY: {eps_yoy:+.1f}% (\u20b9{curr_eps})")
+
+    # ── Verdict ──────────────────────────────────────────────────────────────
+    if   score >= 5:   verdict = "Strong Positive"
+    elif score >= 2:   verdict = "Positive"
+    elif score == 1:   verdict = "Positive"
+    elif score == 0:   verdict = "Neutral"
+    elif score >= -2:  verdict = "Negative"
+    else:              verdict = "Strong Negative"
+
+    return {
+        "quarter_label":          latest_q,
+        # Tier 1
+        "opm":                    curr_opm,
+        "opm_yoy_delta":          opm_yoy_delta,
+        "opm_qoq_delta":          opm_qoq_delta,
+        "pat_margin":             pat_margin,
+        "pat_margin_yoy":         pat_margin_yoy,
+        "est_pat_consensus":      est_pat_consensus,
+        "est_revenue_consensus":  None,  # filled by analyze loop
+        "est_eps_consensus":      None,  # filled by analyze loop
+        "n_analysts":             n_analysts,
+        # Tier 2
+        "revenue":                curr_sales,
+        "revenue_yoy":            rev_yoy,
+        "revenue_qoq":            rev_qoq,
+        "net_profit":             curr_profit,
+        "profit_yoy":             profit_yoy,
+        "profit_qoq":             profit_qoq,
+        # Tier 3
+        "other_income":           curr_oi,
+        "other_income_pct":       other_income_pct,
+        "finance_cost":           curr_fc,
+        "finance_cost_yoy":       fc_yoy,
+        "exceptional_items":      curr_exc,
+        "normalized_pat":         normalized_pat,
+        "icr":                    icr,
+        # Tier 4
+        "eps":                    curr_eps,
+        "eps_yoy":                eps_yoy,
+        "depreciation":           curr_dep,
+        # Verdict
+        "verdict":                verdict,
+        "reasons":                reasons,
+        "quality_flags":          quality_flags,
+    }
+
+def _save_res_cache(symbol, result, status="ok"):
+    conn = sqlite3.connect(RES_DB_PATH)
+    conn.execute("""
+        INSERT INTO results_cache
+        (symbol, quarter_label, revenue, revenue_yoy, revenue_qoq, net_profit,
+         profit_yoy, profit_qoq, opm, opm_yoy_delta, opm_qoq_delta,
+         pat_margin, pat_margin_yoy,
+         other_income, other_income_pct, finance_cost, finance_cost_yoy,
+         eps, eps_yoy, depreciation,
+         exceptional_items, normalized_pat, icr,
+         est_pat_consensus, est_revenue_consensus, est_eps_consensus, n_analysts,
+         verdict, reasons, quality_flags, fetched_at, raw_status)
+        VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)
+        ON CONFLICT(symbol) DO UPDATE SET
+            quarter_label=excluded.quarter_label,
+            revenue=excluded.revenue, revenue_yoy=excluded.revenue_yoy, revenue_qoq=excluded.revenue_qoq,
+            net_profit=excluded.net_profit, profit_yoy=excluded.profit_yoy, profit_qoq=excluded.profit_qoq,
+            opm=excluded.opm, opm_yoy_delta=excluded.opm_yoy_delta, opm_qoq_delta=excluded.opm_qoq_delta,
+            pat_margin=excluded.pat_margin, pat_margin_yoy=excluded.pat_margin_yoy,
+            other_income=excluded.other_income, other_income_pct=excluded.other_income_pct,
+            finance_cost=excluded.finance_cost, finance_cost_yoy=excluded.finance_cost_yoy,
+            eps=excluded.eps, eps_yoy=excluded.eps_yoy, depreciation=excluded.depreciation,
+            exceptional_items=excluded.exceptional_items,
+            normalized_pat=excluded.normalized_pat, icr=excluded.icr,
+            est_pat_consensus=excluded.est_pat_consensus,
+            est_revenue_consensus=excluded.est_revenue_consensus,
+            est_eps_consensus=excluded.est_eps_consensus,
+            n_analysts=excluded.n_analysts,
+            verdict=excluded.verdict, reasons=excluded.reasons, quality_flags=excluded.quality_flags,
+            fetched_at=excluded.fetched_at, raw_status=excluded.raw_status
+    """, (
+        symbol,
+        result.get("quarter_label"),
+        result.get("revenue"),             result.get("revenue_yoy"),    result.get("revenue_qoq"),
+        result.get("net_profit"),          result.get("profit_yoy"),     result.get("profit_qoq"),
+        result.get("opm"),                 result.get("opm_yoy_delta"),  result.get("opm_qoq_delta"),
+        result.get("pat_margin"),          result.get("pat_margin_yoy"),
+        result.get("other_income"),        result.get("other_income_pct"),
+        result.get("finance_cost"),        result.get("finance_cost_yoy"),
+        result.get("eps"),                 result.get("eps_yoy"),
+        result.get("depreciation"),
+        result.get("exceptional_items"),   result.get("normalized_pat"),  result.get("icr"),
+        result.get("est_pat_consensus"),   result.get("est_revenue_consensus"),
+        result.get("est_eps_consensus"),   result.get("n_analysts"),
+        result.get("verdict"),
+        json.dumps(result.get("reasons", [])),
+        json.dumps(result.get("quality_flags", [])),
+        dt.now(datetime.timezone.utc).isoformat(),
+        status
+    ))
+    conn.commit()
+    conn.close()
+
+def _get_res_cached(symbol, max_age_hours=6):
+    conn = sqlite3.connect(RES_DB_PATH)
+    cur = conn.execute("SELECT * FROM results_cache WHERE symbol=?", (symbol,))
+    row = cur.fetchone()
+    conn.close()
+    if not row: return None
+    # Use cursor.description for reliable column mapping regardless of schema version
+    cols = [desc[0] for desc in cur.description]
+    d = dict(zip(cols, row))
+    fetched_str = d.get("fetched_at")
+    if not fetched_str:
+        return None  # corrupt/old row — force live re-fetch
+    fetched   = dt.fromisoformat(fetched_str)
+    age_hours = (dt.now(datetime.timezone.utc) - fetched).total_seconds() / 3600
+    d["reasons"]       = json.loads(d["reasons"])       if d.get("reasons")       else []
+    d["quality_flags"] = json.loads(d["quality_flags"]) if d.get("quality_flags") else []
+    d["age_hours"]     = round(age_hours, 1)
+    d["stale"]         = age_hours > max_age_hours
+    return d
+
+def _get_res_annotation(symbol):
+    """Return user-entered est_pat and guidance from results_annotations."""
+    conn = sqlite3.connect(RES_DB_PATH)
+    row = conn.execute(
+        "SELECT est_pat, guidance FROM results_annotations WHERE symbol=?", (symbol,)
+    ).fetchone()
+    conn.close()
+    if not row: return {"est_pat": None, "guidance": None}
+    return {"est_pat": row[0], "guidance": row[1]}
+
+@app.route('/fno-res-analyzer')
+def fno_res_analyzer_page():
+    return send_from_directory(static_root, 'fno-res-analyzer.html')
+
+@app.route("/api/fno-symbols")
+def api_fno_symbols():
+    return jsonify(sorted(_FNO_RES_SYMBOLS))
+
+@app.route("/api/res-annotate", methods=["POST"])
+def api_res_annotate():
+    """Save user-entered Est. PAT and/or Guidance for a symbol."""
+    body   = request.get_json(force=True) or {}
+    symbol = (body.get("symbol") or "").strip().upper()
+    if not symbol:
+        return jsonify({"error": "symbol required"}), 400
+    est_pat  = body.get("est_pat")   # numeric or None
+    guidance = body.get("guidance")  # 'UP' | 'FLAT' | 'CUT' | None
+    conn = sqlite3.connect(RES_DB_PATH)
+    # Partial UPSERT: COALESCE preserves existing value when caller sends null
+    conn.execute("""
+        INSERT INTO results_annotations (symbol, est_pat, guidance, updated_at)
+        VALUES (?, ?, ?, ?)
+        ON CONFLICT(symbol) DO UPDATE SET
+            est_pat    = COALESCE(excluded.est_pat,  est_pat),
+            guidance   = COALESCE(excluded.guidance, guidance),
+            updated_at = excluded.updated_at
+    """, (symbol, est_pat, guidance, dt.now(datetime.timezone.utc).isoformat()))
+    conn.commit()
+    conn.close()
+    return jsonify({"ok": True, "symbol": symbol})
+
+# Quarter-code → (month_prefix, year_offset) mapping
+# Q1 FYxx = Jun of (xx-1), Q2 = Sep of (xx-1), Q3 = Dec of (xx-1), Q4 = Mar of xx
+_RES_Q_MAP = {
+    "Q1": ("Jun", -1),
+    "Q2": ("Sep", -1),
+    "Q3": ("Dec", -1),
+    "Q4": ("Mar",  0),
+}
+
+@app.route("/api/res-lookup", methods=["GET"])
+def api_res_lookup():
+    """Pure DB lookup — no live fetch.
+    Params: symbol, q (Q1/Q2/Q3/Q4), fy (2-digit, e.g. 26)
+    Returns the cached row + annotation, or {found: false}.
+    """
+    symbol = (request.args.get("symbol") or "").strip().upper()
+    q_code = (request.args.get("q") or "").strip().upper()      # Q1..Q4
+    fy_raw = (request.args.get("fy") or "").strip()             # e.g. "26"
+
+    if not symbol or q_code not in _RES_Q_MAP or not fy_raw:
+        return jsonify({"found": False, "message": "Invalid parameters — provide symbol, q (Q1-Q4) and fy (e.g. 26)"}), 400
+
+    try:
+        fy = int(fy_raw)
+    except ValueError:
+        return jsonify({"found": False, "message": "fy must be a 2-digit number"}), 400
+
+    month_prefix, yr_offset = _RES_Q_MAP[q_code]
+    # Convert 2-digit FY to full calendar year of that quarter
+    full_fy = (2000 + fy) if fy < 100 else fy
+    cal_year = full_fy + yr_offset      # e.g. FY26 Q1 → Jun 2025
+
+    quarter_pattern = f"{month_prefix} {cal_year}%"   # e.g. "Jun 2025%"
+
+    conn = sqlite3.connect(RES_DB_PATH)
+    cols = [
+        "symbol", "quarter_label",
+        "revenue", "revenue_yoy", "revenue_qoq",
+        "net_profit", "profit_yoy", "profit_qoq",
+        "opm", "opm_yoy_delta", "opm_qoq_delta",
+        "pat_margin", "pat_margin_yoy",
+        "other_income", "other_income_pct",
+        "finance_cost", "finance_cost_yoy",
+        "eps", "eps_yoy", "depreciation",
+        "verdict", "reasons", "quality_flags",
+        "fetched_at", "raw_status",
+        "icr", "normalized_pat", "exceptional_items",
+        "est_pat_consensus", "est_revenue_consensus", "est_eps_consensus", "n_analysts"
+    ]
+    row = conn.execute(
+        f"SELECT {','.join(cols)} FROM results_cache WHERE symbol=? AND quarter_label LIKE ?",
+        (symbol, quarter_pattern)
+    ).fetchone()
+
+    ann = conn.execute(
+        "SELECT est_pat, guidance FROM results_annotations WHERE symbol=?",
+        (symbol,)
+    ).fetchone()
+    conn.close()
+
+    if row is None:
+        return jsonify({
+            "found": False,
+            "symbol": symbol,
+            "q_label": f"{q_code} FY{fy_raw}",
+            "message": f"{symbol} — {q_code} FY{fy_raw} not in DB. Run Analyze to fetch it."
+        })
+
+    d = dict(zip(cols, row))
+    d["reasons"]       = json.loads(d["reasons"])       if d["reasons"]       else []
+    d["quality_flags"] = json.loads(d["quality_flags"]) if d["quality_flags"] else []
+    d["found"]         = True
+    d["is_fno"]        = True
+    d["from_cache"]    = True
+    d["est_pat"]       = ann[0] if ann else None
+    d["guidance"]      = ann[1] if ann else None
+    return jsonify(d)
+
+@app.route("/api/analyze", methods=["POST"])
+def api_res_analyze():
+    body          = request.get_json(force=True) or {}
+    symbols       = [s.strip().upper() for s in body.get("symbols", []) if s.strip()]
+    force_refresh = body.get("force_refresh", False)
+    results       = []
+    for symbol in symbols:
+        if symbol not in _FNO_RES_SYMBOLS:
+            continue
+        is_fno = True
+        cached = None if force_refresh else _get_res_cached(symbol)
+        if cached and not cached["stale"]:
+            cached["is_fno"]     = is_fno
+            cached["from_cache"] = True
+            cached.update(_get_res_annotation(symbol))
+            results.append(cached)
+            continue
+        raw = _fetch_screener_quarterly(symbol)
+        if raw is None:
+            entry = {
+                "symbol": symbol, "is_fno": is_fno, "from_cache": False,
+                "verdict": "Fetch Failed",
+                "reasons": ["Could not retrieve data from screener.in — check symbol or connectivity"],
+                "quality_flags": [],
+                "quarter_label": None,
+                "fetched_at": dt.now(datetime.timezone.utc).isoformat(),
+            }
+            _save_res_cache(symbol, entry, status="failed")
+            entry.update(_get_res_annotation(symbol))
+            results.append(entry)
+            time.sleep(0.5)
+            continue
+        # Get annotation (user's manual est_pat + guidance) before scoring
+        annotation   = _get_res_annotation(symbol)
+        user_est_pat = annotation.get("est_pat")
+        guidance     = annotation.get("guidance")
+        # Fetch Trendlyne consensus estimates (graceful on failure)
+        tl_est = None
+        try:
+            tl_est = _fetch_trendlyne_estimates(symbol)
+        except Exception as _te:
+            logging.debug(f"[TL] Non-fatal error for {symbol}: {type(_te).__name__}: {_te}")
+        est_pat_consensus     = tl_est.get("est_pat_consensus")     if tl_est else None
+        est_revenue_consensus = tl_est.get("est_revenue_consensus") if tl_est else None
+        est_eps_consensus     = tl_est.get("est_eps_consensus")     if tl_est else None
+        n_analysts            = tl_est.get("n_analysts", 0)         if tl_est else 0
+        # Manual user entry always wins over Trendlyne auto for Beat/Miss scoring
+        effective_est_pat = user_est_pat if user_est_pat is not None else est_pat_consensus
+        analyzed = _analyze_res_quarterly(
+            symbol, raw,
+            est_pat_consensus=effective_est_pat,
+            guidance=guidance,
+            n_analysts=n_analysts,
+        )
+        # Merge Trendlyne estimates into result for frontend display
+        analyzed["est_pat_consensus"]     = est_pat_consensus
+        analyzed["est_revenue_consensus"] = est_revenue_consensus
+        analyzed["est_eps_consensus"]     = est_eps_consensus
+        analyzed["n_analysts"]            = n_analysts
+        analyzed["tl_source"]             = True if tl_est else False
+        analyzed["symbol"]     = symbol
+        analyzed["is_fno"]     = is_fno
+        analyzed["from_cache"] = False
+        _save_res_cache(symbol, analyzed, status="ok")
+        analyzed.update(annotation)
+        results.append(analyzed)
+        time.sleep(0.5)
+    return jsonify(results)
+
+
 # ── Futures Buildup Board ──────────────────────────────────────────────────────
 _fut_buildup_cache = {"data": None, "ts": 0.0}
 _fut_buildup_lock  = threading.Lock()
+
+# CE SC above ATM signal cache — populated from _spurt_history or background get_option_chain()
+_chain_signal_cache   = {}                       # {symbol: {"date": str, "ce_sc_above_atm": bool, "ts": float}}
+_chain_signal_lock    = threading.Lock()
+_chain_signal_pending = set()                    # symbols with a bg thread in flight (prevents duplicates)
+_chain_signal_sem     = threading.Semaphore(3)   # max 3 concurrent get_option_chain() calls
 
 # Static cap categorization — Nifty 50 = Large, Nifty Midcap 150 F&O = Mid, rest = Small
 _CAP_CATEGORY = {
@@ -10238,19 +11227,114 @@ _CAP_CATEGORY = {
 }
 
 def _classify_fut_buildup(oi_chg_pct: float, price_chg_pct: float) -> str:
-    """Classify futures position buildup from OI% change and price% change."""
-    if abs(oi_chg_pct) < 1.0:
+    """Classify futures position buildup from OI% change and price% change.
+
+    Enhanced Option B+ logic:
+    - True Flat requires BOTH OI and price to be below their noise floors.
+    - If either signal is meaningful, classify by direction.
+    - When OI is silent but price moves, still classify by price direction
+      (covers early-session cold-start where oi_day_low ≈ curr_oi).
+
+    Noise floors (anchored to market reality):
+      PRICE_NOISE_FLOOR = 0.10%  — below this, price move is random tick noise
+      OI_NOISE_FLOOR    = 0.05%  — below this, OI move is sub-lot rounding noise
+    """
+    PRICE_NOISE_FLOOR = 0.10   # %
+    OI_NOISE_FLOOR    = 0.05   # %
+
+    price_meaningful = abs(price_chg_pct) >= PRICE_NOISE_FLOOR
+    oi_meaningful    = abs(oi_chg_pct)    >= OI_NOISE_FLOOR
+
+    # True Flat: neither OI nor price is moving meaningfully
+    if not price_meaningful and not oi_meaningful:
         return "Flat"
-    oi_up    = oi_chg_pct > 0
+
+    oi_up    = oi_chg_pct   > 0
     price_up = price_chg_pct > 0
-    if oi_up and price_up:
-        return "Long Buildup"
-    elif oi_up and not price_up:
-        return "Short Buildup"
-    elif not oi_up and not price_up:
+
+    if oi_meaningful:
+        # Classical 4-way matrix — both signals present
+        if oi_up and price_up:     return "Long Buildup"
+        if oi_up and not price_up: return "Short Buildup"
+        if not oi_up and price_up: return "Short Covering"
         return "Long Unwinding"
     else:
-        return "Short Covering"
+        # OI silent but price is meaningful — price-direction-only signal.
+        # Covers early-session where oi_day_low baseline hasn't diverged yet.
+        return "Short Covering" if price_up else "Long Unwinding"
+
+
+def _get_ce_sc_above_atm(symbol, spot_ltp, kite):
+    """Return True if any CE strike at or above ATM shows Short Covering (OI down).
+    Primary:  reads _spurt_history ticks already populated by the OI scanner — zero Kite calls.
+    Fallback: spawns a background thread (semaphore-capped, duplicate-guarded) that calls
+              get_option_chain() — same underlying function as /api/oi/symbol/<sym>.
+    Returns True/False (from cache) or None (not yet computed; no highlight this cycle).
+    """
+    today_str = datetime.date.today().isoformat()
+
+    # ─ 1: Serve from cache if fresh (5-min TTL, same day) ─────────────────────────
+    with _chain_signal_lock:
+        cached = _chain_signal_cache.get(symbol)
+    if cached and cached["date"] == today_str and time.time() - cached["ts"] < 300:
+        return cached["ce_sc_above_atm"]
+
+    # ─ 2: Primary — _spurt_history ticks (zero Kite calls) ──────────────────────
+    try:
+        from oi_spurt_routes import _spurt_history, _spurt_lock
+        with _spurt_lock:
+            ticks = list(_spurt_history.get(symbol, []))
+        if len(ticks) >= 2:
+            t_cur = ticks[-1]
+            t_prv = ticks[-2]
+            strikes_list = [s for s in t_cur.get("strikes", {}) if isinstance(s, (int, float))]
+            if strikes_list and spot_ltp > 0:
+                atm_strike = min(strikes_list, key=lambda s: abs(s - spot_ltp))
+                ce_sc = any(
+                    strike >= atm_strike
+                    and (t_cur["strikes"][strike].get("ce_oi", 0) - t_prv["strikes"].get(strike, {}).get("ce_oi", 0)) < 0
+                    and t_cur["strikes"][strike].get("ce_ltp", 0) >= t_prv["strikes"].get(strike, {}).get("ce_ltp", 0) * 0.99
+                    for strike in strikes_list
+                )
+                with _chain_signal_lock:
+                    _chain_signal_cache[symbol] = {"date": today_str, "ce_sc_above_atm": ce_sc, "ts": time.time()}
+                return ce_sc
+    except Exception:
+        pass
+
+    # ─ 3: Fallback — background get_option_chain() (semaphore-capped + duplicate-guarded) ─
+    with _chain_signal_lock:
+        if symbol in _chain_signal_pending:
+            return None   # already in flight
+        _chain_signal_pending.add(symbol)
+
+    def _bg():
+        try:
+            with _chain_signal_sem:          # max 3 concurrent Kite option-chain calls
+                from oi_spurt_routes import get_option_chain
+                chain, *_ = get_option_chain(kite, symbol)
+                if chain and spot_ltp > 0:
+                    atm_idx = min(range(len(chain)), key=lambda i: abs(chain[i]["strike"] - spot_ltp))
+                    atm_strike = chain[atm_idx]["strike"]
+
+                    ce_sc = any(
+                        r["strike"] >= atm_strike
+                        and r.get("ce_oi_chg", 0) < 0
+                        and (r.get("ce_ltp", 0) >= r.get("ce_prev_ltp", 0) * 0.99 or r.get("ce_prev_ltp", 0) == 0)
+                        for r in chain
+                    )
+                else:
+                    ce_sc = False
+                with _chain_signal_lock:
+                    _chain_signal_cache[symbol] = {"date": today_str, "ce_sc_above_atm": ce_sc, "ts": time.time()}
+        except Exception as e:
+            logging.debug(f"[ChainSignal] {symbol}: {e}")
+        finally:
+            with _chain_signal_lock:
+                _chain_signal_pending.discard(symbol)
+
+    threading.Thread(target=_bg, daemon=True).start()
+    return None   # not yet computed; row rendered without highlight this cycle
 
 
 @app.route("/api/futures-buildup")
@@ -10261,11 +11345,18 @@ def futures_buildup_board():
     """
     import time as _time
 
-    # Serve from cache if fresh
+    # Serve from cache if fresh (dynamically enrich any newly ready chain signals)
     with _fut_buildup_lock:
         cached = _fut_buildup_cache.get("data")
         age    = _time.time() - _fut_buildup_cache.get("ts", 0.0)
         if cached is not None and age < 60:
+            today_str = datetime.date.today().isoformat()
+            with _chain_signal_lock:
+                for s in cached.get("stocks", []):
+                    if s.get("buildup") in ("Short Covering", "Long Buildup") and s.get("ce_sc_above_atm") is None:
+                        sig = _chain_signal_cache.get(s["symbol"])
+                        if sig and sig["date"] == today_str:
+                            s["ce_sc_above_atm"] = sig["ce_sc_above_atm"]
             return jsonify(cached)
 
     kite = get_kite()
@@ -10340,6 +11431,28 @@ def futures_buildup_board():
         except Exception:
             _cpr_available = False
 
+        # ── EOD OI baseline infrastructure (reuses option chain SQLite cache) ──
+        # Provides true previous-day closing OI so oi_chg_pct can be negative,
+        # enabling Short Covering and Long Unwinding to be populated correctly.
+        today_str      = today.isoformat()
+        _eod_bl_ok     = False
+        _get_cached_bl = None
+        try:
+            from oi_spurt_routes import (
+                get_cached_baseline as _get_cached_bl,
+                _baseline_queue, _baseline_seq,
+                _pending_baselines, _baseline_lock,
+                _baseline_worker,
+            )
+            import oi_spurt_routes as _oir
+            _eod_bl_ok = True
+            # Ensure background worker thread is alive to populate cache
+            if _oir._worker_thread is None or not _oir._worker_thread.is_alive():
+                _oir._worker_thread = threading.Thread(target=_baseline_worker, daemon=True)
+                _oir._worker_thread.start()
+        except Exception:
+            pass
+
         # ── Classify each symbol ──────────────────────────────────────────────
         stocks = []
         for symbol, fut_key in symbol_to_fut_key.items():
@@ -10348,11 +11461,29 @@ def futures_buildup_board():
                 continue
 
             curr_oi       = int(fq.get("oi") or 0)
-            prev_oi       = int(fq.get("oi_day_low") or 0)
             fut_ltp       = float(fq.get("last_price") or 0)
             fut_prev_cls  = float((fq.get("ohlc") or {}).get("close") or fut_ltp or 1)
             fut_price_chg = ((fut_ltp - fut_prev_cls) / fut_prev_cls * 100) if fut_prev_cls else 0.0
-            oi_chg_pct    = ((curr_oi - prev_oi) / prev_oi * 100) if prev_oi > 0 else 0.0
+
+            # True previous-day EOD OI from SQLite cache (same infra as option chain).
+            # Background worker populates cache; falls back to oi_day_low temporarily.
+            prev_oi = None
+            if _eod_bl_ok and curr_oi > 0:
+                fut_inst = fut_map.get(symbol, {})
+                fut_ts   = fut_inst.get("tradingsymbol", "")
+                fut_tok  = fut_inst.get("instrument_token")
+                if fut_ts:
+                    prev_oi = _get_cached_bl(today_str, fut_ts)
+                    if prev_oi is None and fut_tok:
+                        key = (today_str, fut_ts)
+                        with _baseline_lock:
+                            if key not in _pending_baselines:
+                                _pending_baselines.add(key)
+                                _baseline_queue.put((1, next(_baseline_seq), kite, today_str, int(fut_tok), fut_ts, curr_oi))
+            if prev_oi is None or prev_oi == 0:
+                prev_oi = int(fq.get("oi_day_low") or curr_oi)  # fallback until cache warms
+
+            oi_chg_pct = ((curr_oi - prev_oi) / prev_oi * 100) if prev_oi > 0 else 0.0
 
             # Spot
             sq            = spot_quotes.get(symbol_to_spot_key.get(symbol, "")) or {}
@@ -10401,9 +11532,18 @@ def futures_buildup_board():
 
             # CPR Pivots (TC, Pivot, BC) — Top/Bottom flags
             cpr_flags = None
+            open_vs_pdh_pdl = "inside"
+            pdh_val = None
+            pdl_val = None
             if _cpr_available:
                 cpr_info = get_cpr_pivots(symbol)
                 if cpr_info:
+                    pdh_val = cpr_info.get("pdh")
+                    pdl_val = cpr_info.get("pdl")
+                    if spot_open > 0 and pdh_val and pdh_val > 0 and spot_open > pdh_val:
+                        open_vs_pdh_pdl = "above_pdh"
+                    elif spot_open > 0 and pdl_val and pdl_val > 0 and spot_open < pdl_val:
+                        open_vs_pdh_pdl = "below_pdl"
                     cpr_flags = compute_cpr_flags(
                         spot_open=spot_open,
                         spot_ltp=spot_ltp,
@@ -10415,20 +11555,30 @@ def futures_buildup_board():
             buildup = _classify_fut_buildup(oi_chg_pct, fut_price_chg)
             cap     = _CAP_CATEGORY.get(symbol.upper(), "Small Cap")
 
+            # CE SC above ATM — only computed for SC/LB rows (others skipped for performance)
+            ce_sc_above_atm = None
+            if buildup in ("Short Covering", "Long Buildup"):
+                ce_sc_above_atm = _get_ce_sc_above_atm(symbol, spot_ltp, kite)
+
             stocks.append({
-                "symbol":       symbol,
-                "ltp":          round(spot_ltp, 2),
-                "spot_chg_pct": round(spot_chg_pct, 2),
-                "buildup":      buildup,
-                "cap":          cap,
-                "oi_chg_pct":   round(oi_chg_pct, 2),
-                "gap_pct":      gap_pct,
-                "rvol":         rvol,
-                "linearity":    linearity,
-                "fh_spurt":     fh_spurt,
-                "fh_cumul":     fh_cumul,
-                "fh_tag":       fh_tag,
-                "cpr":          cpr_flags,
+                "symbol":          symbol,
+                "ltp":             round(spot_ltp, 2),
+                "spot_chg_pct":    round(spot_chg_pct, 2),
+                "buildup":         buildup,
+                "cap":             cap,
+                "oi_chg_pct":      round(oi_chg_pct, 2),
+                "gap_pct":         gap_pct,
+                "rvol":            rvol,
+                "linearity":       linearity,
+                "fh_spurt":        fh_spurt,
+                "fh_cumul":        fh_cumul,
+                "fh_tag":          fh_tag,
+                "cpr":             cpr_flags,
+                "ce_sc_above_atm": ce_sc_above_atm,
+                "spot_open":       round(spot_open, 2) if spot_open else None,
+                "pdh":             pdh_val,
+                "pdl":             pdl_val,
+                "open_vs_pdh_pdl": open_vs_pdh_pdl,
             })
 
         stocks.sort(key=lambda x: x["symbol"])

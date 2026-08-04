@@ -818,6 +818,7 @@
       .layer-row1-grid {
         grid-template-columns: 1fr !important;
       }
+
       .layer3-subgrid {
         grid-template-columns: 1fr !important;
       }
@@ -1771,8 +1772,22 @@
         prevRankMap = newRankMap;
         spurtData = newData;
         document.getElementById('spurt-count').textContent = spurtData.length;
-        document.getElementById('last-update').textContent = 'L:' + new Date().toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' });
-        document.getElementById('lp-ts').textContent = new Date().toLocaleTimeString('en-IN');
+
+        const isMktOpen = j.market_open !== undefined ? j.market_open : isMarketOpen();
+        const tsStr = j.data_as_of ? new Date(j.data_as_of).toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' }) : new Date().toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' });
+
+        if (!isMktOpen) {
+          clearInterval(leftTimer);
+          leftTimer = null;
+          document.getElementById('last-update').innerHTML = `<span style="color:var(--yellow);font-weight:600;">🌙 Market Closed</span>`;
+          document.getElementById('lp-ts').innerHTML = `<span style="color:var(--yellow);">EOD ${tsStr} IST</span>`;
+          const cdEl = document.getElementById('countdown');
+          if (cdEl) cdEl.parentElement.innerHTML = `<span style="color:var(--yellow);font-size:9px;font-weight:600;">EOD Snapshot</span>`;
+        } else {
+          document.getElementById('last-update').textContent = 'L:' + tsStr;
+          document.getElementById('lp-ts').textContent = tsStr;
+          if (!leftTimer) startLeftCountdown();
+        }
       } catch (e) { document.getElementById('stock-list').innerHTML = `<div class="lp-empty" style="color:var(--red)">⚠ ${e.message}</div>`; }
     }
     let oiTimestampMap = {};  // {symbol: {pct, time}} — tracks when OI last changed per stock
@@ -1888,15 +1903,17 @@
         wrap.innerHTML = `<div class="loader"><div class="spinner"></div> Loading ${sym}…</div>`;
       }
       fetchDetail(sym);
-      // Start independent timer if not already running
-      if (!tabTimers[sym]) {
+      // Start independent timer if not already running and market is open
+      if (!tabTimers[sym] && isMarketOpen()) {
         tabTimers[sym] = setInterval(() => fetchDetail(sym), 15000);
       }
     }
 
     function closeTab(sym) {
-      clearInterval(tabTimers[sym]);
-      delete tabTimers[sym];
+      if (tabTimers[sym]) {
+        clearInterval(tabTimers[sym]);
+        delete tabTimers[sym];
+      }
       delete prevDetails[sym];
       const idx = watchList.indexOf(sym);
       watchList = watchList.filter(s => s !== sym);
@@ -1931,6 +1948,14 @@
       try {
         const d = await fetch(`/api/oi/symbol/${encodeURIComponent(sym)}`, { headers: getKiteHeaders(), credentials: 'include' }).then(r => r.json());
         if (d.error && !d.ltp) throw new Error(d.error);
+
+        // If market closed, stop background 15s timer for this tab
+        const isMktOpen = d.market_open !== undefined ? d.market_open : isMarketOpen();
+        if (!isMktOpen && tabTimers[sym]) {
+          clearInterval(tabTimers[sym]);
+          delete tabTimers[sym];
+        }
+
         const spurtRow = spurtData.find(s => s.symbol === sym) || {};
         const prev = prevDetails[sym] || {};
         const changes = detectChanges(prev, d, spurtRow);
@@ -1967,6 +1992,8 @@
       if (prev.pcr && curr.pcr && Math.abs(curr.pcr - prev.pcr) > 0.01) changes.pcr = { old: prev.pcr, new: curr.pcr };
       if (prev.max_pain && curr.max_pain && curr.max_pain !== prev.max_pain) changes.max_pain = { old: prev.max_pain, new: curr.max_pain };
       if (prev.oi_change_pct && spurtRow.oi_change_pct && Math.abs(spurtRow.oi_change_pct - prev.oi_change_pct) > 0.1) changes.oi_change_pct = true;
+      // Issue 9 FIX: track straddle shifts > ₹1 (signals ATM strike migration between refreshes)
+      if (prev.straddle && curr.straddle && Math.abs(curr.straddle - prev.straddle) > 1.0) changes.straddle = { old: prev.straddle, new: curr.straddle };
       return changes;
     }
     const alertBadge = ch => ch ? `<span class="alert-badge" title="Changed!">!</span>` : '';
@@ -1994,8 +2021,10 @@
       const dirCls = priceChg > 0 ? 'tag-green' : priceChg < 0 ? 'tag-red' : 'tag-yellow';
 
       // Market hours banner (Indian market: Mon-Fri 9:15-15:30 IST)
-      const mktBanner = isMarketOpen() ? '' :
-        `<div style="background:rgba(217,119,6,.1);border:1px solid rgba(217,119,6,.3);border-radius:6px;padding:5px 10px;font-size:9px;color:var(--yellow);margin-bottom:8px;">🕒 Market closed — showing last session data &nbsp;|&nbsp; NSE: Mon–Fri 9:15–15:30 IST</div>`;
+      const isMktOpen = d.market_open !== undefined ? d.market_open : isMarketOpen();
+      const tsStr = d.data_as_of ? new Date(d.data_as_of).toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' }) : '';
+      const mktBanner = isMktOpen ? '' :
+        `<div style="background:rgba(217,119,6,.1);border:1px solid rgba(217,119,6,.3);border-radius:6px;padding:5px 10px;font-size:9px;color:var(--yellow);margin-bottom:8px;">🌙 Market closed — showing EOD snapshot ${tsStr ? '(' + tsStr + ' IST) ' : ''}&nbsp;|&nbsp; Live updates resume 9:15 AM IST</div>`;
 
       // strikePCR client-side lookup REMOVED — backend now provides r.strike_pcr directly
       // (previously rebuilt from chain_data here but was dead code after backend fix)
@@ -2082,7 +2111,7 @@
             <div style="font-size: 9px; color: var(--muted);">${pcrTag} Sentiment</div>
           </div>
           <div style="width: 80px; background: rgba(128,128,128,0.15); height: 4px; border-radius: 2px; position: relative;">
-            <div style="width: ${Math.min(100, (pcr || 0) * 50)}%; background: ${pcrColor}; height: 100%; border-radius: 2px;"></div>
+            <div style="width: ${Math.min(100, Math.log1p(pcr || 0) / Math.log1p(2.5) * 100).toFixed(1)}%; background: ${pcrColor}; height: 100%; border-radius: 2px;"></div>
           </div>
         </div>
         <div class="kv" style="border-top: 1px solid rgba(128,128,128,0.15); padding-top: 6px;">
@@ -2452,7 +2481,7 @@
       <!-- Column 2: Heatmap and State Transition Conviction -->
       <div style="display: flex; flex-direction: column; gap: 7px;">
         <!-- 1) OI Chain Heatmap -->
-        ${buildHeatmap(sym, d.chain_data, ltp, d.max_pain, d.straddle, d.atm, d.expiry, d.pcr, prev.chain_data, prev.arrowState, d.dual_side_analysis)}
+        ${buildHeatmap(sym, d.chain_data, ltp, d.max_pain, d.straddle, d.atm, d.expiry, d.pcr, prev.chain_data, prev.arrowState, d.dual_side_analysis, changes)}
 
         <!-- 2) State Transition Conviction -->
         ${transitionConvictionHtml}
@@ -2475,7 +2504,7 @@
     }
 
     // ─── OI Chain Heatmap ───────────────────────────────
-    function buildHeatmap(sym, chain, ltp, maxPain, straddle, atm, expiry, pcr, prevChain, prevArrows = {}, dualSide = null) {
+    function buildHeatmap(sym, chain, ltp, maxPain, straddle, atm, expiry, pcr, prevChain, prevArrows = {}, dualSide = null, changes = {}) {
       if (!chain?.length) return `
     <div class="sec-head">OI Chain Heatmap</div>
     <div class="heatmap-wrap" style="padding:16px;text-align:center;">
@@ -2526,14 +2555,14 @@
       ${isATM ? '<span class="atm-badge">ATM</span>' : ''}
       ${fmt(r.strike, 0)}`;
 
-        // Calculate CE % Change
-        const baseCeOi = r.ce_oi - (r.ce_oi_chg || 0);
-        const cePctChg = baseCeOi > 0 ? ((r.ce_oi_chg || 0) / baseCeOi) * 100 : 0;
+        // BUG 5 FIX: Use backend EOD-baseline % directly (ce_oi_eod_chg_pct / pe_oi_eod_chg_pct).
+        // Previous client-side recalc was (oi_chg / (curr_oi - oi_chg)) * 100 — same math but
+        // redundant and diverges on rounding. Backend field is the authoritative value.
+        const cePctChg = r.ce_oi_eod_chg_pct || 0;
         const cePctStr = cePctChg !== 0 ? ` <span style="font-size:9px; opacity:0.75">(${cePctChg > 0 ? '+' : ''}${cePctChg.toFixed(1)}%)</span>` : '';
 
         // Calculate PE % Change
-        const basePeOi = r.pe_oi - (r.pe_oi_chg || 0);
-        const pePctChg = basePeOi > 0 ? ((r.pe_oi_chg || 0) / basePeOi) * 100 : 0;
+        const pePctChg = r.pe_oi_eod_chg_pct || 0;
         const pePctStr = pePctChg !== 0 ? ` <span style="font-size:9px; opacity:0.75">(${pePctChg > 0 ? '+' : ''}${pePctChg.toFixed(1)}%)</span>` : '';
 
         // Real-time tick arrows comparison next to absolute CE/PE OI with Delta Count Support
@@ -2634,18 +2663,18 @@
       const dsSignal = dualSide?.signal || 'Not live';
       const dsBias = dualSide?.bias || 'Not live';
 
-      const stateColor = 
-        dsState === 'RANGE_PINNING' ? 'var(--yellow)' : 
-        dsState === 'VOL_COILING' ? 'var(--accent)' : 
-        dsState === 'TRENDING' ? 'var(--green)' : 
-        dsState === 'Not live' ? 'var(--muted)' : 'var(--muted)';
-      
-      const biasBg = 
-        dsBias === 'NEUTRAL_THETA_FAVORABLE' ? 'var(--green)' : 
-        dsBias === 'NEUTRAL_BREAKOUT_WATCH' ? 'var(--yellow)' : 
-        'rgba(255, 255, 255, 0.1)';
-      
-      const biasText = 
+      const stateColor =
+        dsState === 'RANGE_PINNING' ? 'var(--yellow)' :
+          dsState === 'VOL_COILING' ? 'var(--accent)' :
+            dsState === 'TRENDING' ? 'var(--green)' :
+              dsState === 'Not live' ? 'var(--muted)' : 'var(--muted)';
+
+      const biasBg =
+        dsBias === 'NEUTRAL_THETA_FAVORABLE' ? 'var(--green)' :
+          dsBias === 'NEUTRAL_BREAKOUT_WATCH' ? 'var(--yellow)' :
+            'rgba(255, 255, 255, 0.1)';
+
+      const biasText =
         (dsBias === 'NEUTRAL_THETA_FAVORABLE' || dsBias === 'NEUTRAL_BREAKOUT_WATCH') ? '#000' : '#fff';
 
       const dualSideHtml = `
@@ -2669,7 +2698,7 @@
         <div class="hm-meta">
           <span>Max Pain: <b class="kv-pivot">${maxPain ? fmt(maxPain, 0) : '–'}</b></span>
           <span>Spot: <b>${fmt(ltp)}</b></span>
-          <span>Straddle: <b>₹${straddle ? fmt(straddle, 1) : '–'}</b></span>
+          <span>${alertBadge(changes.straddle)}Straddle: <b>₹${straddle ? fmt(straddle, 1) : '–'}</b></span>
           <span>PCR: <b style="color:${pcr >= 1 ? 'var(--green)' : 'var(--red)'}">${pcr ? fmt(pcr, 2) : '–'}</b></span>
         </div>
       </div>
@@ -2818,12 +2847,34 @@
       prevRankMap = {};  // reset rank map — new threshold = fresh baseline, no misleading badges
       loadSpurt();
     });
-    document.getElementById('manual-refresh').addEventListener('click', () => { loadSpurt(); startLeftCountdown(); });
+    // ─── Layer 3: Market Open Lifecycle Transition Watcher ─────────────
+    let _wasMarketOpen = isMarketOpen();
+    setInterval(() => {
+      const nowOpen = isMarketOpen();
+      if (nowOpen && !_wasMarketOpen) {
+        _wasMarketOpen = true;
+        // Market opened → restart refresh timers and update views
+        loadSpurt();
+        startLeftCountdown();
+        if (activeTab) switchTab(activeTab);
+      } else if (!nowOpen && _wasMarketOpen) {
+        _wasMarketOpen = false;
+        // Market closed → stop refresh timers
+        clearInterval(leftTimer);
+        leftTimer = null;
+        Object.keys(tabTimers).forEach(sym => {
+          clearInterval(tabTimers[sym]);
+          delete tabTimers[sym];
+        });
+      }
+    }, 60000);
 
     // ─── Boot ────────────────────────────────────────────
     loadSymbolList();
     loadSpurt();
-    startLeftCountdown();
+    if (isMarketOpen()) {
+      startLeftCountdown();
+    }
   </script>
 </body>
 

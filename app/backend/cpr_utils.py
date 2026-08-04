@@ -40,6 +40,18 @@ def _save_cpr_cache():
 _load_cpr_cache()
 
 
+def get_current_session_date() -> str:
+    """Returns ISO string YYYY-MM-DD for current session date (today if weekday, last Friday if weekend)."""
+    today = date.today()
+    if today.weekday() == 5:    # Saturday
+        s_date = today - timedelta(days=1)
+    elif today.weekday() == 6:  # Sunday
+        s_date = today - timedelta(days=2)
+    else:
+        s_date = today
+    return s_date.isoformat()
+
+
 def calculate_cpr(pdh: float, pdl: float, pdc: float):
     """
     Pure mathematical calculation of Central Pivot Range (CPR):
@@ -66,9 +78,18 @@ def calculate_cpr(pdh: float, pdl: float, pdc: float):
 
 
 def get_cpr_pivots(symbol: str):
-    """Returns cached CPR pivots dict for symbol, or None."""
+    """Returns cached CPR pivots dict for symbol if valid for current session, or None."""
+    cur_session = get_current_session_date()
     with _cpr_lock:
-        return _cpr_cache.get(symbol.upper()) or _cpr_cache.get(symbol)
+        item = _cpr_cache.get(symbol.upper()) or _cpr_cache.get(symbol)
+        if item:
+            # Guardrail: Check session date invalidation
+            item_session = item.get("session_date")
+            if item_session and item_session == cur_session:
+                return item
+            # Stale record from older session date
+            return None
+        return None
 
 
 def compute_cpr_flags(spot_open: float, spot_ltp: float, tc: float, pivot: float, bc: float):
@@ -88,7 +109,7 @@ def compute_cpr_flags(spot_open: float, spot_ltp: float, tc: float, pivot: float
     piv_top = "Y" if open_val > pivot else "N"
     piv_bot = "Y" if spot_ltp >= pivot else "N"
 
-    bc_top  = "Y" if open_val > bc else "N"
+    bc_top  = "Y" if open_val < bc else "N"
     bc_bot  = "Y" if spot_ltp >= bc else "N"
 
     return {
@@ -139,12 +160,20 @@ def _get_previous_day_bar_for_cpr(hist):
 
 def warm_cpr_pivots_bg(kite, spot_tokens_map: dict):
     """
-    Background worker that fetches previous day's OHLC from Kite for missing symbols
-    and populates the CPR cache + disk. Completely independent of any other scanner.
+    Background worker that fetches previous day's OHLC from Kite for missing/stale symbols
+    and populates the CPR cache + disk with active session guardrails.
     """
+    cur_session = get_current_session_date()
+
     def _worker():
         with _cpr_lock:
-            missing = {tok: sym for tok, sym in spot_tokens_map.items() if sym.upper() not in _cpr_cache and sym not in _cpr_cache}
+            # Identify missing OR stale symbols whose session_date != cur_session
+            missing = {}
+            for tok, sym in spot_tokens_map.items():
+                cached_item = _cpr_cache.get(sym.upper()) or _cpr_cache.get(sym)
+                if not cached_item or cached_item.get("session_date") != cur_session:
+                    missing[tok] = sym
+
         if not missing:
             return
 
@@ -152,7 +181,7 @@ def warm_cpr_pivots_bg(kite, spot_tokens_map: dict):
         from_dt = today - timedelta(days=7)
         to_dt   = today
 
-        log.info(f"[CPRUtils] Warming CPR pivots for {len(missing)} missing symbols...")
+        log.info(f"[CPRUtils] Warming CPR pivots for {len(missing)} missing/stale symbols (Session: {cur_session})...")
         updated = False
         for tok, sym in missing.items():
             try:
@@ -163,11 +192,18 @@ def warm_cpr_pivots_bg(kite, spot_tokens_map: dict):
                     pdh = float(last.get("high") or 0)
                     pdl = float(last.get("low") or 0)
                     pdc = float(last.get("close") or 0)
-                    cpr = calculate_cpr(pdh, pdl, pdc)
-                    if cpr:
-                        with _cpr_lock:
-                            _cpr_cache[sym.upper()] = cpr
-                        updated = True
+
+                    # Guardrails on price sanity
+                    if pdh > 0 and pdl > 0 and pdc > 0 and pdh >= pdl:
+                        cpr = calculate_cpr(pdh, pdl, pdc)
+                        if cpr:
+                            ref_bar_date = last.get("date")
+                            ref_date_str = ref_bar_date.strftime("%Y-%m-%d") if hasattr(ref_bar_date, 'strftime') else str(ref_bar_date)[:10]
+                            cpr["ref_date"] = ref_date_str
+                            cpr["session_date"] = cur_session
+                            with _cpr_lock:
+                                _cpr_cache[sym.upper()] = cpr
+                            updated = True
                 time.sleep(0.35)
             except Exception as e:
                 log.warning(f"[CPRUtils] Failed to fetch history for {sym}: {e}")
@@ -175,6 +211,6 @@ def warm_cpr_pivots_bg(kite, spot_tokens_map: dict):
 
         if updated:
             _save_cpr_cache()
-            log.info(f"[CPRUtils] Finished warming CPR pivots. Total cached: {len(_cpr_cache)}")
+            log.info(f"[CPRUtils] Finished warming CPR pivots. Total cached for session {cur_session}: {len(_cpr_cache)}")
 
     threading.Thread(target=_worker, daemon=True).start()

@@ -1608,7 +1608,6 @@ window.saBulkRun = async function () {
     rawInput.split(/[\s,;\n]+/).map(s => s.trim().toUpperCase()).filter(Boolean)
   )];
   if (!symbols.length)  { alert('No valid symbols found.'); return; }
-  if (symbols.length > 100) { alert('Maximum 100 symbols allowed.'); return; }
 
   const runBtn   = document.getElementById('btn-sa-bulk-run');
   const csvBtn   = document.getElementById('btn-sa-bulk-csv');

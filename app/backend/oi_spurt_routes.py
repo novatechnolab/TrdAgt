@@ -39,6 +39,10 @@ oi_spurt_bp = Blueprint("oi_spurt", __name__, url_prefix="/api/oi")
 _spurt_history = {}
 _spurt_lock = threading.Lock()
 
+# EOD Spurt List Cache for off-market hours: {(date_str, min_pct): {"data": [...], "source": str, "fetched_at": iso_str}}
+_spurt_eod_cache = {}
+_spurt_eod_lock = threading.Lock()
+
 _housekeeping_done = False
 _housekeeping_lock = threading.Lock()
 
@@ -244,12 +248,21 @@ def fetch_oi_spurt(min_pct: float = 5.0):
         return [], "kite", f"Scrape failed ({scrape_error}) and Kite quote fetch failed: {e}"
 
     result = []
+    today_str = datetime.date.today().isoformat()
     for symbol, fut_key in symbol_to_fut_key.items():
         q = quotes.get(fut_key)
         if not q:
             continue
         curr_oi = int(q.get("oi") or 0)
-        prev_oi = int(q.get("oi_day_low") or 0)
+        # BUG 1 FIX: Use SQLite EOD baseline for prev_oi instead of oi_day_low.
+        # oi_day_low is the intraday tick low (near 0 early session) → wildly inflated oi_chg%.
+        # Falls back to oi_day_low only if no baseline exists yet (first run / cold start).
+        tradingsymbol = fut_key.split(":", 1)[1] if ":" in fut_key else fut_key
+        cached_eod = get_cached_baseline(today_str, tradingsymbol)
+        if cached_eod is not None and cached_eod > 0:
+            prev_oi = cached_eod
+        else:
+            prev_oi = int(q.get("oi_day_low") or 0)
         oi_chg = ((curr_oi - prev_oi) / prev_oi * 100) if prev_oi > 0 else 0.0
 
         if abs(oi_chg) < min_pct:
@@ -519,14 +532,16 @@ def get_option_chain(kite, symbol: str):
         prev_oi = int(q.get("oi_day_low", 0) or 0)
         if prev_oi == 0:
             prev_oi = oi  # fallback: no change if no baseline
-            
-        # Get true yesterday's EOD baseline if near ATM (within 5% of Futures LTP) to minimize API overhead
-        is_near_atm = True
-        if futures_ltp > 0:
-            is_near_atm = (abs(instr["strike"] - futures_ltp) / futures_ltp) <= 0.05
-            
+
+        # EOD OI baseline for ALL strikes (near-ATM and OTM alike).
+        # Near-ATM (≤5% from futures LTP): queued at priority 0 — served first.
+        # OTM (>5%): queued at priority 2 — background, yields to near-ATM fetches.
+        # Falls back to oi_day_low only until background worker populates SQLite.
+        is_near_atm = (futures_ltp <= 0) or (abs(instr["strike"] - futures_ltp) / futures_ltp <= 0.05)
+        bl_priority  = 0 if is_near_atm else 2
+
         prev_day_eod_oi = prev_oi
-        if is_near_atm and instr.get("instrument_token"):
+        if instr.get("instrument_token"):
             cached_val = get_cached_baseline(today_str, instr["tradingsymbol"])
             if cached_val is not None:
                 prev_day_eod_oi = cached_val
@@ -536,16 +551,15 @@ def get_option_chain(kite, symbol: str):
                 with _baseline_lock:
                     if key not in _pending_baselines:
                         _pending_baselines.add(key)
-                        
+
                         # Initialize worker thread if not running
                         global _worker_thread
                         if _worker_thread is None or not _worker_thread.is_alive():
                             _worker_thread = threading.Thread(target=_baseline_worker, daemon=True)
                             _worker_thread.start()
-                            
-                        # Queue the task
-                        # Priority 0 = user-triggered (highest priority in PriorityQueue)
-                        _baseline_queue.put((0, next(_baseline_seq), kite, today_str, instr["instrument_token"], instr["tradingsymbol"], oi))
+
+                        # Queue baseline fetch (priority 0 = near-ATM, 2 = OTM)
+                        _baseline_queue.put((bl_priority, next(_baseline_seq), kite, today_str, instr["instrument_token"], instr["tradingsymbol"], oi))
             
         # Calculate % Change vs EOD Snapshot
         oi_eod_chg_pct = 0.0
@@ -977,6 +991,12 @@ def get_ltp_and_pivots(kite, symbol):
                 high  = last["high"]
                 low   = last["low"]
                 close = last["close"]
+                # BUG 7 FIX: BSE quotes return ohlc.close=0 before auction settles (SENSEX/BANKEX).
+                # Recompute price_change_pct and open_gap_pct using historical prev close.
+                if prev_close == 0 and close > 0:
+                    prev_close = close
+                    price_change_pct = round((ltp - prev_close) / prev_close * 100, 2)
+                    open_gap_pct = round((open_px - prev_close) / prev_close * 100, 2) if open_px > 0 else 0.0
 
         if not (high and low and close):
             o            = d.get("ohlc", {})
@@ -996,16 +1016,53 @@ def get_ltp_and_pivots(kite, symbol):
 
 @oi_spurt_bp.route("/spurt")
 def api_spurt():
-    """GET /api/oi/spurt?min_pct=5  →  NSE OI spurt list (no Kite calls)."""
+    """GET /api/oi/spurt?min_pct=5  →  NSE OI spurt list."""
     min_pct = float(request.args.get("min_pct", 5.0))
+    market_open = is_market_hours()
+    today_str = datetime.date.today().isoformat()
+    cache_key = (today_str, min_pct)
+
+    # Off-hours caching logic
+    if not market_open:
+        with _spurt_eod_lock:
+            # Clean up old date entries
+            stale_keys = [k for k in _spurt_eod_cache.keys() if k[0] != today_str]
+            for sk in stale_keys:
+                del _spurt_eod_cache[sk]
+
+            if cache_key in _spurt_eod_cache:
+                cached = _spurt_eod_cache[cache_key]
+                return jsonify({
+                    "data":         cached["data"],
+                    "source":       cached["source"],
+                    "count":        len(cached["data"]),
+                    "market_open":  False,
+                    "cache_source": "eod_cache",
+                    "data_as_of":   cached["fetched_at"],
+                    "timestamp":    cached["fetched_at"],
+                })
+
     spurt_list, source, err = fetch_oi_spurt(min_pct)
     if err:
         return jsonify({"error": err}), 502
+
+    now_iso = datetime.datetime.now().isoformat()
+    if not market_open:
+        with _spurt_eod_lock:
+            _spurt_eod_cache[cache_key] = {
+                "data": spurt_list,
+                "source": source,
+                "fetched_at": now_iso
+            }
+
     return jsonify({
-        "data":      spurt_list,
-        "source":    source,
-        "count":     len(spurt_list),
-        "timestamp": datetime.datetime.now().isoformat(),
+        "data":         spurt_list,
+        "source":       source,
+        "count":        len(spurt_list),
+        "market_open":  market_open,
+        "cache_source": "live" if market_open else "eod_cache",
+        "data_as_of":   now_iso,
+        "timestamp":    now_iso,
     })
 
 
@@ -1058,6 +1115,10 @@ def api_symbol(symbol):
     if chain and ltp:
         with _spurt_lock:
             if sym not in _spurt_history:
+                # Issue 10 FIX: cap dict at 100 symbols to prevent unbounded growth
+                # on long-running servers where many F&O symbols get clicked over a session.
+                if len(_spurt_history) >= 100:
+                    _spurt_history.pop(next(iter(_spurt_history)))
                 _spurt_history[sym] = []
             
             # ATM strike CE/PE detail for checklist steps
@@ -1098,7 +1159,11 @@ def api_symbol(symbol):
         # Step 1: Flat Futures OI Gate
         if len(history) >= 3:
             fut_oi_ticks = [t["futures_oi"] for t in history[-3:]]
-            if len(set(fut_oi_ticks)) == 1:
+            # BUG 6 FIX: Time-gate flat-futures suppression to avoid session-open false positives.
+            # First 3 ticks (≈45s) are identical simply because Kite OI hasn't moved yet.
+            # Only suppress signals after 10 minutes have elapsed since the first history tick.
+            elapsed_since_first = time.time() - history[0]["timestamp"]
+            if len(set(fut_oi_ticks)) == 1 and elapsed_since_first >= 600:
                 is_flat_futures = True
             futures_oi_change = history[-1]["futures_oi"] - history[-2]["futures_oi"]
         else:
@@ -1400,6 +1465,30 @@ def api_symbol(symbol):
         except Exception as e:
             errors.append(f"Action calc err: {e}")
 
+    # BUG 2 FIX: Resolve wall buildup from the full chain, not just the top-5 list.
+    def _wall_buildup(row, side):
+        if not row:
+            return "\u2013"
+        oi_chg = row.get(f"{side}_oi_chg", 0)
+        _ltp   = row.get(f"{side}_ltp",      0) or 0
+        _prev  = row.get(f"{side}_prev_ltp", _ltp) or _ltp
+        price_up = _ltp > (_prev * 1.005) if _prev > 0 else False
+        if   oi_chg > 0 and price_up:  return "Long Buildup"
+        elif oi_chg > 0:               return "Short Buildup"
+        elif oi_chg < 0 and price_up:  return "Short Covering"
+        elif oi_chg < 0:               return "Long Unwinding"
+        return "\u2013"
+
+    top_ce_list = strikes.get("top_ce", [])
+    top_pe_list = strikes.get("top_pe", [])
+    ce_wall_strike = strikes.get("ce_wall")   # highest OI CE at/above LTP (actual resistance wall)
+    pe_wall_strike = strikes.get("pe_wall")   # highest OI PE at/below LTP (actual support wall)
+
+    ce_wall_row     = next((r for r in chain if r["strike"] == ce_wall_strike), None)
+    pe_wall_row     = next((r for r in chain if r["strike"] == pe_wall_strike), None)
+    ce_wall_buildup = _wall_buildup(ce_wall_row, "ce")
+    pe_wall_buildup = _wall_buildup(pe_wall_row, "pe")
+
     # Enrich chain_data with per-strike actions captured from retail action loop
     for row in chain_data:
         s = row["strike"]
@@ -1409,20 +1498,6 @@ def api_symbol(symbol):
     # ── F&O Synergy Profile (7-Profile Master Combination Matrix) ──
     synergy_profile = "Mixed Flow (No Setup)"
     synergy_action  = "WAIT"
-    
-    top_ce_list = strikes.get("top_ce", [])
-    top_pe_list = strikes.get("top_pe", [])
-    ce_wall_strike = strikes.get("ce_wall")   # highest OI CE at/above LTP (actual resistance wall)
-    pe_wall_strike = strikes.get("pe_wall")   # highest OI PE at/below LTP (actual support wall)
-
-    # GAP 1 FIX: resolve buildup of the actual CE/PE *wall* strike, not the top-OI strike
-    # top_ce[0] is the global highest OI (could be deep OTM/ITM); ce_wall is the relevant ATM wall
-    ce_wall_buildup = next(
-        (r["buildup"] for r in top_ce_list if r["strike"] == ce_wall_strike), "–"
-    )
-    pe_wall_buildup = next(
-        (r["buildup"] for r in top_pe_list if r["strike"] == pe_wall_strike), "–"
-    )
 
     f_b = futures_buildup
     ce_b = ce_wall_buildup
@@ -1445,7 +1520,9 @@ def api_symbol(symbol):
         synergy_action = "BOOK PROFIT ON CALLS / HOLD CASH"
     elif f_b == "Short Buildup" and ce_b == "Long Unwinding" and pe_b == "Short Buildup":
         synergy_profile = "🪤 Bear Trap (Floor Holding)"
-        synergy_action = "SELL PUTS / WAIT"
+        # Issue 11 FIX: Bear Trap = floor holding → bullish reversal expected.
+        # "SELL PUTS" was wrong (contradicts the trap definition — floor is holding).
+        synergy_action = "CE BUY / Avoid Selling Puts"
     elif (f_b in ("Flat", "–") or is_flat_futures) and ce_b == "Short Buildup" and pe_b == "Short Buildup":
         synergy_profile = "🔁 Range Lock (Institutional Pinning)"
         synergy_action = "SELL STRADDLE or STRANGLE"
@@ -1497,9 +1574,21 @@ def api_symbol(symbol):
             pe_prem_chg = ((pe_ltp - pe_prev) / pe_prev * 100) if pe_prev > 0 else 0.0
             
             # Determine thresholds based on asset class
+            # Issue 12 FIX: Widen index spot_threshold on expiry day.
+            # Expiry opening gaps/auction volatility routinely exceed 0.20% and would
+            # force TRENDING state all morning — suppressing the RANGE_PINNING /
+            # VOL_COILING signals that are most actionable precisely on expiry day.
+            # Uses the actual nearest-expiry date (already in scope) so each symbol
+            # auto-detects its own correct expiry day (Tue/Wed/Thu/Mon as applicable).
             sym_upper = sym.upper()
+            try:
+                _today_str = str(datetime.date.today())
+                is_expiry_day = bool(expiry and str(expiry)[:10] == _today_str)
+            except Exception:
+                is_expiry_day = False
+
             if sym_upper in ("NIFTY", "BANKNIFTY", "FINNIFTY", "MIDCPNIFTY", "SENSEX", "BANKEX", "NIFTYIT", "NIFTYNXT50"):
-                spot_threshold = 0.20   # 0.20% daily spot change
+                spot_threshold = 0.35 if is_expiry_day else 0.20   # wider on expiry day to avoid false TRENDING
                 oi_add_threshold = 3.0  # 3.0% daily OI increase
             elif sym_upper in ("RELIANCE", "TCS", "INFY", "HDFCBANK", "ICICIBANK", "BHARTIARTL", "ITC", "SBIN", "LT", "AXISBANK", "MARUTI", "HINDUNILVR", "KOTAKBANK", "TATASTEEL", "M&M", "TRENT"):
                 spot_threshold = 0.30   # 0.30% daily spot change
@@ -1526,6 +1615,9 @@ def api_symbol(symbol):
             "bias": "Not live"
         }
 
+    now_iso = datetime.datetime.now().isoformat()
+    mkt_open = is_market_hours()
+
     return jsonify({
         "symbol":             sym,
         "ltp":                ltp,
@@ -1549,7 +1641,10 @@ def api_symbol(symbol):
         "gap_detected":     gap_detected,
         "is_index":         sym in INDEX_SYMBOLS,
         "errors":           errors,
-        "timestamp":        datetime.datetime.now().isoformat(),
+        "market_open":      mkt_open,
+        "cache_source":     "live" if mkt_open else "eod_cache",
+        "data_as_of":       now_iso,
+        "timestamp":        now_iso,
         "transition_conviction": transition_data,
         
         # LAYER 1 INTEGRATION: Live Futures Metadata

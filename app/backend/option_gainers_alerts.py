@@ -18,13 +18,15 @@ from datetime import datetime, time as dt_time
 from session_utils import IST, is_market_hours, is_premarket, now_ist
 
 
+import sqlite3
+
 logger = logging.getLogger("option_gainers_alerts")
 
 POLL_INTERVAL_SECS = 15
 WINDOW_SECS = 180
 PREMIUM_SPIKE_PCT = 10.0
 SPOT_SPIKE_PCT = 0.30
-MIN_LTP = 1.0
+MIN_LTP = 0.10
 COOLDOWN_SECS = 180
 MAX_ALERTS = 500
 MAX_TOKEN_HISTORY = 32
@@ -41,6 +43,152 @@ _tracked_contracts = 0
 _sampled_contracts = 0
 _eod_snapshot_cache = {"result": None, "ts": 0.0, "running": False}
 _EOD_CACHE_TTL = 28800
+
+
+def _get_db_conn():
+    db_path = os.path.join(os.path.dirname(__file__), "tradesignal_cache.db")
+    conn = sqlite3.connect(db_path, timeout=10.0)
+    conn.execute("PRAGMA journal_mode=WAL;")
+    return conn
+
+
+def _init_alerts_db():
+    try:
+        conn = _get_db_conn()
+        cursor = conn.cursor()
+        cursor.execute("""
+            CREATE TABLE IF NOT EXISTS premium_spike_alerts (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                alert_date TEXT NOT NULL,
+                alert_time TEXT NOT NULL,
+                timestamp REAL NOT NULL,
+                token INTEGER NOT NULL,
+                symbol TEXT NOT NULL,
+                tradingsymbol TEXT NOT NULL,
+                opt_type TEXT NOT NULL,
+                strike REAL NOT NULL,
+                label TEXT,
+                layer TEXT,
+                direction TEXT,
+                open_prem REAL,
+                old_ltp REAL,
+                ltp REAL,
+                premium_spike_pct REAL,
+                board_gain_pct REAL,
+                old_spot REAL,
+                spot REAL,
+                spot_spike_pct REAL,
+                interval_volume INTEGER,
+                consistency REAL,
+                is_eod_snapshot INTEGER DEFAULT 0,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                UNIQUE(alert_date, token, alert_time) ON CONFLICT IGNORE
+            )
+        """)
+        cursor.execute("CREATE INDEX IF NOT EXISTS idx_psa_date ON premium_spike_alerts(alert_date)")
+        cursor.execute("CREATE INDEX IF NOT EXISTS idx_psa_symbol ON premium_spike_alerts(symbol)")
+        cursor.execute("DELETE FROM premium_spike_alerts WHERE alert_date < date('now', '-30 days')")
+        conn.commit()
+        conn.close()
+    except Exception as e:
+        logger.warning(f"[Premium Alerts DB] Init failed: {e}")
+
+
+_init_alerts_db()
+
+
+def _save_alerts_to_db(alerts):
+    if not alerts:
+        return
+    try:
+        conn = _get_db_conn()
+        cursor = conn.cursor()
+        cursor.execute("DELETE FROM premium_spike_alerts WHERE alert_date < date('now', '-30 days')")
+        for a in alerts:
+            alert_date = a.get("date") or (a.get("time") and a["time"][:10]) or now_ist().strftime("%Y-%m-%d")
+            cursor.execute("""
+                INSERT OR IGNORE INTO premium_spike_alerts (
+                    alert_date, alert_time, timestamp, token, symbol, tradingsymbol,
+                    opt_type, strike, label, layer, direction, open_prem, old_ltp, ltp,
+                    premium_spike_pct, board_gain_pct, old_spot, spot, spot_spike_pct,
+                    interval_volume, consistency, is_eod_snapshot
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            """, (
+                alert_date,
+                a.get("time", ""),
+                a.get("ts", time.time()),
+                a.get("token", 0),
+                a.get("symbol", ""),
+                a.get("tradingsymbol", ""),
+                a.get("opt_type", ""),
+                a.get("strike", 0.0),
+                a.get("label", ""),
+                a.get("layer", ""),
+                a.get("direction", ""),
+                a.get("open_prem", 0.0),
+                a.get("old_ltp", 0.0),
+                a.get("ltp", 0.0),
+                a.get("premium_spike_pct", 0.0),
+                a.get("board_gain_pct", 0.0),
+                a.get("old_spot", 0.0),
+                a.get("spot", 0.0),
+                a.get("spot_spike_pct", 0.0),
+                a.get("interval_volume", 0),
+                a.get("consistency", 0.0),
+                1 if a.get("is_eod_snapshot") else 0
+            ))
+        conn.commit()
+        conn.close()
+    except Exception as e:
+        logger.warning(f"[Premium Alerts DB] Save failed: {e}")
+
+
+def get_alerts_from_db_by_date(date_str):
+    try:
+        _init_alerts_db()
+        conn = _get_db_conn()
+        cursor = conn.cursor()
+        cursor.execute("""
+            SELECT alert_date, alert_time, timestamp, token, symbol, tradingsymbol,
+                   opt_type, strike, label, layer, direction, open_prem, old_ltp, ltp,
+                   premium_spike_pct, board_gain_pct, old_spot, spot, spot_spike_pct,
+                   interval_volume, consistency, is_eod_snapshot
+            FROM premium_spike_alerts
+            WHERE alert_date = ?
+            ORDER BY timestamp DESC
+        """, (date_str,))
+        rows = cursor.fetchall()
+        conn.close()
+        alerts = []
+        for r in rows:
+            alerts.append({
+                "date": r[0],
+                "time": r[1],
+                "ts": r[2],
+                "token": r[3],
+                "symbol": r[4],
+                "tradingsymbol": r[5],
+                "opt_type": r[6],
+                "strike": r[7],
+                "label": r[8],
+                "layer": r[9],
+                "direction": r[10],
+                "open_prem": r[11],
+                "old_ltp": r[12],
+                "ltp": r[13],
+                "premium_spike_pct": r[14],
+                "board_gain_pct": r[15],
+                "old_spot": r[16],
+                "spot": r[17],
+                "spot_spike_pct": r[18],
+                "interval_volume": r[19],
+                "consistency": r[20],
+                "is_eod_snapshot": bool(r[21]),
+            })
+        return alerts
+    except Exception as e:
+        logger.warning(f"[Premium Alerts DB] Fetch by date failed: {e}")
+        return []
 
 
 def _get_kite():
@@ -295,6 +443,8 @@ def _push_alert(alert):
         alert["seq"] = _seq
         _alerts.append(alert)
 
+    _save_alerts_to_db([alert])
+
     logger.info(
         "[Premium Alerts] %s %s %s +%.2f%%, spot %.2f%%",
         alert["symbol"],
@@ -447,6 +597,16 @@ def _build_eod_board(kite):
 
     opening_contracts = _build_atm_otm2_contracts(nfo_data, opening_spot, mode="opening")
     running_contracts = _build_atm_otm2_contracts(nfo_data, current_spot, mode="running")
+
+    # Interpolate intermediate spot levels for trending stocks to capture intermediate breakout strikes
+    for sym, open_px in opening_spot.items():
+        curr_px = current_spot.get(sym, open_px)
+        if open_px > 0 and curr_px > 0 and abs(curr_px - open_px) / open_px >= 0.01:
+            for factor in [0.2, 0.4, 0.6, 0.8]:
+                mid_px = open_px + (curr_px - open_px) * factor
+                mid_contracts = _build_atm_otm2_contracts(nfo_data, {sym: mid_px}, mode="running")
+                running_contracts.update(mid_contracts)
+
     board = {}
     board.update(running_contracts)
     board.update(opening_contracts)
@@ -598,6 +758,8 @@ def _save_eod_snapshot(trade_date, alerts):
     }
     _eod_snapshot_cache["result"] = result
     _eod_snapshot_cache["ts"] = time.time()
+
+    _save_alerts_to_db(alerts)
 
     try:
         # GUARD: Never write the EOD snapshot file to disk before 15:30 IST on the target date.
