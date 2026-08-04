@@ -1902,7 +1902,10 @@
       const wrap = document.getElementById('det-wrap');
       document.getElementById('rp-empty').style.display = 'none';
       wrap.style.display = 'block';
-      if (!prevDetails[sym]) {
+      const spurtRow = spurtData.find(s => s.symbol === sym) || {};
+      if (prevDetails[sym]) {
+        wrap.innerHTML = buildDetail(sym, prevDetails[sym], spurtRow, {}, {});
+      } else {
         wrap.innerHTML = `<div class="loader"><div class="spinner"></div> Loading ${sym}…</div>`;
       }
       fetchDetail(sym);
