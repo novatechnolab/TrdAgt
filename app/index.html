@@ -3106,7 +3106,12 @@
         document.body.style.overflow = '';
       }
 
-      if (menuBtn) menuBtn.addEventListener('click', openSidebar);
+      function toggleSidebar() {
+        if (sidebar.classList.contains('sidebar-open')) closeSidebar();
+        else openSidebar();
+      }
+
+      if (menuBtn) menuBtn.addEventListener('click', toggleSidebar);
       if (overlay) overlay.addEventListener('click', closeSidebar);
 
       // Close drawer when any sidebar nav item is clicked on mobile
