@@ -136,7 +136,7 @@ def _market_open() -> bool:
     if now.weekday() >= 5 or now.date() in NSE_HOLIDAYS:
         return False
     t = now.hour * 100 + now.minute
-    return 915 <= t <= 1530
+    return 915 <= t <= 1540
 
 def cache_ttl_default() -> int:
     return 60 if _market_open() else 600
@@ -820,7 +820,7 @@ def get_market_status() -> str:
     t = now.hour * 100 + now.minute
     if t < 900:   return "PRE-MARKET"
     if t < 915:   return "OPENING"
-    if t <= 1530: return "OPEN"
+    if t <= 1540: return "OPEN"
     if t <= 1600: return "POST-MARKET"
     return "CLOSED"
 

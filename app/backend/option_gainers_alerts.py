@@ -764,9 +764,9 @@ def _save_eod_snapshot(trade_date, alerts):
     try:
         # GUARD: Never write the EOD snapshot file to disk before 15:30 IST on the target date.
         now_val = now_ist()
-        is_past_close = (now_val.hour > 15 or (now_val.hour == 15 and now_val.minute >= 30))
+        is_past_close = (now_val.hour > 15 or (now_val.hour == 15 and now_val.minute >= 40))
         if trade_date == now_val.date() and not is_past_close:
-            logger.info("[Premium Alerts EOD] Skipping saving to disk: target date is today (%s) but it is before 15:30 IST.", trade_date)
+            logger.info("[Premium Alerts EOD] Skipping saving to disk: target date is today (%s) but it is before 15:40 IST.", trade_date)
             return
 
         _cleanup_old_snapshots(trade_date)

@@ -27,7 +27,7 @@ except ImportError:
         n = datetime.datetime.now(datetime.timezone(datetime.timedelta(hours=5, minutes=30)))
         if n.weekday() >= 5: return 'historical'
         m = n.hour * 60 + n.minute
-        if 555 <= m <= 930: return 'live'       # 9:15–15:30
+        if 555 <= m <= 940: return 'live'       # 9:15–15:40
         if 540 <= m < 555:  return 'premarket'  # 9:00–9:15
         return 'historical'
     def is_market_hours():

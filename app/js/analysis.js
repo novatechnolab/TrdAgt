@@ -970,7 +970,7 @@ class AnalysisSignalChart {
     const day = ist.getDay();
     if (day === 0 || day === 6) return false;
     const mins = ist.getHours() * 60 + ist.getMinutes();
-    return mins >= 555 && mins < 930;   // 9:15 = 555, 15:30 = 930
+    return mins >= 555 && mins < 940;   // 9:15 = 555, 15:40 = 940
   }
 
   // ── Public: initial load (resets chart, starts polling if live) ──

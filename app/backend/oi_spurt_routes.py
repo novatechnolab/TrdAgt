@@ -295,6 +295,24 @@ def _chunks(lst, n):
         yield lst[i:i+n]
 
 
+# ── Pivot cache (prev-day OHLC → pivots don't change intraday) ────────────────
+_pivot_cache      = {}  # {(symbol_upper, date_str): {pivots, pivot_source, prev_close, open_gap_pct}}
+_pivot_cache_lock = threading.Lock()
+
+# ── Max Pain cache (3-min TTL — max pain changes slowly) ──────────────────────
+_max_pain_cache = {}  # {(symbol, expiry_str): (value, expires_at)}
+
+def compute_max_pain_cached(symbol, expiry, chain):
+    """Cached wrapper for compute_max_pain(). Avoids O(n²) on every 15s refresh."""
+    key = (symbol, str(expiry))
+    cached = _max_pain_cache.get(key)
+    if cached and time.time() < cached[1]:
+        return cached[0]
+    val = compute_max_pain(chain)
+    _max_pain_cache[key] = (val, time.time() + 180)  # 3-min TTL
+    return val
+
+
 # ── Session-start OI baseline cache ───────────────────────────────────────────
 # FIX: Replaces oi_day_high proxy. On first fetch per session, stores OI as
 # baseline. OI change = current_oi - session_baseline (true intraday delta).
@@ -427,6 +445,91 @@ def get_cached_baseline(date_str: str, tradingsymbol: str) -> int | None:
     return None
 
 
+# ── Persistent Spurt Timestamp Tracker ─────────────────────────────────────────
+_spurt_time_memory = {}  # {(date_str, symbol): (spurt_time_str, oi_change_pct)}
+_spurt_time_lock = threading.Lock()
+
+def sync_spurt_timestamps(spurt_list):
+    """Assigns persistent discovery/update timestamps to each stock in spurt_list.
+    Persists to SQLite (tradesignal_cache.db) and RAM.
+    Updates spurt_time ONLY when OI% changes; retains existing timestamp if unchanged."""
+    if not spurt_list:
+        return spurt_list
+
+    today_str = datetime.date.today().isoformat()
+    now_time_str = datetime.datetime.now().strftime("%I:%M:%S %p").lower()
+
+    with _spurt_time_lock:
+        # Purge stale dates from RAM memory
+        stale = [k for k in _spurt_time_memory.keys() if k[0] != today_str]
+        for k in stale:
+            del _spurt_time_memory[k]
+
+        try:
+            conn = sqlite3.connect(DB_PATH)
+            conn.execute("""
+                CREATE TABLE IF NOT EXISTS oi_spurt_log (
+                    date TEXT NOT NULL,
+                    symbol TEXT NOT NULL,
+                    spurt_time TEXT NOT NULL,
+                    oi_change_pct REAL NOT NULL,
+                    PRIMARY KEY (date, symbol)
+                )
+            """)
+            conn.commit()
+
+            cursor = conn.cursor()
+            cursor.execute("SELECT symbol, spurt_time, oi_change_pct FROM oi_spurt_log WHERE date = ?", (today_str,))
+            db_rows = {r[0]: (r[1], r[2]) for r in cursor.fetchall()}
+
+            db_updates = []
+            for item in spurt_list:
+                sym = item.get("symbol")
+                if not sym:
+                    continue
+                pct = item.get("oi_change_pct", 0.0)
+                mem_key = (today_str, sym)
+
+                if mem_key in _spurt_time_memory:
+                    existing_time, existing_pct = _spurt_time_memory[mem_key]
+                    if abs(pct - existing_pct) > 0.01:
+                        _spurt_time_memory[mem_key] = (now_time_str, pct)
+                        db_updates.append((today_str, sym, now_time_str, pct))
+                        item["spurt_time"] = now_time_str
+                    else:
+                        item["spurt_time"] = existing_time
+                elif sym in db_rows:
+                    existing_time, existing_pct = db_rows[sym]
+                    if abs(pct - existing_pct) > 0.01:
+                        _spurt_time_memory[mem_key] = (now_time_str, pct)
+                        db_updates.append((today_str, sym, now_time_str, pct))
+                        item["spurt_time"] = now_time_str
+                    else:
+                        _spurt_time_memory[mem_key] = (existing_time, existing_pct)
+                        item["spurt_time"] = existing_time
+                else:
+                    _spurt_time_memory[mem_key] = (now_time_str, pct)
+                    db_updates.append((today_str, sym, now_time_str, pct))
+                    item["spurt_time"] = now_time_str
+
+            if db_updates:
+                cursor.executemany(
+                    "INSERT OR REPLACE INTO oi_spurt_log (date, symbol, spurt_time, oi_change_pct) VALUES (?, ?, ?, ?)",
+                    db_updates
+                )
+                conn.commit()
+            conn.close()
+        except Exception as e:
+            import logging
+            logging.getLogger(__name__).warning(f"Error syncing spurt timestamps: {e}")
+            for item in spurt_list:
+                if "spurt_time" not in item:
+                    item["spurt_time"] = now_time_str
+
+    return spurt_list
+
+
+
 def get_option_chain(kite, symbol: str):
     """Nearest-expiry option chain from Kite.
     Automatically routes SENSEX/BANKEX to BFO exchange, all others to NFO.
@@ -434,6 +537,7 @@ def get_option_chain(kite, symbol: str):
       - Uses session-start OI baseline (not oi_day_high) for oi_chg
       - Stores net_change per strike/side for correct buildup direction
     Returns (rows, expiry_str, futures_oi, futures_oi_prev, futures_ltp, futures_prev_close, error)."""
+    global _worker_thread
     # FIX: BSE F&O instruments (SENSEX, BANKEX) live on BFO exchange, not NFO
     exchange = "BFO" if symbol.upper() in BFO_SYMBOLS else "NFO"
     try:
@@ -502,27 +606,37 @@ def get_option_chain(kite, symbol: str):
     today_str = datetime.date.today().isoformat()
     if fut_symbol and fut_symbol in quotes:
         fq = quotes[fut_symbol]
-        futures_oi = int(fq.get("oi", 0) or 0)
-        futures_oi_prev = int(fq.get("oi_day_low", 0) or 0)
-        if futures_oi_prev == 0:
-            futures_oi_prev = futures_oi
-        futures_ltp = float(fq.get("last_price", 0) or 0)
+        futures_oi   = int(fq.get("oi", 0) or 0)
+        futures_ltp  = float(fq.get("last_price", 0) or 0)
         futures_prev_close = float(fq.get("ohlc", {}).get("close", futures_ltp) or futures_ltp)
 
-        # Retrieve true Previous Day EOD baseline for Futures
+        # B1 FIX: Retrieve EOD baseline non-blocking.
+        # Check SQLite cache first; queue background fetch if missing (no blocking).
+        futures_oi_prev = futures_oi  # safe default
         if fut_candidates and nearest_fut.get("instrument_token"):
             fut_ts = nearest_fut["tradingsymbol"]
             cached_fut_eod = get_cached_baseline(today_str, fut_ts)
-            if cached_fut_eod is not None:
+            if cached_fut_eod is not None and cached_fut_eod > 0:
                 futures_oi_prev = cached_fut_eod
             else:
-                try:
-                    _fetch_and_cache_baseline_sync(kite, today_str, nearest_fut["instrument_token"], fut_ts, futures_oi)
-                    fetched_fut_eod = get_cached_baseline(today_str, fut_ts)
-                    if fetched_fut_eod is not None:
-                        futures_oi_prev = fetched_fut_eod
-                except Exception:
-                    pass
+                # Fall back to oi_day_low until background worker populates SQLite
+                futures_oi_prev = int(fq.get("oi_day_low", 0) or 0)
+                if futures_oi_prev == 0:
+                    futures_oi_prev = futures_oi
+                # Queue background fetch if not already in flight
+                key = (today_str, fut_ts)
+                with _baseline_lock:
+                    if key not in _pending_baselines:
+                        _pending_baselines.add(key)
+                        if _worker_thread is None or not _worker_thread.is_alive():
+                            _worker_thread = threading.Thread(target=_baseline_worker, daemon=True)
+                            _worker_thread.start()
+                        _baseline_queue.put((0, next(_baseline_seq), kite, today_str,
+                                             nearest_fut["instrument_token"], fut_ts, futures_oi))
+        else:
+            futures_oi_prev = int(fq.get("oi_day_low", 0) or 0)
+            if futures_oi_prev == 0:
+                futures_oi_prev = futures_oi
     by_strike = defaultdict(dict)
     for instr in chain_instr:
         ts      = f"{exchange}:{instr['tradingsymbol']}"
@@ -553,7 +667,6 @@ def get_option_chain(kite, symbol: str):
                         _pending_baselines.add(key)
 
                         # Initialize worker thread if not running
-                        global _worker_thread
                         if _worker_thread is None or not _worker_thread.is_alive():
                             _worker_thread = threading.Thread(target=_baseline_worker, daemon=True)
                             _worker_thread.start()
@@ -959,21 +1072,33 @@ INDEX_SYMBOLS = set(EXCHANGE_MAP.keys())
 
 def get_ltp_and_pivots(kite, symbol):
     """Get LTP, price_change_pct, and PREVIOUS DAY pivots.
-    price_change_pct computed from Kite net_change / prev_close (accurate %).
-    Falls back to today's OHLC with a warning if historical fails."""
-    exch_sym = EXCHANGE_MAP.get(symbol.upper(), f"NSE:{symbol}")
-    pivot_source = "prev_day"
+    P1 FIX: Previous-day OHLC and derived pivots are cached per (symbol, date) —
+    historical_data() is called only ONCE per symbol per trading day.
+    LTP and price_change_pct are always fetched fresh from kite.quote()."""
+    exch_sym  = EXCHANGE_MAP.get(symbol.upper(), f"NSE:{symbol}")
+    today_str = datetime.date.today().isoformat()
+    cache_key = (symbol.upper(), today_str)
 
     try:
         q_data = kite.quote([exch_sym])
         d      = q_data.get(exch_sym, {})
         ltp    = d.get("last_price", 0)
         token  = d.get("instrument_token")
-        today  = datetime.date.today()
+        ohlc   = d.get("ohlc", {})
+        open_px = ohlc.get("open", 0) or 0
 
-        prev_close  = d.get("ohlc", {}).get("close", 0) or 0
-        open_px     = d.get("ohlc", {}).get("open", 0) or 0
-        if prev_close and prev_close > 0:
+        # ── Pivot cache hit: reuse historical data, only recompute LTP-derived fields ──
+        with _pivot_cache_lock:
+            cached = _pivot_cache.get(cache_key)
+        if cached:
+            prev_close = cached["prev_close"]
+            price_change_pct = round((ltp - prev_close) / prev_close * 100, 2) if prev_close > 0 else 0.0
+            return ltp, price_change_pct, cached["pivots"], cached["pivot_source"], prev_close, cached["open_gap_pct"], None
+
+        # ── Cache miss: full fetch including historical_data() ──
+        pivot_source = "prev_day"
+        prev_close   = ohlc.get("close", 0) or 0
+        if prev_close > 0:
             price_change_pct = round((ltp - prev_close) / prev_close * 100, 2)
             open_gap_pct     = round((open_px - prev_close) / prev_close * 100, 2) if open_px > 0 else 0.0
         else:
@@ -983,6 +1108,7 @@ def get_ltp_and_pivots(kite, symbol):
         # Previous session OHLC for correct pivot calculation
         high, low, close = 0, 0, 0
         if token:
+            today   = datetime.date.today()
             from_dt = today - datetime.timedelta(days=7)
             to_dt   = today - datetime.timedelta(days=1)
             hist    = kite.historical_data(token, from_dt, to_dt, "day")
@@ -999,16 +1125,26 @@ def get_ltp_and_pivots(kite, symbol):
                     open_gap_pct = round((open_px - prev_close) / prev_close * 100, 2) if open_px > 0 else 0.0
 
         if not (high and low and close):
-            o            = d.get("ohlc", {})
-            high         = o.get("high", 0)
-            low          = o.get("low", 0)
-            close        = o.get("close", 0)
+            high         = ohlc.get("high", 0)
+            low          = ohlc.get("low", 0)
+            close        = ohlc.get("close", 0)
             pivot_source = "today_ohlc"
 
         pivots = compute_pivots(high, low, close) if (high and low and close) else None
+
+        # Store pivot data in cache (LTP not cached — always refreshed from quote)
+        with _pivot_cache_lock:
+            _pivot_cache[cache_key] = {
+                "pivots":       pivots,
+                "pivot_source": pivot_source,
+                "prev_close":   prev_close,
+                "open_gap_pct": open_gap_pct,
+            }
+
         return ltp, price_change_pct, pivots, pivot_source, prev_close, open_gap_pct, None
 
     except Exception as e:
+
         return 0, 0.0, None, None, 0, 0.0, str(e)
 
 
@@ -1046,6 +1182,7 @@ def api_spurt():
     if err:
         return jsonify({"error": err}), 502
 
+    spurt_list = sync_spurt_timestamps(spurt_list)
     now_iso = datetime.datetime.now().isoformat()
     if not market_open:
         with _spurt_eod_lock:
@@ -1202,7 +1339,7 @@ def api_symbol(symbol):
             if atm_pe_oi_change > 0 and atm_pe_ltp_change < 0:
                 is_atm_pe_writers_dominating = True
 
-    max_pain = compute_max_pain(chain) if chain else None
+    max_pain = compute_max_pain_cached(sym, expiry, chain) if chain else None
     strikes  = top_strikes(chain, ltp) if chain else {"top_ce": [], "top_pe": [], "ce_wall": None, "pe_wall": None}
 
     # Build chain_data: ±10 strikes around ATM for the heatmap

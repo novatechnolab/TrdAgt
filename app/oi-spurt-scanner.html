@@ -1661,6 +1661,7 @@
     let watchList = [];        // ordered array of open symbols
     let activeTab = null;      // currently visible symbol
     let tabTimers = {};        // {sym: intervalId} — independent 15s refresh per tab
+    let _leftDebounce = null;  // B3: debounce handle for slider-triggered loadSpurt
     let prevDetails = {};      // {sym: {...}} — change detection per tab
     let prevRankMap = {};      // {sym: rank} — for left-panel reorder detection
     let aiAnalysisCache = {};  // {sym: { html: '', open: false, loaded: '0' }} — preserves AI analysis on tab refresh
@@ -1676,13 +1677,15 @@
     ];
     const INDEX_SET = new Set(['NIFTY', 'NIFTY50', 'BANKNIFTY', 'FINNIFTY', 'MIDCPNIFTY', 'SENSEX', 'BANKEX', 'NIFTYIT']);
 
-    // Market hours check — Indian context: browser always runs in IST, use local time directly
+    // B2 FIX: Convert to IST using UTC offset math — browser clock may not be IST
     function isMarketOpen() {
-      const now = new Date();
-      const day = now.getDay(); // 0=Sun, 6=Sat
+      const now   = new Date();
+      const utcMs = now.getTime() + (now.getTimezoneOffset() * 60000);
+      const ist   = new Date(utcMs + (5.5 * 3600000));  // UTC+5:30
+      const day   = ist.getDay(); // 0=Sun, 6=Sat
       if (day === 0 || day === 6) return false;
-      const mins = now.getHours() * 60 + now.getMinutes();
-      return mins >= 9 * 60 + 15 && mins <= 15 * 60 + 30;
+      const mins  = ist.getHours() * 60 + ist.getMinutes();
+      return mins >= 9 * 60 + 15 && mins <= 15 * 60 + 40;  // 09:15–15:40 IST
     }
 
     // PCR label — FIX: different thresholds for indices vs stocks
@@ -1850,7 +1853,7 @@
         if (isNew) { rankCls = 'sl-new'; rankBadge = `<span class="sl-rank-badge sl-rank-new">NEW</span>`; }
         else if (delta > 0) { rankCls = 'sl-up'; rankBadge = `<span class="sl-rank-badge sl-rank-up">▲${delta}</span>`; }
         else if (delta < 0) { rankCls = 'sl-down'; rankBadge = `<span class="sl-rank-badge sl-rank-down">▼${Math.abs(delta)}</span>`; }
-        const stockTs = oiTimestampMap[d.symbol]?.time || now;
+        const stockTs = d.spurt_time || oiTimestampMap[d.symbol]?.time || now;
 
         const oiColorStyle = isKite ? 'style="color: var(--red);"' : '';
         const barStyle = isKite ? 'background: linear-gradient(90deg, var(--red), transparent);' : '';
@@ -1903,8 +1906,9 @@
         wrap.innerHTML = `<div class="loader"><div class="spinner"></div> Loading ${sym}…</div>`;
       }
       fetchDetail(sym);
-      // Start independent timer if not already running and market is open
-      if (!tabTimers[sym] && isMarketOpen()) {
+      // B4 FIX: Always clear existing timer first to prevent duplicate intervals on double-click
+      if (tabTimers[sym]) clearInterval(tabTimers[sym]);
+      if (isMarketOpen()) {
         tabTimers[sym] = setInterval(() => fetchDetail(sym), 15000);
       }
     }
@@ -2020,7 +2024,7 @@
       const { tag: pcrTag, cls: pcrCls, color: pcrColor } = getPCRLabel(pcr, isIndex);
       const dirCls = priceChg > 0 ? 'tag-green' : priceChg < 0 ? 'tag-red' : 'tag-yellow';
 
-      // Market hours banner (Indian market: Mon-Fri 9:15-15:30 IST)
+      // Market hours banner (Indian market: Mon-Fri 9:15-15:40 IST)
       const isMktOpen = d.market_open !== undefined ? d.market_open : isMarketOpen();
       const tsStr = d.data_as_of ? new Date(d.data_as_of).toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' }) : '';
       const mktBanner = isMktOpen ? '' :
@@ -2383,7 +2387,10 @@
         <div class="stat-box ${changes.pcr ? 'changed' : ''}">
           ${alertBadge(changes.pcr)}<div class="stat-label">Overall PCR</div>
           <div class="stat-val" style="color:${pcrColor}">${pcr != null ? fmt(pcr, 3) : '–'}</div>
-          <div class="stat-sub">${pcrTag}</div>
+          <div class="stat-sub">
+            ${pcrTag}
+            ${prev.pcr != null && pcr != null ? (pcr > prev.pcr ? ' <span style="color:var(--green);font-weight:700">↑</span>' : pcr < prev.pcr ? ' <span style="color:var(--red);font-weight:700">↓</span>' : '') : ''}
+          </div>
         </div>
 
         <!-- Pivot Levels in header strip next to PCR -->
@@ -2845,7 +2852,9 @@
     slider.addEventListener('input', () => { minPct = Number(slider.value); slVal.textContent = minPct + '%'; });
     slider.addEventListener('change', () => {
       prevRankMap = {};  // reset rank map — new threshold = fresh baseline, no misleading badges
-      loadSpurt();
+      // B3 FIX: Debounce rapid slider drags — avoid burst API calls
+      clearTimeout(_leftDebounce);
+      _leftDebounce = setTimeout(() => loadSpurt(), 300);
     });
     // ─── Layer 3: Market Open Lifecycle Transition Watcher ─────────────
     let _wasMarketOpen = isMarketOpen();

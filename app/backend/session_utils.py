@@ -41,7 +41,7 @@ IST = timezone(timedelta(hours=5, minutes=30))
 
 # ── NSE Market Hours (IST) ────────────────────────────────────────────────────
 _MARKET_OPEN_H,  _MARKET_OPEN_M  =  9, 15
-_MARKET_CLOSE_H, _MARKET_CLOSE_M = 15, 30
+_MARKET_CLOSE_H, _MARKET_CLOSE_M = 15, 40
 _PREMARKET_START_H, _PREMARKET_START_M =  9,  0   # Pre-open starts 9:00 AM
 _LATE_ENTRY_H,   _LATE_ENTRY_M   = 14, 45          # No new entries after 2:45 PM
 
@@ -62,7 +62,7 @@ def today_ist() -> str:
 
 
 def is_market_hours() -> bool:
-    """True during live NSE session: 9:15 AM – 3:30 PM IST, Mon–Fri (excluding holidays)."""
+    """True during live NSE session: 9:15 AM – 3:40 PM IST, Mon–Fri (excluding holidays)."""
     n = now_ist()
     if n.weekday() >= 5 or n.date() in NSE_HOLIDAYS:      # Saturday/Sunday or Holiday
         return False
@@ -95,7 +95,7 @@ def get_session_mode() -> str:
     """Classify current moment into one of three modes.
 
     Returns:
-        'live'       — active market session (9:15–15:30 IST, weekday)
+        'live'       — active market session (9:15–15:40 IST, weekday)
         'premarket'  — pre-open window (9:00–9:15 IST, weekday)
         'historical' — outside market hours (evening, weekend, holiday)
     """

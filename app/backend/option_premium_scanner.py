@@ -179,10 +179,10 @@ def _discover_option_contracts(kite, mode="opening", nfo_cache=None, spot_cache=
         return {}
 
 def _is_active_window(now):
-    """Returns True between 09:15 and 15:30 IST"""
+    """Returns True between 09:15 and 15:40 IST"""
     if now.hour == 9 and now.minute >= 15: return True
     if 10 <= now.hour <= 14: return True
-    if now.hour == 15 and now.minute <= 30: return True
+    if now.hour == 15 and now.minute <= 40: return True
     return False
 
 def _option_scanner_loop():

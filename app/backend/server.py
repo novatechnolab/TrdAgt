@@ -3364,7 +3364,7 @@ def historical():
             if now.weekday() >= 5:  # Saturday or Sunday
                 return True
             minutes_since_midnight = now.hour * 60 + now.minute
-            return minutes_since_midnight < 555 or minutes_since_midnight >= 930  # 9:15 = 555, 15:30 = 930
+            return minutes_since_midnight < 555 or minutes_since_midnight >= 940  # 9:15 = 555, 15:40 = 940
 
         # ── CACHE STRATEGY ──
         # For intraday intervals: always fetch fresh from API during market hours, but use DB cache out of market hours
@@ -8739,7 +8739,7 @@ def fno_alerts_ai_rank():
             'opening bell (9:00-9:15)'                if h < 9.25 else
             'morning session (9:15-12:00)'            if h < 12   else
             'post-lunch (12:00-14:00)'                if h < 14   else
-            'closing session (14:00-15:30)'           if h < 15.5 else
+            'closing session (14:00-15:40)'           if h < 15.67 else
             'after-hours (next-session planning mode)'
         )
 

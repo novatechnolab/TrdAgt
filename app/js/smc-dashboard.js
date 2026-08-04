@@ -29,7 +29,7 @@ class SmcDashboard {
     const day = ist.getDay();
     if (day === 0 || day === 6) return false;
     const t = ist.getHours() * 60 + ist.getMinutes();
-    return t >= 555 && t < 930; // 9:15 = 555, 15:30 = 930
+    return t >= 555 && t < 940; // 9:15 = 555, 15:40 = 940
   }
 
   /** Returns IST date as YYYY-MM-DD */

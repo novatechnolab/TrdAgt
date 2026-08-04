@@ -144,15 +144,15 @@ def _get_kite():
 
 
 def _is_active_window(now):
-    """Returns True between 09:15 and 15:30 IST."""
+    """Returns True between 09:15 and 15:40 IST."""
     if now.hour == 9 and now.minute >= 15: return True
     if 10 <= now.hour <= 14: return True
-    if now.hour == 15 and now.minute <= 30: return True
+    if now.hour == 15 and now.minute <= 40: return True
     return False
 
 
 def _is_eod_window(now):
-    return now.hour > 15 or (now.hour == 15 and now.minute >= 30)
+    return now.hour > 15 or (now.hour == 15 and now.minute >= 40)
 
 
 _prev_close_cache = {}
@@ -600,9 +600,9 @@ def _run_eod_snapshot_bg():
             expected_date = _get_expected_trading_date(now_val)
             
             # GUARD: Never write the EOD snapshot file to disk before 15:30 IST on the target date.
-            is_past_close = (now_val.hour > 15 or (now_val.hour == 15 and now_val.minute >= 30))
+            is_past_close = (now_val.hour > 15 or (now_val.hour == 15 and now_val.minute >= 40))
             if expected_date == now_val.date() and not is_past_close:
-                logging.info(f"[Gainers EOD] Skipping saving to disk: target date is today ({expected_date}) but it is before 15:30 IST.")
+                logging.info(f"[Gainers EOD] Skipping saving to disk: target date is today ({expected_date}) but it is before 15:40 IST.")
             else:
                 suffix = expected_date.strftime('%d%m%Y')
                 snapshot_filename = f"gainers_eod_snapshot_{suffix}.json"
