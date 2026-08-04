@@ -3088,7 +3088,7 @@
 
   <!-- ═══ Mobile Sidebar Toggle Script ═══ -->
   <script>
-    (function  () {
+    (function () {
       const sidebar = document.querySelector('.sidebar');
       const overlay = document.getElementById('sidebar-overlay');
       const menuBtn = document.getElementById('mobile-menu-btn');
@@ -3111,19 +3111,19 @@
 
       // Close drawer when any sidebar nav item is clicked on mobile
       if (sidebar) {
-        sidebar.querySelectorAll('.nav-item').forEach(function (item)  {
+        sidebar.querySelectorAll('.nav-item').forEach(function (item) {
           item.addEventListener('click', function () {
-             if (window.innerWidth <= 767) closeSidebar();
+            if (window.innerWidth <= 767) closeSidebar();
           });
         });
       }
 
       // Sync bottom tab active state with main nav
-      bottomTabs.forEach(function (btn)  {
-        btn.addEventListener('click', function () { 
+      bottomTabs.forEach(function (btn) {
+        btn.addEventListener('click', function () {
           const page = btn.dataset.page;
           if (page && window.switchPage) window.switchPage(page);
-          bottomTabs.forEach(function (b)  { b.classList.remove('active'); });
+          bottomTabs.forEach(function (b) { b.classList.remove('active'); });
           btn.classList.add('active');
           if (window.innerWidth <= 767) closeSidebar();
         });
@@ -3131,9 +3131,9 @@
 
       // Sync active bottom tab when desktop nav is used
       document.querySelectorAll('.nav-item[data-page]').forEach(function (i tem) {
-        item.addEventListener('click', function ( ) {
+        item.addEventListener('click', function () {
           const page = item.dataset.page;
-          bottomTabs.forEach(function  (b) {
+          bottomTabs.forEach(function (b) {
             b.classList.toggle('active', b.dataset.page === page);
           });
         });
