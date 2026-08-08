@@ -10589,8 +10589,8 @@ _TL_HEADERS = {
     "Referer": "https://trendlyne.com/",
 }
 
-# Seed Trendlyne ID cache once at startup — background thread, non-blocking
-threading.Thread(target=_seed_trendlyne_from_sitemap, daemon=True, name="tl-seed").start()
+# NOTE: Trendlyne seeder is started in __main__ with a 15s delay
+# to avoid module-level I/O that blocks request handling at startup.
 
 
 def _tl_cache_id(symbol, tl_id, tl_slug):
@@ -11674,5 +11674,11 @@ if __name__ == '__main__':
         print("  [INFO] Kite-dependent services DEFERRED — will auto-start once you log in via the browser.")
 
     # Use SocketIO for development (supports WebSocket)
-    socketio.run(app, host='0.0.0.0', port=port, debug=False, allow_unsafe_werkzeug=True)
-    socketio.run(app, host='0.0.0.0', port=port, debug=False, allow_unsafe_werkzeug=True)
+    # use_reloader=False: prevents Werkzeug from forking in Termux which caused
+    # new browser tabs to hang until the terminal was refocused.
+    import threading as _t
+    _t.Timer(15, lambda: threading.Thread(
+        target=_seed_trendlyne_from_sitemap, daemon=True, name="tl-seed"
+    ).start()).start()
+    socketio.run(app, host='0.0.0.0', port=port, debug=False,
+                 allow_unsafe_werkzeug=True, use_reloader=False)

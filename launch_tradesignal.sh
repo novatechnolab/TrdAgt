@@ -8,6 +8,8 @@ DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )"
 cd "$DIR"
 
 if [ -d /data/data/com.termux ]; then
+    # Prevent Android from throttling Termux when the browser is in foreground
+    termux-wake-lock 2>/dev/null || true
     # Resolve Termux venv symbol loading bug (cannot locate symbol: pyexc_warning)
     PY_VER=$(python3 -c 'import sys; print(f"{sys.version_info.major}.{sys.version_info.minor}")' 2>/dev/null || python -c 'import sys; print(f"{sys.version_info.major}.{sys.version_info.minor}")' 2>/dev/null || echo "3.13")
     export LD_PRELOAD="/data/data/com.termux/files/usr/lib/libpython${PY_VER}.so"
@@ -24,11 +26,14 @@ fi
 
 # ── Start backend server ─────────────────────────────────────────────────────
 echo "🚀 Starting TradeSignal backend on port $PORT..."
-python "$DIR/app/backend/server.py" &
+# Redirect all server output to server.log — Python writes to a file (never
+# blocks), tail -f reads the file and displays it in terminal. This prevents
+# the Termux PTY buffer from filling and blocking Flask request threads.
+PYTHONUNBUFFERED=1 python "$DIR/app/backend/server.py" >> "$DIR/server.log" 2>&1 &
 SERVER_PID=$!
 
-# Cleanup: stop the server when this script exits
-trap "echo '🛑 Shutting down TradeSignal server...'; kill $SERVER_PID 2>/dev/null; exit" EXIT INT TERM
+# Cleanup: stop server and log tail on exit
+trap "echo '🛑 Shutting down TradeSignal server...'; kill $SERVER_PID $TAIL_PID 2>/dev/null; exit" EXIT INT TERM
 
 # Wait for Flask to boot
 sleep 3
@@ -72,10 +77,12 @@ if command -v termux-open-url &> /dev/null; then
             --ongoing 2>/dev/null &
     fi
 
-    # Keep server alive — wait in a loop so Ctrl+C works cleanly
-    while kill -0 "$SERVER_PID" 2>/dev/null; do
-        sleep 5
-    done
+    # Show live server logs in terminal — Python writes to file (no PTY blocking),
+    # tail reads the file and displays it. Ctrl+C stops both tail and server.
+    echo "📋 Live server logs (Ctrl+C to stop):"
+    tail -f "$DIR/server.log" &
+    TAIL_PID=$!
+    wait $SERVER_PID
 
 elif command -v google-chrome &> /dev/null; then
     # ── Ubuntu Desktop — Chrome App Mode ──
@@ -97,10 +104,12 @@ else
     xdg-open "$APP_URL" 2>/dev/null || true
 fi
 
-# ── Keep server alive (desktop) ──────────────────────────────────────────────
+# ── Show live logs and keep server alive (desktop) ─────────────────────────
 echo "======================================================="
 echo "  TradeSignal Server is running in the background."
 echo "  URL: $APP_URL"
-echo "  Close this terminal window (or press Ctrl+C) to stop."
+echo "  Live logs below (Ctrl+C to stop):"
 echo "======================================================="
+tail -f "$DIR/server.log" &
+TAIL_PID=$!
 wait $SERVER_PID
