@@ -81,11 +81,76 @@ from flask import session
 
 BACKEND_BUILD = 'server.py:kite-session-debug-2026-05-08'
 
-# ── Kite-dependent service startup gate ──────────────────────────────────────
-# Ensures scanners, RVOL warming, and WebSocket services are only started once,
-# and only after a verified Kite session is available (at boot or login).
-_kite_services_started = False
-_kite_services_lock = threading.Lock()
+# ── Agentic Framework Initialization ─────────────────────────────────────────
+_global_orchestrator = None
+_agentic_data_agent = None  # Fix5: cached at startup — zero per-tick lock acquisitions
+
+def get_agentic_orchestrator():
+    global _global_orchestrator
+    if _global_orchestrator is None:
+        try:
+            from constants import USE_AGENTIC_WORKFLOW
+            if USE_AGENTIC_WORKFLOW:
+                # D2: Support both launch CWDs (project root OR app/backend/)
+                try:
+                    from agents import (
+                        Orchestrator, KiteDataAgent, SynergyAgent, EMAAgent,
+                        FNOTrapAgent, MarketAgent, PredictionAgent, AlertDispatchAgent
+                    )
+                except ImportError:
+                    from app.backend.agents import (
+                        Orchestrator, KiteDataAgent, SynergyAgent, EMAAgent,
+                        FNOTrapAgent, MarketAgent, PredictionAgent, AlertDispatchAgent
+                    )
+                orch = Orchestrator()
+                data_agent = KiteDataAgent(name="KiteDataAgent")
+                synergy_agent = SynergyAgent(name="SynergyAgent")
+                ema_agent = EMAAgent(name="EMAAgent")
+                trap_agent = FNOTrapAgent(name="FNOTrapAgent")
+                market_agent = MarketAgent(name="MarketAgent")
+                prediction_agent = PredictionAgent(name="PredictionAgent")
+                dispatch_agent = AlertDispatchAgent(
+                    name="AlertDispatchAgent",
+                    telegram_token=os.environ.get('TELEGRAM_BOT_TOKEN', '').strip() or None,
+                    telegram_chat_id=os.environ.get('TELEGRAM_CHAT_ID', '').strip() or None,
+                    discord_webhook_url=os.environ.get('DISCORD_WEBHOOK_URL', '').strip() or None,
+                )
+
+                orch.register_agent(data_agent)
+                orch.register_agent(synergy_agent)
+                orch.register_agent(ema_agent)
+                orch.register_agent(trap_agent)
+                orch.register_agent(market_agent)
+                orch.register_agent(prediction_agent)
+                orch.register_agent(dispatch_agent)
+
+                dispatch_agent.attach_socketio(socketio)
+                orch.start_all()
+                _global_orchestrator = orch
+                # Fix5: Cache data_agent reference — eliminates per-tick lock acquisitions
+                global _agentic_data_agent
+                _agentic_data_agent = orch.get_agent("KiteDataAgent")
+                # D9: Register graceful shutdown hook
+                import atexit as _atexit
+                _atexit.register(lambda: _global_orchestrator.stop_all(timeout=2.0) if _global_orchestrator else None)
+                logging.info("[AGENTIC] Autonomous Agent Architecture successfully initialized and active.")
+        except Exception as e:
+            logging.exception(f"[AGENTIC] Failed to initialize agentic architecture: {e}")
+    return _global_orchestrator
+
+
+@app.route('/api/agentic/health')
+def agentic_health():
+    orch = get_agentic_orchestrator()
+    if orch:
+        return jsonify({
+            'enabled': True,
+            'health': orch.get_system_health()
+        })
+    return jsonify({
+        'enabled': False,
+        'message': 'Agentic architecture not active or flag disabled.'
+    })
 
 
 @app.route('/api/backend-version')
@@ -94,7 +159,9 @@ def backend_version():
         'build': BACKEND_BUILD,
         'server_file': __file__,
         'session_file': _SESSION_FILE if '_SESSION_FILE' in globals() else None,
+        'agentic_enabled': _global_orchestrator is not None,
     })
+
 
 
 @app.route('/favicon.ico')
@@ -1797,6 +1864,16 @@ def kite_ws_start():
                                         'ltp': t.get('last_price'),
                                         'ts': now_ts
                                     }
+                    # ── Fix5: Non-blocking tick forward to agentic pipeline ──────
+                    # Zero lock acquisitions on WS callback thread.
+                    # KiteDataAgent's own thread does all processing.
+                    try:
+                        if _agentic_data_agent:
+                            _agentic_data_agent.put_inbox(
+                                {"type": "ticks", "data": ticks}, block=False
+                            )
+                    except Exception:
+                        pass  # agent pipeline non-critical; never block main tick path
 
                 def on_connect(ws, _):
                     nonlocal delay

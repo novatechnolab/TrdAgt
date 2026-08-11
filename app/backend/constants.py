@@ -65,3 +65,7 @@ SESSION_CLOSE_HOUR   = 14   # After 2:45 PM = late session
 SESSION_CLOSE_MINUTE = 45
 CIRCUIT_PROXIMITY_PCT = 2.0  # % from circuit limit → NO TRADE
 BID_ASK_MAX_SPREAD_PCT = 1.0  # Illiquidity threshold
+
+# ── Agentic AI Architecture Feature Flag ─────────────────────────────────────
+USE_AGENTIC_WORKFLOW = True   # Enable non-LLM autonomous agent pipeline
+

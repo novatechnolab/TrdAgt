@@ -755,10 +755,15 @@ def top_strikes(chain, ltp, n=5):
         pe_oi = r.get("pe_oi", 0) or 0
         chain_pcr[r["strike"]] = round(pe_oi / ce_oi, 2) if ce_oi > 0 else None
 
-    # FIX: ATM-proximal walls (first meaningful resistance/support near current price)
-    # CE Wall = highest OI CE strike at or ABOVE LTP (nearest resistance)
-    ce_candidates = [r for r in chain if r["strike"] >= ltp]
-    pe_candidates = [r for r in chain if r["strike"] <= ltp]
+    # FIX: ATM-proximal walls — restrict to ±10 strike window (same as heatmap display)
+    # Prevents deep OTM strikes from being flagged as "wall" due to rollover/hedging OI
+    atm_idx_ts = min(range(len(strikes_sorted)), key=lambda i: abs(strikes_sorted[i] - ltp))
+    window_set = set(strikes_sorted[max(0, atm_idx_ts - 9) : min(len(strikes_sorted), atm_idx_ts + 10)])
+    ce_candidates = [r for r in chain if r["strike"] >= ltp and r["strike"] in window_set]
+    pe_candidates = [r for r in chain if r["strike"] <= ltp and r["strike"] in window_set]
+    # Fallback to full half-chain if window has no candidates on one side (edge case)
+    if not ce_candidates: ce_candidates = [r for r in chain if r["strike"] >= ltp]
+    if not pe_candidates: pe_candidates = [r for r in chain if r["strike"] <= ltp]
     ce_wall = max(ce_candidates, key=lambda r: r["ce_oi"])["strike"] if ce_candidates else None
     pe_wall = max(pe_candidates, key=lambda r: r["pe_oi"])["strike"] if pe_candidates else None
 
@@ -1070,6 +1075,31 @@ EXCHANGE_MAP = {
 INDEX_SYMBOLS = set(EXCHANGE_MAP.keys())
 
 
+def get_layer1_noise_threshold(symbol: str) -> float:
+    """Return Layer 1 Futures price noise threshold (%) based on asset class / market cap.
+    Prevents random 1-paisa tick fluctuations from triggering false Long/Short Buildup signals.
+    - Indices (NIFTY, BANKNIFTY, SENSEX, etc.): 0.05%
+    - Large Cap Stocks (Nifty 50 constituents): 0.08%
+    - Mid Cap Stocks (Nifty Midcap F&O universe): 0.10%
+    - Small Cap F&O Stocks (all remaining F&O stocks): 0.12%
+    Re-uses master _CAP_CATEGORY mapping from server.py for 100% unified categorization.
+    """
+    sym = symbol.upper()
+    if sym in INDEX_SYMBOLS:
+        return 0.05
+    try:
+        from server import _CAP_CATEGORY
+        cap = _CAP_CATEGORY.get(sym, "Small Cap")
+    except Exception:
+        cap = "Small Cap"
+
+    if cap == "Large Cap":
+        return 0.08
+    elif cap == "Mid Cap":
+        return 0.10
+    return 0.12
+
+
 def get_ltp_and_pivots(kite, symbol):
     """Get LTP, price_change_pct, and PREVIOUS DAY pivots.
     P1 FIX: Previous-day OHLC and derived pivots are cached per (symbol, date) —
@@ -1229,10 +1259,12 @@ def api_symbol(symbol):
         futures_price_up = futures_ltp > futures_prev_close
         futures_oi_up = futures_oi > futures_oi_prev
         
-        # Matrix classification
+        # Matrix classification — applies asset-class noise filter before matrix
+        # (0.05% Index, 0.08% Large Cap, 0.10% Mid Cap, 0.12% Small Cap)
+        # Prevents low-volatility 1-paisa tick noise from flickering buildup direction.
         if futures_oi_prev == 0 or futures_prev_close == 0:
             futures_buildup = "–"
-        elif futures_oi == futures_oi_prev or futures_ltp == futures_prev_close:
+        elif futures_oi == futures_oi_prev or abs(futures_price_chg_pct) <= get_layer1_noise_threshold(sym):
             futures_buildup = "Flat"
         elif futures_oi_up and futures_price_up:
             futures_buildup = "Long Buildup"

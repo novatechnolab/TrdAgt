@@ -1,0 +1,713 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>F&amp;O ResAnalyzer — Quarterly Results Intelligence</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    /* Pure White Professional Theme */
+    --bg: #ffffff;
+    --panel: #ffffff;
+    --panel-2: #f8fafc;
+    --border: #e2e8f0;
+    --border-strong: #cbd5e1;
+    --text: #0f172a;
+    --dim: #475569;
+    --green: #16a34a;
+    --green-dim: #dcfce7;
+    --red: #dc2626;
+    --red-dim: #fee2e2;
+    --amber: #d97706;
+    --cyan: #0284c7;
+    --purple: #7c3aed;
+    --mono: "JetBrains Mono","SFMono-Regular",Consolas,"Liberation Mono",Menlo,monospace;
+  }
+  * { box-sizing: border-box; }
+  body { margin:0; background:var(--bg); color:var(--text); font-family:var(--mono); font-size:13px; line-height:1.5; }
+  header { display:flex; align-items:center; justify-content:space-between; padding:14px 24px; border-bottom:2px solid var(--border); background:#ffffff; box-shadow:0 1px 3px rgba(0,0,0,0.03); }
+  .brand { display:flex; align-items:center; gap:10px; }
+  .brand .dot { width:9px; height:9px; border-radius:50%; background:var(--green); box-shadow:0 0 8px rgba(22,163,74,.4); }
+  .brand h1 { font-size:15px; margin:0; letter-spacing:.04em; font-weight:700; color:var(--text); }
+  .brand .sub { color:var(--dim); font-size:11px; }
+  .status { font-size:11px; color:var(--dim); font-weight:600; }
+  main { padding:18px 20px; width:100%; max-width:100%; margin:0 auto; box-sizing:border-box; }
+  .panel { background:var(--panel); border:1px solid var(--border); border-radius:6px; padding:16px 18px; margin-bottom:18px; box-shadow:0 1px 4px rgba(15,23,42,.04); }
+  .panel h2 { font-size:11px; text-transform:uppercase; letter-spacing:.08em; color:var(--dim); margin:0 0 12px 0; font-weight:700; }
+  .input-row { display:flex; gap:10px; flex-wrap:wrap; align-items:flex-start; }
+  textarea { flex:1; min-width:280px; min-height:74px; resize:vertical; background:var(--panel-2); border:1px solid var(--border); color:var(--text); font-family:var(--mono); font-size:13px; padding:10px 12px; border-radius:4px; outline:none; }
+  textarea:focus { border-color:var(--cyan); box-shadow:0 0 0 2px rgba(2,132,199,0.15); }
+  textarea::placeholder { color:var(--dim); opacity:.6; }
+  .btn-col { display:flex; flex-direction:column; gap:8px; min-width:150px; }
+  button { font-family:var(--mono); font-size:12px; font-weight:600; border:1px solid var(--border); border-radius:4px; padding:9px 14px; cursor:pointer; background:var(--panel-2); color:var(--text); transition:all .12s ease; }
+  button:hover { border-color:var(--cyan); color:var(--cyan); background:#ffffff; }
+  button.primary { background:var(--cyan); color:#fff; border-color:var(--cyan); }
+  button.primary:hover { background:#0369a1; border-color:#0369a1; color:#fff; }
+  button:disabled { opacity:.4; cursor:not-allowed; }
+  .hint { color:var(--dim); font-size:11px; margin-top:8px; }
+  .hint b { color:var(--amber); }
+
+  /* Table & Layout Overflow Fix */
+  .table-container { width:100%; overflow-x:auto; -webkit-overflow-scrolling:touch; border:1px solid var(--border); border-radius:6px; background:#ffffff; }
+  table { width:100%; min-width:1600px; border-collapse:collapse; font-size:11.5px; }
+  thead th { text-align:left; padding:9px 10px; border-bottom:2px solid var(--border-strong); color:var(--dim); font-weight:700; text-transform:uppercase; font-size:10px; letter-spacing:.05em; white-space:nowrap; position:sticky; top:0; background:#f8fafc; z-index:5; }
+  thead th.sortable { cursor:pointer; user-select:none; }
+  thead th.sortable:hover { color:var(--cyan); }
+  thead th.t1 { color:var(--cyan); }
+  thead th.t2 { color:var(--green); }
+  thead th.t3 { color:var(--amber); }
+  thead th.t4 { color:var(--purple); }
+  .sort-icon { font-size:9px; margin-left:3px; opacity:0.5; display:inline-block; }
+  tbody td { padding:8px 10px; border-bottom:1px solid var(--border); white-space:nowrap; }
+  tbody td:last-child, thead th:last-child { padding-right:16px; }
+  tbody tr.data-row { transition:background .1s ease; }
+  tbody tr.data-row:hover { background:#f1f5f9; cursor:pointer; }
+  tbody tr.detail-row td { padding:0; white-space:normal; }
+  .sym { font-weight:700; color:var(--text); letter-spacing:.02em; }
+  .fno-tag { font-size:9.5px; font-weight:700; padding:1px 5px; border-radius:3px; margin-left:6px; background:#e0f2fe; color:var(--cyan); border:1px solid #7dd3fc; }
+  .num-pos { color:var(--green); font-weight:600; }
+  .num-neg { color:var(--red); font-weight:600; }
+  .num-flat { color:var(--dim); }
+  .verdict { font-weight:700; padding:4px 10px; border-radius:4px; font-size:10.5px; display:inline-flex; align-items:center; white-space:nowrap; }
+  .v-strong-positive { background:#dcfce7; color:#14532d; border:1px solid #86efac; }
+  .v-positive { background:#f0fdf4; color:#166534; border:1px solid #bbf7d0; }
+  .v-neutral { background:#fef3c7; color:#78350f; border:1px solid #fde68a; }
+  .v-negative { background:#fef2f2; color:#991b1b; border:1px solid #fecaca; }
+  .v-strong-negative { background:#fee2e2; color:#7f1d1d; border:1px solid #fca5a5; }
+  .v-failed, .v-insufficient { background:#f1f5f9; color:var(--dim); border:1px solid var(--border); }
+
+  tr.guidance-up   td { background:#f0fdf4; }
+  tr.guidance-cut  td { background:#fef2f2; }
+
+  .quarter { color:var(--dim); font-size:11px; font-weight:500; }
+  .cache-tag { color:var(--dim); font-size:10px; opacity:.8; }
+  .empty { padding:40px 20px; text-align:center; color:var(--dim); font-size:12px; }
+  .spinner { display:inline-block; width:12px; height:12px; border:2px solid var(--border); border-top-color:var(--cyan); border-radius:50%; animation:spin .7s linear infinite; margin-right:6px; vertical-align:-1px; }
+  @keyframes spin { to { transform:rotate(360deg); } }
+  .progress { color:var(--dim); font-size:11px; margin-top:10px; }
+  .legend { display:flex; gap:16px; flex-wrap:wrap; margin-top:14px; font-size:11px; color:var(--dim); }
+  .legend span { display:inline-flex; align-items:center; gap:5px; }
+  .swatch { width:8px; height:8px; border-radius:2px; }
+
+  .qflag { display:inline-block; font-size:10px; font-weight:700; padding:1px 5px; border-radius:3px; background:#fef3c7; color:var(--amber); border:1px solid #fde68a; cursor:help; margin-left:4px; }
+  .bm-beat  { color:var(--green); font-weight:700; font-size:10.5px; }
+  .bm-miss  { color:var(--red);   font-weight:700; font-size:10.5px; }
+  .bm-inline{ color:var(--amber); font-weight:700; font-size:10.5px; }
+
+  .est-input { width:68px; background:transparent; border:none; border-bottom:1px dashed var(--border-strong); color:var(--text); font-family:var(--mono); font-size:11px; text-align:right; outline:none; padding:1px 3px; font-weight:600; }
+  .est-input:focus { border-bottom-color:var(--cyan); }
+  .est-input::placeholder { color:var(--dim); opacity:.5; }
+
+  .guidance-btn { font-family:var(--mono); font-size:11px; font-weight:700; border:1px solid var(--border); border-radius:3px; padding:2px 8px; cursor:pointer; background:var(--panel-2); transition:all .1s; }
+  .guidance-btn.up   { color:#14532d; border-color:#86efac; background:#dcfce7; }
+  .guidance-btn.flat { color:#78350f; border-color:#fde68a; background:#fef3c7; }
+  .guidance-btn.cut  { color:#7f1d1d; border-color:#fca5a5; background:#fee2e2; }
+
+  .detail-panel { background:#f8fafc; border-top:1px solid var(--border); padding:16px 20px; display:none; }
+  .detail-panel.open { display:grid; grid-template-columns:repeat(auto-fill,minmax(270px,1fr)); gap:14px; }
+  .detail-section { background:#ffffff; border:1px solid var(--border); border-radius:6px; padding:12px 14px; box-shadow:0 1px 2px rgba(0,0,0,0.02); }
+  .detail-section h4 { font-size:10.5px; text-transform:uppercase; letter-spacing:.08em; margin:0 0 8px 0; padding-bottom:4px; border-bottom:1px solid var(--border); font-weight:700; }
+  .detail-section h4.t1 { color:var(--cyan); }
+  .detail-section h4.t2 { color:var(--green); }
+  .detail-section h4.t3 { color:var(--amber); }
+  .detail-section h4.t4 { color:var(--purple); }
+  .detail-item { font-size:11px; color:var(--dim); margin:4px 0; }
+  .detail-item b { color:var(--text); }
+  .detail-flag-item { font-size:11px; color:var(--amber); font-weight:600; margin:4px 0; }
+
+  /* ─── DB Search panel ─── */
+  .search-row { display:flex; align-items:center; gap:8px; flex-wrap:wrap; }
+  .search-sym { width:150px; background:var(--panel-2); border:1px solid var(--border); color:var(--text); font-family:var(--mono); font-size:12px; padding:7px 10px; border-radius:4px; outline:none; }
+  .search-sym:focus { border-color:var(--cyan); }
+  .search-sym::placeholder { color:var(--dim); opacity:.6; }
+  .search-sel { background:var(--panel-2); border:1px solid var(--border); color:var(--text); font-family:var(--mono); font-size:12px; padding:7px 10px; border-radius:4px; outline:none; cursor:pointer; }
+  .search-sel:focus { border-color:var(--cyan); }
+  .srch-card { margin-top:14px; border:1px solid var(--border); border-radius:6px; overflow:hidden; background:#ffffff; }
+  .srch-card-hdr { display:flex; align-items:center; justify-content:space-between; padding:10px 14px; background:var(--panel-2); border-bottom:1px solid var(--border); flex-wrap:wrap; gap:8px; }
+  .srch-not-found { padding:16px 14px; color:var(--amber); font-size:12px; display:flex; align-items:center; gap:10px; background:#fffbeb; border-top:2px solid #fde68a; }
+  .srch-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(250px,1fr)); gap:14px; padding:14px; background:#f8fafc; }
+</style>
+</head>
+<body>
+<header>
+  <div class="brand">
+    <span class="dot"></span>
+    <div>
+      <h1>F&amp;O QUARTERLY RESULTS ANALYZER (F&amp;O ResAnalyzer)</h1>
+      <div class="sub">Source: screener.in &middot; 4-Tier Institutional Analysis &middot; <span style="color:var(--cyan)">T1: Margin/Estimates</span> &middot; <span style="color:var(--green)">T2: Revenue/PAT</span> &middot; <span style="color:var(--amber)">T3: Quality Filter</span> &middot; <span style="color:var(--purple)">T4: Context</span></div>
+    </div>
+  </div>
+  <div class="status" id="statusLine">Idle</div>
+</header>
+
+<main>
+  <div class="panel">
+    <h2>Stock List</h2>
+    <div class="input-row">
+      <textarea id="symbolInput" placeholder="Paste NSE symbols, comma or newline separated&#10;e.g. COALINDIA, BEL, TATAPOWER, HUDCO, COFORGE, CANBK"></textarea>
+      <div class="btn-col">
+        <button class="primary" id="analyzeBtn">&#9654; Analyze</button>
+        <button id="refreshBtn" title="Ignore cache, force re-fetch">&#8635; Force Refresh</button>
+        <button id="fnoOnlyBtn" title="Load full tracked F&O universe">Load F&amp;O List</button>
+      </div>
+    </div>
+    <div class="hint">Works for any quarter &mdash; always shows screener.in's <b>latest reported column</b>. Cached results reused if fetched within 6h. <b>Click any row</b> to expand full tier breakdown. Enter Est. PAT for Beat/Miss badge. Click Guidance to toggle and save.</div>
+    <div class="progress" id="progressLine"></div>
+  </div>
+
+  <div class="panel" style="padding:10px 16px;margin-bottom:14px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;background:var(--panel-2);">
+    <div style="display:flex;align-items:center;gap:14px;flex-wrap:wrap;">
+      <div style="display:flex;align-items:center;gap:6px;">
+        <label style="font-weight:600;color:var(--cyan);font-size:11px;text-transform:uppercase;">Filter Quarter:</label>
+        <select id="quarterFilter" onchange="applyFilters()" style="background:var(--panel);border:1px solid var(--border);color:var(--cyan);font-family:var(--mono);font-size:12px;padding:5px 10px;border-radius:4px;outline:none;cursor:pointer;font-weight:600;">
+          <option value="ALL">All Quarters</option>
+          <option value="Q1">Q1 (June Quarter)</option>
+          <option value="Q2">Q2 (September Quarter)</option>
+          <option value="Q3">Q3 (December Quarter)</option>
+          <option value="Q4">Q4 (March Quarter)</option>
+        </select>
+      </div>
+      <div style="display:flex;align-items:center;gap:6px;">
+        <label style="font-weight:600;color:var(--dim);font-size:11px;text-transform:uppercase;">Filter Verdict:</label>
+        <select id="verdictFilter" onchange="applyFilters()" style="background:var(--panel);border:1px solid var(--border);color:var(--text);font-family:var(--mono);font-size:12px;padding:5px 10px;border-radius:4px;outline:none;cursor:pointer;">
+          <option value="ALL">All Verdicts</option>
+          <option value="Strong Positive">Strong Positive</option>
+          <option value="Positive">Positive</option>
+          <option value="Neutral">Neutral</option>
+          <option value="Negative">Negative</option>
+          <option value="Strong Negative">Strong Negative</option>
+        </select>
+      </div>
+    </div>
+    <div id="filterCount" style="font-size:11px;color:var(--dim);">Idle</div>
+  </div>
+
+  <div class="table-container">
+    <table id="resultsTable">
+      <thead>
+         <tr>
+          <th class="sortable" onclick="sortBy('symbol')">Symbol <span class="sort-icon" id="sort-symbol">&#8597;</span></th>
+          <th class="sortable" onclick="sortBy('quarter')">Quarter <span class="sort-icon" id="sort-quarter">&#8597;</span></th>
+          <!-- Tier 1: Margin/Estimates — primary sentiment drivers -->
+          <th class="t1 sortable" onclick="sortBy('opm')" title="EBITDA Margin % (OPM) — T1: first ratio institutions check">EBITDA Mgn% <span class="sort-icon" id="sort-opm">&#8597;</span></th>
+          <th class="t1 sortable" onclick="sortBy('opm_yoy_delta')" title="EBITDA Margin expansion/contraction YoY in percentage points — highest scoring weight">EBITDA&#916; pts <span class="sort-icon" id="sort-opm_yoy_delta">&#8597;</span></th>
+          <th class="t1 sortable" onclick="sortBy('pat_margin')" title="PAT Margin % — bottom-line quality, T1">PAT Mgn% <span class="sort-icon" id="sort-pat_margin">&#8597;</span></th>
+          <th class="t1 sortable" onclick="sortBy('pat_margin_yoy')" title="PAT Margin delta YoY in percentage points (not PAT growth %) — T1">PATMgn&#916; pts <span class="sort-icon" id="sort-pat_margin_yoy">&#8597;</span></th>
+          <th class="t1" title="Enter consensus estimate PAT (Cr) — Beat/Miss % auto-computed vs Actual PAT">Est. PAT (Cr)</th>
+          <th class="t1" title="Management guidance revision — ↑ Upgrade / → Maintain / ↓ Cut — click to cycle, saved to DB">Mgmt Guidance</th>
+          <!-- Tier 2: Revenue & PAT — core quality validation -->
+          <th class="t2 sortable" onclick="sortBy('revenue')" title="Net Sales / Revenue (Cr) — T2">Revenue (Cr) <span class="sort-icon" id="sort-revenue">&#8597;</span></th>
+          <th class="t2 sortable" onclick="sortBy('revenue_yoy')" title="Revenue YoY growth % — T2 (preferred over QoQ, strips seasonality)">Rev YoY% <span class="sort-icon" id="sort-revenue_yoy">&#8597;</span></th>
+          <th class="t2 sortable" onclick="sortBy('net_profit')" title="Reported PAT (Cr) — cross-check against Other Income before trusting">PAT (Cr) <span class="sort-icon" id="sort-net_profit">&#8597;</span></th>
+          <th class="t2 sortable" onclick="sortBy('profit_yoy')" title="PAT YoY growth % — T2 (distinct from PAT Margin delta in T1)">PAT YoY% <span class="sort-icon" id="sort-profit_yoy">&#8597;</span></th>
+          <!-- Tier 3: Quality filter — catch low-quality beats -->
+          <th class="t3 sortable" onclick="sortBy('other_income_pct')" title="Other Income as % of Revenue — T3: institutions strip this to get normalized PAT">OtherInc/Rev% <span class="sort-icon" id="sort-other_income_pct">&#8597;</span></th>
+          <th class="t3 sortable" onclick="sortBy('finance_cost_yoy')" title="Finance Cost YoY change % — T3: rising = leverage eating into PAT">FinCost YoY% <span class="sort-icon" id="sort-finance_cost_yoy">&#8597;</span></th>
+          <!-- Tier 4: Context — derived/modelling inputs, lower institutional weight -->
+          <th class="t4 sortable" onclick="sortBy('eps')" title="EPS (Rs) — derived from PAT; institutions look at drivers behind it, not EPS in isolation">EPS (Rs) <span class="sort-icon" id="sort-eps">&#8597;</span></th>
+          <th class="t4 sortable" onclick="sortBy('eps_yoy')" title="EPS YoY growth % — T4">EPS YoY% <span class="sort-icon" id="sort-eps_yoy">&#8597;</span></th>
+          <th class="t4 sortable" onclick="sortBy('depreciation')" title="Depreciation (Cr) — T4: modelling input; relevant if sudden spike signals major capex cycle">Dep'n (Cr) <span class="sort-icon" id="sort-depreciation">&#8597;</span></th>
+          <!-- Verdict -->
+          <th class="sortable" onclick="sortBy('verdict')">Verdict <span class="sort-icon" id="sort-verdict">&#8597;</span></th>
+          <th>Why</th>
+        </tr>
+      </thead>
+      <tbody id="resultsBody">
+        <tr><td colspan="19" class="empty">Paste symbols above and click Analyze, or click "Load F&amp;O List".</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="legend">
+    <span><span class="swatch" style="background:var(--cyan)"></span> T1: Margin + Estimates</span>
+    <span><span class="swatch" style="background:var(--green)"></span> T2: Revenue / PAT</span>
+    <span><span class="swatch" style="background:var(--amber)"></span> T3: Quality Filter</span>
+    <span><span class="swatch" style="background:var(--purple)"></span> T4: Context</span>
+    <span>&#9888; = Low-quality beat flag &nbsp;|&nbsp; &#8593; Upgrade / &#8594; Maintain / &#8595; Cut = Guidance</span>
+    <span><span class="swatch" style="background:var(--green)"></span> Strong Positive / Positive</span>
+    <span><span class="swatch" style="background:var(--red)"></span> Negative / Strong Negative</span>
+    <span><span class="swatch" style="background:var(--dim)"></span> Not yet reported / fetch failed</span>
+  </div>
+
+  <!-- ─── DB Search Panel ──────────────────────────────────────────────── -->
+  <div class="panel" style="margin-top:20px;">
+    <h2>&#128269; DB Lookup — Search by Symbol &amp; Quarter</h2>
+    <div class="search-row">
+      <input id="srchSym" class="search-sym" type="text" placeholder="e.g. RELIANCE" maxlength="20"
+        onkeydown="if(event.key==='Enter') doDbSearch()" autocomplete="off" spellcheck="false">
+      <select id="srchQ" class="search-sel">
+        <option value="Q1">Q1 (Jun)</option>
+        <option value="Q2">Q2 (Sep)</option>
+        <option value="Q3">Q3 (Dec)</option>
+        <option value="Q4">Q4 (Mar)</option>
+      </select>
+      <select id="srchFY" class="search-sel"></select>
+      <button class="primary" onclick="doDbSearch()" id="srchBtn">Search DB</button>
+      <button onclick="clearDbSearch()" style="padding:7px 12px;">Clear</button>
+      <span id="srchStatus" style="font-size:11px;color:var(--dim);"></span>
+    </div>
+    <div id="srchResult"></div>
+  </div>
+</main>
+
+<script>
+const analyzeBtn   = document.getElementById('analyzeBtn');
+const refreshBtn   = document.getElementById('refreshBtn');
+const fnoOnlyBtn   = document.getElementById('fnoOnlyBtn');
+const symbolInput  = document.getElementById('symbolInput');
+const resultsBody  = document.getElementById('resultsBody');
+const statusLine   = document.getElementById('statusLine');
+const progressLine = document.getElementById('progressLine');
+
+let _currentResults = [];
+let _sortCol = null;
+let _sortDir = 'asc';
+let _expandedRow = null;
+
+function parseSymbols(raw){
+  return [...new Set(raw.split(/[,\n\r\t ]+/).map(s=>s.trim().toUpperCase()).filter(Boolean))];
+}
+function fmtNum(v, suffix=''){
+  if(v===null||v===undefined) return '<span class="num-flat">&#8212;</span>';
+  const cls=v>0?'num-pos':(v<0?'num-neg':'num-flat');
+  const sign=v>0?'+':'';
+  return `<span class="${cls}">${sign}${v}${suffix}</span>`;
+}
+function verdictClass(v){
+  const map={'Strong Positive':'v-strong-positive','Positive':'v-positive','Neutral':'v-neutral',
+    'Negative':'v-negative','Strong Negative':'v-strong-negative','Fetch Failed':'v-failed','Insufficient Data':'v-insufficient'};
+  return map[v]||'v-neutral';
+}
+function formatQuarterLabel(raw){
+  if(!raw) return '&#8212;';
+  const m=raw.match(/([A-Za-z]+)\s*(\d{4})/);
+  if(!m) return raw;
+  const month=m[1].toLowerCase(), year=parseInt(m[2],10);
+  let q='',fy='';
+  if(month.startsWith('jun')){q='Q1';fy='FY'+String(year+1).slice(-2);}
+  else if(month.startsWith('sep')){q='Q2';fy='FY'+String(year+1).slice(-2);}
+  else if(month.startsWith('dec')){q='Q3';fy='FY'+String(year+1).slice(-2);}
+  else if(month.startsWith('mar')){q='Q4';fy='FY'+String(year).slice(-2);}
+  if(q) return `<span style="font-weight:600;color:var(--cyan);">${q} ${fy}</span> <span style="color:var(--dim);font-size:0.85em;">(${raw})</span>`;
+  return raw;
+}
+function quarterToTimestamp(raw){
+  if(!raw) return 0;
+  const m=raw.match(/([A-Za-z]+)\s*(\d{4})/);
+  if(!m) return 0;
+  const ms=m[1].toLowerCase(),year=parseInt(m[2],10);
+  let mn=0;
+  if(ms.startsWith('jan'))mn=1;else if(ms.startsWith('feb'))mn=2;else if(ms.startsWith('mar'))mn=3;
+  else if(ms.startsWith('apr'))mn=4;else if(ms.startsWith('may'))mn=5;else if(ms.startsWith('jun'))mn=6;
+  else if(ms.startsWith('jul'))mn=7;else if(ms.startsWith('aug'))mn=8;else if(ms.startsWith('sep'))mn=9;
+  else if(ms.startsWith('oct'))mn=10;else if(ms.startsWith('nov'))mn=11;else if(ms.startsWith('dec'))mn=12;
+  return year*100+mn;
+}
+function getQuarterCode(raw){
+  if(!raw) return '';
+  const m=raw.match(/([A-Za-z]+)\s*(\d{4})/);
+  if(!m) return '';
+  const mo=m[1].toLowerCase();
+  if(mo.startsWith('jun')) return 'Q1';
+  if(mo.startsWith('sep')) return 'Q2';
+  if(mo.startsWith('dec')) return 'Q3';
+  if(mo.startsWith('mar')) return 'Q4';
+  return '';
+}
+
+// Beat/Miss
+function beatMissBadge(actualPat, estPat, isAuto){
+  if(actualPat==null||estPat==null||estPat===0) return '';
+  const pct=((actualPat-estPat)/Math.abs(estPat))*100;
+  const autoTag=isAuto?'<span style="font-size:9px;opacity:0.7;margin-left:2px">(auto)</span>':'';
+  if(pct>3)  return `<span class="bm-beat">&#9650; Beat +${pct.toFixed(1)}%${autoTag}</span>`;
+  if(pct<-3) return `<span class="bm-miss">&#9660; Miss ${pct.toFixed(1)}%${autoTag}</span>`;
+  return `<span class="bm-inline">&#8776; In-line ${pct>0?'+':''}${pct.toFixed(1)}%${autoTag}</span>`;
+}
+
+// Guidance cycle
+const GUIDANCE_STATES=[null,'UP','FLAT','CUT'];
+const GUIDANCE_LABELS={null:'&#8212;',UP:'&#8593; Upgrade',FLAT:'&#8594; Maintain',CUT:'&#8595; Cut'};
+const GUIDANCE_CLS={null:'',UP:'up',FLAT:'flat',CUT:'cut'};
+
+async function cycleGuidance(symbol,btn){
+  const curr=btn.dataset.guidance==='null'?null:btn.dataset.guidance||null;
+  const idx=GUIDANCE_STATES.indexOf(curr);
+  const next=GUIDANCE_STATES[(idx+1)%GUIDANCE_STATES.length];
+  btn.dataset.guidance=next;
+  btn.innerHTML=GUIDANCE_LABELS[next];
+  btn.className=`guidance-btn ${GUIDANCE_CLS[next]}`;
+  const dataRow=document.querySelector(`tr.data-row[data-symbol="${symbol}"]`);
+  if(dataRow){
+    dataRow.classList.remove('guidance-up','guidance-flat','guidance-cut');
+    if(next) dataRow.classList.add('guidance-'+next.toLowerCase());
+  }
+  try{
+    await fetch('/api/res-annotate',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({symbol,guidance:next})});
+  }catch(e){console.warn('Guidance save failed',e);}
+  const r=_currentResults.find(x=>x.symbol===symbol);
+  if(r) r.guidance=next;
+}
+
+async function saveEstPat(symbol,val,bmCellId,actualPat){
+  const estVal=val===''?null:parseFloat(val);
+  const bmCell=document.getElementById(bmCellId);
+  if(bmCell) bmCell.innerHTML=beatMissBadge(actualPat,estVal);
+  try{
+    await fetch('/api/res-annotate',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({symbol,est_pat:estVal})});
+  }catch(e){console.warn('Est PAT save failed',e);}
+  const r=_currentResults.find(x=>x.symbol===symbol);
+  if(r) r.est_pat=estVal;
+}
+
+// Expandable detail
+function buildDetailHTML(r){
+  const qf=(r.quality_flags||[]);
+  const flagsHTML=qf.length?qf.map(f=>`<div class="detail-flag-item">${f}</div>`).join(''):'<div class="detail-item">No quality flags</div>';
+  const fmtAbs=(v,sfx='')=>v!=null?`<b>${v}${sfx}</b>`:'<span class="num-flat">&#8212;</span>';
+  const fmtDelta=(v,sfx='')=>v!=null?`<b>${v>0?'+':''}${v}${sfx}</b>`:'<span class="num-flat">&#8212;</span>';
+  const fmtCr=(v)=>v!=null?`<b>Rs.${v} Cr</b>`:'<span class="num-flat">&#8212;</span>';
+
+  // Consensus estimate display helpers
+  const hasAutoEst  = r.est_pat_consensus != null;
+  const hasManEst   = r.est_pat != null;
+  const dispEstPAT  = hasManEst ? r.est_pat : (hasAutoEst ? r.est_pat_consensus : null);
+  const estBadge    = hasAutoEst && !hasManEst
+    ? `<span style="font-size:10px;background:#e8f0fe;color:#1a56db;padding:1px 5px;border-radius:3px;margin-left:4px">auto ${r.n_analysts||''}✓</span>`
+    : (hasManEst && hasAutoEst
+        ? `<span style="font-size:10px;background:#fef9e7;color:#b7791f;padding:1px 5px;border-radius:3px;margin-left:4px">manual</span>`
+        : '');
+  const effectivePAT = hasManEst ? r.est_pat : r.est_pat_consensus;
+  const bmPct = effectivePAT != null && r.net_profit != null
+    ? ((r.net_profit - effectivePAT) / Math.abs(effectivePAT) * 100)
+    : null;
+  const bmStr = bmPct != null
+    ? `<b style="color:${bmPct>3?'#1a8a1a':bmPct<-3?'#c0392b':'#555'}">${bmPct>0?'+':''}${bmPct.toFixed(1)}%</b>`
+    : '<span class="num-flat">&#8212;</span>';
+
+  return `<div class="detail-panel open">
+    <div class="detail-section">
+      <h4 class="t1">Tier 1 &mdash; Margin Trajectory</h4>
+      <div class="detail-item">EBITDA Margin (OPM%): ${fmtAbs(r.opm,'%')}</div>
+      <div class="detail-item">EBITDA Margin Delta YoY: ${fmtDelta(r.opm_yoy_delta,' pts')}</div>
+      <div class="detail-item">PAT Margin%: ${fmtAbs(r.pat_margin,'%')}</div>
+      <div class="detail-item">PAT Margin Delta YoY: ${fmtDelta(r.pat_margin_yoy,' pts')}</div>
+    </div>
+    <div class="detail-section">
+      <h4 class="t1">Tier 1 &mdash; Estimates &amp; Mgmt Guidance</h4>
+      <div class="detail-item">Est. PAT (consensus): ${dispEstPAT!=null?`<b>Rs.${dispEstPAT} Cr</b>${estBadge}`:'<span class="num-flat">Not set</span>'}</div>
+      <div class="detail-item">Est. Revenue (consensus): ${r.est_revenue_consensus!=null?`<b>Rs.${r.est_revenue_consensus} Cr</b><span style="font-size:10px;background:#e8f0fe;color:#1a56db;padding:1px 5px;border-radius:3px;margin-left:4px">auto</span>`:'<span class="num-flat">&#8212;</span>'}</div>
+      <div class="detail-item">Est. EPS (consensus): ${r.est_eps_consensus!=null?`<b>Rs.${r.est_eps_consensus}</b><span style="font-size:10px;background:#e8f0fe;color:#1a56db;padding:1px 5px;border-radius:3px;margin-left:4px">auto</span>`:'<span class="num-flat">&#8212;</span>'}</div>
+      <div class="detail-item">Actual PAT (reported): ${fmtCr(r.net_profit)}</div>
+      <div class="detail-item">Beat/Miss vs Est: ${bmStr}</div>
+      <div class="detail-item">Mgmt Guidance Revision: <b>${GUIDANCE_LABELS[r.guidance||null]}</b></div>
+    </div>
+    <div class="detail-section">
+      <h4 class="t2">Tier 2 &mdash; Revenue &amp; PAT Growth</h4>
+      <div class="detail-item">Revenue (Net Sales): ${fmtCr(r.revenue)}</div>
+      <div class="detail-item">Revenue YoY%: ${fmtDelta(r.revenue_yoy,'%')}</div>
+      <div class="detail-item">Revenue QoQ%: ${fmtDelta(r.revenue_qoq,'%')}</div>
+      <div class="detail-item">PAT (reported): ${fmtCr(r.net_profit)}</div>
+      <div class="detail-item">PAT YoY%: ${fmtDelta(r.profit_yoy,'%')}</div>
+      <div class="detail-item">PAT QoQ%: ${fmtDelta(r.profit_qoq,'%')}</div>
+    </div>
+    <div class="detail-section">
+      <h4 class="t3">Tier 3 &mdash; Quality Filter</h4>
+      <div class="detail-item">Other Income (absolute): ${fmtCr(r.other_income)}</div>
+      <div class="detail-item">Other Income as % of Revenue: ${fmtAbs(r.other_income_pct,'%')}</div>
+      <div class="detail-item">Finance Cost (absolute): ${fmtCr(r.finance_cost)}</div>
+      <div class="detail-item">Finance Cost YoY &#916;%: ${fmtDelta(r.finance_cost_yoy,'%')}</div>
+      <div class="detail-item">Interest Coverage Ratio (ICR): ${r.icr!=null?`<b>${r.icr}x</b>`:'<span class="num-flat">&#8212;</span>'}</div>
+      <div class="detail-item">Normalized PAT (ex-OI &amp; Exceptional): ${fmtCr(r.normalized_pat)}</div>
+      <div class="detail-item">Exceptional Items: ${r.exceptional_items!=null?`<b style="color:${Math.abs(r.exceptional_items)>0?'#c0392b':'inherit'}">Rs.${r.exceptional_items} Cr</b>`:'<span class="num-flat">Nil / N/A</span>'}</div>
+      ${flagsHTML}
+    </div>
+    <div class="detail-section">
+      <h4 class="t4">Tier 4 &mdash; Context (derived/modelling)</h4>
+      <div class="detail-item">EPS (Rs): ${r.eps!=null?`<b>Rs.${r.eps}</b>`:'<span class="num-flat">&#8212;</span>'}</div>
+      <div class="detail-item">EPS YoY%: ${fmtDelta(r.eps_yoy,'%')}</div>
+      <div class="detail-item">Depreciation: ${fmtCr(r.depreciation)}</div>
+    </div>
+    <div class="detail-section">
+      <h4 style="color:var(--dim)">All Scoring Reasons</h4>
+      ${(r.reasons||[]).map(rs=>`<div class="detail-item">${rs}</div>`).join('')||'<div class="detail-item num-flat">None</div>'}
+    </div>
+  </div>`;
+}
+
+function toggleDetail(symbol){
+  // Sanitize symbol to match the safe ID used in detail row
+  const safe=symbol.replace(/[^A-Z0-9]/g,'');
+  const detailRow=document.getElementById('detail-'+safe);
+  const panel=detailRow?detailRow.querySelector('.detail-panel'):null;
+  if(!panel) return;
+  if(_expandedRow&&_expandedRow!==symbol){
+    const prevSafe=_expandedRow.replace(/[^A-Z0-9]/g,'');
+    const prev=document.getElementById('detail-'+prevSafe);
+    if(prev){const pp=prev.querySelector('.detail-panel');if(pp)pp.classList.remove('open');}
+  }
+  panel.classList.toggle('open');
+  _expandedRow=panel.classList.contains('open')?symbol:null;
+}
+
+// Row renderer
+function renderRow(r){
+  const fnoTag='<span class="fno-tag">F&amp;O</span>';
+  const cacheTag=r.from_cache?`<span class="cache-tag">cached ${r.age_hours??''}h</span>`:'';
+  const reasons=(r.reasons||[]).join('; ');
+  const qflags=(r.quality_flags||[]);
+  const qfBadge=qflags.length?`<span class="qflag" title="${qflags.join('\n')}">&#9888; ${qflags.length}</span>`:'';
+  const guidVal=r.guidance||null;
+  const rowGCls=guidVal?`guidance-${guidVal.toLowerCase()}`:'';
+  const safeSym=r.symbol.replace(/[^A-Z0-9]/g,'');
+  const bmId=`bm-${safeSym}`;
+
+  const dataRow=`<tr class="data-row ${rowGCls}" data-symbol="${r.symbol}" id="row-${safeSym}" onclick="toggleDetail('${r.symbol}')">
+    <td><span class="sym">${r.symbol}</span>${fnoTag} ${cacheTag}</td>
+    <td class="quarter">${formatQuarterLabel(r.quarter_label)}</td>
+    <td>${r.opm!=null?r.opm+'%':'&#8212;'}</td>
+    <td>${fmtNum(r.opm_yoy_delta,' pts')}</td>
+    <td>${r.pat_margin!=null?r.pat_margin+'%':'&#8212;'}</td>
+    <td>${fmtNum(r.pat_margin_yoy,' pts')}</td>
+    <td onclick="event.stopPropagation()">
+      <input class="est-input" type="number" step="0.01"
+        value="${r.est_pat!=null?r.est_pat:''}" placeholder="${r.est_pat_consensus!=null?r.est_pat_consensus:'—'}"
+        title="${r.est_pat_consensus!=null?'Auto-consensus: Rs.'+r.est_pat_consensus+' Cr ('+r.n_analysts+' analysts). Type to override.':'No consensus data. Enter manually.'}"
+        onchange="saveEstPat('${r.symbol}',this.value,'${bmId}',${r.net_profit??'null'})"
+        oninput="if(!this.value.trim()){
+          const auto=${r.est_pat_consensus??'null'};
+          document.getElementById('${bmId}').innerHTML=beatMissBadge(${r.net_profit??'null'},auto);
+        }">
+      <span id="${bmId}">${beatMissBadge(r.net_profit, r.est_pat!=null?r.est_pat:r.est_pat_consensus, r.est_pat==null&&r.est_pat_consensus!=null)}</span>
+    </td>
+    <td onclick="event.stopPropagation()">
+      <button class="guidance-btn ${GUIDANCE_CLS[guidVal]}" data-guidance="${guidVal}"
+        onclick="cycleGuidance('${r.symbol}',this)">${GUIDANCE_LABELS[guidVal]}</button>
+    </td>
+    <td>${r.revenue??'&#8212;'}</td>
+    <td>${fmtNum(r.revenue_yoy,'%')}</td>
+    <td>${r.net_profit??'&#8212;'}</td>
+    <td>${fmtNum(r.profit_yoy,'%')}</td>
+    <td>${r.other_income_pct!=null?r.other_income_pct+'%':'&#8212;'}${qfBadge}</td>
+    <td>${fmtNum(r.finance_cost_yoy,'%')}</td>
+    <td>${r.eps??'&#8212;'}</td>
+    <td>${fmtNum(r.eps_yoy,'%')}</td>
+    <td>${r.depreciation??'&#8212;'}</td>
+    <td><span class="verdict ${verdictClass(r.verdict)}">${r.verdict}</span></td>
+    <td style="color:var(--dim);font-size:11px;max-width:260px;white-space:normal">${reasons}</td>
+  </tr>`;
+
+  const detailRow=`<tr class="detail-row" id="detail-${safeSym}">
+    <td colspan="19">${buildDetailHTML(r)}</td>
+  </tr>`;
+
+  return dataRow+detailRow;
+}
+
+// Filters
+function applyFilters(){
+  const qVal=document.getElementById('quarterFilter').value;
+  const vVal=document.getElementById('verdictFilter').value;
+  let filtered=_currentResults.filter(r=>{
+    if(r.is_fno===false) return false;
+    if(qVal!=='ALL'){const qCode=getQuarterCode(r.quarter_label);if(qCode!==qVal&&r.quarter_label!==qVal) return false;}
+    if(vVal!=='ALL'){if(r.verdict!==vVal) return false;}
+    return true;
+  });
+  const countEl=document.getElementById('filterCount');
+  if(countEl) countEl.textContent=`Showing ${filtered.length} F&O stock(s)`;
+  resultsBody.innerHTML=filtered.length>0
+    ?filtered.map(renderRow).join('')
+    :`<tr><td colspan="19" class="empty">No F&amp;O results match the selected filter(s).</td></tr>`;
+  _expandedRow=null;
+}
+
+// Sort
+const ALL_SORT_COLS=['symbol','quarter','revenue','revenue_yoy','revenue_qoq','net_profit','profit_yoy','profit_qoq',
+  'opm','opm_yoy_delta','pat_margin','pat_margin_yoy','other_income_pct','finance_cost_yoy','eps','eps_yoy','depreciation','verdict'];
+
+function sortBy(col){
+  if(_sortCol===col){_sortDir=_sortDir==='asc'?'desc':'asc';}
+  else{_sortCol=col;_sortDir='desc';}
+  ALL_SORT_COLS.forEach(c=>{
+    const el=document.getElementById('sort-'+c);
+    if(el){if(c===_sortCol){el.textContent=_sortDir==='asc'?'\u25b2':'\u25bc';el.style.opacity='1';}else{el.textContent='\u2195';el.style.opacity='0.4';}}
+  });
+  _currentResults.sort((a,b)=>{
+    if(col==='symbol') return _sortDir==='asc'?(a.symbol||'').localeCompare(b.symbol||''):(b.symbol||'').localeCompare(a.symbol||'');
+    let va,vb;
+    if(col==='quarter'){va=quarterToTimestamp(a.quarter_label);vb=quarterToTimestamp(b.quarter_label);}
+    else if(col==='verdict'){const vR={'Strong Positive':5,'Positive':4,'Neutral':3,'Negative':2,'Strong Negative':1};va=vR[a.verdict]||0;vb=vR[b.verdict]||0;}
+    else{va=a[col]??-9999999;vb=b[col]??-9999999;}
+    if(va<vb) return _sortDir==='asc'?-1:1;
+    if(va>vb) return _sortDir==='asc'?1:-1;
+    return 0;
+  });
+  applyFilters();
+}
+
+// Fetch
+async function runAnalysis(forceRefresh){
+  const symbols=parseSymbols(symbolInput.value);
+  if(symbols.length===0){alert('Enter at least one NSE symbol.');return;}
+  analyzeBtn.disabled=true;refreshBtn.disabled=true;
+  statusLine.innerHTML=`<span class="spinner"></span> Fetching ${symbols.length} symbol(s)...`;
+  progressLine.textContent=`Processing list (screener.in rate-limited politely)...`;
+  resultsBody.innerHTML=`<tr><td colspan="19" class="empty"><span class="spinner"></span> Working...</td></tr>`;
+  try{
+    const resp=await fetch('/api/analyze',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({symbols,force_refresh:forceRefresh})});
+    const data=await resp.json();
+    if(!Array.isArray(data)||data.length===0){
+      resultsBody.innerHTML=`<tr><td colspan="19" class="empty">No results returned.</td></tr>`;
+      _currentResults=[];
+    }else{_currentResults=data;applyFilters();}
+    statusLine.textContent=`Done \u2014 ${data.length} symbol(s) at ${new Date().toLocaleTimeString()}`;
+    progressLine.textContent='';
+  }catch(err){
+    resultsBody.innerHTML=`<tr><td colspan="19" class="empty">Request failed: ${err}. Is backend running?</td></tr>`;
+    statusLine.textContent='Error';
+  }finally{analyzeBtn.disabled=false;refreshBtn.disabled=false;}
+}
+
+analyzeBtn.addEventListener('click',()=>runAnalysis(false));
+refreshBtn.addEventListener('click',()=>runAnalysis(true));
+fnoOnlyBtn.addEventListener('click',async()=>{
+  try{const resp=await fetch('/api/fno-symbols');const list=await resp.json();symbolInput.value=list.join(', ');}
+  catch(e){alert('Failed to load F&O symbol list');}
+});
+
+// ─── DB Search (pure DB lookup, no live fetch) ─────────────────────────────
+(function initFyDropdown(){
+  const sel=document.getElementById('srchFY');
+  const now=new Date();
+  // Indian FY ends in March; Jan-Mar belongs to the FY ending that same year
+  const curFY=now.getMonth()>=3?now.getFullYear()+1:now.getFullYear();
+  // Show FY23 → FY28
+  for(let y=curFY+2;y>=curFY-4;y--){
+    const opt=document.createElement('option');
+    const label='FY'+(String(y).slice(-2));
+    opt.value=String(y).slice(-2);
+    opt.textContent=label;
+    if(y===curFY) opt.selected=true;
+    sel.appendChild(opt);
+  }
+})();
+
+function renderSrchResult(d){
+  const qf=(d.quality_flags||[]);
+  const flagsHTML=qf.length?qf.map(f=>`<div class="detail-flag-item">${f}</div>`).join(''):'<div class="detail-item">No quality flags</div>';
+  const fD=(v,sfx='')=>v!=null?`<b>${v}${sfx}</b>`:'<span class="num-flat">&#8212;</span>';
+  const fDelta=(v,sfx='')=>v!=null?`<b>${v>0?'+':''}${v}${sfx}</b>`:'<span class="num-flat">&#8212;</span>';
+  const fetchedAt=d.fetched_at?new Date(d.fetched_at).toLocaleString():'—';
+
+  return `<div class="srch-card">
+    <div class="srch-card-hdr">
+      <div style="display:flex;align-items:center;gap:10px;">
+        <span class="sym">${d.symbol}</span>
+        <span class="fno-tag">F&amp;O</span>
+        <span class="quarter">${formatQuarterLabel(d.quarter_label)}</span>
+      </div>
+      <div style="display:flex;align-items:center;gap:10px;">
+        <span class="verdict ${verdictClass(d.verdict)}">${d.verdict}</span>
+        <span style="font-size:10px;color:var(--dim);">Fetched: ${fetchedAt}</span>
+      </div>
+    </div>
+    <div class="srch-grid">
+      <div class="detail-section">
+        <h4 class="t1">Tier 1 &mdash; Margin Trajectory</h4>
+        <div class="detail-item">OPM (EBITDA Margin): ${fD(d.opm,'%')}</div>
+        <div class="detail-item">OPM &#916; YoY: ${fDelta(d.opm_yoy_delta,' pts')}</div>
+        <div class="detail-item">PAT Margin: ${fD(d.pat_margin,'%')}</div>
+        <div class="detail-item">PAT Margin &#916; YoY: ${fDelta(d.pat_margin_yoy,' pts')}</div>
+      </div>
+      <div class="detail-section">
+        <h4 class="t1">Tier 1 &mdash; Estimates &amp; Guidance</h4>
+        <div class="detail-item">Est. PAT: ${d.est_pat!=null?`<b>Rs.${d.est_pat} Cr</b>`:'<span class="num-flat">Not set</span>'}</div>
+        <div class="detail-item">Actual PAT: ${d.net_profit!=null?`<b>Rs.${d.net_profit} Cr</b>`:'<span class="num-flat">&#8212;</span>'}</div>
+        <div class="detail-item">Beat/Miss: <b>${d.est_pat!=null&&d.net_profit!=null?(()=>{const p=((d.net_profit-d.est_pat)/Math.abs(d.est_pat)*100);return (p>0?'+':'')+p.toFixed(1)+'%';})():'&#8212;'}</b></div>
+        <div class="detail-item">Guidance: <b>${GUIDANCE_LABELS[d.guidance||null]}</b></div>
+      </div>
+      <div class="detail-section">
+        <h4 class="t2">Tier 2 &mdash; Revenue &amp; PAT</h4>
+        <div class="detail-item">Revenue: ${d.revenue!=null?`<b>Rs.${d.revenue} Cr</b>`:'<span class="num-flat">&#8212;</span>'}</div>
+        <div class="detail-item">Revenue YoY: ${fDelta(d.revenue_yoy,'%')}</div>
+        <div class="detail-item">Revenue QoQ: ${fDelta(d.revenue_qoq,'%')}</div>
+        <div class="detail-item">PAT: ${d.net_profit!=null?`<b>Rs.${d.net_profit} Cr</b>`:'<span class="num-flat">&#8212;</span>'}</div>
+        <div class="detail-item">PAT YoY: ${fDelta(d.profit_yoy,'%')}</div>
+        <div class="detail-item">PAT QoQ: ${fDelta(d.profit_qoq,'%')}</div>
+      </div>
+      <div class="detail-section">
+        <h4 class="t3">Tier 3 &mdash; Quality Filter</h4>
+        <div class="detail-item">Other Income: ${d.other_income!=null?`<b>Rs.${d.other_income} Cr</b>`:'<span class="num-flat">&#8212;</span>'}</div>
+        <div class="detail-item">Other Income %: ${fD(d.other_income_pct,'%')}</div>
+        <div class="detail-item">Finance Cost: ${d.finance_cost!=null?`<b>Rs.${d.finance_cost} Cr</b>`:'<span class="num-flat">&#8212;</span>'}</div>
+        <div class="detail-item">Finance Cost YoY: ${fDelta(d.finance_cost_yoy,'%')}</div>
+        ${flagsHTML}
+      </div>
+      <div class="detail-section">
+        <h4 class="t4">Tier 4 &mdash; Context</h4>
+        <div class="detail-item">EPS: ${d.eps!=null?`<b>Rs.${d.eps}</b>`:'<span class="num-flat">&#8212;</span>'}</div>
+        <div class="detail-item">EPS YoY: ${fDelta(d.eps_yoy,'%')}</div>
+        <div class="detail-item">Depreciation: ${d.depreciation!=null?`<b>Rs.${d.depreciation} Cr</b>`:'<span class="num-flat">&#8212;</span>'}</div>
+      </div>
+      <div class="detail-section">
+        <h4 style="color:var(--dim)">Scoring Reasons</h4>
+        ${(d.reasons||[]).map(rs=>`<div class="detail-item">${rs}</div>`).join('')||'<div class="detail-item num-flat">None</div>'}
+      </div>
+    </div>
+  </div>`;
+}
+
+async function doDbSearch(){
+  const sym=(document.getElementById('srchSym').value||'').trim().toUpperCase();
+  const q=document.getElementById('srchQ').value;
+  const fy=document.getElementById('srchFY').value;
+  const status=document.getElementById('srchStatus');
+  const result=document.getElementById('srchResult');
+
+  if(!sym){document.getElementById('srchSym').focus();return;}
+
+  const srchBtn=document.getElementById('srchBtn');
+  srchBtn.disabled=true;
+  status.innerHTML='<span class="spinner"></span>';
+  result.innerHTML='';
+
+  try{
+    const resp=await fetch(`/api/res-lookup?symbol=${encodeURIComponent(sym)}&q=${q}&fy=${fy}`);
+    const data=await resp.json();
+
+    if(data.found){
+      status.textContent=`Found in DB`;
+      status.style.color='var(--green)';
+      result.innerHTML=renderSrchResult(data);
+    } else {
+      status.textContent='';
+      result.innerHTML=`<div class="srch-not-found">
+        <span style="font-size:20px;">&#128683;</span>
+        <div>
+          <div style="font-weight:700;margin-bottom:3px;">${data.message || 'Not in DB'}</div>
+          <div style="font-size:10.5px;color:var(--dim);">Enter the symbol in the Stock List above and click Analyze to fetch &amp; store it.</div>
+        </div>
+      </div>`;
+    }
+  }catch(e){
+    status.textContent='Request failed';
+    status.style.color='var(--red)';
+    result.innerHTML=`<div class="srch-not-found">&#9888; Backend error: ${e}</div>`;
+  }finally{
+    srchBtn.disabled=false;
+  }
+}
+
+function clearDbSearch(){
+  document.getElementById('srchSym').value='';
+  document.getElementById('srchResult').innerHTML='';
+  const srchStatus=document.getElementById('srchStatus');
+  srchStatus.textContent='';
+  srchStatus.style.color='var(--dim)';
+  document.getElementById('srchSym').focus();
+}
+</script>
+</body>
+</html>

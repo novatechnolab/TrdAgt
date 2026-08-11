@@ -1,0 +1,327 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Nifty Candle Analyzer — Sample Dashboard</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg: #12181A;
+    --panel: #182022;
+    --panel-2: #1D2628;
+    --border: #2A3739;
+    --text: #E9E6DD;
+    --text-muted: #8B9795;
+    --text-faint: #5C6A68;
+    --green: #3FB68C;
+    --green-dim: #1F3D34;
+    --red: #E0654A;
+    --red-dim: #3D251F;
+    --amber: #D9A44C;
+    --amber-dim: #3A301D;
+    --steel: #5C86B8;
+    --radius: 3px;
+  }
+  *{box-sizing:border-box; margin:0; padding:0;}
+  body{
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Inter', sans-serif;
+    padding: 20px;
+    min-height: 100vh;
+    background-image:
+      linear-gradient(var(--border) 1px, transparent 1px),
+      linear-gradient(90deg, var(--border) 1px, transparent 1px);
+    background-size: 44px 44px;
+    background-position: -1px -1px;
+    background-attachment: fixed;
+  }
+  .wrap{ max-width: 1180px; margin: 0 auto; }
+  .mono{ font-family: 'IBM Plex Mono', monospace; }
+
+  /* ===== HEADER STRIP ===== */
+  header{
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 16px 22px;
+    display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px;
+    margin-bottom: 14px;
+  }
+  .idx-name{ font-family:'IBM Plex Mono', monospace; font-weight:700; font-size: 13px; letter-spacing: 0.12em; color: var(--text-muted); text-transform: uppercase;}
+  .idx-price{ font-family:'IBM Plex Mono', monospace; font-weight:700; font-size: 30px; margin-top: 3px; }
+  .idx-chg{ font-family:'IBM Plex Mono', monospace; font-size: 14px; font-weight:600; margin-left: 12px; }
+  .idx-chg.up{ color: var(--green); }
+  .idx-meta{ text-align:right; font-size: 11.5px; color: var(--text-faint); font-family:'IBM Plex Mono', monospace; line-height:1.6;}
+  .live-dot{ display:inline-block; width:7px; height:7px; border-radius:50%; background: var(--green); margin-right:6px; animation: pulse 1.8s infinite; }
+  @keyframes pulse{ 0%,100%{opacity:1;} 50%{opacity:0.3;} }
+
+  /* ===== BIAS GAUGE — signature element ===== */
+  .gauge-panel{
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 22px 26px 16px;
+    margin-bottom: 14px;
+  }
+  .gauge-label-row{ display:flex; justify-content:space-between; align-items:baseline; margin-bottom:14px; }
+  .section-title{ font-family:'IBM Plex Mono', monospace; font-size: 11px; letter-spacing: 0.14em; text-transform:uppercase; color: var(--text-faint); }
+  .bias-readout{ font-family:'IBM Plex Mono', monospace; font-weight:700; font-size: 20px; }
+  .bias-readout.bullish{ color: var(--green); }
+  .bias-readout.bearish{ color: var(--red); }
+  .bias-readout.choppy{ color: var(--amber); }
+  .gauge-track{
+    position: relative;
+    height: 46px;
+    display:flex;
+    border-radius: var(--radius);
+    overflow: visible;
+    margin-bottom: 6px;
+  }
+  .gauge-zone{ flex:1; position:relative; display:flex; align-items:center; justify-content:center; }
+  .gauge-zone::after{ content:''; position:absolute; inset:0; opacity:0.14; }
+  .zone-bear::after{ background: var(--red); }
+  .zone-choppy::after{ background: var(--amber); }
+  .zone-bull::after{ background: var(--green); }
+  .gauge-zone { border-right: 1px solid var(--border); }
+  .gauge-zone:last-child{ border-right:none; }
+  .zone-tag{ font-family:'IBM Plex Mono', monospace; font-size: 10px; letter-spacing:0.1em; text-transform:uppercase; color: var(--text-faint); z-index:1;}
+  .needle{
+    position:absolute; top:-8px; bottom:-8px;
+    width: 3px; background: var(--text);
+    box-shadow: 0 0 10px 1px rgba(233,230,221,0.5);
+    transition: left 900ms cubic-bezier(.2,.9,.25,1);
+    z-index: 2;
+  }
+  .needle::before{
+    content:''; position:absolute; top:-6px; left:50%; transform:translateX(-50%);
+    width:0; height:0; border-left:6px solid transparent; border-right:6px solid transparent; border-top:7px solid var(--text);
+  }
+  .ticks{ display:flex; justify-content:space-between; margin-top: 4px; font-family:'IBM Plex Mono', monospace; font-size: 9.5px; color: var(--text-faint); }
+  .gauge-drivers{ display:flex; gap:18px; flex-wrap:wrap; margin-top:16px; padding-top:14px; border-top: 1px dashed var(--border); }
+  .driver{ font-family:'IBM Plex Mono', monospace; font-size: 11px; color: var(--text-muted); display:flex; align-items:center; gap:6px; }
+  .driver .dot{ width:6px; height:6px; border-radius:50%; }
+  .dot.g{ background: var(--green); } .dot.r{ background: var(--red); } .dot.a{ background: var(--amber); }
+
+  /* ===== GRID ===== */
+  .grid{ display:grid; grid-template-columns: 1.35fr 1fr; gap: 14px; }
+  @media (max-width: 860px){ .grid{ grid-template-columns: 1fr; } }
+  .panel{
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 20px 22px;
+  }
+  .panel + .panel{ margin-top: 14px; }
+
+  /* ===== CANDLE STRIP ===== */
+  .candle-svg-wrap{ background: var(--panel-2); border:1px solid var(--border); border-radius: var(--radius); padding: 14px 10px 8px; margin-top: 12px; }
+  .pattern-tags{ display:flex; gap:8px; flex-wrap:wrap; margin-top: 14px; }
+  .tag{
+    font-family:'IBM Plex Mono', monospace; font-size: 10.5px; padding: 5px 9px; border-radius: 2px;
+    border: 1px solid var(--border); color: var(--text-muted); background: var(--panel-2);
+  }
+  .tag.bull{ color: var(--green); border-color: var(--green-dim); background: var(--green-dim); }
+  .tag.bear{ color: var(--red); border-color: var(--red-dim); background: var(--red-dim); }
+
+  /* ===== SIGNAL CARDS ===== */
+  .signal-grid{ display:grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 12px; }
+  .signal-card{ background: var(--panel-2); border:1px solid var(--border); border-radius: var(--radius); padding: 12px 14px; }
+  .signal-card .k{ font-family:'IBM Plex Mono', monospace; font-size: 10px; color: var(--text-faint); text-transform:uppercase; letter-spacing:0.08em; }
+  .signal-card .v{ font-family:'IBM Plex Mono', monospace; font-size: 16px; font-weight:700; margin-top: 4px; }
+  .v.green{ color: var(--green); } .v.red{ color: var(--red); } .v.amber{ color: var(--amber); }
+
+  /* ===== SECTOR WEIGHTAGE ===== */
+  .stacked-bar{ display:flex; width:100%; height: 20px; border-radius: 2px; overflow:hidden; margin: 12px 0 16px; border:1px solid var(--border); }
+  .sector-list{ display:flex; flex-direction:column; gap: 0; }
+  .sector-row{
+    display:flex; align-items:center; justify-content:space-between;
+    padding: 8px 0; border-bottom: 1px solid var(--border);
+    font-family:'IBM Plex Mono', monospace; font-size: 12px;
+  }
+  .sector-row:last-child{ border-bottom:none; }
+  .sector-left{ display:flex; align-items:center; gap:9px; color: var(--text); }
+  .swatch{ width:9px; height:9px; border-radius:2px; flex-shrink:0; }
+  .sector-name{ color: var(--text-muted); }
+  .sector-right{ display:flex; align-items:center; gap: 10px; }
+  .sector-chg{ font-size: 10.5px; width: 46px; text-align:right; }
+  .sector-chg.up{ color: var(--green); } .sector-chg.down{ color: var(--red); }
+  .sector-wt{ width: 44px; text-align:right; font-weight:600; }
+  .total-row{
+    display:flex; justify-content:space-between; margin-top: 10px; padding-top: 10px;
+    border-top: 1px solid var(--border); font-family:'IBM Plex Mono', monospace; font-size: 11px; color: var(--text-faint);
+  }
+  .total-row b{ color: var(--text); }
+
+  footer{ text-align:center; color: var(--text-faint); font-family:'IBM Plex Mono', monospace; font-size: 10.5px; margin-top: 18px; letter-spacing: 0.05em; }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header>
+    <div>
+      <div class="idx-name">NIFTY 50 · SPOT INDEX</div>
+      <div>
+        <span class="idx-price">24,212.65</span><span class="idx-chg up mono">▲ +40.30 (+0.17%)</span>
+      </div>
+    </div>
+    <div class="idx-meta">
+      <div><span class="live-dot"></span>LIVE — 14 Jul 2026, 13:42:07 IST</div>
+      <div>Timeframe: 5-min · Sample / mock data</div>
+    </div>
+  </header>
+
+  <div class="gauge-panel">
+    <div class="gauge-label-row">
+      <span class="section-title">Index Bias — Composite Classifier</span>
+      <span class="bias-readout bullish">BULLISH · Score 72/100</span>
+    </div>
+    <div class="gauge-track">
+      <div class="gauge-zone zone-bear"><span class="zone-tag">Bearish</span></div>
+      <div class="gauge-zone zone-choppy"><span class="zone-tag">Choppy</span></div>
+      <div class="gauge-zone zone-bull"><span class="zone-tag">Bullish</span></div>
+      <div class="needle" id="gaugeNeedle" style="left:0%;"></div>
+    </div>
+    <div class="ticks"><span>0</span><span>35</span><span>65</span><span>100</span></div>
+    <div class="gauge-drivers">
+      <span class="driver"><span class="dot g"></span>CE short-covering across 24200–24600</span>
+      <span class="driver"><span class="dot g"></span>PE writers rebuilding floor higher (24000–24150)</span>
+      <span class="driver"><span class="dot a"></span>24500 wall still holds 1.57 Cr OI</span>
+      <span class="driver"><span class="dot g"></span>Last candle: Bullish Engulfing on OR breakout</span>
+    </div>
+  </div>
+
+  <div class="grid">
+    <div class="col-main">
+      <div class="panel">
+        <span class="section-title">Candle Pattern Analyzer · Last 14 × 5-min</span>
+        <div class="candle-svg-wrap">
+          <svg id="candleSvg" viewBox="0 0 640 190" width="100%" height="190" preserveAspectRatio="none"></svg>
+        </div>
+        <div class="pattern-tags">
+          <span class="tag bull">Bullish Engulfing — 13:35</span>
+          <span class="tag">Inside Bar — 13:15</span>
+          <span class="tag bear">Upper Wick Rejection — 12:50</span>
+          <span class="tag">OR Breakout Confirmed — 09:45</span>
+        </div>
+      </div>
+
+      <div class="panel">
+        <span class="section-title">Supporting Signals</span>
+        <div class="signal-grid">
+          <div class="signal-card"><div class="k">CE Buildup</div><div class="v green">Short Covering</div></div>
+          <div class="signal-card"><div class="k">PE Buildup</div><div class="v amber">Long Unwinding</div></div>
+          <div class="signal-card"><div class="k">PCR (OI)</div><div class="v">1.32</div></div>
+          <div class="signal-card"><div class="k">Max Pain</div><div class="v">24,200</div></div>
+          <div class="signal-card"><div class="k">Opening Range</div><div class="v green">Bullish Break</div></div>
+          <div class="signal-card"><div class="k">Move Speed</div><div class="v amber">Fast</div></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-side">
+      <div class="panel">
+        <span class="section-title">Sector Weightage — NIFTY 50 (Σ 100%)</span>
+        <div class="stacked-bar" id="stackedBar"></div>
+        <div class="sector-list" id="sectorList"></div>
+        <div class="total-row"><span>16 sectors</span><span>Total weight <b>100.0%</b></span></div>
+      </div>
+    </div>
+  </div>
+
+  <footer>SAMPLE DASHBOARD · MOCK DATA FOR LAYOUT REFERENCE · NIFTY CANDLE ANALYZER</footer>
+</div>
+
+<script>
+// ---------- Sector weightage (sums exactly to 100.0) ----------
+const sectors = [
+  { name:"Financial Services", wt:35.5, chg:0.42, color:"#3FB68C" },
+  { name:"Information Technology", wt:12.8, chg:-0.31, color:"#5C86B8" },
+  { name:"Oil, Gas & Fuels", wt:9.7, chg:0.18, color:"#D9A44C" },
+  { name:"FMCG", wt:7.8, chg:0.05, color:"#8B9795" },
+  { name:"Automobile", wt:7.2, chg:0.63, color:"#3FB68C" },
+  { name:"Healthcare", wt:4.2, chg:-0.12, color:"#E0654A" },
+  { name:"Metals & Mining", wt:3.8, chg:0.88, color:"#3FB68C" },
+  { name:"Construction", wt:3.6, chg:0.21, color:"#D9A44C" },
+  { name:"Consumer Durables", wt:3.0, chg:-0.09, color:"#8B9795" },
+  { name:"Capital Goods", wt:2.9, chg:0.34, color:"#5C86B8" },
+  { name:"Power", wt:2.7, chg:0.11, color:"#8B9795" },
+  { name:"Telecommunication", wt:2.4, chg:0.27, color:"#3FB68C" },
+  { name:"Consumer Services", wt:1.8, chg:-0.44, color:"#E0654A" },
+  { name:"Cement & Products", wt:1.2, chg:0.02, color:"#8B9795" },
+  { name:"Chemicals", wt:1.0, chg:-0.19, color:"#E0654A" },
+  { name:"Realty", wt:0.4, chg:1.02, color:"#3FB68C" },
+];
+
+const bar = document.getElementById('stackedBar');
+const list = document.getElementById('sectorList');
+sectors.forEach(s=>{
+  const seg = document.createElement('div');
+  seg.style.width = s.wt + '%';
+  seg.style.background = s.color;
+  seg.title = s.name + ' — ' + s.wt + '%';
+  bar.appendChild(seg);
+
+  const row = document.createElement('div');
+  row.className = 'sector-row';
+  row.innerHTML = `
+    <div class="sector-left">
+      <span class="swatch" style="background:${s.color}"></span>
+      <span class="sector-name">${s.name}</span>
+    </div>
+    <div class="sector-right">
+      <span class="sector-chg ${s.chg>=0?'up':'down'}">${s.chg>=0?'+':''}${s.chg.toFixed(2)}%</span>
+      <span class="sector-wt">${s.wt.toFixed(1)}%</span>
+    </div>`;
+  list.appendChild(row);
+});
+
+// ---------- Bias gauge needle ----------
+const score = 72; // 0-100
+document.getElementById('gaugeNeedle').style.left = score + '%';
+
+// ---------- Candlesticks ----------
+const candles = [
+  {o:100,h:112,l:96,c:108},{o:108,h:115,l:104,c:106},{o:106,h:110,l:98,c:101},
+  {o:101,h:118,l:99,c:115},{o:115,h:120,l:110,c:112},{o:112,h:114,l:100,c:103},
+  {o:103,h:108,l:95,c:98},{o:98,h:102,l:88,c:91},{o:91,h:96,l:84,c:94},
+  {o:94,h:104,l:92,c:102},{o:102,h:107,l:99,c:105},{o:105,h:109,l:101,c:104},
+  {o:104,h:106,l:98,c:100},{o:97,h:128,l:96,c:126}
+];
+const svg = document.getElementById('candleSvg');
+const min = Math.min(...candles.map(c=>c.l));
+const max = Math.max(...candles.map(c=>c.h));
+const pad = 12, W = 640, H = 190;
+const cw = (W - pad*2) / candles.length;
+const y = v => H - pad - ((v - min) / (max - min)) * (H - pad*2);
+
+candles.forEach((c,i)=>{
+  const x = pad + i*cw + cw/2;
+  const up = c.c >= c.o;
+  const color = up ? '#3FB68C' : '#E0654A';
+  const ns = 'http://www.w3.org/2000/svg';
+
+  const wick = document.createElementNS(ns,'line');
+  wick.setAttribute('x1',x); wick.setAttribute('x2',x);
+  wick.setAttribute('y1',y(c.h)); wick.setAttribute('y2',y(c.l));
+  wick.setAttribute('stroke',color); wick.setAttribute('stroke-width','1.4');
+  svg.appendChild(wick);
+
+  const bodyTop = y(Math.max(c.o,c.c));
+  const bodyH = Math.max(2, Math.abs(y(c.o)-y(c.c)));
+  const rect = document.createElementNS(ns,'rect');
+  rect.setAttribute('x', x - cw*0.28);
+  rect.setAttribute('y', bodyTop);
+  rect.setAttribute('width', cw*0.56);
+  rect.setAttribute('height', bodyH);
+  rect.setAttribute('fill', up ? color : color);
+  rect.setAttribute('opacity', up ? '1' : '0.9');
+  rect.setAttribute('rx','1');
+  svg.appendChild(rect);
+});
+</script>
+</body>
+</html>

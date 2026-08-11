@@ -2647,8 +2647,12 @@
         // Per-strike action cell — derives color from action text
         const ceAct = r.ce_action || '';
         const peAct = r.pe_action || '';
-        const actText = ceAct || peAct || '';
-        const actColor = actText.includes('BUY') ? 'var(--green)' : actText.includes('WAIT') ? 'var(--yellow)' : 'var(--muted)';
+        const actPri = a => a.includes('BUY') ? 2 : (a.includes('WAIT') || a.includes('PREPARE')) ? 1 : 0;
+        const actText = (ceAct && peAct && ceAct !== peAct)
+            ? (actPri(ceAct) >= actPri(peAct) ? `${ceAct} / ${peAct}` : `${peAct} / ${ceAct}`)
+            : (ceAct || peAct || '');
+        const topAct = actPri(ceAct) >= actPri(peAct) ? (ceAct || peAct) : (peAct || ceAct);
+        const actColor = topAct.includes('BUY') ? 'var(--green)' : topAct.includes('WAIT') ? 'var(--yellow)' : 'var(--muted)';
 
         return `<tr class="${rowCls}">
       <td class="ce-cell" style="background:rgba(0,230,118,${(cePct * .35).toFixed(2)})">${fmtOI(r.ce_oi)}${ceEodStr}</td>
