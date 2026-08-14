@@ -294,14 +294,29 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--t1);min-hei
 .fb-stat-val.val-lu{color:#a855f7;}
 .fb-stat-val.val-flat{color:var(--t2);}
 
-/* In-line APEX Chart Sub-row */
+/* Native In-line Candlestick & CPR Chart Sub-row */
 .chart-subrow{background:rgba(2,6,15,.96)!important;border-bottom:2px solid rgba(59,130,246,.35);}
-.chart-embed-box{padding:6px 12px 10px;background:rgba(3,8,18,.98);}
-.chart-embed-topbar{display:flex;align-items:center;justify-content:space-between;padding:8px 12px;background:rgba(13,24,44,.9);border:1px solid rgba(59,130,246,.25);border-bottom:none;border-radius:6px 6px 0 0;}
-.chart-embed-title{font-size:11px;font-weight:700;color:var(--t1);display:flex;align-items:center;gap:8px;}
-.apex-chart-iframe{width:100%;height:580px;border:1px solid rgba(59,130,246,.25);border-top:none;border-radius:0 0 6px 6px;background:#ffffff;display:block;}
+.inline-chart-box{padding:6px 12px 10px;background:rgba(3,8,18,.98);}
+.inline-chart-topbar{display:flex;align-items:center;justify-content:space-between;padding:8px 12px;background:rgba(13,24,44,.9);border:1px solid rgba(59,130,246,.25);border-bottom:none;border-radius:6px 6px 0 0;flex-wrap:wrap;gap:8px;}
+.ichart-info{display:flex;align-items:center;gap:10px;flex-wrap:wrap;}
+.ichart-badge{font-size:10px;font-weight:700;padding:2px 7px;border-radius:4px;background:rgba(59,130,246,.15);color:var(--t1);font-family:var(--mono);}
+.ichart-levels{display:flex;align-items:center;gap:5px;flex-wrap:wrap;}
+.lvl-badge{font-size:9px;font-weight:800;padding:1px 6px;border-radius:3px;font-family:var(--mono);}
+.lvl-badge.pdh{background:rgba(34,197,94,.12);color:#22c55e;border:1px solid rgba(34,197,94,.35);}
+.lvl-badge.pdl{background:rgba(239,68,68,.12);color:#ef4444;border:1px solid rgba(239,68,68,.35);}
+.lvl-badge.tc{background:rgba(168,85,247,.12);color:#c084fc;border:1px solid rgba(168,85,247,.35);}
+.lvl-badge.piv{background:rgba(6,182,212,.12);color:#22d3ee;border:1px solid rgba(6,182,212,.35);}
+.lvl-badge.bc{background:rgba(129,140,248,.12);color:#818cf8;border:1px solid rgba(129,140,248,.35);}
+.ichart-actions{display:flex;gap:8px;align-items:center;}
+.tf-btn-group{display:flex;border:1px solid rgba(59,130,246,.3);border-radius:4px;overflow:hidden;}
+.ichart-tf-btn{font-size:9px;font-weight:800;padding:3px 8px;background:rgba(13,24,44,.8);color:var(--t2);border:none;cursor:pointer;transition:all .15s;}
+.ichart-tf-btn.active{background:var(--acc);color:#ffffff;}
 .chart-popout-btn{font-size:9px;font-weight:700;padding:3px 8px;background:rgba(59,130,246,.18);color:var(--acc);border:1px solid rgba(59,130,246,.35);border-radius:4px;text-decoration:none;transition:all .15s;}
 .chart-popout-btn:hover{background:rgba(59,130,246,.3);color:#ffffff;}
+.ichart-canvas-container{position:relative;width:100%;height:380px;background:#030712;border:1px solid rgba(59,130,246,.25);border-top:none;border-radius:0 0 6px 6px;overflow:hidden;}
+.ichart-canvas{width:100%;height:100%;display:block;}
+.ichart-loading{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);font-size:11px;font-weight:700;color:var(--t2);letter-spacing:1px;font-family:var(--mono);}
+.ichart-crosshair-hud{position:absolute;top:8px;left:12px;font-size:10px;font-family:var(--mono);color:var(--t1);background:rgba(3,8,18,.85);padding:4px 8px;border-radius:4px;border:1px solid rgba(59,130,246,.25);pointer-events:none;display:none;z-index:10;}
 
 /* RIGHT PANEL */
 .rp{display:flex;flex-direction:column;overflow:hidden;}
@@ -739,21 +754,54 @@ function renderBoard(){
       const spotPriceFormatted = s.spotLtp ? s.spotLtp.toLocaleString('en-IN', {minimumFractionDigits: 2, maximumFractionDigits: 2}) : s.ltp.toLocaleString('en-IN');
       const expChartIcon = `<span style="display:inline-block;font-size:8px;margin-right:4px;color:var(--t2);transform:${isChartOpen?'rotate(90deg)':'none'};transition:transform .15s;">▶</span>`;
 
+      const pdhVal = s.pdh;
+      const pdlVal = s.pdl;
+      let pivVal = null, bcVal = null, tcVal = null;
+      if (pdhVal != null && pdlVal != null) {
+        const pdc = (s.spotLtp && s.spot) ? (s.spotLtp / (1 + s.spot / 100)) : (s.spotLtp || (pdhVal + pdlVal) / 2);
+        pivVal = (pdhVal + pdlVal + pdc) / 3;
+        bcVal = (pdhVal + pdlVal) / 2;
+        tcVal = 2 * pivVal - bcVal;
+        if (tcVal < bcVal) { const tmp = tcVal; tcVal = bcVal; bcVal = tmp; }
+      }
+      const fmtNum = v => Number.isFinite(v) ? (v >= 100 ? v.toFixed(1) : v.toFixed(2)) : '—';
+      const pdhStr = fmtNum(pdhVal);
+      const pdlStr = fmtNum(pdlVal);
+      const tcStr = fmtNum(tcVal);
+      const pivStr = fmtNum(pivVal);
+      const bcStr = fmtNum(bcVal);
+
       const chartSubrowHtml = isChartOpen ? `
         <tr class="chart-subrow">
           <td colspan="17" style="padding:0;">
-            <div class="chart-embed-box">
-              <div class="chart-embed-topbar">
-                <div class="chart-embed-title">
+            <div class="inline-chart-box">
+              <div class="inline-chart-topbar">
+                <div class="ichart-info">
                   <span style="font-size:13px;">📊</span>
-                  <b style="color:var(--acc);font-size:12px;">${s.sym}</b> — APEX Intraday Signal Chart (${s.fut} · &#8377;${spotPriceFormatted})
+                  <b style="color:var(--acc);font-size:12px;">${s.sym}</b>
+                  <span class="ichart-badge ${sCls}">${s.fut} · &#8377;${spotPriceFormatted} (${s.spot>0?'+':''}${s.spot}%)</span>
+                  <div class="ichart-levels">
+                    <span class="lvl-badge pdh" title="Previous Day High">PDH: &#8377;${pdhStr}</span>
+                    <span class="lvl-badge pdl" title="Previous Day Low">PDL: &#8377;${pdlStr}</span>
+                    <span class="lvl-badge tc" title="Top Central Pivot">TC: &#8377;${tcStr}</span>
+                    <span class="lvl-badge piv" title="Central Pivot">PIV: &#8377;${pivStr}</span>
+                    <span class="lvl-badge bc" title="Bottom Central Pivot">BC: &#8377;${bcStr}</span>
+                  </div>
                 </div>
-                <div style="display:flex;gap:8px;align-items:center;">
-                  <a href="apex-dashboard.html?symbol=${encodeURIComponent(s.sym)}" target="_blank" class="chart-popout-btn">↗ Popout</a>
+                <div class="ichart-actions">
+                  <div class="tf-btn-group">
+                    <button class="ichart-tf-btn ${_inlineChartTf===5?'active':''}" onclick="event.stopPropagation();switchInlineChartTf('${s.sym}', 5)">5m</button>
+                    <button class="ichart-tf-btn ${_inlineChartTf===15?'active':''}" onclick="event.stopPropagation();switchInlineChartTf('${s.sym}', 15)">15m</button>
+                  </div>
+                  <a href="apex-dashboard.html?symbol=${encodeURIComponent(s.sym)}" target="_blank" class="chart-popout-btn">↗ Full APEX Dashboard</a>
                   <button class="ibtn" style="font-size:12px;padding:2px 6px;" onclick="event.stopPropagation();toggleStockChart('${s.sym}')">✕</button>
                 </div>
               </div>
-              <iframe src="apex-dashboard.html?symbol=${encodeURIComponent(s.sym)}&embed=1" class="apex-chart-iframe" loading="lazy"></iframe>
+              <div class="ichart-canvas-container" id="ichart-container-${s.sym}">
+                <div class="ichart-loading" id="ichart-loading-${s.sym}">Loading ${s.sym} intraday chart data...</div>
+                <canvas id="ichart-canvas-${s.sym}" class="ichart-canvas"></canvas>
+                <div class="ichart-crosshair-hud" id="ichart-hud-${s.sym}"></div>
+              </div>
             </div>
           </td>
         </tr>` : '';
@@ -803,14 +851,14 @@ function renderBoard(){
                       <span class="opt-badge ${optType}">${optType}</span>
                     </div>
                     <div class="premium-flow">
-                      <span>&#8377;${openPrem}</span>
-                      <span class="prem-arrow">→</span>
-                      <span>&#8377;${curLtp}</span>
+                      <span class="flow-open" title="Strike open price">&#8377;${openPrem}</span>
+                      <span class="flow-arrow">→</span>
+                      <span class="flow-ltp" title="Current LTP">&#8377;${curLtp}</span>
                     </div>
                   </div>
                 </div>
                 <div class="opt-right">
-                  <span class="gain-pct ${gClass}">${emoji} +${gPct}%</span>
+                  <span class="gain-badge ${gClass}">${emoji} +${gPct}%</span>
                 </div>
               </div>`;
             }).join('')}
@@ -839,6 +887,413 @@ function renderBoard(){
       <td><span class="${gc}">${sc}</span></td>
     </tr>${subrowHtml}`;
   }).join('');
+
+  if (isFutBld && _activeChartStock) {
+    const activeStock = rows.find(s => s.sym === _activeChartStock);
+    if (activeStock) {
+      const pdhVal = activeStock.pdh;
+      const pdlVal = activeStock.pdl;
+      let pivVal = null, bcVal = null, tcVal = null;
+      if (pdhVal != null && pdlVal != null) {
+        const pdc = (activeStock.spotLtp && activeStock.spot) ? (activeStock.spotLtp / (1 + activeStock.spot / 100)) : (activeStock.spotLtp || (pdhVal + pdlVal) / 2);
+        pivVal = (pdhVal + pdlVal + pdc) / 3;
+        bcVal = (pdhVal + pdlVal) / 2;
+        tcVal = 2 * pivVal - bcVal;
+        if (tcVal < bcVal) { const tmp = tcVal; tcVal = bcVal; bcVal = tmp; }
+      }
+      const levels = { pdh: pdhVal, pdl: pdlVal, tc: tcVal, piv: pivVal, bc: bcVal };
+      setTimeout(() => initInlineChart(_activeChartStock, levels), 20);
+    }
+  }
+}
+
+/* ============================================================
+   NATIVE IN-LINE INTRADAY CANDLESTICK & CPR CHART ENGINE
+============================================================ */
+let _inlineChartTf = 5;
+const _tokenCache = {};
+const _chartCandlesCache = {};
+const _chartMouseHandlers = {};
+
+function switchInlineChartTf(sym, tf) {
+  _inlineChartTf = tf;
+  renderBoard();
+}
+
+function calcEMA(closes, period) {
+  if (!closes || !closes.length) return [];
+  const k = 2 / (period + 1);
+  const ema = [closes[0]];
+  for (let i = 1; i < closes.length; i++) {
+    ema.push(closes[i] * k + ema[i - 1] * (1 - k));
+  }
+  return ema;
+}
+
+function calcVWAP(candles) {
+  if (!candles || !candles.length) return [];
+  let sumPV = 0, sumV = 0;
+  return candles.map(c => {
+    const hl = parseFloat(c.high || c.h || 0);
+    const ll = parseFloat(c.low || c.l || 0);
+    const cl = parseFloat(c.close || c.c || 0);
+    const typ = (hl + ll + cl) / 3;
+    const v = parseFloat(c.volume ?? c.v ?? 0);
+    sumPV += typ * v;
+    sumV += v;
+    return sumV === 0 ? typ : sumPV / sumV;
+  });
+}
+
+async function initInlineChart(sym, levels = {}) {
+  const container = document.getElementById(`ichart-container-${sym}`);
+  const canvas = document.getElementById(`ichart-canvas-${sym}`);
+  const loadingEl = document.getElementById(`ichart-loading-${sym}`);
+  if (!container || !canvas) return;
+
+  // Resolve instrument token
+  let token = _tokenCache[sym];
+  if (!token) {
+    try {
+      const res = await fetch(`/kite/instruments?search=${encodeURIComponent(sym)}&exchange=NSE`);
+      if (res.ok) {
+        const json = await res.json();
+        const list = json.instruments || [];
+        const match = list.find(it => (it.symbol === sym || it.tradingsymbol === sym)) || list[0];
+        if (match) {
+          token = match.token || match.instrument_token;
+          _tokenCache[sym] = token;
+        }
+      }
+    } catch (e) {
+      console.warn(`[INLINE CHART] Token lookup failed for ${sym}:`, e);
+    }
+  }
+
+  if (!token) {
+    if (loadingEl) loadingEl.textContent = `Instrument token not found for ${sym}`;
+    return;
+  }
+
+  // Fetch Historical Candles
+  const intervalStr = _inlineChartTf === 15 ? '15minute' : '5minute';
+  const now = new Date();
+  const toDate = now.toISOString().split('T')[0];
+  const fromDateObj = new Date(now.getTime() - 6 * 24 * 3600000);
+  const fromDate = fromDateObj.toISOString().split('T')[0];
+
+  let candles = [];
+  try {
+    const res = await fetch(`/api/historical?token=${token}&interval=${intervalStr}&from=${fromDate}&to=${toDate}`);
+    if (res.ok) {
+      const json = await res.json();
+      candles = (json.candles || []).map(c => ({
+        timestamp: new Date(c.date || c.timestamp).getTime(),
+        open: c.open, high: c.high, low: c.low, close: c.close, volume: c.volume || 0
+      }));
+    }
+  } catch (e) {
+    console.warn(`[INLINE CHART] Fetch error for ${sym}:`, e);
+  }
+
+  if (!candles || !candles.length) {
+    if (loadingEl) loadingEl.textContent = `No historical data available for ${sym}`;
+    return;
+  }
+
+  if (loadingEl) loadingEl.style.display = 'none';
+
+  // Filter to latest trading session
+  const latestTs = candles[candles.length - 1].timestamp;
+  const latestDayStr = new Date(latestTs).toISOString().split('T')[0];
+  const sessionCandles = candles.filter(c => new Date(c.timestamp).toISOString().split('T')[0] === latestDayStr);
+  const activeCandles = sessionCandles.length >= 3 ? sessionCandles : candles.slice(-50);
+
+  // Indicators calculated over full fetched window, then sliced
+  const fullCloses = candles.map(c => c.close);
+  const fullEma9 = calcEMA(fullCloses, 9);
+  const fullEma21 = calcEMA(fullCloses, 21);
+  const fullEma50 = calcEMA(fullCloses, 50);
+  const fullVwap = calcVWAP(candles);
+
+  const startIndex = candles.length - activeCandles.length;
+  const ema9 = fullEma9.slice(startIndex);
+  const ema21 = fullEma21.slice(startIndex);
+  const ema50 = fullEma50.slice(startIndex);
+  const vwap = fullVwap.slice(startIndex);
+
+  _chartCandlesCache[sym] = {
+    candles: activeCandles,
+    ema9, ema21, ema50, vwap,
+    levels: levels || {},
+    tf: _inlineChartTf
+  };
+
+  drawInlineCandleCanvas(sym, null);
+
+  // Mousemove Crosshair & HUD Listener
+  if (!_chartMouseHandlers[sym]) {
+    _chartMouseHandlers[sym] = true;
+    container.addEventListener('mousemove', (e) => {
+      const rect = canvas.getBoundingClientRect();
+      const mouseX = e.clientX - rect.left;
+      const mouseY = e.clientY - rect.top;
+      drawInlineCandleCanvas(sym, { x: mouseX, y: mouseY });
+    });
+    container.addEventListener('mouseleave', () => {
+      const hud = document.getElementById(`ichart-hud-${sym}`);
+      if (hud) hud.style.display = 'none';
+      drawInlineCandleCanvas(sym, null);
+    });
+  }
+}
+
+function drawInlineCandleCanvas(sym, hoverPos = null) {
+  const canvas = document.getElementById(`ichart-canvas-${sym}`);
+  const hud = document.getElementById(`ichart-hud-${sym}`);
+  const data = _chartCandlesCache[sym];
+  if (!canvas || !data || !data.candles || !data.candles.length) return;
+
+  const { candles, ema9, ema21, ema50, vwap, levels } = data;
+  const ctx = canvas.getContext('2d');
+  const dpr = window.devicePixelRatio || 1;
+  const rect = canvas.getBoundingClientRect();
+  
+  const width = rect.width || canvas.parentElement.clientWidth || 800;
+  const height = 380;
+
+  if (canvas.width !== width * dpr || canvas.height !== height * dpr) {
+    canvas.width = width * dpr;
+    canvas.height = height * dpr;
+  }
+
+  ctx.save();
+  ctx.scale(dpr, dpr);
+  ctx.clearRect(0, 0, width, height);
+
+  const pl = 14, pr = 78, pt = 16, pb = 26;
+  const cw = width - pl - pr;
+  const ch = height - pt - pb;
+  const n = candles.length;
+
+  // Compute Min & Max bounds
+  let minPrice = Infinity;
+  let maxPrice = -Infinity;
+  candles.forEach(c => {
+    if (c.low < minPrice) minPrice = c.low;
+    if (c.high > maxPrice) maxPrice = c.high;
+  });
+
+  // Include Key Levels in bounds
+  const checkLevels = [levels.pdh, levels.pdl, levels.tc, levels.piv, levels.bc];
+  checkLevels.forEach(lvl => {
+    if (lvl != null && Number.isFinite(lvl)) {
+      if (lvl < minPrice) minPrice = lvl;
+      if (lvl > maxPrice) maxPrice = lvl;
+    }
+  });
+
+  const pRange = Math.max(1, maxPrice - minPrice);
+  minPrice -= pRange * 0.03;
+  maxPrice += pRange * 0.03;
+  const effectiveRange = maxPrice - minPrice;
+
+  const getY = p => pt + ch * (1 - (p - minPrice) / effectiveRange);
+  const getX = i => pl + (i + 0.5) * (cw / n);
+  const candleW = Math.max(2.5, Math.min(16, (cw / n) * 0.7));
+
+  // Horizontal Grid Lines & Right Price Axis
+  const numGridTicks = 6;
+  ctx.lineWidth = 1;
+  ctx.font = '10px monospace';
+  ctx.fillStyle = '#64748b';
+  for (let i = 0; i <= numGridTicks; i++) {
+    const p = minPrice + (effectiveRange / numGridTicks) * i;
+    const y = getY(p);
+    ctx.strokeStyle = 'rgba(59,130,246,0.12)';
+    ctx.setLineDash([4, 4]);
+    ctx.beginPath();
+    ctx.moveTo(pl, y);
+    ctx.lineTo(width - pr, y);
+    ctx.stroke();
+
+    ctx.setLineDash([]);
+    ctx.fillText('₹' + (p >= 100 ? p.toFixed(1) : p.toFixed(2)), width - pr + 8, y + 3.5);
+  }
+
+  // Vertical Grid Lines & Time Labels
+  const step = Math.max(1, Math.floor(n / 6));
+  for (let i = 0; i < n; i += step) {
+    const x = getX(i);
+    const c = candles[i];
+    const d = new Date(c.timestamp);
+    const hh = String(d.getHours()).padStart(2, '0');
+    const mm = String(d.getMinutes()).padStart(2, '0');
+    const timeStr = `${hh}:${mm}`;
+
+    ctx.strokeStyle = 'rgba(59,130,246,0.08)';
+    ctx.setLineDash([3, 3]);
+    ctx.beginPath();
+    ctx.moveTo(x, pt);
+    ctx.lineTo(x, pt + ch);
+    ctx.stroke();
+
+    ctx.setLineDash([]);
+    ctx.fillText(timeStr, x - 14, height - 8);
+  }
+
+  // Volume Sub-Histogram (Bottom 20%)
+  const maxVol = Math.max(...candles.map(c => c.volume || 1), 1);
+  const volBaseY = pt + ch;
+  const volMaxH = ch * 0.22;
+  candles.forEach((c, i) => {
+    const x = getX(i);
+    const vH = ((c.volume || 0) / maxVol) * volMaxH;
+    const isUp = c.close >= c.open;
+    ctx.fillStyle = isUp ? 'rgba(34,197,94,0.25)' : 'rgba(239,68,68,0.25)';
+    ctx.fillRect(x - candleW / 2, volBaseY - vH, candleW, vH);
+  });
+
+  // CPR & Key Level Lines
+  function drawLevelLine(val, label, color) {
+    if (val == null || !Number.isFinite(val)) return;
+    const y = getY(val);
+    if (y < pt - 5 || y > pt + ch + 5) return;
+
+    ctx.strokeStyle = color;
+    ctx.setLineDash([5, 4]);
+    ctx.lineWidth = 1.2;
+    ctx.beginPath();
+    ctx.moveTo(pl, y);
+    ctx.lineTo(width - pr, y);
+    ctx.stroke();
+
+    // Right-edge level badge
+    ctx.setLineDash([]);
+    const txt = `${label} ₹${val >= 100 ? val.toFixed(1) : val.toFixed(2)}`;
+    ctx.font = 'bold 9px monospace';
+    const tw = ctx.measureText(txt).width;
+    ctx.fillStyle = 'rgba(3,8,18,0.92)';
+    ctx.fillRect(width - pr + 4, y - 8, tw + 8, 16);
+    ctx.strokeStyle = color;
+    ctx.strokeRect(width - pr + 4, y - 8, tw + 8, 16);
+    ctx.fillStyle = color;
+    ctx.fillText(txt, width - pr + 8, y + 3.5);
+  }
+
+  drawLevelLine(levels.pdh, 'PDH', '#22c55e');
+  drawLevelLine(levels.pdl, 'PDL', '#ef4444');
+  drawLevelLine(levels.tc, 'TC', '#c084fc');
+  drawLevelLine(levels.piv, 'PIV', '#22d3ee');
+  drawLevelLine(levels.bc, 'BC', '#818cf8');
+
+  // Technical Indicators Lines
+  function drawIndicatorLine(series, color, lineWidth = 1.4) {
+    if (!series || !series.length) return;
+    ctx.strokeStyle = color;
+    ctx.lineWidth = lineWidth;
+    ctx.beginPath();
+    let started = false;
+    for (let i = 0; i < n; i++) {
+      const v = series[i];
+      if (v == null || !Number.isFinite(v)) continue;
+      const x = getX(i);
+      const y = getY(v);
+      if (!started) { ctx.moveTo(x, y); started = true; }
+      else { ctx.lineTo(x, y); }
+    }
+    ctx.stroke();
+  }
+
+  drawIndicatorLine(ema9, '#38bdf8', 1.4);   // EMA 9 (Sky Blue)
+  drawIndicatorLine(ema21, '#fb923c', 1.4);  // EMA 21 (Orange)
+  drawIndicatorLine(ema50, '#facc15', 1.4);  // EMA 50 (Yellow)
+  drawIndicatorLine(vwap, '#c084fc', 1.6);   // VWAP (Purple)
+
+  // Candlesticks
+  candles.forEach((c, i) => {
+    const x = getX(i);
+    const yO = getY(c.open);
+    const yC = getY(c.close);
+    const yH = getY(c.high);
+    const yL = getY(c.low);
+    const isUp = c.close >= c.open;
+    const color = isUp ? '#22c55e' : '#ef4444';
+
+    // Wick
+    ctx.strokeStyle = color;
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.moveTo(x, yH);
+    ctx.lineTo(x, yL);
+    ctx.stroke();
+
+    // Body
+    const topY = Math.min(yO, yC);
+    const bodyH = Math.max(1.5, Math.abs(yC - yO));
+    ctx.fillStyle = color;
+    ctx.fillRect(x - candleW / 2, topY, candleW, bodyH);
+  });
+
+  // Crosshair & Hover HUD
+  if (hoverPos && hoverPos.x >= pl && hoverPos.x <= width - pr && hoverPos.y >= pt && hoverPos.y <= pt + ch) {
+    let idx = Math.floor(((hoverPos.x - pl) / cw) * n);
+    idx = Math.max(0, Math.min(n - 1, idx));
+    const hCandle = candles[idx];
+    const hx = getX(idx);
+    const hy = hoverPos.y;
+
+    // Crosshair Lines
+    ctx.strokeStyle = 'rgba(255, 255, 255, 0.4)';
+    ctx.lineWidth = 0.8;
+    ctx.setLineDash([4, 4]);
+
+    // Vertical line
+    ctx.beginPath();
+    ctx.moveTo(hx, pt);
+    ctx.lineTo(hx, pt + ch);
+    ctx.stroke();
+
+    // Horizontal line
+    ctx.beginPath();
+    ctx.moveTo(pl, hy);
+    ctx.lineTo(width - pr, hy);
+    ctx.stroke();
+    ctx.setLineDash([]);
+
+    // Price indicator on Y-axis
+    const hoverPrice = minPrice + (1 - (hy - pt) / ch) * effectiveRange;
+    ctx.fillStyle = '#38bdf8';
+    ctx.fillRect(width - pr + 2, hy - 8, 70, 16);
+    ctx.fillStyle = '#020617';
+    ctx.font = 'bold 9px monospace';
+    ctx.fillText('₹' + (hoverPrice >= 100 ? hoverPrice.toFixed(1) : hoverPrice.toFixed(2)), width - pr + 6, hy + 3.5);
+
+    // Update HUD
+    if (hud && hCandle) {
+      hud.style.display = 'block';
+      const d = new Date(hCandle.timestamp);
+      const timeStr = `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;
+      const volStr = hCandle.volume > 1e6 ? (hCandle.volume / 1e6).toFixed(1) + 'M' : hCandle.volume > 1e3 ? (hCandle.volume / 1e3).toFixed(1) + 'K' : hCandle.volume;
+      const cChg = ((hCandle.close - hCandle.open) / hCandle.open * 100);
+      const chgCls = cChg >= 0 ? '#22c55e' : '#ef4444';
+
+      hud.innerHTML = `
+        <span style="color:#94a3b8;">${timeStr}</span> |
+        O: <b style="color:#ffffff;">&#8377;${hCandle.open.toFixed(2)}</b> |
+        H: <b style="color:#ffffff;">&#8377;${hCandle.high.toFixed(2)}</b> |
+        L: <b style="color:#ffffff;">&#8377;${hCandle.low.toFixed(2)}</b> |
+        C: <b style="color:${chgCls};">&#8377;${hCandle.close.toFixed(2)} (${cChg>=0?'+':''}${cChg.toFixed(2)}%)</b> |
+        Vol: <b style="color:#e2e8f0;">${volStr}</b> |
+        <span style="color:#38bdf8;">EMA9: ${ema9[idx]?.toFixed(1)||'—'}</span> |
+        <span style="color:#fb923c;">EMA21: ${ema21[idx]?.toFixed(1)||'—'}</span> |
+        <span style="color:#facc15;">EMA50: ${ema50[idx]?.toFixed(1)||'—'}</span> |
+        <span style="color:#c084fc;">VWAP: ${vwap[idx]?.toFixed(1)||'—'}</span>
+      `;
+    }
+  }
+
+  ctx.restore();
 }
 
 function fil(type,btn){
@@ -1274,6 +1729,8 @@ function mapBoardToStocks(board, confMap, futMap, oiMap = {}){
       fhC: +(s.fh_cumulative_ratio || fb.fh_cumul || 1).toFixed(1),
       fut: futCode,
       tc, pvt, bc,
+      pdh: fb.pdh != null ? fb.pdh : (s.pdh != null ? s.pdh : null),
+      pdl: fb.pdl != null ? fb.pdl : (s.pdl != null ? s.pdl : null),
       drift, driftLabel, driftCls, driftRaw,
       conf,
       oiChg: +(oiVal).toFixed(1),
@@ -1342,6 +1799,8 @@ function mapBoardToStocks(board, confMap, futMap, oiMap = {}){
       fhC: +(fb.fh_cumul || 1).toFixed(1),
       fut: futCode,
       tc, pvt, bc,
+      pdh: fb.pdh != null ? fb.pdh : null,
+      pdl: fb.pdl != null ? fb.pdl : null,
       drift, driftLabel, driftCls, driftRaw,
       conf,
       oiChg: +(oiVal).toFixed(1),

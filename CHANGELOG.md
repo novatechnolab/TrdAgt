@@ -271,6 +271,14 @@ Zero changes to alert eligibility logic. All EMA crossover, pre-cross, live brea
 **Files Changed:**
 - `app/apex-dashboard.html` — Configured initial active tab and symbol from `?symbol=<SYM>`; added `ensureInstrument(symbol)` to dynamically resolve tokens via `/kite/instruments?search=<SYM>` for all F&O stocks across `fetchCandles`, `fetchLiveQuote`, and `fetchPrevSessionOHLC`.
 
+## [2026-08-15] — 360 Command Center: Native In-Line Intraday Candlestick & CPR Chart Engine
+
+**Session Goal:** Implement a native, high-performance in-line intraday candlestick and CPR chart inside the 360 Command Center that loads in < 50ms without rate limits.
+
+**Files Changed:**
+- `app/360-command-center.html` — Replaced heavy iframe embed with a native HTML5 Canvas intraday chart engine displaying 5m/15m candlesticks, volume bars, EMA 9, EMA 21, EMA 50, VWAP, horizontal dashed level lines with right-edge badges for PDH, PDL, TC, Pivot, BC, 5m/15m switcher, interactive hover crosshair HUD, and one-click popout to the full APEX dashboard.
+
+
 
 
 
