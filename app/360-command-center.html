@@ -628,8 +628,12 @@ function toggleStockContracts(sym){
 }
 
 function toggleStockChart(sym){
-  if(_activeChartStock === sym) _activeChartStock = null;
-  else _activeChartStock = sym;
+  if(_activeChartStock === sym) {
+    _activeChartStock = null;
+    if(typeof stopInlineChartTickFeed === 'function') stopInlineChartTickFeed();
+  } else {
+    _activeChartStock = sym;
+  }
   renderBoard();
 }
 
@@ -911,6 +915,7 @@ function renderBoard(){
    NATIVE IN-LINE INTRADAY CANDLESTICK & CPR CHART ENGINE
 ============================================================ */
 let _inlineChartTf = 5;
+let _inlineChartTickTimer = null;
 const _tokenCache = {};
 const _chartCandlesCache = {};
 const _chartMouseHandlers = {};
@@ -918,6 +923,73 @@ const _chartMouseHandlers = {};
 function switchInlineChartTf(sym, tf) {
   _inlineChartTf = tf;
   renderBoard();
+}
+
+function stopInlineChartTickFeed() {
+  if (_inlineChartTickTimer) {
+    clearInterval(_inlineChartTickTimer);
+    _inlineChartTickTimer = null;
+  }
+}
+
+function startInlineChartTickFeed(sym) {
+  stopInlineChartTickFeed();
+  _inlineChartTickTimer = setInterval(async () => {
+    if (_activeChartStock !== sym) {
+      stopInlineChartTickFeed();
+      return;
+    }
+    try {
+      const res = await fetch(`/kite/quote?symbols=${encodeURIComponent(sym)}`);
+      if (res.ok) {
+        const json = await res.json();
+        const q = json.data && json.data[sym];
+        if (q && q.last_price) {
+          applyLiveTickToInlineChart(sym, q.last_price, q.volume, Date.now());
+        }
+      }
+    } catch (e) {
+      // Background tick poll error handler
+    }
+  }, 2500);
+}
+
+function applyLiveTickToInlineChart(sym, ltp, volume, timestamp) {
+  const data = _chartCandlesCache[sym];
+  if (!data || !data.candles || !data.candles.length) return;
+
+  const tfMinutes = data.tf || 5;
+  const intervalMs = tfMinutes * 60 * 1000;
+  const currentBoundary = Math.floor(timestamp / intervalMs) * intervalMs;
+  const lastCandle = data.candles[data.candles.length - 1];
+
+  if (lastCandle.timestamp === currentBoundary) {
+    // Update active forming candle
+    lastCandle.close = ltp;
+    lastCandle.high = Math.max(lastCandle.high, ltp);
+    lastCandle.low = Math.min(lastCandle.low, ltp);
+    if (volume != null) lastCandle.volume = volume;
+  } else if (currentBoundary > lastCandle.timestamp) {
+    // New period rollover: push new candle
+    data.candles.push({
+      timestamp: currentBoundary,
+      open: ltp,
+      high: ltp,
+      low: ltp,
+      close: ltp,
+      volume: volume || 0
+    });
+  }
+
+  // Recalculate indicators on the fly
+  const fullCloses = data.candles.map(c => c.close);
+  data.ema9 = calcEMA(fullCloses, 9);
+  data.ema21 = calcEMA(fullCloses, 21);
+  data.ema50 = calcEMA(fullCloses, 50);
+  data.vwap = calcVWAP(data.candles);
+
+  // Fast canvas repaint
+  drawInlineCandleCanvas(sym, null);
 }
 
 function calcEMA(closes, period) {
@@ -1030,6 +1102,9 @@ async function initInlineChart(sym, levels = {}) {
   };
 
   drawInlineCandleCanvas(sym, null);
+
+  // Start Live Tick Polling for active stock
+  startInlineChartTickFeed(sym);
 
   // Mousemove Crosshair & HUD Listener
   if (!_chartMouseHandlers[sym]) {
