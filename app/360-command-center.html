@@ -294,6 +294,15 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--t1);min-hei
 .fb-stat-val.val-lu{color:#a855f7;}
 .fb-stat-val.val-flat{color:var(--t2);}
 
+/* In-line APEX Chart Sub-row */
+.chart-subrow{background:rgba(2,6,15,.96)!important;border-bottom:2px solid rgba(59,130,246,.35);}
+.chart-embed-box{padding:6px 12px 10px;background:rgba(3,8,18,.98);}
+.chart-embed-topbar{display:flex;align-items:center;justify-content:space-between;padding:8px 12px;background:rgba(13,24,44,.9);border:1px solid rgba(59,130,246,.25);border-bottom:none;border-radius:6px 6px 0 0;}
+.chart-embed-title{font-size:11px;font-weight:700;color:var(--t1);display:flex;align-items:center;gap:8px;}
+.apex-chart-iframe{width:100%;height:580px;border:1px solid rgba(59,130,246,.25);border-top:none;border-radius:0 0 6px 6px;background:#ffffff;display:block;}
+.chart-popout-btn{font-size:9px;font-weight:700;padding:3px 8px;background:rgba(59,130,246,.18);color:var(--acc);border:1px solid rgba(59,130,246,.35);border-radius:4px;text-decoration:none;transition:all .15s;}
+.chart-popout-btn:hover{background:rgba(59,130,246,.3);color:#ffffff;}
+
 /* RIGHT PANEL */
 .rp{display:flex;flex-direction:column;overflow:hidden;}
 .rp-section{border-bottom:1px solid var(--b);flex-shrink:0;}
@@ -595,10 +604,17 @@ function renderHotZone(){
 let activeFilter='all';
 let _subBuildupFilter='all'; // 'all' | 'LB' | 'SB' | 'SC' | 'LU' | 'FLAT'
 let _expandedStocks = new Set();
+let _activeChartStock = null;
 
 function toggleStockContracts(sym){
   if(_expandedStocks.has(sym)) _expandedStocks.delete(sym);
   else _expandedStocks.add(sym);
+  renderBoard();
+}
+
+function toggleStockChart(sym){
+  if(_activeChartStock === sym) _activeChartStock = null;
+  else _activeChartStock = sym;
   renderBoard();
 }
 
@@ -719,9 +735,31 @@ function renderBoard(){
     const isExp=_expandedStocks.has(s.sym);
 
     if (isFutBld) {
+      const isChartOpen = _activeChartStock === s.sym;
       const spotPriceFormatted = s.spotLtp ? s.spotLtp.toLocaleString('en-IN', {minimumFractionDigits: 2, maximumFractionDigits: 2}) : s.ltp.toLocaleString('en-IN');
-      return `<tr class="${dir} ${glow}">
-        <td class="rank">${s.rank}</td><td class="sym">${s.sym}</td>
+      const expChartIcon = `<span style="display:inline-block;font-size:8px;margin-right:4px;color:var(--t2);transform:${isChartOpen?'rotate(90deg)':'none'};transition:transform .15s;">▶</span>`;
+
+      const chartSubrowHtml = isChartOpen ? `
+        <tr class="chart-subrow">
+          <td colspan="17" style="padding:0;">
+            <div class="chart-embed-box">
+              <div class="chart-embed-topbar">
+                <div class="chart-embed-title">
+                  <span style="font-size:13px;">📊</span>
+                  <b style="color:var(--acc);font-size:12px;">${s.sym}</b> — APEX Intraday Signal Chart (${s.fut} · &#8377;${spotPriceFormatted})
+                </div>
+                <div style="display:flex;gap:8px;align-items:center;">
+                  <a href="apex-dashboard.html?symbol=${encodeURIComponent(s.sym)}" target="_blank" class="chart-popout-btn">↗ Popout</a>
+                  <button class="ibtn" style="font-size:12px;padding:2px 6px;" onclick="event.stopPropagation();toggleStockChart('${s.sym}')">✕</button>
+                </div>
+              </div>
+              <iframe src="apex-dashboard.html?symbol=${encodeURIComponent(s.sym)}&embed=1" class="apex-chart-iframe" loading="lazy"></iframe>
+            </div>
+          </td>
+        </tr>` : '';
+
+      return `<tr class="${dir} ${glow} ${isChartOpen?'selected':''}" style="cursor:pointer;" onclick="toggleStockChart('${s.sym}')">
+        <td class="rank">${s.rank}</td><td class="sym">${expChartIcon}${s.sym}</td>
         <td>${capBadge(s.cap)}</td>
         <td class="mono"><div class="gain-cell"><span class="spot-badge ${sCls}">${s.spot>0?'+':''}${s.spot}%</span>${sp}</div></td>
         <td class="mono" style="color:var(--t1);font-weight:700;">&#8377;${spotPriceFormatted}</td>
@@ -737,7 +775,7 @@ function renderBoard(){
         <td style="white-space:nowrap;">${tfBadge(s.conf[0],'15m')}${tfBadge(s.conf[1],'1H')}${tfBadge(s.conf[2],'D')}</td>
         <td class="mono ${oiCls}">${s.oiChg>0?'+':''}${s.oiChg}%</td>
         <td><span class="${gc}">${sc}</span></td>
-      </tr>`;
+      </tr>${chartSubrowHtml}`;
     }
 
     const expIcon=s.contracts&&s.contracts.length?`<span style="display:inline-block;font-size:8px;margin-right:4px;color:var(--t2);transform:${isExp?'rotate(90deg)':'none'};transition:transform .15s;">▶</span>`:'';

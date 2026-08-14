@@ -256,6 +256,15 @@ Zero changes to alert eligibility logic. All EMA crossover, pre-cross, live brea
 **Files Changed:**
 - `app/360-command-center.html` — Added `.spot-badge` CSS with color-coded borders and glowing background; rendered `SPOT%` within a `.gain-cell` container alongside trailing SVG sparklines (`${sp}`).
 
+## [2026-08-15] — 360 Command Center: In-Line APEX Intraday Chart Integration
+
+**Session Goal:** Enable clicking any stock under Futures Buildup to expand an interactive in-line panel directly below the row displaying the full live APEX Intraday Chart for that stock.
+
+**Files Changed:**
+- `app/apex-dashboard.html` — Added embed-mode CSS to cleanly fit within iframe containers without top navigation bar; supports deep-linked `?symbol=<SYM>&embed=1`.
+- `app/360-command-center.html` — Added `_activeChartStock`, `toggleStockChart(sym)`, `.chart-subrow`, `.chart-embed-box`, and `.apex-chart-iframe` styles to render the live APEX chart with 5m/15m candles, EMAs, CPR pivots, signals, popout button, and close controls.
+
+
 
 
 

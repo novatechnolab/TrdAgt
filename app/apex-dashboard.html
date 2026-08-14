@@ -55,6 +55,11 @@
       min-width: 1280px;
     }
 
+    /* Embedded Iframe Mode */
+    html.embed-mode .topbar { display: none !important; }
+    html.embed-mode body { padding-top: 0 !important; min-width: unset !important; }
+    html.embed-mode .main { min-width: unset !important; }
+
     /* TOP BAR */
     .topbar {
       display: flex;
