@@ -95,3 +95,174 @@ Zero changes to alert eligibility logic. All EMA crossover, pre-cross, live brea
 
 ### Test Results
 - 13/13 PASS
+
+## 2026-08-13 — Fix: NameError _kite_services_lock on startup
+**Goal:** Fix NameError crash in `start_kite_dependent_services` that silently prevented all Kite-dependent services from starting.
+**Files changed:**
+- `app/backend/server.py`
+
+**Summary:**
+- Added missing module-level declarations `_kite_services_lock = threading.Lock()` and `_kite_services_started = False` (after line 389, alongside other lock definitions).
+- Fixed broken double-check locking pattern in `start_kite_dependent_services()` — consolidated into a single `with _kite_services_lock:` block with `kite` guard inside, eliminating the race condition.
+
+## [2026-08-14] — 360 Command Center v2 Upgrade
+
+**Session Goal:** Upgrade 360 Command Center from v1 to v2 with 6 visual improvements.
+
+**Files Changed:**
+- `app/360-command-center.html` — Full v2 rewrite (732 lines, 48KB)
+- `app/360-command-center-v1-backup.html` — Backup of v1 (renamed from .v1.bak)
+
+**Summary of Changes:**
+1. **Hot Zone strip** — Top 3 confluent stocks shown as large cards above layout with confluence meter bar (gradient fill), TF/OI/RVOL tags, score badge, inline sparkline
+2. **Amber pulse animation** — A-grade alerts fire `amberpulse` keyframe (3 pulses) + continuous amber dot indicator
+3. **Row-level heatmap glow** — Table rows have `glow-hi` (green, score≥8 bullish), `glow-bear-hi` (red, score≥8 bearish), `glow-med` (amber tint, score≥5)
+4. **8-factor filled bars** — Each confluence factor shown as tall gradient-filled bar (green/red/amber) replacing flat boxes
+5. **Inline SVG sparkline** — Premium gain trend sparkline with area fill + endpoint dot in GAIN% column
+6. **OI Spurt ranked bar chart** — 8px gradient purple bars, top-1 has glow/shimmer effect
+7. **Dynamic layout height** — `fixHeight()` adjusts `.lay` height to account for Hot Zone strip on load + resize
+
+## [2026-08-14] — 360 Command Center Live Backend Integration
+
+**Session Goal:** Wire 360 Command Center to backend agents and REST APIs with full independence from other dashboard pages.
+
+**Files Changed:**
+- `app/backend/server.py` — Added 3 lazy_start calls after orch.start_all() (lines 128-133)
+- `app/360-command-center.html` — Injected Socket.IO client + fetchAll() + field mappers (967 lines)
+
+**Summary:**
+1. `server.py`: `lazy_start_option_scanners()`, `lazy_start_option_gainers_alerts()`, `lazy_start_ema_crossover_scanner()` now auto-start when agentic orchestrator initialises — zero dependency on other pages opening first
+2. `360-command-center.html`:
+   - Added Socket.IO CDN (v4.7.2)
+   - `initSocketIO()` — listens to `tradesignal_alert` from AlertDispatchAgent for real-time A/B/C alerts with amber pulse
+   - `startPolling()` — polls `/api/option-gainers-board` (30s), `/spurt` (30s), `/api/live-breakouts` (30s), `/kite/global-quotes` (15s)
+   - `mapBoardToStocks()`, `mapAlerts()`, `mapSpurts()`, `mapBreakouts()`, `mapAlertPayload()` — field mappers for all endpoints
+   - `setFetchStatus()` — live/stale pill indicator
+   - Static sample data arrays converted from `const` to `let` for live overwrite
+   - No changes to any agent files or other dashboard pages
+
+## [2026-08-14] — 360 Command Center Added to Sidebar
+
+**Session Goal:** Add 360° Command Center to the left navigation sidebar above Premium Gainers Board.
+
+**Files Changed:**
+- `app/index.html` — Inserted nav item at line 84 (above Premium Gainers Board)
+
+**Summary:** Added `🔭 360° Command Center` sidebar link pointing to `/360-command-center.html`, opens in new tab (↗), matching exact style of adjacent nav items.
+
+## [2026-08-14] — 360 Command Center: Live Field Mapper Fix
+
+**Session Goal:** Fix mock data showing by verifying actual API field names and correcting all mappers.
+
+**Root cause:** mapBoardToStocks() used wrong field names (ltp/gain_pct/rvol at stock level, but actual API has best_gain/rvol_ratio; no ltp at stock level — ltp is in contracts[]).
+
+**Files Changed:**
+- `app/360-command-center.html` — Cleared all mock arrays + rewrote all integration code with verified field names
+
+**API Field Corrections:**
+- `/api/option-gainers-board`: `rvol_ratio` (not `rvol`), `best_gain` (not `gain_pct`), ltp from `contracts[].ltp`, cap/buildup from `/api/futures-buildup`
+- `/api/futures-buildup`: `stocks[]` with `buildup`, `cap`, `rvol`, `oi_chg_pct`, `spot_chg_pct`, `cpr.tc/piv/bc`
+- `/api/ema-crossovers`: `crossovers{}` with `state_15m/1h/day`, used for both TF confluence AND bulls/bears
+- `/kite/global-quotes`: `data.india_vix.price`, `data.gift_nifty.price` (GIFT NIFTY shown when market closed)
+- `/spurt`: returns HTML not JSON — replaced with OI data from `/api/futures-buildup` oi_chg_pct
+- Static mock arrays: all cleared to `[]`
+
+## [2026-08-14] — 360 Command Center: Live vs EOD Rebuild & Syntax Fix
+
+**Session Goal:** Ensure zero stale/mock data display, handle off-market EOD snapshot rebuilding automatically, serve live data during market hours, and fix JS syntax concatenation error.
+
+**Files Changed:**
+- `app/360-command-center.html` — Removed duplicated file concatenation at line 972; added EOD snapshot rebuilding spinner and loading state handling; converted static placeholders (`SOLARINDS/ASTRAL`, dummy stats, hardcoded market index prices) to dynamic containers.
+
+**Summary of Changes:**
+1. **Syntax Fix:** Truncated duplicate HTML block appended at line 972 that caused `SyntaxError: Unexpected token '<'` and stopped JavaScript execution.
+2. **EOD Rebuilding Support:** Added handler for `data.status === 'loading'` and `data.is_eod_snapshot` to display `📸 Rebuilding EOD Snapshot…` with auto-polling every 30s until background generation completes.
+3. **Live vs EOD Status Engine:** Switched top status badge dynamically between `LIVE · [Time]` (green) during market hours and `EOD SNAPSHOT · [Date]` (amber) outside market hours.
+4. **Dynamic Sidebars & Stats:** Replaced static HTML mock breakout items and stats with dynamic renderers (`renderSideBreakouts`, `updateSessionStats`).
+5. **Zero Regression:** All backend files and other dashboard pages remained 100% untouched.
+
+## [2026-08-14] — 360 Command Center: Adopt Exact OI Spurt Scanner Logic
+
+**Session Goal:** Align OI Spurt % change and rankings with the official NSE underlying Change in OI dataset matching `oi-spurt-scanner.html`.
+
+**Files Changed:**
+- `app/360-command-center.html` — Integrated `/api/oi/spurt?min_pct=0` in `fetchBoard()`; sorted descending by `oi_change_pct`; updated `OI_SPURTS`, ticker, and `mapBoardToStocks(..., oiMap)` with true aggregate NSE OI% changes.
+
+**Summary:**
+1. Replaced single-contract `/api/futures-buildup` fallback with the dedicated `/api/oi/spurt` dataset used by `oi-spurt-scanner.html`.
+2. Sorted descending by `oi_change_pct` to match official NSE ordering (HINDPETRO +54.4%, ALKEM +44.7%, PAGEIND +42.3%, BDL +32.3%, VOLTAS +22.8%, etc.).
+3. Mapped `oiMap` into the Unified Master Board and confluence scoring.
+
+## [2026-08-14] — 360 Command Center: Yellow Highlight on OI Spurt Order & Value Changes
+
+**Session Goal:** Highlight both ranking order shifts (reorderings) and OI value updates in yellow across the OI Spurt Board, Marquee Ticker, and Master Board.
+
+**Files Changed:**
+- `app/360-command-center.html` — Added rank cache (`_prevOIRankMap`) and value cache (`_prevOIPctMap`); added yellow delta badges (`▲2`, `▼1`, `NEW`), yellow row tint/glow, yellow gradient bar, and pulse animation for live OI% changes.
+
+## [2026-08-14] — 360 Command Center: Expandable Contracts & Bulls (68) / Bears (146) Alignment
+
+**Session Goal:** Implement expandable option contracts sub-rows on the Master Board and adopt authentic 68 Bulls / 146 Bears classification matching `option-gainers-board.html`.
+
+**Files Changed:**
+- `app/360-command-center.html` — Added accordion click-to-expand option contract sub-rows (`.contracts-subrow`) showing opening/running tags (`⭐`/`🏃`), strike price, type (`CE`/`PE`), premium flow (`open_prem → ltp`), and % gain; adopted exact `renderCrossovers()` categorization logic from `option-gainers-board.html` to populate 68 Bulls and 146 Bears with `All`, `Aligned`, and `Cross` filters.
+
+## [2026-08-14] — 360 Command Center: Vertical Option Cards Layout (Matching Screenshot 2)
+
+**Session Goal:** Replace horizontal pills with the clean vertical full-width option cards view matching `option-gainers-board.html`.
+
+**Files Changed:**
+- `app/360-command-center.html` — Updated `.contracts-subrow` and `.option-card` with full-width vertical layout: gold `⭐` / cyan `🏃` tag, bold strike price `₹1,170`, `PE`/`CE` badges, entry → LTP flow (`₹20.4 → ₹37.9`), and right-aligned gain badge (`🚀 +85.1%` / `🔥 +567.4%`).
+
+## [2026-08-15] — 360 Command Center: PremGain Tab & Complete Futures Buildups
+
+**Session Goal:** Rename default 'All' tab to '🔥 PremGain' (denoting active option gainer stocks) and add complete futures buildup filter tabs (LB, SB, SC, LU, FLAT) covering the full F&O universe.
+
+**Files Changed:**
+- `app/360-command-center.html` — Renamed 'All' button to '🔥 PremGain'; added '⚡ Short Cover' (`SC`), '💨 Long Unwind' (`LU`), and '⚖️ Flat B/U' (`FLAT`) filter tabs; merged full ~214 F&O universe from `futMap` so that `LB + SB + SC + LU + FLAT = Total F&O Stocks`; updated session stats with full buildup breakdown.
+
+## [2026-08-15] — 360 Command Center: Consolidated Futures Buildup Tab & Interactive Stats Grid
+
+**Session Goal:** Consolidate multiple buildup buttons into a single '📈 Futures Buildup' tab with an interactive 5-card stats grid (Long Buildup, Short Buildup, Short Cover, Long Unwind, Flat Buildup) that filters stocks on click.
+
+**Files Changed:**
+- `app/360-command-center.html` — Replaced individual buildup filter tabs with a single `📈 Futures Buildup` tab; rendered an interactive 5-box stats grid (`.futbld-stats-bar` / `.fb-stat-card`) with color-coded live counts matching the user's design; clicking any stat box filters the table to that buildup with active highlight glow; updated `aTab('bup')` in Alert Feed.
+
+## [2026-08-15] — 360 Command Center: Net Drift Aligned with OI Transition Conviction Engine
+
+**Session Goal:** Align the DRIFT column in 360 Command Center with the authentic OI Transition Conviction Engine (`/api/oi/symbol/<symbol>`) matching the OI Spurt Scanner and Option Gainers Board.
+
+**Files Changed:**
+- `app/360-command-center.html` — Added `_driftCache` and `fetchOITransitionDrifts()`; resolved drift using Transition Conviction `net_drift` (`Lift`, `Sink`, `Brk▲`, `Brk▼`, `Rng`, `Neut`) with fallback to spot direction rather than linear regression slope.
+
+## [2026-08-15] — 360 Command Center: INST & E9H Display Logic Aligned with Premium Gainers Board
+
+**Session Goal:** Fix INST and E9H mapping in 360 Command Center to match the exact format of the Premium Gainers Board (`option-gainers-board.html`).
+
+**Files Changed:**
+- `app/360-command-center.html` — Fixed INST to display institutional holding percentage (`18%`, `27%`, `42%`, `65%` with cyan highlight for $\ge 50\%$); fixed E9H to render EMA-9 Hold state + minutes as `Y25` (Green = price above 9-EMA for 25 min) and `N80` (Red = price below 9-EMA for 80 min).
+
+## [2026-08-15] — 360 Command Center: Tailored Stock-Level Metrics in Futures Buildup Mode
+
+**Session Goal:** Tailor the Futures Buildup view to stock-level metrics: display actual stock cash/spot price in SPOT PRICE column, suppress option contract accordion subrows, and remove LIN% and GAIN% columns in Futures Buildup mode.
+
+**Files Changed:**
+- `app/360-command-center.html` — Dynamically updated `<thead>` and `<tbody>` for `activeFilter === 'futbld'`: renders `SPOT PRICE` with stock's actual cash price (e.g. ₹1,850+ for DALBHARAT), removes `LIN%` and `GAIN%` columns, and disables option contract subrows.
+
+## [2026-08-15] — 360 Command Center: SPOT% Pill Badge & Sparkline Styling
+
+**Session Goal:** Style SPOT% as a rounded pill badge with glowing border and trailing sparkline/direction vector matching the user's design reference.
+
+**Files Changed:**
+- `app/360-command-center.html` — Added `.spot-badge` CSS with color-coded borders and glowing background; rendered `SPOT%` within a `.gain-cell` container alongside trailing SVG sparklines (`${sp}`).
+
+
+
+
+
+
+
+
+
+
+

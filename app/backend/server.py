@@ -126,6 +126,12 @@ def get_agentic_orchestrator():
 
                 dispatch_agent.attach_socketio(socketio)
                 orch.start_all()
+                # Auto-start background scanners so 360 Command Center works
+                # independently — no other page needs to open first.
+                # These are idempotent: each has a thread.is_alive() guard.
+                lazy_start_option_scanners()          # option gainers board data
+                lazy_start_option_gainers_alerts()    # premium spike alerts
+                lazy_start_ema_crossover_scanner()    # bulls/bears crossovers
                 _global_orchestrator = orch
                 # Fix5: Cache data_agent reference — eliminates per-tick lock acquisitions
                 global _agentic_data_agent
@@ -387,6 +393,8 @@ _kite_ws_running = False
 _kite_ws_stop_flag = False
 _kite_tick_store = {}
 _kite_tick_lock = threading.Lock()
+_kite_services_lock = threading.Lock()
+_kite_services_started = False
 
 def check_auth(username, password):
     """Check if a username / password combination is valid."""
@@ -1090,12 +1098,7 @@ def start_kite_dependent_services(kite):
     with _kite_services_lock:
         if _kite_services_started:
             return
-
-    if not kite:
-        return
-
-    with _kite_services_lock:
-        if _kite_services_started:
+        if not kite:
             return
         _kite_services_started = True
 
