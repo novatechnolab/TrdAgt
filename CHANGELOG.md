@@ -264,6 +264,14 @@ Zero changes to alert eligibility logic. All EMA crossover, pre-cross, live brea
 - `app/apex-dashboard.html` — Added embed-mode CSS to cleanly fit within iframe containers without top navigation bar; supports deep-linked `?symbol=<SYM>&embed=1`.
 - `app/360-command-center.html` — Added `_activeChartStock`, `toggleStockChart(sym)`, `.chart-subrow`, `.chart-embed-box`, and `.apex-chart-iframe` styles to render the live APEX chart with 5m/15m candles, EMAs, CPR pivots, signals, popout button, and close controls.
 
+## [2026-08-15] — APEX Dashboard: Dynamic Instrument Resolution & URL Symbol Startup
+
+**Session Goal:** Fix APEX Chart defaulting to NIFTY50 when embedded in 360 Command Center by auto-reading `?symbol=<SYM>` from URL query and dynamically resolving Kite instrument tokens for all F&O stocks on demand.
+
+**Files Changed:**
+- `app/apex-dashboard.html` — Configured initial active tab and symbol from `?symbol=<SYM>`; added `ensureInstrument(symbol)` to dynamically resolve tokens via `/kite/instruments?search=<SYM>` for all F&O stocks across `fetchCandles`, `fetchLiveQuote`, and `fetchPrevSessionOHLC`.
+
+
 
 
 

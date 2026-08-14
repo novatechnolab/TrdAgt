@@ -1933,10 +1933,17 @@
       try { localStorage.setItem('apex_instruments', JSON.stringify(INSTRUMENTS)); } catch { }
     }
 
-    let INSTRUMENTS = loadInstruments();
+    const _urlParams = new URLSearchParams(window.location.search);
+    const _initSym = (_urlParams.get('symbol') || _urlParams.get('sym') || '').toUpperCase();
+    const _isEmbed = _urlParams.get('embed') === '1' || _urlParams.get('embed') === 'true';
+    if (_isEmbed) {
+      document.documentElement.classList.add('embed-mode');
+    }
+
+    const defaultSym = _initSym || 'NIFTY50';
 
     let state = {
-      symbol: 'NIFTY50',
+      symbol: defaultSym,
       tf: 5,
       candles: [],
       candles15: [],
@@ -1965,11 +1972,32 @@
       drawings: loadDrawings(), // Array of manual drawings
       activeTool: 'cursor',     // cursor, trendline
       tabs: [
-        { id: 'tab-default', symbol: 'NIFTY50', tf: 5 }
+        { id: 'tab-default', symbol: defaultSym, tf: 5 }
       ],
       activeTabId: 'tab-default',
       tabData: {} // Cache for background candles: { [tabId]: { candles: [...], candles15: [...] } }
     };
+
+    async function ensureInstrument(symbol) {
+      if (INSTRUMENTS[symbol] && INSTRUMENTS[symbol].token) return INSTRUMENTS[symbol];
+      try {
+        const res = await fetch(`${state.proxyUrl}/kite/instruments?search=${encodeURIComponent(symbol)}&exchange=NSE`, { credentials: 'include' });
+        if (res.ok) {
+          const data = await res.json();
+          const list = Array.isArray(data) ? data : (data.instruments || data.data || []);
+          const match = list.find(it => (it.tradingsymbol === symbol || it.symbol === symbol)) || list[0];
+          if (match) {
+            const inst = { token: String(match.instrument_token || match.token), label: match.name || symbol, exchange: match.exchange || 'NSE' };
+            INSTRUMENTS[symbol] = inst;
+            saveInstruments();
+            return inst;
+          }
+        }
+      } catch (e) {
+        console.warn(`[INSTRUMENT] Lookup failed for ${symbol}:`, e);
+      }
+      return null;
+    }
 
     function loadDrawings() {
       try {
@@ -5718,7 +5746,7 @@
 
     async function fetchCandles(symbol, tf) {
       console.log(`[FETCH] fetchCandles(${symbol}, ${tf}m)`);
-      const inst = INSTRUMENTS[symbol];
+      const inst = await ensureInstrument(symbol);
       if (!inst) {
         console.warn(`[FETCH] No instrument for ${symbol}`);
         return null;
@@ -5817,7 +5845,7 @@
     // ============================================================
     async function fetchPrevSessionOHLC(symbol) {
       try {
-        const inst = INSTRUMENTS[symbol];
+        const inst = await ensureInstrument(symbol);
         if (!inst) return null;
         const base = state.proxyUrl.replace(/\/$/, '');
 
@@ -5870,7 +5898,7 @@
     async function fetchLiveQuote(symbol) {
       try {
         const base = state.proxyUrl.replace(/\/$/, '');
-        const inst = INSTRUMENTS[symbol];
+        const inst = await ensureInstrument(symbol);
         if (!inst) return {};
         const url = `${base}/kite/quote?symbols=${encodeURIComponent(symbol)}`;
         const res = await fetchWithTimeout(url, { credentials: 'include' }, 5000);
