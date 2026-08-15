@@ -304,3 +304,11 @@ Zero changes to alert eligibility logic. All EMA crossover, pre-cross, live brea
 
 
 
+---
+
+## [2026-08-15] — 360 Command Center: OI Spurt Board — Remove 15-Entry Cap
+
+**Session Goal:** Fix OI Spurt Board displaying fewer entries than the OI Spurt Scanner.
+
+**Files Changed:**
+- `app/360-command-center.html` — Replaced `slice(0, 15)` with `filter(f => oi_change_pct >= 5)` in `buildOISpurts()`. Now shows all F&O stocks with OI% ≥ 5%, matching the OI Spurt Scanner left panel behavior.
