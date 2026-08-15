@@ -1329,7 +1329,7 @@ function drawInlineCandleCanvas(sym, hoverPos = null) {
 
   drawIndicatorLine(ema9, '#2563eb', 1.5);   // EMA 9 (Blue)
   drawIndicatorLine(ema21, '#dc2626', 1.5);  // EMA 21 (Red)
-  drawIndicatorLine(vwap, '#9333ea', 1.5);   // VWAP (Purple)
+  drawIndicatorLine(vwap, '#16a34a', 1.5);   // VWAP (Green)
 
   // Candlesticks
   candles.forEach((c, i) => {
@@ -1408,7 +1408,7 @@ function drawInlineCandleCanvas(sym, hoverPos = null) {
         Vol: <b style="color:#334155;">${volStr}</b> |
         <span style="color:#2563eb;font-weight:700;">EMA9: ${ema9[idx]?.toFixed(1)||'—'}</span> |
         <span style="color:#dc2626;font-weight:700;">EMA21: ${ema21[idx]?.toFixed(1)||'—'}</span> |
-        <span style="color:#9333ea;font-weight:700;">VWAP: ${vwap[idx]?.toFixed(1)||'—'}</span>
+        <span style="color:#16a34a;font-weight:700;">VWAP: ${vwap[idx]?.toFixed(1)||'—'}</span>
       `;
     }
   }
