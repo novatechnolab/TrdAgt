@@ -312,3 +312,10 @@ Zero changes to alert eligibility logic. All EMA crossover, pre-cross, live brea
 
 **Files Changed:**
 - `app/360-command-center.html` — Replaced `slice(0, 15)` with `filter(f => oi_change_pct >= 5)` in `buildOISpurts()`. Now shows all F&O stocks with OI% ≥ 5%, matching the OI Spurt Scanner left panel behavior.
+
+## [2026-08-15] — 360 Command Center: Board Column Reorder
+
+**Session Goal:** Remove OPT LTP column and move RVOL, FH VOL, E9H to appear after DRIFT column in the Unified Master Board.
+
+**Files Changed:**
+- `app/360-command-center.html` — Removed `OPT LTP` column; moved `RVOL`, `FH VOL`, `E9H` columns to appear after `DRIFT` in both the table header and row rendering (default/non-futures-buildup view).
