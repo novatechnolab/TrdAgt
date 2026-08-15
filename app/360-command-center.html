@@ -313,10 +313,10 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--t1);min-hei
 .ichart-tf-btn.active{background:var(--acc);color:#ffffff;}
 .chart-popout-btn{font-size:9px;font-weight:700;padding:3px 8px;background:rgba(59,130,246,.18);color:var(--acc);border:1px solid rgba(59,130,246,.35);border-radius:4px;text-decoration:none;transition:all .15s;}
 .chart-popout-btn:hover{background:rgba(59,130,246,.3);color:#ffffff;}
-.ichart-canvas-container{position:relative;width:100%;height:380px;background:#030712;border:1px solid rgba(59,130,246,.25);border-top:none;border-radius:0 0 6px 6px;overflow:hidden;}
+.ichart-canvas-container{position:relative;width:100%;height:380px;background:#ffffff;border:1px solid #cbd5e1;border-top:none;border-radius:0 0 6px 6px;overflow:hidden;}
 .ichart-canvas{width:100%;height:100%;display:block;}
-.ichart-loading{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);font-size:11px;font-weight:700;color:var(--t2);letter-spacing:1px;font-family:var(--mono);}
-.ichart-crosshair-hud{position:absolute;top:8px;left:12px;font-size:10px;font-family:var(--mono);color:var(--t1);background:rgba(3,8,18,.85);padding:4px 8px;border-radius:4px;border:1px solid rgba(59,130,246,.25);pointer-events:none;display:none;z-index:10;}
+.ichart-loading{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);font-size:11px;font-weight:700;color:#475569;letter-spacing:1px;font-family:var(--mono);}
+.ichart-crosshair-hud{position:absolute;top:8px;left:12px;font-size:10px;font-family:var(--mono);color:#0f172a;background:rgba(255,255,255,.96);padding:4px 8px;border-radius:4px;border:1px solid #94a3b8;box-shadow:0 4px 12px rgba(0,0,0,.12);pointer-events:none;display:none;z-index:10;}
 
 /* RIGHT PANEL */
 .rp{display:flex;flex-direction:column;overflow:hidden;}
@@ -1007,12 +1007,10 @@ function applyLiveTickToInlineChart(sym, ltp, volume, timestamp) {
   const fullCloses = data.rawCandles.map(c => c.close);
   const fullEma9 = calcEMA(fullCloses, 9);
   const fullEma21 = calcEMA(fullCloses, 21);
-  const fullEma50 = calcEMA(fullCloses, 50);
 
   const startIndex = data.rawCandles.length - data.candles.length;
   data.ema9 = fullEma9.slice(startIndex);
   data.ema21 = fullEma21.slice(startIndex);
-  data.ema50 = fullEma50.slice(startIndex);
   data.vwap = calcVWAP(data.candles);
 
   // Fast canvas repaint
@@ -1145,18 +1143,16 @@ async function initInlineChart(sym, levels = {}) {
   const fullCloses = candles.map(c => c.close);
   const fullEma9 = calcEMA(fullCloses, 9);
   const fullEma21 = calcEMA(fullCloses, 21);
-  const fullEma50 = calcEMA(fullCloses, 50);
   const vwap = calcVWAP(activeCandles);
 
   const startIndex = candles.length - activeCandles.length;
   const ema9 = fullEma9.slice(startIndex);
   const ema21 = fullEma21.slice(startIndex);
-  const ema50 = fullEma50.slice(startIndex);
 
   _chartCandlesCache[sym] = {
     rawCandles: candles,
     candles: activeCandles,
-    ema9, ema21, ema50, vwap,
+    ema9, ema21, vwap,
     levels: levels || {},
     tf: _inlineChartTf,
     lastFetch: Date.now()
@@ -1177,7 +1173,7 @@ function drawInlineCandleCanvas(sym, hoverPos = null) {
   const data = _chartCandlesCache[sym];
   if (!canvas || !data || !data.candles || !data.candles.length) return;
 
-  const { candles, ema9, ema21, ema50, vwap, levels } = data;
+  const { candles, ema9, ema21, vwap, levels } = data;
   const ctx = canvas.getContext('2d');
   const dpr = window.devicePixelRatio || 1;
   const rect = canvas.getBoundingClientRect();
@@ -1192,7 +1188,10 @@ function drawInlineCandleCanvas(sym, hoverPos = null) {
 
   ctx.save();
   ctx.scale(dpr, dpr);
-  ctx.clearRect(0, 0, width, height);
+
+  // Solid White Canvas Background
+  ctx.fillStyle = '#ffffff';
+  ctx.fillRect(0, 0, width, height);
 
   const pl = 14, pr = 78, pt = 16, pb = 26;
   const cw = width - pl - pr;
@@ -1229,11 +1228,11 @@ function drawInlineCandleCanvas(sym, hoverPos = null) {
   const numGridTicks = 6;
   ctx.lineWidth = 1;
   ctx.font = '10px monospace';
-  ctx.fillStyle = '#64748b';
+  ctx.fillStyle = '#475569';
   for (let i = 0; i <= numGridTicks; i++) {
     const p = minPrice + (effectiveRange / numGridTicks) * i;
     const y = getY(p);
-    ctx.strokeStyle = 'rgba(59,130,246,0.12)';
+    ctx.strokeStyle = 'rgba(0, 0, 0, 0.07)';
     ctx.setLineDash([4, 4]);
     ctx.beginPath();
     ctx.moveTo(pl, y);
@@ -1254,7 +1253,7 @@ function drawInlineCandleCanvas(sym, hoverPos = null) {
     const mm = String(d.getMinutes()).padStart(2, '0');
     const timeStr = `${hh}:${mm}`;
 
-    ctx.strokeStyle = 'rgba(59,130,246,0.08)';
+    ctx.strokeStyle = 'rgba(0, 0, 0, 0.05)';
     ctx.setLineDash([3, 3]);
     ctx.beginPath();
     ctx.moveTo(x, pt);
@@ -1273,7 +1272,7 @@ function drawInlineCandleCanvas(sym, hoverPos = null) {
     const x = getX(i);
     const vH = ((c.volume || 0) / maxVol) * volMaxH;
     const isUp = c.close >= c.open;
-    ctx.fillStyle = isUp ? 'rgba(34,197,94,0.25)' : 'rgba(239,68,68,0.25)';
+    ctx.fillStyle = isUp ? 'rgba(22, 163, 74, 0.22)' : 'rgba(220, 38, 38, 0.22)';
     ctx.fillRect(x - candleW / 2, volBaseY - vH, candleW, vH);
   });
 
@@ -1296,7 +1295,7 @@ function drawInlineCandleCanvas(sym, hoverPos = null) {
     const txt = `${label} ₹${val >= 100 ? val.toFixed(1) : val.toFixed(2)}`;
     ctx.font = 'bold 9px monospace';
     const tw = ctx.measureText(txt).width;
-    ctx.fillStyle = 'rgba(3,8,18,0.92)';
+    ctx.fillStyle = '#ffffff';
     ctx.fillRect(width - pr + 4, y - 8, tw + 8, 16);
     ctx.strokeStyle = color;
     ctx.strokeRect(width - pr + 4, y - 8, tw + 8, 16);
@@ -1304,14 +1303,14 @@ function drawInlineCandleCanvas(sym, hoverPos = null) {
     ctx.fillText(txt, width - pr + 8, y + 3.5);
   }
 
-  drawLevelLine(levels.pdh, 'PDH', '#22c55e');
-  drawLevelLine(levels.pdl, 'PDL', '#ef4444');
-  drawLevelLine(levels.tc, 'TC', '#c084fc');
-  drawLevelLine(levels.piv, 'PIV', '#22d3ee');
-  drawLevelLine(levels.bc, 'BC', '#818cf8');
+  drawLevelLine(levels.pdh, 'PDH', '#16a34a');
+  drawLevelLine(levels.pdl, 'PDL', '#dc2626');
+  drawLevelLine(levels.tc, 'TC', '#9333ea');
+  drawLevelLine(levels.piv, 'PIV', '#0284c7');
+  drawLevelLine(levels.bc, 'BC', '#4f46e5');
 
   // Technical Indicators Lines
-  function drawIndicatorLine(series, color, lineWidth = 1.4) {
+  function drawIndicatorLine(series, color, lineWidth = 1.5) {
     if (!series || !series.length) return;
     ctx.strokeStyle = color;
     ctx.lineWidth = lineWidth;
@@ -1328,10 +1327,9 @@ function drawInlineCandleCanvas(sym, hoverPos = null) {
     ctx.stroke();
   }
 
-  drawIndicatorLine(ema9, '#38bdf8', 1.4);   // EMA 9 (Sky Blue)
-  drawIndicatorLine(ema21, '#fb923c', 1.4);  // EMA 21 (Orange)
-  drawIndicatorLine(ema50, '#facc15', 1.4);  // EMA 50 (Yellow)
-  drawIndicatorLine(vwap, '#c084fc', 1.6);   // VWAP (Purple)
+  drawIndicatorLine(ema9, '#2563eb', 1.5);   // EMA 9 (Blue)
+  drawIndicatorLine(ema21, '#dc2626', 1.5);  // EMA 21 (Red)
+  drawIndicatorLine(vwap, '#9333ea', 1.5);   // VWAP (Purple)
 
   // Candlesticks
   candles.forEach((c, i) => {
@@ -1341,7 +1339,7 @@ function drawInlineCandleCanvas(sym, hoverPos = null) {
     const yH = getY(c.high);
     const yL = getY(c.low);
     const isUp = c.close >= c.open;
-    const color = isUp ? '#22c55e' : '#ef4444';
+    const color = isUp ? '#16a34a' : '#dc2626';
 
     // Wick
     ctx.strokeStyle = color;
@@ -1367,7 +1365,7 @@ function drawInlineCandleCanvas(sym, hoverPos = null) {
     const hy = hoverPos.y;
 
     // Crosshair Lines
-    ctx.strokeStyle = 'rgba(255, 255, 255, 0.4)';
+    ctx.strokeStyle = 'rgba(0, 0, 0, 0.35)';
     ctx.lineWidth = 0.8;
     ctx.setLineDash([4, 4]);
 
@@ -1386,9 +1384,9 @@ function drawInlineCandleCanvas(sym, hoverPos = null) {
 
     // Price indicator on Y-axis
     const hoverPrice = minPrice + (1 - (hy - pt) / ch) * effectiveRange;
-    ctx.fillStyle = '#38bdf8';
+    ctx.fillStyle = '#1e293b';
     ctx.fillRect(width - pr + 2, hy - 8, 70, 16);
-    ctx.fillStyle = '#020617';
+    ctx.fillStyle = '#ffffff';
     ctx.font = 'bold 9px monospace';
     ctx.fillText('₹' + (hoverPrice >= 100 ? hoverPrice.toFixed(1) : hoverPrice.toFixed(2)), width - pr + 6, hy + 3.5);
 
@@ -1399,19 +1397,18 @@ function drawInlineCandleCanvas(sym, hoverPos = null) {
       const timeStr = `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;
       const volStr = hCandle.volume > 1e6 ? (hCandle.volume / 1e6).toFixed(1) + 'M' : hCandle.volume > 1e3 ? (hCandle.volume / 1e3).toFixed(1) + 'K' : hCandle.volume;
       const cChg = ((hCandle.close - hCandle.open) / hCandle.open * 100);
-      const chgCls = cChg >= 0 ? '#22c55e' : '#ef4444';
+      const chgCls = cChg >= 0 ? '#16a34a' : '#dc2626';
 
       hud.innerHTML = `
-        <span style="color:#94a3b8;">${timeStr}</span> |
-        O: <b style="color:#ffffff;">&#8377;${hCandle.open.toFixed(2)}</b> |
-        H: <b style="color:#ffffff;">&#8377;${hCandle.high.toFixed(2)}</b> |
-        L: <b style="color:#ffffff;">&#8377;${hCandle.low.toFixed(2)}</b> |
+        <span style="color:#64748b;">${timeStr}</span> |
+        O: <b style="color:#0f172a;">&#8377;${hCandle.open.toFixed(2)}</b> |
+        H: <b style="color:#0f172a;">&#8377;${hCandle.high.toFixed(2)}</b> |
+        L: <b style="color:#0f172a;">&#8377;${hCandle.low.toFixed(2)}</b> |
         C: <b style="color:${chgCls};">&#8377;${hCandle.close.toFixed(2)} (${cChg>=0?'+':''}${cChg.toFixed(2)}%)</b> |
-        Vol: <b style="color:#e2e8f0;">${volStr}</b> |
-        <span style="color:#38bdf8;">EMA9: ${ema9[idx]?.toFixed(1)||'—'}</span> |
-        <span style="color:#fb923c;">EMA21: ${ema21[idx]?.toFixed(1)||'—'}</span> |
-        <span style="color:#facc15;">EMA50: ${ema50[idx]?.toFixed(1)||'—'}</span> |
-        <span style="color:#c084fc;">VWAP: ${vwap[idx]?.toFixed(1)||'—'}</span>
+        Vol: <b style="color:#334155;">${volStr}</b> |
+        <span style="color:#2563eb;font-weight:700;">EMA9: ${ema9[idx]?.toFixed(1)||'—'}</span> |
+        <span style="color:#dc2626;font-weight:700;">EMA21: ${ema21[idx]?.toFixed(1)||'—'}</span> |
+        <span style="color:#9333ea;font-weight:700;">VWAP: ${vwap[idx]?.toFixed(1)||'—'}</span>
       `;
     }
   }

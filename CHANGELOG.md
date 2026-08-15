@@ -278,12 +278,13 @@ Zero changes to alert eligibility logic. All EMA crossover, pre-cross, live brea
 **Files Changed:**
 - `app/360-command-center.html` — Replaced heavy iframe embed with a native HTML5 Canvas intraday chart engine displaying 5m/15m candlesticks, volume bars, EMA 9, EMA 21, EMA 50, VWAP, horizontal dashed level lines with right-edge badges for PDH, PDL, TC, Pivot, BC, 5m/15m switcher, interactive hover crosshair HUD, and one-click popout to the full APEX dashboard.
 
-## [2026-08-15] — 360 Command Center: In-Line Chart Consistency & Off-Market Hours Stability
+## [2026-08-15] — 360 Command Center: In-Line Chart Visual Restyling & EMA Updates
 
-**Session Goal:** Fix in-line chart inconsistency in 360 Command Center Future Buildup by preventing off-market hours quote polling and preserving multi-day historical warmup candles for EMA calculations.
+**Session Goal:** Update 360 Command Center in-line chart color palette: set EMA9 to Blue, EMA21 to Red, remove EMA50, and set the chart canvas to crisp White.
 
 **Files Changed:**
-- `app/360-command-center.html` — Added `isMarketOpen()` to disable tick polling and candle mutation outside market hours; updated `applyLiveTickToInlineChart` to preserve full multi-day `rawCandles` during EMA recalculations preventing indicator curve distortion; added chart cache checking to eliminate redundant re-fetch flicker on board polling cycles.
+- `app/360-command-center.html` — Updated in-line chart canvas and container to pure white (`#ffffff`) with subtle light grids and high-contrast slate text; set EMA 9 to Blue (`#2563eb`) and EMA 21 to Red (`#dc2626`); removed EMA 50 indicator calculation, canvas line, and HUD display.
+
 
 
 
