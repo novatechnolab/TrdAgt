@@ -920,6 +920,16 @@ const _tokenCache = {};
 const _chartCandlesCache = {};
 const _chartMouseHandlers = {};
 
+function isMarketOpen() {
+  const now = new Date();
+  const utcMs = now.getTime() + (now.getTimezoneOffset() * 60000);
+  const ist = new Date(utcMs + (5.5 * 3600000)); // UTC+5:30
+  const day = ist.getDay(); // 0=Sun, 6=Sat
+  if (day === 0 || day === 6) return false;
+  const mins = ist.getHours() * 60 + ist.getMinutes();
+  return mins >= 9 * 60 + 15 && mins <= 15 * 60 + 30; // 09:15 to 15:30 IST
+}
+
 function switchInlineChartTf(sym, tf) {
   _inlineChartTf = tf;
   renderBoard();
@@ -934,8 +944,9 @@ function stopInlineChartTickFeed() {
 
 function startInlineChartTickFeed(sym) {
   stopInlineChartTickFeed();
+  if (!isMarketOpen()) return; // Never poll live ticks outside market hours
   _inlineChartTickTimer = setInterval(async () => {
-    if (_activeChartStock !== sym) {
+    if (_activeChartStock !== sym || !isMarketOpen()) {
       stopInlineChartTickFeed();
       return;
     }
@@ -955,13 +966,15 @@ function startInlineChartTickFeed(sym) {
 }
 
 function applyLiveTickToInlineChart(sym, ltp, volume, timestamp) {
+  if (!isMarketOpen()) return; // Never mutate chart candles outside market hours
   const data = _chartCandlesCache[sym];
-  if (!data || !data.candles || !data.candles.length) return;
+  if (!data || !data.candles || !data.candles.length || !data.rawCandles || !data.rawCandles.length) return;
 
   const tfMinutes = data.tf || 5;
   const intervalMs = tfMinutes * 60 * 1000;
   const currentBoundary = Math.floor(timestamp / intervalMs) * intervalMs;
   const lastCandle = data.candles[data.candles.length - 1];
+  const lastRawCandle = data.rawCandles[data.rawCandles.length - 1];
 
   if (lastCandle.timestamp === currentBoundary) {
     // Update active forming candle
@@ -969,23 +982,37 @@ function applyLiveTickToInlineChart(sym, ltp, volume, timestamp) {
     lastCandle.high = Math.max(lastCandle.high, ltp);
     lastCandle.low = Math.min(lastCandle.low, ltp);
     if (volume != null) lastCandle.volume = volume;
+
+    if (lastRawCandle && lastRawCandle.timestamp === currentBoundary) {
+      lastRawCandle.close = ltp;
+      lastRawCandle.high = Math.max(lastRawCandle.high, ltp);
+      lastRawCandle.low = Math.min(lastRawCandle.low, ltp);
+      if (volume != null) lastRawCandle.volume = volume;
+    }
   } else if (currentBoundary > lastCandle.timestamp) {
     // New period rollover: push new candle
-    data.candles.push({
+    const newC = {
       timestamp: currentBoundary,
       open: ltp,
       high: ltp,
       low: ltp,
       close: ltp,
       volume: volume || 0
-    });
+    };
+    data.candles.push(newC);
+    data.rawCandles.push(newC);
   }
 
-  // Recalculate indicators on the fly
-  const fullCloses = data.candles.map(c => c.close);
-  data.ema9 = calcEMA(fullCloses, 9);
-  data.ema21 = calcEMA(fullCloses, 21);
-  data.ema50 = calcEMA(fullCloses, 50);
+  // Recalculate indicators with full multi-day warmup preservation
+  const fullCloses = data.rawCandles.map(c => c.close);
+  const fullEma9 = calcEMA(fullCloses, 9);
+  const fullEma21 = calcEMA(fullCloses, 21);
+  const fullEma50 = calcEMA(fullCloses, 50);
+
+  const startIndex = data.rawCandles.length - data.candles.length;
+  data.ema9 = fullEma9.slice(startIndex);
+  data.ema21 = fullEma21.slice(startIndex);
+  data.ema50 = fullEma50.slice(startIndex);
   data.vwap = calcVWAP(data.candles);
 
   // Fast canvas repaint
@@ -1017,11 +1044,44 @@ function calcVWAP(candles) {
   });
 }
 
+function attachChartMouseHandlers(sym, container, canvas) {
+  if (_chartMouseHandlers[sym]) return;
+  _chartMouseHandlers[sym] = true;
+  container.addEventListener('mousemove', (e) => {
+    const rect = canvas.getBoundingClientRect();
+    const mouseX = e.clientX - rect.left;
+    const mouseY = e.clientY - rect.top;
+    drawInlineCandleCanvas(sym, { x: mouseX, y: mouseY });
+  });
+  container.addEventListener('mouseleave', () => {
+    const hud = document.getElementById(`ichart-hud-${sym}`);
+    if (hud) hud.style.display = 'none';
+    drawInlineCandleCanvas(sym, null);
+  });
+}
+
 async function initInlineChart(sym, levels = {}) {
   const container = document.getElementById(`ichart-container-${sym}`);
   const canvas = document.getElementById(`ichart-canvas-${sym}`);
   const loadingEl = document.getElementById(`ichart-loading-${sym}`);
   if (!container || !canvas) return;
+
+  // Check if we have cached data for the same symbol and timeframe
+  const cached = _chartCandlesCache[sym];
+  const isCachedValid = cached && cached.tf === _inlineChartTf && cached.candles && cached.candles.length > 0;
+
+  if (isCachedValid) {
+    if (levels && Object.keys(levels).length) cached.levels = levels;
+    if (loadingEl) loadingEl.style.display = 'none';
+    drawInlineCandleCanvas(sym, null);
+
+    // If market is closed or cache is very fresh (<30s), don't refetch
+    if (!isMarketOpen() || (Date.now() - (cached.lastFetch || 0) < 30000)) {
+      startInlineChartTickFeed(sym);
+      attachChartMouseHandlers(sym, container, canvas);
+      return;
+    }
+  }
 
   // Resolve instrument token
   let token = _tokenCache[sym];
@@ -1043,7 +1103,7 @@ async function initInlineChart(sym, levels = {}) {
   }
 
   if (!token) {
-    if (loadingEl) loadingEl.textContent = `Instrument token not found for ${sym}`;
+    if (loadingEl && !isCachedValid) loadingEl.textContent = `Instrument token not found for ${sym}`;
     return;
   }
 
@@ -1069,7 +1129,7 @@ async function initInlineChart(sym, levels = {}) {
   }
 
   if (!candles || !candles.length) {
-    if (loadingEl) loadingEl.textContent = `No historical data available for ${sym}`;
+    if (loadingEl && !isCachedValid) loadingEl.textContent = `No historical data available for ${sym}`;
     return;
   }
 
@@ -1081,46 +1141,34 @@ async function initInlineChart(sym, levels = {}) {
   const sessionCandles = candles.filter(c => new Date(c.timestamp).toISOString().split('T')[0] === latestDayStr);
   const activeCandles = sessionCandles.length >= 3 ? sessionCandles : candles.slice(-50);
 
-  // Indicators calculated over full fetched window, then sliced
+  // Indicators calculated over full fetched window (warmup), then sliced
   const fullCloses = candles.map(c => c.close);
   const fullEma9 = calcEMA(fullCloses, 9);
   const fullEma21 = calcEMA(fullCloses, 21);
   const fullEma50 = calcEMA(fullCloses, 50);
-  const fullVwap = calcVWAP(candles);
+  const vwap = calcVWAP(activeCandles);
 
   const startIndex = candles.length - activeCandles.length;
   const ema9 = fullEma9.slice(startIndex);
   const ema21 = fullEma21.slice(startIndex);
   const ema50 = fullEma50.slice(startIndex);
-  const vwap = fullVwap.slice(startIndex);
 
   _chartCandlesCache[sym] = {
+    rawCandles: candles,
     candles: activeCandles,
     ema9, ema21, ema50, vwap,
     levels: levels || {},
-    tf: _inlineChartTf
+    tf: _inlineChartTf,
+    lastFetch: Date.now()
   };
 
   drawInlineCandleCanvas(sym, null);
 
-  // Start Live Tick Polling for active stock
+  // Start Live Tick Polling for active stock (market hours only)
   startInlineChartTickFeed(sym);
 
   // Mousemove Crosshair & HUD Listener
-  if (!_chartMouseHandlers[sym]) {
-    _chartMouseHandlers[sym] = true;
-    container.addEventListener('mousemove', (e) => {
-      const rect = canvas.getBoundingClientRect();
-      const mouseX = e.clientX - rect.left;
-      const mouseY = e.clientY - rect.top;
-      drawInlineCandleCanvas(sym, { x: mouseX, y: mouseY });
-    });
-    container.addEventListener('mouseleave', () => {
-      const hud = document.getElementById(`ichart-hud-${sym}`);
-      if (hud) hud.style.display = 'none';
-      drawInlineCandleCanvas(sym, null);
-    });
-  }
+  attachChartMouseHandlers(sym, container, canvas);
 }
 
 function drawInlineCandleCanvas(sym, hoverPos = null) {

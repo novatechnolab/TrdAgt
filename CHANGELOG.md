@@ -278,12 +278,12 @@ Zero changes to alert eligibility logic. All EMA crossover, pre-cross, live brea
 **Files Changed:**
 - `app/360-command-center.html` — Replaced heavy iframe embed with a native HTML5 Canvas intraday chart engine displaying 5m/15m candlesticks, volume bars, EMA 9, EMA 21, EMA 50, VWAP, horizontal dashed level lines with right-edge badges for PDH, PDL, TC, Pivot, BC, 5m/15m switcher, interactive hover crosshair HUD, and one-click popout to the full APEX dashboard.
 
-## [2026-08-15] — 360 Command Center: Tick-by-Tick Real-Time In-Line Chart Engine
+## [2026-08-15] — 360 Command Center: In-Line Chart Consistency & Off-Market Hours Stability
 
-**Session Goal:** Implement live tick-by-tick real-time polling and active forming candle mutator for the Native In-Line Chart in 360 Command Center.
+**Session Goal:** Fix in-line chart inconsistency in 360 Command Center Future Buildup by preventing off-market hours quote polling and preserving multi-day historical warmup candles for EMA calculations.
 
 **Files Changed:**
-- `app/360-command-center.html` — Added `startInlineChartTickFeed(sym)`, `stopInlineChartTickFeed()`, and `applyLiveTickToInlineChart(sym, ltp, vol, ts)` to dynamically update the active candle's OHLC, volume, and recalculated EMAs/VWAP on incoming live ticks with automatic interval boundary rollovers.
+- `app/360-command-center.html` — Added `isMarketOpen()` to disable tick polling and candle mutation outside market hours; updated `applyLiveTickToInlineChart` to preserve full multi-day `rawCandles` during EMA recalculations preventing indicator curve distortion; added chart cache checking to eliminate redundant re-fetch flicker on board polling cycles.
 
 
 
