@@ -712,10 +712,11 @@ function renderBoard(){
       </tr>`;
     } else {
       thead.innerHTML = `<tr>
-        <th>#</th><th>SYMBOL</th><th>CAP</th><th>SPOT%</th><th>OPT LTP</th>
-        <th>RVOL</th><th>LIN%</th><th>DXCNT</th>
-        <th>GAIN%</th><th>GAP%</th><th>INST</th><th>E9H</th>
-        <th>FH VOL</th><th>FUT B/U</th><th>TC/PVT/BC</th><th>DRIFT</th>
+        <th>#</th><th>SYMBOL</th><th>CAP</th><th>SPOT%</th>
+        <th>LIN%</th><th>DXCNT</th>
+        <th>GAIN%</th><th>GAP%</th><th>INST</th>
+        <th>FUT B/U</th><th>TC/PVT/BC</th><th>DRIFT</th>
+        <th>RVOL</th><th>FH VOL</th><th>E9H</th>
         <th>TF</th><th>OI%</th><th>SCORE</th>
       </tr>`;
     }
@@ -874,18 +875,17 @@ function renderBoard(){
       <td class="rank">${s.rank}</td><td class="sym">${expIcon}${s.sym}</td>
       <td>${capBadge(s.cap)}</td>
       <td class="mono"><div class="gain-cell"><span class="spot-badge ${sCls}">${s.spot>0?'+':''}${s.spot}%</span></div></td>
-      <td class="mono" style="color:var(--t2);">&#8377;${s.optLtp != null ? s.optLtp.toFixed(2) : s.ltp.toLocaleString()}</td>
-      <td class="mono"><span class="${s.rvol>=3?'bull':s.rvol<1?'bear':''}">${s.rvol>=3?'▲':'▽'} ${s.rvol}x</span></td>
       <td class="mono neu">${s.lin}%</td>
       <td class="mono ${dCls}">${s.dxcnt>0?'+':''}${s.dxcnt}D</td>
       <td><div class="gain-cell"><span class="gbadge">${s.gain}%</span>${sp}</div></td>
       <td class="mono ${s.gap>0?'bull':s.gap<0?'bear':''}">${s.gap>0?'+':''}${s.gap}%</td>
       <td class="mono" style="font-size:9px;color:${s.instHi?'var(--cyn)':'var(--t1)'};">${s.inst}</td>
-      <td class="mono" style="font-size:9px;"><span class="${s.e9hCls}">${s.e9hText}</span></td>
-      <td class="mono" style="font-size:9px;"><span class="bull">${s.fhS}x</span><br/><span style="color:var(--t3);">${s.fhC}x</span></td>
       <td>${futBadge(s.fut)}</td>
       <td style="white-space:nowrap;"><span class="flag ${s.tc}">${s.tc}</span><span class="flag ${s.pvt}">${s.pvt}</span><span class="flag ${s.bc}">${s.bc}</span></td>
       <td class="mono ${s.driftCls}" style="font-size:9px;" title="${s.driftRaw||s.drift}">${s.driftLabel}</td>
+      <td class="mono"><span class="${s.rvol>=3?'bull':s.rvol<1?'bear':''}">${s.rvol>=3?'▲':'▽'} ${s.rvol}x</span></td>
+      <td class="mono" style="font-size:9px;"><span class="bull">${s.fhS}x</span><br/><span style="color:var(--t3);">${s.fhC}x</span></td>
+      <td class="mono" style="font-size:9px;"><span class="${s.e9hCls}">${s.e9hText}</span></td>
       <td style="white-space:nowrap;">${tfBadge(s.conf[0],'15m')}${tfBadge(s.conf[1],'1H')}${tfBadge(s.conf[2],'D')}</td>
       <td class="mono ${oiCls}">${s.oiChg>0?'+':''}${s.oiChg}%</td>
       <td><span class="${gc}">${sc}</span></td>
