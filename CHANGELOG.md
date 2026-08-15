@@ -319,3 +319,10 @@ Zero changes to alert eligibility logic. All EMA crossover, pre-cross, live brea
 
 **Files Changed:**
 - `app/360-command-center.html` — Removed `OPT LTP` column; moved `RVOL`, `FH VOL`, `E9H` columns to appear after `DRIFT` in both the table header and row rendering (default/non-futures-buildup view).
+
+## [2026-08-15] — 360 Command Center: Dark Navy & Vibrant Neon Theme Refresh
+
+**Session Goal:** Refresh 360 Command Center color theme and visual palette to match the dark navy, high-contrast cyan/indigo glassmorphic aesthetic of the reference design.
+
+**Files Changed:**
+- `app/360-command-center.html` — Updated `:root` CSS variables with deep midnight navy background (`#040916`), high-contrast dark indigo glass containers, cyan/indigo border highlights (`rgba(56,189,248,0.18)`), crisp off-white primary text (`#f8fafc`), and saturated neon signal colors.
