@@ -1942,7 +1942,7 @@ function buildOISpurts(spurtList = []){
   const currentPctMap = {};
 
   const spurts = spurtList
-    .slice(0, 15)
+    .filter(f => +(f.oi_change_pct || 0) >= 5)
     .map((f, i) => {
       const sym = f.symbol;
       const pct = +(f.oi_change_pct || 0).toFixed(1);
