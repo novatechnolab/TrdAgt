@@ -278,12 +278,14 @@ Zero changes to alert eligibility logic. All EMA crossover, pre-cross, live brea
 **Files Changed:**
 - `app/360-command-center.html` — Replaced heavy iframe embed with a native HTML5 Canvas intraday chart engine displaying 5m/15m candlesticks, volume bars, EMA 9, EMA 21, EMA 50, VWAP, horizontal dashed level lines with right-edge badges for PDH, PDL, TC, Pivot, BC, 5m/15m switcher, interactive hover crosshair HUD, and one-click popout to the full APEX dashboard.
 
-## [2026-08-15] — APEX Dashboard: Declare Missing INSTRUMENTS Variable
+## [2026-08-15] — Option Chain: Automatic Active Expiry Resolution & OI Heatmap Accuracy
 
-**Session Goal:** Fix chart failing to load with `ERROR — LIVE DATA UNAVAILABLE` on APEX dashboard by declaring the missing `INSTRUMENTS` state variable.
+**Session Goal:** Fix multi-expiry contract pollution in `/api/option-chain` ensuring all ATM ± 10 strikes in the APEX OI Heatmap belong strictly to the nearest active monthly expiry with correct prices, OI, and PCR.
 
 **Files Changed:**
-- `app/apex-dashboard.html` — Initialized `let INSTRUMENTS = loadInstruments();` to resolve runtime `ReferenceError` during instrument token resolution in `ensureInstrument()`.
+- `app/backend/server.py` — Updated `/api/option-chain` to resolve and filter by the nearest upcoming active expiry when `expiry` parameter is omitted, eliminating contract price/OI overwrites from far-month expiries.
+- `app/apex-dashboard.html` — Added active expiry badge display in `renderOIHeatmap` summary header while preserving the ATM ± 10 strikes display range.
+
 
 
 

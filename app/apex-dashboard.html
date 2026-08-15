@@ -5591,11 +5591,14 @@
           </tr>`;
       }).join('');
 
+      const expStr = chainData?.expiry ? new Date(chainData.expiry).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' }) : '';
+
       panel.innerHTML = `
         <div class="oi-heatmap-summary">
           <div class="oi-heatmap-kpi"><span>Spot</span><strong>${spot ? spot.toFixed(2) : '-'}</strong></div>
           <div class="oi-heatmap-kpi"><span>Max Pain</span><strong>${maxPain ? maxPain.toLocaleString('en-IN') : '-'}</strong></div>
           <div class="oi-heatmap-kpi"><span>PCR</span><strong style="color:${pcr >= 1 ? 'var(--bull)' : 'var(--bear)'}">${pcr ? pcr.toFixed(2) : '-'}</strong></div>
+          ${expStr ? `<div class="oi-heatmap-kpi"><span>Expiry</span><strong style="color:var(--accent);">${expStr}</strong></div>` : ''}
         </div>
         <div class="oi-heatmap-scroll">
           <table class="oi-heatmap">

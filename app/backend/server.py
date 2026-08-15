@@ -5162,9 +5162,21 @@ def option_chain():
         options = [i for i in _instruments_cache
                    if i.get('name') == symbol and i.get('segment') == 'NFO-OPT']
 
+        if not options:
+            return jsonify({'chain': [], 'spot_price': 0, 'expiry': None, 'available_expiries': []})
+
+        def to_date_obj(e):
+            if hasattr(e, 'date'): return e.date()
+            if hasattr(e, 'isoformat'): return e
+            try: return dt.strptime(str(e).split('T')[0], '%Y-%m-%d').date()
+            except: return dt.now().date()
+
+        today = dt.now().date()
+        all_expiries_dates = sorted({to_date_obj(i['expiry']) for i in options if i.get('expiry')})
+        available_expiries = [e.isoformat() if hasattr(e, 'isoformat') else str(e) for e in all_expiries_dates]
+
+        active_expiry = None
         if expiry:
-            # Normalize expiry to string for comparison (handles both
-            # datetime.date objects from live API and strings from cache)
             exp_str = expiry.strip()
             def expiry_matches(inst_expiry):
                 if inst_expiry is None:
@@ -5173,9 +5185,16 @@ def option_chain():
                     return inst_expiry.isoformat() == exp_str
                 return str(inst_expiry).split('T')[0] == exp_str
             options = [i for i in options if expiry_matches(i.get('expiry'))]
+            active_expiry = exp_str
+        else:
+            # Default to the nearest active/upcoming expiry
+            nearest = next((e for e in all_expiries_dates if e >= today), all_expiries_dates[0] if all_expiries_dates else None)
+            if nearest:
+                options = [i for i in options if to_date_obj(i.get('expiry')) == nearest]
+                active_expiry = nearest.isoformat() if hasattr(nearest, 'isoformat') else str(nearest)
 
         if not options:
-            return jsonify({'chain': [], 'spot_price': 0})
+            return jsonify({'chain': [], 'spot_price': 0, 'expiry': active_expiry, 'available_expiries': available_expiries})
 
         # Limit to 500 options and batch quote calls (Kite API limit ~200/call)
         options = options[:500]
@@ -5228,7 +5247,7 @@ def option_chain():
             }
 
         chain = sorted(strikes.values(), key=lambda x: x['strike'])
-        return jsonify({'chain': chain, 'spot_price': spot})
+        return jsonify({'chain': chain, 'spot_price': spot, 'expiry': active_expiry, 'available_expiries': available_expiries})
 
     except Exception as e:
         return jsonify({'error': str(e)}), 500
