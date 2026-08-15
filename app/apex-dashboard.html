@@ -1932,6 +1932,7 @@
     function saveInstruments() {
       try { localStorage.setItem('apex_instruments', JSON.stringify(INSTRUMENTS)); } catch { }
     }
+    let INSTRUMENTS = loadInstruments();
 
     const _urlParams = new URLSearchParams(window.location.search);
     const _initSym = (_urlParams.get('symbol') || _urlParams.get('sym') || '').toUpperCase();
