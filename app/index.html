@@ -427,6 +427,24 @@
 
         <!-- ═══ PAGE: Historical Analysis ═══ -->
         <div class="page" id="page-historical-analysis">
+
+          <!-- ── Page-level Tab Bar ── -->
+          <div class="tabs mb-16" id="ha-page-tabs" style="border-bottom:1px solid var(--border); padding-bottom:0; gap:4px;">
+            <button class="tab-btn active" id="ha-tab-analytics" onclick="window.haSwitchTab('analytics')"
+              style="padding:10px 20px; font-size:0.85rem; font-weight:700; border-radius:var(--radius-md) var(--radius-md) 0 0; margin-bottom:-1px; cursor:pointer;">
+              📈 Historical Analytics
+            </button>
+            <button class="tab-btn" id="ha-tab-traction" onclick="window.haSwitchTab('traction')"
+              style="padding:10px 20px; font-size:0.85rem; font-weight:700; border-radius:var(--radius-md) var(--radius-md) 0 0; margin-bottom:-1px; cursor:pointer;">
+              🎯 Traction Board <span style="font-size:0.7rem; background:rgba(34,211,199,0.18); color:#22d3c7; padding:2px 7px; border-radius:8px; margin-left:6px; font-weight:800;">360°</span>
+            </button>
+          </div>
+
+          <!-- ══════════════════════════════════════════════════ -->
+          <!-- TAB 1: Existing Historical Analytics content       -->
+          <!-- ══════════════════════════════════════════════════ -->
+          <div id="ha-panel-analytics">
+
           <!-- Filter Controls & Header -->
           <div class="card mb-16"
             style="background: var(--bg-glass); backdrop-filter: blur(12px); border: 1px solid var(--border); overflow:visible; position:relative; z-index:100;">
@@ -1178,7 +1196,7 @@
                 </div>
 
                 <!-- Card 3: Institutional Volume Climax Walls -->
-                <div class="card" style="background:var(--bg-glass); backdrop-filter:blur(8px);">
+<div class="card" style="background:var(--bg-glass); backdrop-filter:blur(8px);">
                   <div class="card-header">
                     <h3>🏔️ Institutional Volume Climax Support &amp; Resistance</h3>
                   </div>
@@ -1195,6 +1213,683 @@
               </div>
             </div>
           </div>
+          </div><!-- /ha-panel-analytics -->
+
+          <!-- ═══ TAB 2: Traction Board 360° ═══ -->
+          <div id="ha-panel-traction" style="display:none; margin-top: 10px;">
+
+            <style>
+              #tb-container-wrap {
+                --tb-bg: #0a0d10;
+                --tb-panel: #12171c;
+                --tb-panel-2: #161c22;
+                --tb-line: #232b32;
+                --tb-text: #e6ebef;
+                --tb-muted: #7d8a96;
+                --tb-dim: #4d5860;
+                --tb-bull: #2fbf71;
+                --tb-bull-dim: #1b3d2b;
+                --tb-bear: #e5484d;
+                --tb-bear-dim: #3d1e20;
+                --tb-amber: #ffb020;
+                --tb-amber-dim: #3d2e10;
+                --tb-cyan: #22d3c7;
+                --tb-cyan-dim: #0f2f2c;
+                --tb-mono: 'IBM Plex Mono', monospace;
+                --tb-sans: 'IBM Plex Sans', sans-serif;
+                background: var(--tb-bg);
+                color: var(--tb-text);
+                border: 1px solid var(--tb-line);
+                border-radius: 12px;
+                padding: 24px 20px 40px;
+                font-family: var(--tb-sans);
+                box-shadow: 0 8px 32px rgba(0,0,0,0.5);
+              }
+              #tb-container-wrap * { box-sizing: border-box; }
+
+              /* Control Card */
+              .tb-scan-control-card {
+                background: var(--tb-panel);
+                border: 1px solid var(--tb-line);
+                border-radius: 10px;
+                padding: 18px 20px;
+                margin-bottom: 22px;
+              }
+              .tb-scan-header {
+                display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px;
+              }
+              .tb-brand-eyebrow {
+                font-family: var(--tb-mono); font-size: 11px; letter-spacing: .14em; text-transform: uppercase;
+                color: var(--tb-cyan); margin-bottom: 4px; font-weight: 700;
+              }
+              .tb-title-h1 { font-size: 20px; font-weight: 700; letter-spacing: -.01em; margin: 0; color: var(--tb-text); }
+              .tb-title-h1 span { color: var(--tb-muted); font-weight: 400; font-size: 16px; }
+
+              .tb-quickfill-bar {
+                display: flex; gap: 8px; margin-bottom: 10px; flex-wrap: wrap; align-items: center;
+              }
+              .tb-quick-btn {
+                padding: 5px 13px; border-radius: 20px; font-size: 0.72rem; font-weight: 700; cursor: pointer; transition: all 0.15s;
+                font-family: var(--tb-mono); outline: none;
+              }
+              .tb-quick-btn.large { border: 1.5px solid rgba(30,136,229,0.45); background: rgba(30,136,229,0.1); color: #1E88E5; }
+              .tb-quick-btn.large:hover, .tb-quick-btn.large.active { background: rgba(30,136,229,0.25); border-color: #1E88E5; }
+              .tb-quick-btn.mid { border: 1.5px solid rgba(255,167,38,0.45); background: rgba(255,167,38,0.1); color: #FFA726; }
+              .tb-quick-btn.mid:hover, .tb-quick-btn.mid.active { background: rgba(255,167,38,0.25); border-color: #FFA726; }
+              .tb-quick-btn.small { border: 1.5px solid rgba(38,166,154,0.45); background: rgba(38,166,154,0.1); color: #26A69A; }
+              .tb-quick-btn.small:hover, .tb-quick-btn.small.active { background: rgba(38,166,154,0.25); border-color: #26A69A; }
+              .tb-quick-btn.all { border: 1.5px solid rgba(156,39,176,0.45); background: rgba(156,39,176,0.1); color: #CE93D8; }
+              .tb-quick-btn.all:hover, .tb-quick-btn.all.active { background: rgba(156,39,176,0.25); border-color: #CE93D8; }
+              .tb-quick-btn.clear { border: 1px solid var(--tb-line); background: transparent; color: var(--tb-muted); }
+              .tb-quick-btn.clear:hover { color: var(--tb-text); border-color: var(--tb-dim); }
+
+              .tb-scan-grid {
+                display: grid; grid-template-columns: 1fr auto; gap: 16px; align-items: flex-start;
+              }
+              @media (max-width: 800px) { .tb-scan-grid { grid-template-columns: 1fr; } }
+
+              .tb-symbols-textarea {
+                width: 100%; min-height: 80px; border-radius: 8px; border: 1px solid var(--tb-line);
+                background: var(--tb-panel-2); color: var(--tb-text); padding: 10px 12px; font-size: 0.82rem;
+                font-family: var(--tb-mono); resize: vertical; box-sizing: border-box; outline: none;
+              }
+              .tb-symbols-textarea:focus { border-color: var(--tb-cyan); }
+
+              .tb-action-column {
+                display: flex; flex-direction: column; gap: 10px; min-width: 180px;
+              }
+              .tb-period-select {
+                background: var(--tb-panel-2); border: 1px solid var(--tb-line); border-radius: 8px;
+                color: var(--tb-text); font-family: var(--tb-mono); font-size: 0.82rem; font-weight: 600;
+                padding: 9px 12px; outline: none; width: 100%; cursor: pointer;
+              }
+              .tb-period-select:focus { border-color: var(--tb-cyan); }
+
+              .tb-run-scan-btn {
+                padding: 10px 20px; font-weight: 700; border-radius: 8px;
+                background: linear-gradient(135deg, var(--tb-cyan), #0ea5a0); border: none; color: #0a0d10;
+                cursor: pointer; font-size: 0.85rem; font-family: var(--tb-sans); transition: all 0.15s;
+                display: flex; align-items: center; justify-content: center; gap: 8px; box-shadow: 0 4px 14px rgba(34,211,199,0.3);
+              }
+              .tb-run-scan-btn:hover { transform: translateY(-1px); box-shadow: 0 6px 20px rgba(34,211,199,0.45); }
+              .tb-run-scan-btn:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+
+              .tb-status-line {
+                font-family: var(--tb-mono); font-size: 11px; color: var(--tb-muted); margin-top: 6px; display: flex; align-items: center; gap: 8px;
+              }
+              .tb-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--tb-bull); box-shadow: 0 0 6px var(--tb-bull); display: inline-block; }
+
+              /* Market pulse */
+              .tb-pulse-sec { margin-bottom: 24px; }
+              .tb-sec-label {
+                font-family: var(--tb-mono); font-size: 11px; letter-spacing: .1em; text-transform: uppercase;
+                color: var(--tb-muted); margin-bottom: 10px; display: flex; align-items: center; gap: 8px; font-weight: 700;
+              }
+              .tb-sec-label::after { content: ''; flex: 1; height: 1px; background: var(--tb-line); }
+
+              .tb-pulse-strip-wrap {
+                display: flex; gap: 6px; overflow-x: auto; padding-bottom: 8px;
+              }
+              .tb-pulse-strip-wrap::-webkit-scrollbar { height: 5px; }
+              .tb-pulse-strip-wrap::-webkit-scrollbar-thumb { background: var(--tb-line); border-radius: 3px; }
+
+              .tb-pulse-card {
+                flex: 0 0 auto; width: 68px; height: 54px; border-radius: 6px;
+                display: flex; flex-direction: column; align-items: center; justify-content: center;
+                font-family: var(--tb-mono); cursor: pointer; position: relative; transition: .15s;
+                border: 1px solid transparent; user-select: none;
+              }
+              .tb-pulse-card:hover { transform: translateY(-2px); border-color: var(--tb-text); }
+              .tb-pulse-card .sym { font-size: 10.5px; font-weight: 700; letter-spacing: .02em; }
+              .tb-pulse-card .sc { font-size: 9.5px; opacity: .9; margin-top: 2px; font-weight: 600; }
+
+              /* Board grid */
+              .tb-board-layout {
+                display: grid; grid-template-columns: 1fr 320px; gap: 20px; align-items: start;
+              }
+              @media (max-width: 980px) { .tb-board-layout { grid-template-columns: 1fr; } }
+
+              .tb-main-panel {
+                background: var(--tb-panel); border: 1px solid var(--tb-line); border-radius: 10px; overflow: hidden;
+              }
+              .tb-table-filter-bar {
+                display: flex; justify-content: space-between; align-items: center; padding: 10px 14px;
+                background: var(--tb-panel-2); border-bottom: 1px solid var(--tb-line); gap: 10px; flex-wrap: wrap;
+              }
+              .tb-table-filter-input {
+                background: var(--tb-panel); border: 1px solid var(--tb-line); border-radius: 6px;
+                padding: 6px 10px; font-family: var(--tb-mono); font-size: 11.5px; color: var(--tb-text); width: 180px; outline: none;
+              }
+              .tb-table-filter-input:focus { border-color: var(--tb-cyan); }
+
+              .tb-main-panel table {
+                width: 100%; border-collapse: collapse; font-family: var(--tb-mono); font-size: 12px;
+              }
+              .tb-main-panel thead th {
+                text-align: left; padding: 10px 12px; font-size: 10.5px; letter-spacing: .06em; text-transform: uppercase;
+                color: var(--tb-muted); font-weight: 600; background: var(--tb-panel-2); border-bottom: 1px solid var(--tb-line);
+                cursor: pointer; white-space: nowrap; user-select: none; transition: color 0.15s;
+              }
+              .tb-main-panel thead th:hover { color: var(--tb-text); }
+              .tb-main-panel thead th.sorted-desc::after { content: ' ▾'; color: var(--tb-cyan); }
+              .tb-main-panel thead th.sorted-asc::after { content: ' ▴'; color: var(--tb-cyan); }
+
+              .tb-main-panel tbody td { padding: 9px 12px; border-bottom: 1px solid var(--tb-line); white-space: nowrap; vertical-align: middle; }
+              .tb-main-panel tbody tr:hover { background: rgba(255,255,255,0.03); }
+              .tb-main-panel tbody tr:last-child td { border-bottom: none; }
+
+              .tb-sym-name { display: flex; flex-direction: column; }
+              .tb-sym-name b { font-family: var(--tb-sans); font-size: 13px; font-weight: 700; color: var(--tb-text); }
+              .tb-sym-name small { color: var(--tb-muted); font-size: 10.5px; }
+
+              .tb-chg-up { color: var(--tb-bull); font-weight: 600; }
+              .tb-chg-down { color: var(--tb-bear); font-weight: 600; }
+
+              .tb-trend-pill {
+                display: inline-flex; align-items: center; gap: 4px; padding: 3px 8px; border-radius: 5px; font-size: 11px; font-weight: 600;
+              }
+              .tb-trend-up { background: var(--tb-bull-dim); color: var(--tb-bull); }
+              .tb-trend-down { background: var(--tb-bear-dim); color: var(--tb-bear); }
+              .tb-trend-flat { background: rgba(255,255,255,0.05); color: var(--tb-muted); }
+
+              .tb-spark-svg { display: inline-block; vertical-align: middle; margin-right: 6px; }
+
+              .tb-score-badge {
+                display: inline-flex; align-items: center; justify-content: center; min-width: 28px; padding: 3px 7px;
+                border-radius: 5px; font-weight: 700; font-size: 11.5px; font-family: var(--tb-mono);
+              }
+              .tb-score-2 { background: var(--tb-bull); color: #06110b; }
+              .tb-score-1 { background: var(--tb-bull-dim); color: var(--tb-bull); }
+              .tb-score-0 { background: rgba(255,255,255,0.06); color: var(--tb-muted); }
+              .tb-score-n1 { background: var(--tb-bear-dim); color: var(--tb-bear); }
+              .tb-score-n2 { background: var(--tb-bear); color: #1a0708; }
+
+              .tb-quad-tag {
+                font-size: 10.5px; padding: 3px 8px; border-radius: 5px; font-family: var(--tb-mono);
+                letter-spacing: .02em; white-space: nowrap; font-weight: 700;
+              }
+              .tb-q-confirm-up { background: var(--tb-bull-dim); color: var(--tb-bull); }
+              .tb-q-confirm-down { background: var(--tb-bear-dim); color: var(--tb-bear); }
+              .tb-q-div-bear { background: var(--tb-amber-dim); color: var(--tb-amber); }
+              .tb-q-div-bull { background: var(--tb-cyan-dim); color: var(--tb-cyan); }
+              .tb-q-none { background: rgba(255,255,255,0.04); color: var(--tb-dim); }
+
+              /* Side panel */
+              .tb-side-panel {
+                background: var(--tb-panel); border: 1px solid var(--tb-line); border-radius: 10px; overflow: hidden; padding: 18px;
+              }
+              .tb-side-title { font-size: 14px; font-weight: 700; color: var(--tb-text); margin-bottom: 2px; }
+              .tb-side-sub { font-family: var(--tb-mono); font-size: 11px; color: var(--tb-muted); margin-bottom: 16px; }
+              .tb-div-group { margin-bottom: 16px; }
+              .tb-div-label {
+                font-family: var(--tb-mono); font-size: 10.5px; letter-spacing: .06em; text-transform: uppercase; font-weight: 700;
+                padding: 4px 0 8px;
+              }
+              .tb-div-label.bear { color: var(--tb-amber); }
+              .tb-div-label.bull { color: var(--tb-cyan); }
+              .tb-div-item {
+                display: flex; justify-content: space-between; align-items: center;
+                padding: 8px 10px; border-radius: 6px; background: var(--tb-panel-2); margin-bottom: 6px;
+                border: 1px solid rgba(255,255,255,0.02);
+              }
+              .tb-div-item .n { font-family: var(--tb-mono); font-size: 11.5px; font-weight: 700; color: var(--tb-text); }
+              .tb-div-item .d { font-size: 10.5px; color: var(--tb-muted); margin-top: 1px; }
+              .tb-div-item .right { font-family: var(--tb-mono); font-size: 12px; font-weight: 700; }
+              .tb-empty-note { font-family: var(--tb-mono); font-size: 11px; color: var(--tb-dim); padding: 8px 0; text-align: center; }
+
+              .tb-legend-box {
+                border-top: 1px solid var(--tb-line); margin-top: 14px; padding-top: 14px;
+                font-size: 11px; color: var(--tb-muted); line-height: 1.7;
+              }
+              .tb-legend-box b { color: var(--tb-text); }
+
+              .tb-footer-bar {
+                margin-top: 20px; display: flex; justify-content: space-between; align-items: center;
+                font-family: var(--tb-mono); font-size: 11.5px; color: var(--tb-muted); border-top: 1px solid var(--tb-line); padding-top: 14px;
+              }
+            </style>
+
+            <div id="tb-container-wrap">
+              <!-- Scan / Search Control Card -->
+              <div class="tb-scan-control-card">
+                <div class="tb-scan-header">
+                  <div>
+                    <div class="tb-brand-eyebrow">F&amp;O · Delivery · Volume · Price</div>
+                    <h1 class="tb-title-h1">Traction Board <span>— 360° Conviction View</span></h1>
+                  </div>
+                  <div class="tb-status-line">
+                    <span class="tb-dot"></span>
+                    <span id="tb-data-source-status">Kite Historical Daily Feed</span>
+                  </div>
+                </div>
+
+                <!-- Quick-fill Bar -->
+                <div class="tb-quickfill-bar">
+                  <span style="font-size:0.75rem; font-weight:700; color:var(--tb-muted); font-family:var(--tb-mono); margin-right:4px;">Quick Fill:</span>
+                  <button class="tb-quick-btn large active" id="tb-qbtn-large" onclick="window.tbQuickFill('large')">🔵 Large Cap</button>
+                  <button class="tb-quick-btn mid" id="tb-qbtn-mid" onclick="window.tbQuickFill('mid')">🟠 Mid Cap</button>
+                  <button class="tb-quick-btn small" id="tb-qbtn-small" onclick="window.tbQuickFill('small')">🟢 Small Cap</button>
+                  <button class="tb-quick-btn all" id="tb-qbtn-all" onclick="window.tbQuickFill('all')">🔮 All F&amp;O (215)</button>
+                  <button class="tb-quick-btn clear" onclick="window.tbClearSymbols()">✕ Clear</button>
+                </div>
+
+                <!-- Scan Input Grid -->
+                <div class="tb-scan-grid">
+                  <div>
+                    <textarea class="tb-symbols-textarea" id="tb-symbols-textarea" placeholder="Enter stock symbols (comma, space, or newline separated) or click quick-fill buttons above..."></textarea>
+                    <div style="font-size:0.7rem; color:var(--tb-muted); margin-top:4px; font-family:var(--tb-mono);">
+                      💡 Real market scan queries Kite daily historical candles &amp; institutional delivery conviction.
+                    </div>
+                  </div>
+
+                  <div class="tb-action-column">
+                    <div>
+                      <label style="font-size:0.72rem; font-weight:700; color:var(--tb-muted); font-family:var(--tb-mono); display:block; margin-bottom:4px;">Lookback Window:</label>
+                      <select class="tb-period-select" id="tb-period-select">
+                        <option value="30">30 Days</option>
+                        <option value="60" selected>60 Days</option>
+                        <option value="90">90 Days</option>
+                        <option value="120">120 Days</option>
+                      </select>
+                    </div>
+                    <button class="tb-run-scan-btn" id="tb-run-btn" onclick="window.tbExecuteScan()">
+                      <span>⚡ Run Traction Board</span>
+                    </button>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Market Pulse Ribbon -->
+              <div class="tb-pulse-sec">
+                <div class="tb-sec-label">Market pulse — alignment score by symbol</div>
+                <div class="tb-pulse-strip-wrap" id="tb-pulse-strip-container"></div>
+              </div>
+
+              <!-- Main Board & Side Panel -->
+              <div class="tb-board-layout">
+                <!-- Table Panel -->
+                <div class="tb-main-panel">
+                  <div class="tb-table-filter-bar">
+                    <span style="font-family:var(--tb-mono); font-size:11px; font-weight:700; color:var(--tb-muted);">360° Conviction Table</span>
+                    <input class="tb-table-filter-input" id="tb-search-filter" placeholder="Filter symbol in results…" oninput="window.tbFilterTableOnly()" />
+                  </div>
+                  <table>
+                    <thead>
+                      <tr>
+                        <th data-tb-sort="symbol" onclick="window.tbSortTable('symbol')">Symbol</th>
+                        <th data-tb-sort="price" onclick="window.tbSortTable('price')">Real Price</th>
+                        <th data-tb-sort="chg" onclick="window.tbSortTable('chg')">% Chg</th>
+                        <th data-tb-sort="priceTrend" onclick="window.tbSortTable('priceTrend')">Price Trend</th>
+                        <th data-tb-sort="volRatio" onclick="window.tbSortTable('volRatio')">Volume Trend</th>
+                        <th data-tb-sort="delPct" onclick="window.tbSortTable('delPct')">Delivery %</th>
+                        <th data-tb-sort="delTrend" onclick="window.tbSortTable('delTrend')">Delivery Trend</th>
+                        <th data-tb-sort="score" onclick="window.tbSortTable('score')">Alignment</th>
+                        <th data-tb-sort="quadrant" onclick="window.tbSortTable('quadrant')">Traction</th>
+                      </tr>
+                    </thead>
+                    <tbody id="tb-table-body"></tbody>
+                  </table>
+                </div>
+
+                <!-- Side Panel -->
+                <div class="tb-side-panel">
+                  <div class="tb-side-title">Divergence Watchlist</div>
+                  <div class="tb-side-sub" id="tb-side-period-label">Delivery vs price mismatches</div>
+
+                  <div class="tb-div-group">
+                    <div class="tb-div-label bear">▲ Price up · Delivery down</div>
+                    <div id="tb-bear-div-list"></div>
+                  </div>
+
+                  <div class="tb-div-group">
+                    <div class="tb-div-label bull">▼ Price down · Delivery up</div>
+                    <div id="tb-bull-div-list"></div>
+                  </div>
+
+                  <div class="tb-legend-box">
+                    <div><b>Confirmed</b> — price &amp; delivery agree, real conviction</div>
+                    <div><b>Bear divergence</b> — rally without delivery backing, fade risk</div>
+                    <div><b>Bull divergence</b> — selloff absorbed by delivery buyers</div>
+                    <div><b>No traction</b> — flat price &amp; delivery, low signal</div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Footer -->
+              <div class="tb-footer-bar">
+                <span>Real market data sourced from Zerodha Kite &amp; Bhavcopy cache.</span>
+                <span id="tb-footer-count"></span>
+              </div>
+            </div>
+
+          </div><!-- /ha-panel-traction -->
+
+          <!-- ═══════════════════════════════════════════════════ -->
+          <!-- Traction Board Controller Script (Real Kite Data)   -->
+          <!-- ═══════════════════════════════════════════════════ -->
+          <script>
+          (function(){
+            var CAP_LISTS = {
+              large: ['RELIANCE','TCS','INFY','HDFCBANK','ICICIBANK','SBIN','BAJFINANCE','LT',
+                      'HINDUNILVR','ITC','AXISBANK','KOTAKBANK','MARUTI','TATAMOTORS','SUNPHARMA',
+                      'WIPRO','BHARTIARTL','ASIANPAINT','TATASTEEL','HINDALCO','JSWSTEEL',
+                      'ADANIENT','ADANIPORTS','POWERGRID','NTPC','COALINDIA','ONGC','BPCL','DRREDDY','CIPLA'],
+              mid: ['TRENT','COFORGE','KAYNES','PERSISTENT','MPHASIS','ZYDUSLIFE','JUBLFOOD',
+                    'PIIND','PAGEIND','DIXON','POLYCAB','LALPATHLAB','METROPOLIS','IRCTC',
+                    'GLAND','DEEPAKNTR','AAVAS','HOMEFIRST','CAMS','ANGELONE'],
+              small: ['IDFCFIRSTB','RBLBANK','BANDHANBNK','FEDERALBNK','KARURVYSYA',
+                      'CENTURYTEX','GNFC','GHCL','ATUL','NAVINFLUOR','FINEORG','ROUTE',
+                      'LATENTVIEW','TARSONS','HAPPYMIND'],
+              all: [
+                '360ONE','ABB','ABCAPITAL','ADANIENSOL','ADANIENT','ADANIGREEN','ADANIPORTS','ADANIPOWER',
+                'ALKEM','AMBER','AMBUJACEM','ANGELONE','APLAPOLLO','APOLLOHOSP','ASHOKLEY','ASIANPAINT',
+                'ASTRAL','AUBANK','AUROPHARMA','AXISBANK','BAJAJ-AUTO','BAJAJFINSV','BAJAJHLDNG','BAJFINANCE',
+                'BANDHANBNK','BANKBARODA','BANKINDIA','BDL','BEL','BHARATFORG','BHARTIARTL','BHEL',
+                'BIOCON','BLUESTARCO','BOSCHLTD','BPCL','BRITANNIA','BSE','CAMS','CANBK',
+                'CDSL','CGPOWER','CHOLAFIN','CIPLA','COALINDIA','COCHINSHIP','COFORGE','COLPAL',
+                'CONCOR','CROMPTON','CUMMINSIND','DABUR','DALBHARAT','DELHIVERY','DIVISLAB','DIXON',
+                'DLF','DMART','DRREDDY','EICHERMOT','ETERNAL','FEDERALBNK','FORCEMOT','FORTIS',
+                'GAIL','GLENMARK','GMRAIRPORT','GODFRYPHLP','GODREJCP','GODREJPROP','GRASIM','GVT&D',
+                'HAL','HAVELLS','HCLTECH','HDFCAMC','HDFCBANK','HDFCLIFE','HEROMOTOCO','HINDALCO',
+                'HINDPETRO','HINDUNILVR','HINDZINC','HYUNDAI','ICICIBANK','ICICIGI','ICICIPRULI','IDEA',
+                'IDFCFIRSTB','IEX','INDHOTEL','INDIANB','INDIGO','INDUSINDBK','INDUSTOWER','INFY',
+                'INOXWIND','IOC','IREDA','IRFC','IRCTC','ITC','JINDALSTEL','JIOFIN','JSWENERGY',
+                'JSWSTEEL','JUBLFOOD','KALYANKJIL','KAYNES','KEI','KFINTECH','KOTAKBANK','KPITTECH',
+                'LAURUSLABS','LICHSGFIN','LICI','LODHA','LT','LTF','LTM','LUPIN',
+                'M&M','MANAPPURAM','MANKIND','MARICO','MARUTI','MAXHEALTH','MAZDOCK','MCX',
+                'MFSL','MOTHERSON','MOTILALOFS','MPHASIS','MUTHOOTFIN','NAM-INDIA','NATIONALUM','NAUKRI',
+                'NBCC','NESTLEIND','NHPC','NMDC','NTPC','NYKAA','OBEROIRLTY','OFSS',
+                'OIL','ONGC','PAGEIND','PATANJALI','PAYTM','PERSISTENT','PETRONET','PFC',
+                'PGEL','PHOENIXLTD','PIDILITIND','PIIND','PNB','PNBHOUSING','POLICYBZR','POLYCAB',
+                'POWERGRID','POWERINDIA','PREMIERENE','PRESTIGE','RADICO','RBLBANK','RECLTD','RELIANCE',
+                'RVNL','SAIL','SBICARD','SBILIFE','SBIN','SHREECEM','SHRIRAMFIN','SIEMENS',
+                'SOLARINDS','SONACOMS','SRF','SUNPHARMA','SUPREMEIND','SUZLON','SWIGGY','TATACONSUM',
+                'TATAELXSI','TATAPOWER','TATASTEEL','TCS','TECHM','TIINDIA','TITAN','TMPV',
+                'TORNTPHARM','TRENT','TVSMOTOR','ULTRACEMCO','UNIONBANK','UNITDSPR','UNOMINDA','UPL',
+                'VBL','VEDL','VMM','VOLTAS','WAAREEENER','WIPRO','YESBANK','ZYDUSLIFE'
+              ]
+            };
+
+            var activeCap = 'large';
+            var sortCol = 'score';
+            var sortAsc = false;
+            var currentData = [];
+            var isScanning = false;
+
+            // Initialize symbols input box with Large Cap on startup
+            function initSymbolBox(){
+              var ta = document.getElementById('tb-symbols-textarea');
+              if(ta && !ta.value.trim()){
+                ta.value = CAP_LISTS.large.join(', ');
+              }
+            }
+
+            window.tbQuickFill = function(cap){
+              activeCap = cap;
+              document.querySelectorAll('.tb-quick-btn').forEach(function(b){ b.classList.remove('active'); });
+              var btn = document.getElementById('tb-qbtn-' + cap);
+              if(btn) btn.classList.add('active');
+
+              var ta = document.getElementById('tb-symbols-textarea');
+              if(ta && CAP_LISTS[cap]){
+                ta.value = CAP_LISTS[cap].join(', ');
+                ta.style.borderColor = cap === 'large' ? '#1E88E5' : (cap === 'mid' ? '#FFA726' : (cap === 'small' ? '#26A69A' : '#CE93D8'));
+                setTimeout(function(){ ta.style.borderColor = ''; }, 600);
+              }
+            };
+
+            window.tbClearSymbols = function(){
+              var ta = document.getElementById('tb-symbols-textarea');
+              if(ta) ta.value = '';
+              document.querySelectorAll('.tb-quick-btn').forEach(function(b){ b.classList.remove('active'); });
+            };
+
+            // ── SVG Helpers ──
+            function renderSparkline(values, w, h){
+              if(!values || values.length < 2) return '';
+              w = w || 54; h = h || 18;
+              var min = Math.min.apply(null, values), max = Math.max.apply(null, values);
+              var range = (max - min) || 1;
+              var step = w / (values.length - 1);
+              var pts = values.map(function(v, i){
+                return (i * step).toFixed(1) + ',' + (h - ((v - min) / range) * h).toFixed(1);
+              }).join(' ');
+              var color = values[values.length - 1] >= values[0] ? '#22d3c7' : '#e5484d';
+              return '<svg class="tb-spark-svg" width="' + w + '" height="' + h + '" viewBox="0 0 ' + w + ' ' + h + '">'
+                + '<polyline points="' + pts + '" fill="none" stroke="' + color + '" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>'
+                + '</svg>';
+            }
+
+            function renderTrendPill(label){
+              var isUp = label === 'Uptrend' || label === 'Expanding' || label === 'Surge';
+              var isDn = label === 'Downtrend' || label === 'Contracting' || label === 'Dry-up';
+              var cls = isUp ? 'tb-trend-up' : (isDn ? 'tb-trend-down' : 'tb-trend-flat');
+              var arrow = isUp ? '▲' : (isDn ? '▼' : '▬');
+              return '<span class="tb-trend-pill ' + cls + '">' + arrow + ' ' + label + '</span>';
+            }
+
+            function renderScoreBadge(score){
+              var map = { '2':'tb-score-2', '1':'tb-score-1', '0':'tb-score-0', '-1':'tb-score-n1', '-2':'tb-score-n2' };
+              var label = score > 0 ? ('+' + score) : ('' + score);
+              return '<span class="tb-score-badge ' + (map[String(score)] || 'tb-score-0') + '">' + label + '</span>';
+            }
+
+            var QUAD_CONFIG = {
+              'confirm-up':   ['Confirmed ▲',   'tb-q-confirm-up'],
+              'confirm-down': ['Confirmed ▼',   'tb-q-confirm-down'],
+              'div-bear':     ['Div · Bear trap', 'tb-q-div-bear'],
+              'div-bull':     ['Div · Bull trap', 'tb-q-div-bull'],
+              'none':         ['No traction',   'tb-q-none']
+            };
+
+            // ── Execute Real Scan via Backend ──
+            window.tbExecuteScan = async function(){
+              if(isScanning) return;
+              var ta = document.getElementById('tb-symbols-textarea');
+              var raw = (ta ? ta.value : '').trim();
+              if(!raw){
+                alert('Please enter or quick-fill at least one symbol.');
+                return;
+              }
+
+              var symbols = Array.from(new Set(
+                raw.split(/[\s,;\n]+/).map(function(s){ return s.trim().toUpperCase(); }).filter(Boolean)
+              ));
+
+              var period = parseInt(document.getElementById('tb-period-select')?.value || '60', 10);
+              var runBtn = document.getElementById('tb-run-btn');
+              var statusEl = document.getElementById('tb-data-source-status');
+
+              isScanning = true;
+              if(runBtn){
+                runBtn.disabled = true;
+                runBtn.innerHTML = '<span>⏳ Scanning ' + symbols.length + ' stocks...</span>';
+              }
+              if(statusEl) statusEl.textContent = 'Querying Kite candles & delivery telemetry...';
+
+              try {
+                var response = await fetch('/api/traction-board', {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({ symbols: symbols, period: period, cap: activeCap })
+                });
+
+                if(!response.ok) throw new Error('HTTP ' + response.status);
+                var data = await response.json();
+
+                if(data.success && data.tractionBoard){
+                  currentData = data.tractionBoard;
+                  renderBoardView(data, period);
+                  if(statusEl) statusEl.textContent = 'Kite Live EOD Telemetry · ' + (data.computedAt || 'Active');
+                } else {
+                  throw new Error(data.error || 'Invalid backend response');
+                }
+              } catch(err) {
+                console.warn('Real traction-board fetch error, retrying via GET fallback:', err);
+                try {
+                  var getRes = await fetch('/api/traction-board?symbols=' + encodeURIComponent(symbols.join(',')) + '&period=' + period);
+                  var getData = await getRes.json();
+                  if(getData.success && getData.tractionBoard){
+                    currentData = getData.tractionBoard;
+                    renderBoardView(getData, period);
+                    if(statusEl) statusEl.textContent = 'Kite Live EOD Telemetry';
+                  }
+                } catch(fallbackErr) {
+                  alert('Error loading real market data: ' + fallbackErr.message);
+                }
+              } finally {
+                isScanning = false;
+                if(runBtn){
+                  runBtn.disabled = false;
+                  runBtn.innerHTML = '<span>⚡ Run Traction Board</span>';
+                }
+              }
+            };
+
+            function renderBoardView(data, period){
+              var pulseList = data.marketPulse || currentData;
+              var pulseStrip = document.getElementById('tb-pulse-strip-container');
+              if(pulseStrip){
+                pulseStrip.innerHTML = pulseList.map(function(m){
+                  var bg = m.score === 2 ? '#2fbf71' : (m.score === 1 ? '#1b3d2b' : (m.score === 0 ? 'rgba(255,255,255,0.06)' : (m.score === -1 ? '#3d1e20' : '#e5484d')));
+                  var fg = (m.score === 2 || m.score === -2) ? '#0a0d10' : (m.score > 0 ? '#2fbf71' : (m.score < 0 ? '#e5484d' : '#7d8a96'));
+                  return '<div class="tb-pulse-card" style="background:' + bg + '; color:' + fg + ';" title="' + m.name + ' (' + m.symbol + ')' + '" onclick="window.tbQuickFilterTable(\'' + m.symbol + '\')">'
+                    + '<div class="sym">' + m.symbol.slice(0, 7) + '</div>'
+                    + '<div class="sc">' + (m.score > 0 ? '+' : '') + m.score + '</div>'
+                    + '</div>';
+                }).join('');
+              }
+
+              // Divergences
+              var bearDiv = (data.divergenceWatchlist && data.divergenceWatchlist.bearDiv) || currentData.filter(function(m){ return m.quadrant === 'div-bear'; });
+              var bullDiv = (data.divergenceWatchlist && data.divergenceWatchlist.bullDiv) || currentData.filter(function(m){ return m.quadrant === 'div-bull'; });
+
+              var bearList = document.getElementById('tb-bear-div-list');
+              if(bearList){
+                bearList.innerHTML = bearDiv.length ? bearDiv.map(function(m){
+                  return '<div class="tb-div-item bear">'
+                    + '<div><div class="n">' + m.symbol + '</div><div class="d">Del ' + (m.delChangePts >= 0 ? '+' : '') + m.delChangePts + 'pt</div></div>'
+                    + '<div class="right tb-chg-up">+' + m.chg + '%</div>'
+                    + '</div>';
+                }).join('') : '<div class="tb-empty-note">None in this universe</div>';
+              }
+
+              var bullList = document.getElementById('tb-bull-div-list');
+              if(bullList){
+                bullList.innerHTML = bullDiv.length ? bullDiv.map(function(m){
+                  return '<div class="tb-div-item bull">'
+                    + '<div><div class="n">' + m.symbol + '</div><div class="d">Del ' + (m.delChangePts >= 0 ? '+' : '') + m.delChangePts + 'pt</div></div>'
+                    + '<div class="right tb-chg-down">' + m.chg + '%</div>'
+                    + '</div>';
+                }).join('') : '<div class="tb-empty-note">None in this universe</div>';
+              }
+
+              var sidePeriodLabel = document.getElementById('tb-side-period-label');
+              if(sidePeriodLabel){
+                sidePeriodLabel.textContent = 'Delivery vs price mismatches · ' + period + 'D';
+              }
+
+              renderFilteredTable();
+            }
+
+            function renderFilteredTable(){
+              var filterVal = ((document.getElementById('tb-search-filter') || {}).value || '').trim().toUpperCase();
+              var rows = currentData.filter(function(m){
+                return !filterVal || m.symbol.indexOf(filterVal) >= 0 || m.name.toUpperCase().indexOf(filterVal) >= 0;
+              });
+
+              rows.sort(function(a, b){
+                var av = a[sortCol], bv = b[sortCol];
+                if(typeof av === 'string'){
+                  av = av.toLowerCase(); bv = bv.toLowerCase();
+                  return sortAsc ? (av < bv ? -1 : (av > bv ? 1 : 0)) : (av < bv ? 1 : (av > bv ? -1 : 0));
+                }
+                return sortAsc ? (av - bv) : (bv - av);
+              });
+
+              var tbody = document.getElementById('tb-table-body');
+              if(tbody){
+                tbody.innerHTML = rows.map(function(m){
+                  var chgCls = m.chg >= 0 ? 'tb-chg-up' : 'tb-chg-down';
+                  var qCfg = QUAD_CONFIG[m.quadrant] || ['—', 'tb-q-none'];
+                  return '<tr>'
+                    + '<td><div class="tb-sym-name"><b>' + m.symbol + '</b><small>' + m.name + '</small></div></td>'
+                    + '<td>₹' + Number(m.price).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + '</td>'
+                    + '<td class="' + chgCls + '">' + (m.chg >= 0 ? '+' : '') + Number(m.chg).toFixed(2) + '%</td>'
+                    + '<td>' + renderTrendPill(m.priceTrend) + '</td>'
+                    + '<td>' + renderTrendPill(m.volTrend) + ' <span style="color:var(--tb-dim); font-size:11px;">' + m.volRatio + 'x</span></td>'
+                    + '<td>' + renderSparkline(m.sparkline) + ' ' + m.delPct + '%</td>'
+                    + '<td>' + renderTrendPill(m.delTrend) + '</td>'
+                    + '<td>' + renderScoreBadge(m.score) + '</td>'
+                    + '<td><span class="tb-quad-tag ' + qCfg[1] + '">' + qCfg[0] + '</span></td>'
+                    + '</tr>';
+                }).join('');
+              }
+
+              var footerCount = document.getElementById('tb-footer-count');
+              if(footerCount){
+                footerCount.textContent = rows.length + ' of ' + currentData.length + ' stocks displayed';
+              }
+
+              document.querySelectorAll('#tb-container-wrap thead th').forEach(function(th){
+                th.classList.remove('sorted-asc', 'sorted-desc');
+                if(th.getAttribute('data-tb-sort') === sortCol){
+                  th.classList.add(sortAsc ? 'sorted-asc' : 'sorted-desc');
+                }
+              });
+            }
+
+            window.tbSortTable = function(col){
+              if(sortCol === col){
+                sortAsc = !sortAsc;
+              } else {
+                sortCol = col;
+                sortAsc = (col === 'symbol' || col === 'name');
+              }
+              renderFilteredTable();
+            };
+
+            window.tbFilterTableOnly = function(){
+              renderFilteredTable();
+            };
+
+            window.tbQuickFilterTable = function(sym){
+              var inp = document.getElementById('tb-search-filter');
+              if(inp){
+                inp.value = sym;
+                renderFilteredTable();
+              }
+            };
+
+            // ── Tab Switcher Hook ──
+            window.haSwitchTab = function(tabName){
+              var tabAnalytics = document.getElementById('ha-tab-analytics');
+              var tabTraction  = document.getElementById('ha-tab-traction');
+              var panAnalytics = document.getElementById('ha-panel-analytics');
+              var panTraction  = document.getElementById('ha-panel-traction');
+
+              if(tabName === 'traction'){
+                if(tabAnalytics) tabAnalytics.classList.remove('active');
+                if(tabTraction)  tabTraction.classList.add('active');
+                if(panAnalytics) panAnalytics.style.display = 'none';
+                if(panTraction)  panTraction.style.display = 'block';
+
+                initSymbolBox();
+                if(!currentData.length){
+                  window.tbExecuteScan();
+                }
+              } else {
+                if(tabTraction)  tabTraction.classList.remove('active');
+                if(tabAnalytics) tabAnalytics.classList.add('active');
+                if(panTraction)  panTraction.style.display = 'none';
+                if(panAnalytics) panAnalytics.style.display = 'block';
+              }
+            };
+
+            // Initialize input box on script load
+            initSymbolBox();
+          })();
+          </script>
         </div>
 
         <!-- ═══ PAGE: Notion Notes Workspace ═══ -->

@@ -43,6 +43,7 @@ _tracked_contracts = 0
 _sampled_contracts = 0
 _eod_snapshot_cache = {"result": None, "ts": 0.0, "running": False}
 _EOD_CACHE_TTL = 28800
+_last_reset_date = None   # Tracks last day-start flush date (YYYY-MM-DD)
 
 
 def _get_db_conn():
@@ -144,6 +145,11 @@ def _save_alerts_to_db(alerts):
 
 
 def get_alerts_from_db_by_date(date_str):
+    """Returns persisted alerts for a given date from SQLite.
+    GUARD: Must not be called during live market hours to prevent stale-data leaks."""
+    if is_market_hours():
+        logger.warning("[Premium Alerts DB] get_alerts_from_db_by_date() called during market hours — blocked.")
+        return []
     try:
         _init_alerts_db()
         conn = _get_db_conn()
@@ -243,7 +249,7 @@ def clear_alerts():
 
 
 def _scanner_loop():
-    global _last_scan, _last_error, _tracked_contracts, _sampled_contracts
+    global _last_scan, _last_error, _tracked_contracts, _sampled_contracts, _last_reset_date, _seq
 
     while True:
         try:
@@ -251,6 +257,19 @@ def _scanner_loop():
                 _last_scan = now_ist().strftime("%Y-%m-%dT%H:%M:%S")
                 time.sleep(30)
                 continue
+
+            # ── Day-start flush: clear in-memory state when a new trading date begins ──
+            # Prevents prior-day deque entries / cooldowns / history from leaking into
+            # the new session's live feed. Does NOT touch the DB (DB is date-keyed).
+            today_str = now_ist().strftime("%Y-%m-%d")
+            if _last_reset_date != today_str:
+                with _lock:
+                    _alerts.clear()
+                    _cooldowns.clear()
+                    _token_history.clear()
+                    _seq = 0
+                _last_reset_date = today_str
+                logger.info(f"[Premium Alerts] Day-start flush: cleared in-memory state for {today_str}")
 
             kite = _get_kite()
             if not kite:

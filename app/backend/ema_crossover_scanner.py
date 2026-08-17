@@ -51,6 +51,105 @@ _tick_buffers = {}
 _tick_buffers_lock = threading.Lock()
 _triggered_alerts = []  # List of triggered alerts today (Fix 2: protected by _alerts_lock)
 _alerts_lock = threading.Lock()  # Fix 2: separate lock so _tick_buffers_lock is never held during alert emit
+_alerts_last_reset_date = None   # Tracks last day-start flush to avoid duplicate resets
+
+# ── Live Breakout Alert DB persistence ───────────────────────────────────────
+def _get_breakout_db_conn():
+    db_path = os.path.join(os.path.dirname(__file__), "tradesignal_cache.db")
+    conn = sqlite3.connect(db_path, timeout=10.0)
+    conn.execute("PRAGMA journal_mode=WAL;")
+    return conn
+
+def _init_breakout_alerts_db():
+    """Create live_breakout_alerts table if it doesn't exist. Called once at module load."""
+    try:
+        conn = _get_breakout_db_conn()
+        cursor = conn.cursor()
+        cursor.execute("""
+            CREATE TABLE IF NOT EXISTS live_breakout_alerts (
+                id            INTEGER PRIMARY KEY AUTOINCREMENT,
+                alert_date    TEXT    NOT NULL,
+                alert_time    TEXT    NOT NULL,
+                timestamp     REAL    NOT NULL,
+                symbol        TEXT    NOT NULL,
+                direction     TEXT,
+                grade         TEXT,
+                ltp           REAL,
+                vol_multiplier REAL,
+                move_pct      REAL,
+                trigger_epoch REAL,
+                created_at    TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                UNIQUE(alert_date, symbol, grade, alert_time) ON CONFLICT IGNORE
+            )
+        """)
+        cursor.execute("CREATE INDEX IF NOT EXISTS idx_lba_date ON live_breakout_alerts(alert_date)")
+        cursor.execute("CREATE INDEX IF NOT EXISTS idx_lba_symbol ON live_breakout_alerts(symbol)")
+        cursor.execute("DELETE FROM live_breakout_alerts WHERE alert_date < date('now', '-30 days')")
+        conn.commit()
+        conn.close()
+    except Exception as ex:
+        logging.warning(f"[Live Breakout DB] Init failed: {ex}")
+
+_init_breakout_alerts_db()
+
+def _save_breakout_alert_to_db(alert):
+    """Persist a single live breakout alert to SQLite. Fire-and-forget — never blocks main logic."""
+    try:
+        from session_utils import now_ist as _now_ist
+        now_val = _now_ist()
+        alert_date = now_val.strftime("%Y-%m-%d")
+        alert_time = alert.get("time", now_val.strftime("%H:%M:%S"))
+        conn = _get_breakout_db_conn()
+        cursor = conn.cursor()
+        cursor.execute("DELETE FROM live_breakout_alerts WHERE alert_date < date('now', '-30 days')")
+        cursor.execute("""
+            INSERT OR IGNORE INTO live_breakout_alerts
+                (alert_date, alert_time, timestamp, symbol, direction, grade, ltp, vol_multiplier, move_pct, trigger_epoch)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        """, (
+            alert_date,
+            alert_time,
+            alert.get("trigger_epoch", now_val.timestamp()),
+            alert.get("symbol", ""),
+            alert.get("direction", ""),
+            alert.get("grade", ""),
+            alert.get("ltp", 0.0),
+            alert.get("vol_multiplier", 0.0),
+            alert.get("move_pct", 0.0),
+            alert.get("trigger_epoch", now_val.timestamp()),
+        ))
+        conn.commit()
+        conn.close()
+    except Exception as ex:
+        logging.warning(f"[Live Breakout DB] Save failed: {ex}")
+
+def get_breakout_alerts_from_db_by_date(date_str):
+    """Read live breakout alerts for a given date from SQLite. Only used after market hours."""
+    try:
+        _init_breakout_alerts_db()
+        conn = _get_breakout_db_conn()
+        cursor = conn.cursor()
+        cursor.execute("""
+            SELECT alert_date, alert_time, timestamp, symbol, direction, grade,
+                   ltp, vol_multiplier, move_pct, trigger_epoch
+            FROM live_breakout_alerts
+            WHERE alert_date = ?
+            ORDER BY timestamp ASC
+        """, (date_str,))
+        rows = cursor.fetchall()
+        conn.close()
+        return [
+            {
+                "date": r[0], "time": r[1], "ts": r[2],
+                "symbol": r[3], "direction": r[4], "grade": r[5],
+                "ltp": r[6], "vol_multiplier": r[7], "move_pct": r[8],
+                "trigger_epoch": r[9],
+            }
+            for r in rows
+        ]
+    except Exception as ex:
+        logging.warning(f"[Live Breakout DB] Fetch by date failed: {ex}")
+        return []
 
 # ── EMA Collision Alert globals ───────────────────────────────────────────────
 # Separate from squeeze breakout alerts — different trigger mechanism.
@@ -992,6 +1091,8 @@ def _evaluate_1m_candle_close(snapshot):
         if do_emit:
             logging.info(f"[Live Breakout Triggered] {symbol} {direction.upper()} breakout! {grade} at {ltp}")
             print(f"[Live Breakout Triggered] {symbol} {direction.upper()} breakout! {grade} at {ltp}")
+            # Persist to DB (async-safe: fire-and-forget INSERT, never blocks emit path)
+            _save_breakout_alert_to_db(alert)
             try:
                 from server import socketio
                 socketio.emit('live_breakout_alert', alert)
@@ -1249,11 +1350,15 @@ def _scan_single_symbol(kite, symbol):
                                     "trigger_epoch":    now_epoch,
                                     "candles_5m_elapsed": 1,
                                 }
+                                _did_append_5m = False
                                 with _alerts_lock:
                                     _clear_stale_alerts_under_lock()
                                     if not any(a["symbol"] == symbol and a["grade"] == "5M Cross" for a in _triggered_alerts):
                                         _triggered_alerts.append(alert)
+                                        _did_append_5m = True
 
+                                if _did_append_5m:
+                                    _save_breakout_alert_to_db(alert)
                                 try:
                                     from server import socketio
                                     socketio.emit('live_breakout_alert', alert)
@@ -1341,11 +1446,15 @@ def _scan_single_symbol(kite, symbol):
                                                         "candles_5m_elapsed": 1,
                                                         "cpr_bottom":         round(cpr_bottom, 2) if cpr_bottom else None,
                                                     }
+                                                    _did_append_pre = False
                                                     with _alerts_lock:
                                                         _clear_stale_alerts_under_lock()
                                                         if not any(a["symbol"] == symbol and a["grade"] == "Pre-Cross 5M" for a in _triggered_alerts):
                                                             _triggered_alerts.append(alert)
+                                                            _did_append_pre = True
 
+                                                    if _did_append_pre:
+                                                        _save_breakout_alert_to_db(alert)
                                                     try:
                                                         from server import socketio
                                                         socketio.emit('live_breakout_alert', alert)
@@ -1463,7 +1572,7 @@ def _scan_single_symbol(kite, symbol):
     return symbol, res
 
 def _ema_crossover_loop():
-    global _eod_saved_date, _fh_rescan_needed   # assigned inside loop — must declare global
+    global _eod_saved_date, _fh_rescan_needed, _alerts_last_reset_date  # assigned inside loop
     logging.info("[EMA Crossover Scanner] Background loop active.")
     print("[EMA Crossover Scanner] Background loop active.")
     
@@ -1483,6 +1592,18 @@ def _ema_crossover_loop():
             now       = now_ist()
             in_window = _is_active_window(now)
             today_str = now.strftime('%Y-%m-%d')
+
+            # ── Day-start flush: proactively clear in-memory alerts on new trading date ──
+            # Ensures no stale prior-day alerts appear if the scanner stays up overnight.
+            if in_window and _alerts_last_reset_date != today_str:
+                with _alerts_lock:
+                    _triggered_alerts.clear()
+                with _ema_cross_dedup_lock:
+                    _ema_cross_dedup.clear()
+                with _collision_alerts_lock:
+                    _collision_dedup.clear()
+                _alerts_last_reset_date = today_str
+                logging.info(f"[EMA Crossover Scanner] Day-start flush: cleared in-memory alerts for {today_str}")
 
             if not in_window:
                 # ── Check if baselines just warmed and we need a re-scan ──────

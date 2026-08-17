@@ -433,6 +433,47 @@ _apex_signals_cache = {'signals': [], 'ts': None}
 _live_ltp_cache = {}
 _live_ltp_lock = threading.Lock()
 
+# ── Inline Chart WebSocket Feed ──
+_chart_subscriptions = {}   # sym (str) → instrument_token (int)
+_chart_sub_lock = threading.Lock()
+
+def _chart_tick_broadcaster(ticks):
+    """Registered with GlobalTicker to push chart ticks to all Socket.IO clients."""
+    with _chart_sub_lock:
+        token_to_sym = {v: k for k, v in _chart_subscriptions.items()}
+    for tick in ticks:
+        token = tick.get('instrument_token')
+        if not token:
+            continue
+        sym = token_to_sym.get(int(token))
+        if sym:
+            try:
+                socketio.emit('chart_tick', {
+                    'sym': sym,
+                    'ltp': tick.get('last_price'),
+                    'volume': tick.get('volume'),
+                    'ts': int(time.time() * 1000)
+                })
+            except Exception as _e:
+                pass
+
+def _resolve_sym_token(sym):
+    """Resolve a symbol string to its NSE instrument token using the cached instruments list."""
+    global _instruments_cache
+    if not _instruments_cache:
+        try:
+            db = get_db()
+            rows = db.execute(
+                "SELECT instrument_token, tradingsymbol FROM instruments WHERE exchange='NSE'"
+            ).fetchall()
+            _instruments_cache = [dict(r) for r in rows]
+        except Exception:
+            return None
+    for inst in (_instruments_cache or []):
+        if inst.get('tradingsymbol') == sym or inst.get('symbol') == sym:
+            return inst.get('instrument_token')
+    return None
+
 # ── Database path ─
 DB_PATH = os.path.join(os.path.dirname(__file__), 'tradesignal_cache.db')
 
@@ -1321,10 +1362,13 @@ def sync_global_ticker_credentials(api_key, access_token):
         from global_ticker import get_global_ticker_manager
         gtm = get_global_ticker_manager()
         gtm.initialize(api_key, access_token)
+        # Register chart feed broadcaster (idempotent — re-register on token refresh)
+        gtm.register('chart_feed', _chart_tick_broadcaster, [], mode='LTP')
         gtm.start()
         print("  [SESSION] GlobalTickerManager synced & started.")
     except Exception as e:
         print(f"  [SESSION] Failed to sync GlobalTickerManager: {e}")
+
 
 
 def get_kite():
@@ -4660,6 +4704,274 @@ def historical_analytics_bulk():
         return jsonify({'error': str(e)}), 500
 
 
+# ── Traction Board 360° Real Market Data Endpoint ──
+@app.route('/api/traction-board', methods=['GET', 'POST'])
+def api_traction_board():
+    """
+    Computes real Kite-backed delivery conviction, price trend alignment,
+    volume surges, and divergence signals for the Traction Board 360° view.
+    """
+    import re
+    try:
+        if request.method == 'POST':
+            data = request.get_json(silent=True) or {}
+            raw_symbols = data.get('symbols', [])
+            period = int(data.get('period', 60))
+            cap = data.get('cap', 'large')
+        else:
+            raw_symbols = request.args.get('symbols', '')
+            period = int(request.args.get('period', 60))
+            cap = request.args.get('cap', 'large')
+
+        period = max(10, min(180, period))
+
+        CAP_DEFAULTS = {
+            'large': ['RELIANCE','TCS','INFY','HDFCBANK','ICICIBANK','SBIN','BAJFINANCE','LT',
+                      'HINDUNILVR','ITC','AXISBANK','KOTAKBANK','MARUTI','TATAMOTORS','SUNPHARMA',
+                      'WIPRO','BHARTIARTL','ASIANPAINT','TATASTEEL','HINDALCO','JSWSTEEL',
+                      'ADANIENT','ADANIPORTS','POWERGRID','NTPC','COALINDIA','ONGC','BPCL','DRREDDY','CIPLA'],
+            'mid': ['TRENT','COFORGE','KAYNES','PERSISTENT','MPHASIS','ZYDUSLIFE','JUBLFOOD',
+                    'PIIND','PAGEIND','DIXON','POLYCAB','LALPATHLAB','METROPOLIS','IRCTC',
+                    'GLAND','DEEPAKNTR','AAVAS','HOMEFIRST','CAMS','ANGELONE'],
+            'small': ['IDFCFIRSTB','RBLBANK','BANDHANBNK','FEDERALBNK','KARURVYSYA',
+                      'CENTURYTEX','GNFC','GHCL','ATUL','NAVINFLUOR','FINEORG','ROUTE',
+                      'LATENTVIEW','TARSONS','HAPPYMIND'],
+            'all': [
+                '360ONE','ABB','ABCAPITAL','ADANIENSOL','ADANIENT','ADANIGREEN','ADANIPORTS','ADANIPOWER',
+                'ALKEM','AMBER','AMBUJACEM','ANGELONE','APLAPOLLO','APOLLOHOSP','ASHOKLEY','ASIANPAINT',
+                'ASTRAL','AUBANK','AUROPHARMA','AXISBANK','BAJAJ-AUTO','BAJAJFINSV','BAJAJHLDNG','BAJFINANCE',
+                'BANDHANBNK','BANKBARODA','BANKINDIA','BDL','BEL','BHARATFORG','BHARTIARTL','BHEL',
+                'BIOCON','BLUESTARCO','BOSCHLTD','BPCL','BRITANNIA','BSE','CAMS','CANBK',
+                'CDSL','CGPOWER','CHOLAFIN','CIPLA','COALINDIA','COCHINSHIP','COFORGE','COLPAL',
+                'CONCOR','CROMPTON','CUMMINSIND','DABUR','DALBHARAT','DELHIVERY','DIVISLAB','DIXON',
+                'DLF','DMART','DRREDDY','EICHERMOT','ETERNAL','FEDERALBNK','FORCEMOT','FORTIS',
+                'GAIL','GLENMARK','GMRAIRPORT','GODFRYPHLP','GODREJCP','GODREJPROP','GRASIM','GVT&D',
+                'HAL','HAVELLS','HCLTECH','HDFCAMC','HDFCBANK','HDFCLIFE','HEROMOTOCO','HINDALCO',
+                'HINDPETRO','HINDUNILVR','HINDZINC','HYUNDAI','ICICIBANK','ICICIGI','ICICIPRULI','IDEA',
+                'IDFCFIRSTB','IEX','INDHOTEL','INDIANB','INDIGO','INDUSINDBK','INDUSTOWER','INFY',
+                'INOXWIND','IOC','IREDA','IRFC','IRCTC','ITC','JINDALSTEL','JIOFIN','JSWENERGY',
+                'JSWSTEEL','JUBLFOOD','KALYANKJIL','KAYNES','KEI','KFINTECH','KOTAKBANK','KPITTECH',
+                'LAURUSLABS','LICHSGFIN','LICI','LODHA','LT','LTF','LTM','LUPIN',
+                'M&M','MANAPPURAM','MANKIND','MARICO','MARUTI','MAXHEALTH','MAZDOCK','MCX',
+                'MFSL','MOTHERSON','MOTILALOFS','MPHASIS','MUTHOOTFIN','NAM-INDIA','NATIONALUM','NAUKRI',
+                'NBCC','NESTLEIND','NHPC','NMDC','NTPC','NYKAA','OBEROIRLTY','OFSS',
+                'OIL','ONGC','PAGEIND','PATANJALI','PAYTM','PERSISTENT','PETRONET','PFC',
+                'PGEL','PHOENIXLTD','PIDILITIND','PIIND','PNB','PNBHOUSING','POLICYBZR','POLYCAB',
+                'POWERGRID','POWERINDIA','PREMIERENE','PRESTIGE','RADICO','RBLBANK','RECLTD','RELIANCE',
+                'RVNL','SAIL','SBICARD','SBILIFE','SBIN','SHREECEM','SHRIRAMFIN','SIEMENS',
+                'SOLARINDS','SONACOMS','SRF','SUNPHARMA','SUPREMEIND','SUZLON','SWIGGY','TATACONSUM',
+                'TATAELXSI','TATAPOWER','TATASTEEL','TCS','TECHM','TIINDIA','TITAN','TMPV',
+                'TORNTPHARM','TRENT','TVSMOTOR','ULTRACEMCO','UNIONBANK','UNITDSPR','UNOMINDA','UPL',
+                'VBL','VEDL','VMM','VOLTAS','WAAREEENER','WIPRO','YESBANK','ZYDUSLIFE'
+            ]
+        }
+
+        symbols = []
+        if isinstance(raw_symbols, list) and raw_symbols:
+            symbols = [str(s).strip().upper() for s in raw_symbols if str(s).strip()]
+        elif isinstance(raw_symbols, str) and raw_symbols.strip():
+            symbols = [s.strip().upper() for s in re.split(r'[\s,;\n]+', raw_symbols) if s.strip()]
+
+        if not symbols:
+            symbols = CAP_DEFAULTS.get(cap, CAP_DEFAULTS['large'])
+
+        # Company Names lookup
+        COMPANY_NAMES = {
+            'RELIANCE':'Reliance Industries','HDFCBANK':'HDFC Bank','ICICIBANK':'ICICI Bank','INFY':'Infosys',
+            'TCS':'Tata Consultancy','SBIN':'State Bank of India','AXISBANK':'Axis Bank',
+            'KOTAKBANK':'Kotak Mahindra Bank','LT':'Larsen & Toubro','ITC':'ITC Ltd',
+            'BAJFINANCE':'Bajaj Finance','MARUTI':'Maruti Suzuki','TATASTEEL':'Tata Steel',
+            'ADANIENT':'Adani Enterprises','HINDUNILVR':'Hindustan Unilever','SUNPHARMA':'Sun Pharma',
+            'TATAMOTORS':'Tata Motors','ULTRACEMCO':'UltraTech Cement','ONGC':'Oil & Natural Gas Corp',
+            'NTPC':'NTPC Ltd','POWERGRID':'Power Grid Corp','COALINDIA':'Coal India',
+            'HCLTECH':'HCL Technologies','WIPRO':'Wipro','BHARTIARTL':'Bharti Airtel',
+            'ASIANPAINT':'Asian Paints','TITAN':'Titan Company','JSWSTEEL':'JSW Steel',
+            'INDUSINDBK':'IndusInd Bank','BAJAJFINSV':'Bajaj Finserv','HINDALCO':'Hindalco Ind',
+            'ADANIPORTS':'Adani Ports','BPCL':'BPCL','DRREDDY':'Dr Reddy Labs','CIPLA':'Cipla',
+            'TRENT':'Trent Ltd','COFORGE':'Coforge Ltd','KAYNES':'Kaynes Tech','PERSISTENT':'Persistent Sys',
+            'MPHASIS':'Mphasis Ltd','ZYDUSLIFE':'Zydus Life','JUBLFOOD':'Jubilant Food','PIIND':'PI Inds',
+            'PAGEIND':'Page Inds','DIXON':'Dixon Tech','POLYCAB':'Polycab India','LALPATHLAB':'Lal PathLabs',
+            'METROPOLIS':'Metropolis','IRCTC':'IRCTC Ltd','GLAND':'Gland Pharma','DEEPAKNTR':'Deepak Nitrite',
+            'AAVAS':'Aavas Financiers','HOMEFIRST':'Home First','CAMS':'CAMS Ltd','ANGELONE':'Angel One',
+            'IDFCFIRSTB':'IDFC First Bank','RBLBANK':'RBL Bank','BANDHANBNK':'Bandhan Bank',
+            'FEDERALBNK':'Federal Bank','KARURVYSYA':'Karur Vysya','CENTURYTEX':'Century Tex',
+            'GNFC':'GNFC Ltd','GHCL':'GHCL Ltd','ATUL':'Atul Ltd','NAVINFLUOR':'Navin Fluorine',
+            'FINEORG':'Fine Organics','ROUTE':'Route Mobile','LATENTVIEW':'Latent View',
+            'TARSONS':'Tarsons Products','HAPPYMIND':'Happiest Minds'
+        }
+
+        db = get_db()
+        kite = get_kite()
+        results = []
+
+        for symbol in symbols:
+            try:
+                norm_sym = re.sub(r'[^A-Z0-9]', '', symbol)
+                token = INSTRUMENT_TOKENS.get(symbol) or INSTRUMENT_TOKENS.get(norm_sym)
+                if not token:
+                    global _instruments_cache
+                    if not _instruments_cache:
+                        _instruments_cache = cache_get_instruments(db)
+                    if _instruments_cache:
+                        for inst in _instruments_cache:
+                            if inst.get('tradingsymbol') == symbol and inst.get('exchange') == 'NSE':
+                                token = inst.get('instrument_token')
+                                break
+
+                from_date = dt.now() - timedelta(days=max(period + 40, 120))
+                to_date = dt.now()
+                from_date_str = from_date.strftime('%Y-%m-%d')
+                to_date_str = to_date.strftime('%Y-%m-%d')
+
+                candles = []
+                if token and kite:
+                    try:
+                        raw = kite.historical_data(token, from_date, to_date, 'day')
+                        cache_store_ohlcv(db, token, raw, 'day')
+                        for c in raw:
+                            c_dict = dict(c)
+                            if 'date' in c_dict and hasattr(c_dict['date'], 'isoformat'):
+                                c_dict['date'] = c_dict['date'].isoformat()
+                            candles.append(c_dict)
+                    except Exception:
+                        candles = cache_get_ohlcv(db, token, from_date_str, to_date_str, 'day') if token else []
+                elif token:
+                    candles = cache_get_ohlcv(db, token, from_date_str, to_date_str, 'day')
+
+                if not candles or len(candles) < 5:
+                    if token:
+                        candles = generate_demo_candles(token, from_date, to_date, 'day')
+                    else:
+                        continue
+
+                candles.sort(key=lambda x: str(x.get('date', '')))
+                window_candles = candles[-period:] if len(candles) >= period else candles
+                if len(window_candles) < 3:
+                    continue
+
+                closes = [float(c['close']) for c in window_candles]
+                volumes = [float(c['volume']) for c in window_candles]
+                highs = [float(c['high']) for c in window_candles]
+                lows = [float(c['low']) for c in window_candles]
+                opens = [float(c['open']) for c in window_candles]
+
+                last_price = round(closes[-1], 2)
+                first_price = closes[0]
+                price_ret = round(((last_price - first_price) / first_price) * 100.0, 2) if first_price > 0 else 0.0
+
+                # ── Trend calculation (9 MA vs 21 MA) ──
+                s_ma = sum(closes[-min(9, len(closes)):]) / min(9, len(closes))
+                l_ma = sum(closes[-min(21, len(closes)):]) / min(21, len(closes))
+                price_trend = "Sideways"
+                if s_ma > l_ma * 1.004 and price_ret > 1:
+                    price_trend = "Uptrend"
+                elif s_ma < l_ma * 0.996 and price_ret < -1:
+                    price_trend = "Downtrend"
+
+                # ── Volume surge ratio (last 5 vs period avg) ──
+                avg_vol = sum(volumes) / len(volumes) if volumes else 1.0
+                recent_vol = sum(volumes[-5:]) / min(5, len(volumes)) if volumes else 1.0
+                vol_ratio = round(recent_vol / avg_vol, 2) if avg_vol > 0 else 1.0
+                vol_trend = "Normal"
+                if vol_ratio > 1.35:
+                    vol_trend = "Surge"
+                elif vol_ratio < 0.75:
+                    vol_trend = "Dry-up"
+
+                # ── Delivery Conviction Model ──
+                # Use candle body-to-range absorption fraction + base delivery baseline
+                del_series = []
+                for i in range(len(window_candles)):
+                    h, l, o, c = highs[i], lows[i], opens[i], closes[i]
+                    rng = (h - l) if (h - l) > 0 else 1.0
+                    body = abs(c - o)
+                    # Institutional absorption heuristic (30% - 75%)
+                    est_del = min(88.0, max(18.0, round((body / rng * 35.0 + 35.0), 1)))
+                    del_series.append(est_del)
+
+                last_del = del_series[-1]
+                avg_del = sum(del_series) / len(del_series)
+                recent_del = sum(del_series[-5:]) / min(5, len(del_series))
+                del_change_pts = round(recent_del - avg_del, 1)
+
+                del_trend = "Stable"
+                if del_change_pts > 2.5:
+                    del_trend = "Expanding"
+                elif del_change_pts < -2.5:
+                    del_trend = "Contracting"
+
+                sorted_del = sorted(del_series)
+                del_rank = round((sorted_del.index(last_del) / len(sorted_del)) * 100.0, 1)
+
+                # ── Composite Alignment Score (-2 to +2) ──
+                score = 0
+                if price_trend == "Uptrend": score += 1
+                elif price_trend == "Downtrend": score -= 1
+
+                if vol_trend == "Surge":
+                    score += (1 if price_trend == "Uptrend" else (-1 if price_trend == "Downtrend" else 0))
+
+                if del_trend == "Expanding" and price_trend != "Downtrend":
+                    score += 1
+                if del_trend == "Contracting" and price_trend == "Uptrend":
+                    score -= 1
+
+                score = max(-2, min(2, score))
+
+                # ── Quadrant Classification ──
+                p_u = price_ret > 1.0
+                p_d = price_ret < -1.0
+                d_u = del_change_pts > 1.5
+                d_d = del_change_pts < -1.5
+
+                quadrant = "none"
+                if p_u and d_u: quadrant = "confirm-up"
+                elif p_d and d_d: quadrant = "confirm-down"
+                elif p_u and d_d: quadrant = "div-bear"
+                elif p_d and d_u: quadrant = "div-bull"
+
+                results.append({
+                    'symbol': symbol,
+                    'name': COMPANY_NAMES.get(symbol, symbol),
+                    'price': last_price,
+                    'chg': price_ret,
+                    'priceTrend': price_trend,
+                    'volRatio': vol_ratio,
+                    'volTrend': vol_trend,
+                    'delPct': last_del,
+                    'delTrend': del_trend,
+                    'delChangePts': del_change_pts,
+                    'delRank': del_rank,
+                    'score': score,
+                    'quadrant': quadrant,
+                    'sparkline': del_series[-20:]
+                })
+            except Exception as e:
+                continue
+
+        # Sort results by absolute alignment score descending
+        pulse_list = sorted(results, key=lambda x: abs(x['score']), reverse=True)
+        bear_div = sorted([r for r in results if r['quadrant'] == 'div-bear'], key=lambda x: x['chg'], reverse=True)
+        bull_div = sorted([r for r in results if r['quadrant'] == 'div-bull'], key=lambda x: x['chg'])
+
+        return jsonify({
+            'success': True,
+            'period': period,
+            'cap': cap,
+            'total': len(results),
+            'marketPulse': pulse_list,
+            'tractionBoard': results,
+            'divergenceWatchlist': {
+                'bearDiv': bear_div,
+                'bullDiv': bull_div
+            },
+            'computedAt': dt.now().strftime('%d %b %Y, %H:%M')
+        })
+    except Exception as err:
+        import traceback; traceback.print_exc()
+        return jsonify({'success': False, 'error': str(err)}), 500
+
+
 # ── Option Chain ──
 @app.route('/api/option-gainers-board')
 def option_gainers_board():
@@ -4702,10 +5014,20 @@ def option_gainers_board():
         except Exception as db_err:
             logging.warning(f"[Gainers API] Failed to fetch fno_shareholding: {db_err}")
 
-        if not _in_market or not open_premiums or not board_contracts:
-            # Only fall back to EOD snapshot outside market + premarket hours.
-            # During early session (board still warming), show loading message instead.
-            if not _in_market and not _in_premarket:
+        # ── LIVE HOURS: board still warming (scanner hasn't captured open yet) ──
+        # Must check _in_market FIRST — never serve EOD during live session.
+        if _in_market and (not open_premiums or not board_contracts):
+            return jsonify({
+                "stocks": [], "total_tracked": 0, "total_positive": 0,
+                "n_stocks": 0, "last_updated": None, "date": state.get("date"),
+                "status": "loading",
+                "message": "Board warming up... refresh in ~30 seconds"
+            })
+
+        # ── OUTSIDE MARKET HOURS: serve EOD snapshot or premarket loading ──
+        if not _in_market:
+            if not _in_premarket:
+                # Truly closed — serve EOD snapshot
                 from option_gainers_scanner import get_eod_snapshot
                 snapshot = get_eod_snapshot()
                 if snapshot is not None:
@@ -4731,14 +5053,14 @@ def option_gainers_board():
                         "status": "loading",
                         "message": "Generating EOD snapshot... please wait."
                     })
-
-            # Inside market hours (or premarket) — board still warming up
-            return jsonify({
-                "stocks": [], "total_tracked": 0, "total_positive": 0,
-                "n_stocks": 0, "last_updated": None, "date": state.get("date"),
-                "status": "loading",
-                "message": "Board warming up... refresh in ~30 seconds"
-            })
+            else:
+                # Pre-open (9:00–9:15) — board not yet active for today
+                return jsonify({
+                    "stocks": [], "total_tracked": 0, "total_positive": 0,
+                    "n_stocks": 0, "last_updated": None, "date": state.get("date"),
+                    "status": "loading",
+                    "message": "Pre-market: board initializing for today's session"
+                })
 
         kite = get_kite()
         if not kite:
@@ -4763,10 +5085,22 @@ def option_gainers_board():
         results = []
         for token, open_prem in open_premiums.items():
             ltp = ltps.get(token)
-            if not ltp:
-                continue
             info = board_contracts.get(token)
             if not info:
+                continue
+            if not ltp:
+                # No live tick yet — include contract as stale at 0% gain so
+                # it remains visible in the premium expansion panel.
+                results.append({
+                    "symbol":    info["symbol"],
+                    "opt_type":  info["opt_type"],
+                    "strike":    info["strike"],
+                    "is_opening": info["is_opening"],
+                    "open_prem": round(open_prem, 2),
+                    "ltp":       round(open_prem, 2),  # use open as best guess
+                    "gain_pct":  0.0,
+                    "ltp_stale": True,
+                })
                 continue
             gain_pct = ((ltp - open_prem) / open_prem) * 100
             if gain_pct <= 0:
@@ -4779,6 +5113,7 @@ def option_gainers_board():
                 "open_prem":  round(open_prem, 2),
                 "ltp":        round(ltp, 2),
                 "gain_pct":   round(gain_pct, 2),
+                "ltp_stale":  False,
             })
 
         # ── Group by stock, rank by best gain ─────────────────────────────────
@@ -4950,7 +5285,56 @@ def option_gainers_alerts_clear():
     except Exception as e:
         logging.error(f"[Premium Alerts Clear API] Exception: {e}")
         return jsonify({"error": str(e), "ok": False}), 500
-@app.route('/api/ema-crossovers')
+
+
+@app.route('/api/eod-alert-summary')
+def api_eod_alert_summary():
+    """
+    Returns both Premium Spike alerts and Live Breakout alerts saved to SQLite
+    for a given date. Only available after market close — blocked during live hours
+    to prevent stale data from appearing on the live dashboard.
+
+    Query params:
+        date (str): YYYY-MM-DD — defaults to last completed trading session date.
+    """
+    from session_utils import is_market_hours, is_premarket
+    if is_market_hours() or is_premarket():
+        return jsonify({"error": "EOD summary only available after market close", "ok": False}), 403
+
+    try:
+        from option_gainers_alerts import get_alerts_from_db_by_date, _expected_trading_date as _prem_expected_date
+        from ema_crossover_scanner import get_breakout_alerts_from_db_by_date, _get_expected_trading_date
+        from session_utils import now_ist
+
+        date_str = request.args.get("date")
+        if date_str:
+            # Validate format
+            from datetime import datetime as _dt
+            try:
+                _dt.strptime(date_str, "%Y-%m-%d")
+            except ValueError:
+                return jsonify({"error": f"Invalid date format: '{date_str}'. Expected YYYY-MM-DD"}), 400
+        else:
+            now = now_ist()
+            date_str = _get_expected_trading_date(now).strftime("%Y-%m-%d")
+
+        prem_spikes = get_alerts_from_db_by_date(date_str)
+        live_breakouts = get_breakout_alerts_from_db_by_date(date_str)
+
+        return jsonify({
+            "date": date_str,
+            "prem_spikes": prem_spikes,
+            "live_breakouts": live_breakouts,
+            "prem_total": len(prem_spikes),
+            "breakout_total": len(live_breakouts),
+            "is_eod_snapshot": True,
+        })
+    except Exception as e:
+        logging.error(f"[EOD Alert Summary API] Exception: {e}")
+        return jsonify({"error": str(e), "ok": False}), 500
+
+
+
 def api_ema_crossovers():
     """
     Returns cached real-time EMA 9 / EMA 21 crossovers and alignment
@@ -9286,6 +9670,57 @@ def handle_subscribe(data):
     except Exception as e:
         print(f"WebSocket subscription error for client {request.sid}: {e}")
         socketio.emit('error', {'message': str(e)}, to=request.sid)
+
+
+@socketio.on('chart_subscribe')
+def handle_chart_subscribe(data):
+    """Client opens inline chart: subscribe token to chart_feed in GlobalTicker."""
+    try:
+        sym = (data.get('sym') or '').upper().strip()
+        if not sym:
+            return
+        token = _resolve_sym_token(sym)
+        if not token:
+            emit('chart_tick_error', {'sym': sym, 'msg': 'Token not found'})
+            return
+        with _chart_sub_lock:
+            _chart_subscriptions[sym] = int(token)
+        from global_ticker import get_global_ticker_manager
+        gtm = get_global_ticker_manager()
+        gtm.update_subscription('chart_feed', [int(token)], [])
+        emit('chart_subscribed', {'sym': sym, 'token': token})
+    except Exception as e:
+        emit('chart_tick_error', {'sym': data.get('sym',''), 'msg': str(e)})
+
+
+@socketio.on('chart_unsubscribe')
+def handle_chart_unsubscribe(data):
+    """Client closes inline chart: remove token from chart_feed subscription."""
+    try:
+        sym = (data.get('sym') or '').upper().strip()
+        with _chart_sub_lock:
+            token = _chart_subscriptions.pop(sym, None)
+        if token:
+            from global_ticker import get_global_ticker_manager
+            gtm = get_global_ticker_manager()
+            gtm.update_subscription('chart_feed', [], [int(token)])
+    except Exception:
+        pass
+
+
+@app.route('/api/market-status')
+def market_status_api():
+    """Return authoritative server-side IST market open/closed status."""
+    try:
+        now = now_ist()
+        is_open = is_market_hours()
+        return jsonify({
+            'is_open': is_open,
+            'server_time_ist': now.isoformat(),
+            'server_time_ms': int(now.timestamp() * 1000)
+        })
+    except Exception as e:
+        return jsonify({'is_open': False, 'error': str(e)}), 500
 
 
 

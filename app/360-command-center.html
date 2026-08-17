@@ -471,6 +471,7 @@ select.sel:focus{outline:none;border-color:var(--acc);}
     <div class="tabs" id="atabs">
       <div class="tab on" onclick="aTab('prem',this)">🔥 Prem Spikes</div>
       <div class="tab" onclick="aTab('bb',this)">📊 Bulls/Bears</div>
+      <div class="tab" onclick="aTab('brk_events',this)">📡 Breakouts</div>
       <div class="tab" onclick="aTab('oi2',this)">⚡ OI Events</div>
       <div class="tab" onclick="aTab('bup',this)">📈 B/U Shift</div>
     </div>
@@ -537,14 +538,18 @@ select.sel:focus{outline:none;border-color:var(--acc);}
 // --- LIVE DATA (populated by fetchAll + Socket.IO) ---
 let STOCKS = [];
 let ALERTS = [];
-let PREM_ALERTS = [];   // Premium Spike Alerts from /api/option-gainers-alerts
-let _lastPremSeq = 0;   // incremental poll cursor
+let PREM_ALERTS = [];       // Premium Spike Alerts from /api/option-gainers-alerts
+let BREAKOUT_ALERTS = [];   // Live Breakout / EMA Crossover Alerts
+let _lastPremSeq = 0;       // incremental poll cursor
 let OI_SPURTS = [];
 let BULLS = [];
 let BEARS = [];
 let _boardLoading = false;
 let _boardLoadingMsg = '';
 let _boardLoadingIsEod = false;
+let _isEodMode = false;
+let _eodAlertsLoaded = false;
+let _lastEodDate = '';
 const CONF_LABELS = ['15m','1h','Day','OI','Vol','Fut','DX','Drift'];
 let _sortCol = null;   // active sort column key
 let _sortDir = -1;     // -1 = desc, +1 = asc
@@ -1623,7 +1628,7 @@ function renderAlerts(){
     }
     feed.innerHTML=PREM_ALERTS.map(a=>{
       const isCE=a.opt_type==='CE';
-      const isBull=a.direction==='BULLISH';
+      const isBull=a.direction==='BULLISH'||a.direction==='BULL';
       const isOpening=a.layer==='opening';
       const layerTag=isOpening?'⭐ STAR':'🏃 RUN';
       const layerCls=isOpening?'gold':'run';
@@ -1659,6 +1664,44 @@ function renderAlerts(){
           <div class="mb"><div class="mbl">Spot Move</div><div class="mbv ${spotCls}">${spotChg}%</div></div>
           <div class="mb"><div class="mbl">Spot Flow</div><div class="mbv" style="font-size:9px;">${spotFlow}</div></div>
           <div class="mb"><div class="mbl">Consistency</div><div class="mbv cyn">${consPct}%</div></div>
+        </div>
+      </div>`;
+    }).join('');
+    return;
+  }
+
+  // ── Breakouts tab: render BREAKOUT_ALERTS ───────────────────────────────────
+  if(_activeAlertTab==='brk_events'){
+    if(!BREAKOUT_ALERTS.length){
+      feed.innerHTML='<div class="empty"><div class="ei">⚡</div><div class="et">No breakout alerts</div><div class="es">Waiting for EMA crossover events…</div></div>';
+      return;
+    }
+    feed.innerHTML=BREAKOUT_ALERTS.map(a=>{
+      const isBull=a.direction==='bullish'||a.direction==='BULL';
+      const moveStr = (a.move_pct != null) ? `${Number(a.move_pct).toFixed(2)}%` : '—';
+      const volStr = (a.vol_multiplier != null && a.vol_multiplier > 0) ? `${Number(a.vol_multiplier).toFixed(1)}x` : '—';
+      const ltpStr = a.ltp ? `₹${Number(a.ltp).toFixed(2)}` : '—';
+      return `<div class="ac prem-spike-card" style="border-left:3px solid ${isBull?'var(--bull)':'var(--bear)'};">
+        <div class="ah" style="gap:6px;flex-wrap:wrap;">
+          <div style="flex:1;min-width:0;">
+            <div style="display:flex;align-items:center;gap:5px;flex-wrap:wrap;">
+              <span class="ac-pulse-dot" style="background:${isBull?'var(--bull)':'var(--bear)'};"></span>
+              <span class="asym" style="cursor:pointer;" onclick="flashSymbolInBoard('${a.symbol}')">${a.symbol}</span>
+              <span class="btag ${isBull?'b':'r'}" style="font-size:9px;">${isBull?'🟢 BULLISH':'🔴 BEARISH'}</span>
+              <span class="layer-tag run" style="font-size:8px;padding:1px 5px;border-radius:3px;">${a.grade||'5M Cross'}</span>
+            </div>
+            <div style="font-size:9px;color:var(--t2);margin-top:2px;">Live 5-Min EMA Crossover breakout event</div>
+          </div>
+          <div style="text-align:right;">
+            <div style="font-size:13px;font-weight:700;color:${isBull?'var(--bull)':'var(--bear)'};">${ltpStr}</div>
+            <div class="atime">${a.time||''}</div>
+          </div>
+        </div>
+        <div class="am" style="grid-template-columns:repeat(4,1fr);margin-top:4px;">
+          <div class="mb"><div class="mbl">Stock LTP</div><div class="mbv ${isBull?'bull':'bear'}" style="font-size:9px;">${ltpStr}</div></div>
+          <div class="mb"><div class="mbl">Move %</div><div class="mbv ${isBull?'bull':'bear'}">${moveStr}</div></div>
+          <div class="mb"><div class="mbl">Volume Ratio</div><div class="mbv cyn">${volStr}</div></div>
+          <div class="mb"><div class="mbl">Signal Type</div><div class="mbv amb" style="font-size:9px;">${a.grade||'EMA Cross'}</div></div>
         </div>
       </div>`;
     }).join('');
@@ -1704,7 +1747,7 @@ function renderAlerts(){
   }).join('');
 }
 
-function clearAlerts(){ALERTS=[];PREM_ALERTS=[];_lastPremSeq=0;renderAlerts();}
+function clearAlerts(){ALERTS=[];PREM_ALERTS=[];BREAKOUT_ALERTS=[];_lastPremSeq=0;renderAlerts();}
 
 /* TAB SWITCHING & BULLS/BEARS */
 let _bbFilterBulls = 'all';
@@ -1783,7 +1826,7 @@ function aTab(type,el){
   _activeAlertTab = type;
   document.querySelectorAll('#atabs .tab').forEach(t=>t.classList.remove('on'));
   el.classList.add('on');
-  if(type==='prem'){renderAlerts();return;}
+  if(type==='prem'||type==='brk_events'){renderAlerts();return;}
   if(type==='bb'){renderBBView();return;}
   if(type==='oi2'){
     document.getElementById('afeed').innerHTML=`<div style="padding:8px;">${OI_SPURTS.map(s=>`
@@ -1906,11 +1949,11 @@ function updateSessionStats(board, futMap){
   const aCnt=ALERTS.filter(a=>a.q==='A').length;
   const bCnt=ALERTS.filter(a=>a.q==='B').length;
   const cCnt=ALERTS.filter(a=>a.q==='C').length;
-  const totalAlerts=ALERTS.length+PREM_ALERTS.length;
+  const totalAlerts=ALERTS.length+PREM_ALERTS.length+BREAKOUT_ALERTS.length;
 
   const setT=(id,val)=>{const e=document.getElementById(id);if(e)e.textContent=val;};
   setT('stat-alerts', totalAlerts);
-  setT('stat-alerts-sub', `Prem: ${PREM_ALERTS.length} · A: ${aCnt} · B: ${bCnt}`);
+  setT('stat-alerts-sub', `Prem: ${PREM_ALERTS.length} · Brk: ${BREAKOUT_ALERTS.length} · A: ${aCnt}`);
   setT('stat-spurts', spurts);
   setT('stat-spurts-sub', `≥15%: ${spurts15} stocks`);
   setT('stat-lb', lbs);
@@ -2410,6 +2453,19 @@ function initSocketIO(){
         }
       }catch(e){console.warn('[360] Alert map error',e);}
     });
+    socket.on('live_breakout_alert',(alert)=>{
+      try{
+        if(!BREAKOUT_ALERTS.some(a=>a.symbol===alert.symbol && a.time===alert.time && a.grade===alert.grade)){
+          BREAKOUT_ALERTS.unshift(alert);
+          if(BREAKOUT_ALERTS.length>200) BREAKOUT_ALERTS.pop();
+          if(_activeAlertTab==='brk_events') renderAlerts();
+          flashSymbolInBoard(alert.symbol);
+          renderHotZone();
+          const el=document.getElementById('stat-alerts');
+          if(el) el.textContent=ALERTS.length+PREM_ALERTS.length+BREAKOUT_ALERTS.length;
+        }
+      }catch(e){console.warn('[360] Live breakout socket error',e);}
+    });
     socket.on('board_update',()=>{ fetchBoard(); });
     // Initialize chart Socket.IO feed with the shared connection
     initChartSocketFeed(socket);
@@ -2438,6 +2494,7 @@ async function fetchBoard(){
     spurtList.forEach(d => { oiMap[d.symbol] = d.oi_change_pct; });
 
     const isEod = !!board.is_eod_snapshot;
+    _isEodMode = isEod;
     const isEodLoading = board.status==='loading' || (isEod && (!board.stocks || board.stocks.length===0));
 
     if(isEodLoading){
@@ -2465,7 +2522,13 @@ async function fetchBoard(){
 
     if(isEod){
       setStatusMode('eod', `EOD SNAPSHOT · ${board.date || 'CLOSED'}`);
+      if(!_eodAlertsLoaded || _lastEodDate !== board.date){
+        _eodAlertsLoaded = true;
+        _lastEodDate = board.date || '';
+        fetchEodAlertSummary(board.date);
+      }
     } else {
+      _eodAlertsLoaded = false;
       setStatusMode('live', `LIVE · ${new Date().toLocaleTimeString('en-IN',{hour12:false})}`);
     }
   }catch(e){
@@ -2473,6 +2536,30 @@ async function fetchBoard(){
     setStatusMode('stale','STALE — backend unreachable');
   }finally{
     _fetchingBoard=false;
+  }
+}
+
+async function fetchEodAlertSummary(dateStr){
+  try {
+    const url = dateStr ? `/api/eod-alert-summary?date=${encodeURIComponent(dateStr)}` : '/api/eod-alert-summary';
+    const res = await fetch(url);
+    if(!res.ok) return;
+    const data = await res.json();
+    if(data.prem_spikes && Array.isArray(data.prem_spikes)){
+      PREM_ALERTS = data.prem_spikes;
+    }
+    if(data.live_breakouts && Array.isArray(data.live_breakouts)){
+      BREAKOUT_ALERTS = data.live_breakouts;
+    }
+    if(_activeAlertTab==='prem' || _activeAlertTab==='brk_events'){
+      renderAlerts();
+    }
+    const el=document.getElementById('stat-alerts');
+    if(el) el.textContent=ALERTS.length+PREM_ALERTS.length+BREAKOUT_ALERTS.length;
+    const sub=document.getElementById('stat-alerts-sub');
+    if(sub) sub.textContent=`Prem: ${PREM_ALERTS.length} · Brk: ${BREAKOUT_ALERTS.length} · A: ${ALERTS.filter(a=>a.q==='A').length}`;
+  } catch(e) {
+    console.warn('[360] EOD Alert Summary fetch error', e);
   }
 }
 
@@ -2498,6 +2585,7 @@ async function fetchAll(){ await Promise.all([fetchBoard(), fetchBreakouts(), fe
 
 /* ── Premium Spike Alerts poller ─────────────────────────────────────────── */
 async function fetchPremSpikes(){
+  if(_isEodMode) return; // Guard: skip polling live endpoint during EOD mode
   try{
     const res=await fetch('/api/option-gainers-alerts?after='+_lastPremSeq);
     if(!res.ok) return;
@@ -2521,9 +2609,9 @@ async function fetchPremSpikes(){
     });
     // Update stat counter
     const el=document.getElementById('stat-alerts');
-    if(el) el.textContent=ALERTS.length+PREM_ALERTS.length;
+    if(el) el.textContent=ALERTS.length+PREM_ALERTS.length+BREAKOUT_ALERTS.length;
     const sub=document.getElementById('stat-alerts-sub');
-    if(sub) sub.textContent=`Prem: ${PREM_ALERTS.length} · A: ${ALERTS.filter(a=>a.q==='A').length} · B: ${ALERTS.filter(a=>a.q==='B').length}`;
+    if(sub) sub.textContent=`Prem: ${PREM_ALERTS.length} · Brk: ${BREAKOUT_ALERTS.length} · A: ${ALERTS.filter(a=>a.q==='A').length} · B: ${ALERTS.filter(a=>a.q==='B').length}`;
   }catch(e){console.warn('[360] PremSpikes fetch error',e);}
 }
 

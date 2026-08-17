@@ -1,5 +1,36 @@
 # TradeSignal — Change Log
 
+## 2026-08-17 — EOD Alert Persistence: Prem Spikes and Live Breakouts
+
+**Goal:** Persist Prem Spike alerts and Live Breakout alerts to SQLite during the trading day with date/time, prevent stale alert leakage into live market hours, and re-display persistent alert logs in 360 Command Center during EOD mode.
+
+**Files changed:**
+- `app/backend/ema_crossover_scanner.py` [MODIFY]
+- `app/backend/option_gainers_alerts.py` [MODIFY]
+- `app/backend/server.py` [MODIFY]
+- `app/360-command-center.html` [MODIFY]
+
+**Agent Reuse Decision:** Extended existing background scanners `ema_crossover_scanner.py` and `option_gainers_alerts.py`, existing endpoint routes in `server.py`, and existing Alert Feed in `360-command-center.html`. No new agents created; no orchestrator alterations.
+
+**Changes:**
+1. **Live Breakout SQLite Persistence (`ema_crossover_scanner.py`):**
+   - Added `live_breakout_alerts` table in `tradesignal_cache.db` with date, time, timestamp, symbol, direction, grade, ltp, vol_multiplier, move_pct.
+   - Fire-and-forget `_save_breakout_alert_to_db()` invoked upon every crossover breakout event.
+   - Added `get_breakout_alerts_from_db_by_date(date_str)` historical reader.
+   - Proactive day-start flush of in-memory `_triggered_alerts`, `_ema_cross_dedup`, and `_collision_dedup` on date rollover.
+2. **Stale Data Prevention & Session Reset (`option_gainers_alerts.py`):**
+   - Proactive in-memory flush (`_alerts`, `_cooldowns`, `_token_history`, `_seq`) on new market trading day.
+   - Added strict `is_market_hours()` guard on `get_alerts_from_db_by_date()` to reject database queries during live hours.
+3. **Unified EOD API Endpoint (`server.py`):**
+   - Added `GET /api/eod-alert-summary?date=YYYY-MM-DD` returning both `prem_spikes` and `live_breakouts` records from SQLite.
+   - Hard-blocked (HTTP 403) during active market and pre-market hours.
+4. **360 Command Center Frontend (`360-command-center.html`):**
+   - Added "📡 Breakouts" tab to the Alert Feed.
+   - Wired `fetchEodAlertSummary()` on EOD mode entry to fetch and render both Prem Spikes and Live Breakouts from the day's snapshot.
+   - Gated live polling `fetchPremSpikes()` so it stays inactive during EOD mode.
+   - Added real-time Socket.IO listener for `live_breakout_alert` during live market sessions.
+   - Updated session stat counters and `clearAlerts()` to reflect breakout alerts.
+
 ## 2026-08-17 — 360 Command Center: PremGain Symbol Click Expansion Fix
 
 **Goal:** Fix premium contracts expansion not triggering when clicking symbol cell / arrow in PremGain and standard filter tabs.
