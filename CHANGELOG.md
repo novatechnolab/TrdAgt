@@ -1,5 +1,253 @@
 # TradeSignal — Change Log
 
+## 2026-08-17 — 360 Command Center: PremGain Symbol Click Expansion Fix
+
+**Goal:** Fix premium contracts expansion not triggering when clicking symbol cell / arrow in PremGain and standard filter tabs.
+
+**Files changed:**
+- `app/360-command-center.html` [MODIFY]
+
+**Agent Reuse Decision:** Pure frontend event handler fix. No backend or agent changes required.
+
+**Changes:**
+- Removed `event.stopPropagation();toggleStockChart('${s.sym}')` from `<td class="sym">` in standard/PremGain rows so clicking the symbol text or `▶` expansion icon correctly invokes `toggleStockContracts('${s.sym}')` on the row and expands option contracts.
+
+## 2026-08-17 — 360 Command Center: Premium Spike Alerts in Alert Feed
+
+**Goal:** Wire Premium Spike Alerts into the 360 CC Alert Feed "🔥 Prem Spikes" tab. Previously empty — only showed orchestrator signals via Socket.IO.
+
+**Files changed:**
+- `app/360-command-center.html` [MODIFY]
+
+**Agent Reuse Decision:** No new agents or backend changes. The `/api/option-gainers-alerts?after=<seq>` endpoint already exists. This is a pure frontend wiring fix — incremental polling added to 360 CC.
+
+**Changes:**
+- Added `PREM_ALERTS[]` array + `_lastPremSeq` cursor for incremental seq-based polling
+- Added `fetchPremSpikes()` — polls `/api/option-gainers-alerts?after=<seq>` every 20s, deduplicates by `seq`, flashes symbols in board on new alerts
+- Rewrote `renderAlerts()` — now branches on `_activeAlertTab`: 'prem' tab renders `PREM_ALERTS` with rich premium spike cards (symbol, CE/PE badge, layer tag ⭐/🏃, spike%, board gain%, prem flow, spot flow, consistency); all other tabs render legacy `ALERTS` as before
+- Updated `clearAlerts()` to also reset `PREM_ALERTS` + `_lastPremSeq`
+- Updated session stat `ALERTS TODAY` counter to show combined total with `Prem: N · A: N · B: N` breakdown
+- Added helper formatters `_fmtMoney()` and `_fmtNum()`
+- `startPolling()` now calls `fetchPremSpikes()` on init + schedules 20s interval
+
+## 2026-08-17 — 360 Command Center: Live/EOD Guard Fix + Premium Click Bug Fix
+
+
+**Goal:** Fix 360 CC serving EOD data during live market hours; fix no premium showing when clicking symbol in PremGain tab.
+
+**Files changed:**
+- `app/backend/server.py` [MODIFY] — board endpoint EOD guard logic + contracts LTP fallback
+- `app/360-command-center.html` [MODIFY] — dynamic loading subtitle, subrow skeleton, stale CSS, expIcon fix
+
+**Agent Reuse Decision:** No new agents created. All changes extend existing server.py board endpoint logic and frontend 360-command-center.html rendering. No orchestrator involvement — purely UI + board data pipeline fixes.
+
+**Changes:**
+
+**Fix 1 — server.py L5017: EOD guard restructure**
+- Old: compound `if not _in_market or not open_premiums or not board_contracts` — during live session with empty scanner (warmup), the OR would enter the EOD block and potentially serve yesterday's snapshot
+- New: check `_in_market` first; if market open and board warming → return loading immediately (never touches EOD code path); only reach EOD path when `not _in_market`
+- Added explicit premarket branch (9:00–9:15) returning "Pre-market: board initializing" message
+
+**Fix 2 — 360-command-center.html L810: Dynamic loading subtitle**
+- Added `_boardLoadingIsEod` boolean flag (set alongside `_boardLoadingMsg` in fetchBoard)
+- Loading overlay subtitle now shows "Fetching live data" during warmup vs "Fetching end-of-day data" during actual EOD mode — no longer hardcoded
+
+**Fix 3 — server.py L5088: Stale LTP fallback for contracts**
+- Contracts with no live LTP (option hasn't traded yet at open) now included as stale records (`ltp_stale: True`, `gain_pct: 0.0`, `ltp: open_prem`) instead of being silently dropped
+- Stale contracts remain visible in premium expansion panel at 0% gain with "no tick yet" indicator
+
+**Fix 4 — 360-command-center.html L909: Subrow skeleton + stale styling**
+- Contract subrow now shows "⏳ Loading premium contracts… refresh in a moment." when contracts array is empty but row is expanded
+- Added `gain-stale` CSS class for visual distinction of stale contracts (muted gray, italic)
+- `expIcon` (▶) now shown for all `hasOptionGain: true` stocks even with 0 contracts, giving click affordance during warmup
+
+## 2026-08-16 — 360 Command Center: TradingView-style Inline Chart Crosshair
+
+
+**Goal:** Replace floating HTML OHLCV HUD with canvas-native info bar; add X-axis datetime pill and Y-axis price pill matching TradingView crosshair style.
+
+**Files changed:** `app/360-command-center.html` [MODIFY] — full rewrite of `drawInlineCandleCanvas`
+
+**Changes:**
+- `pt` increased 16→42px to reserve canvas-top space for 2-line OHLCV info bar
+- **Line 1 (always visible):** `SYMBOL · 5m  O: H: L: C:  Δ (+%)  Vol:` — colour-coded, updates live on hover
+- **Line 2 (always visible):** `EMA9: EMA21: VWAP:` with indicator colours
+- **Separator:** thin rule between info bar and chart area
+- **Crosshair vertical line:** snapped to nearest candle centre
+- **Y-axis price pill:** dark rounded rect with white price label at cursor Y
+- **X-axis datetime pill:** `Fri 14 Aug '26 10:25` dark rounded rect centred at crosshair column, clamped to chart bounds
+- HTML `ichart-crosshair-hud` div hidden unconditionally (all info now on canvas)
+- `ctx.roundRect` used with plain `fillRect` fallback for older browser compatibility
+
+## 2026-08-16 — 360 Command Center: Inline Chart Audit Fixes (5 bugs)
+
+
+**Goal:** Fix 5 issues found in post-implementation audit of the real-time inline chart.
+
+**Files changed:**
+- `app/360-command-center.html` [MODIFY]
+
+**Fixes:**
+1. **#1 Cache freshness (server clock)** — `isMarketOpen()` replaced with `_serverMarketOpen` authority in the cache-hit fast path
+2. **#2 Volume baseline reset** — `_chartVolAtOpen[sym]` and `_chartCandlesCache[sym]` cleared on TF switch so first tick delta is accurate
+3. **#3 TF-aware session window** — `THREE_SESSION_CANDLES` now uses `Math.round(375 / _inlineChartTf)` instead of hardcoded 75 (correct for both 5m and 15m)
+4. **#4 Unsubscribe ordering** — `stopInlineChartTickFeed()` called before `_activeChartStock = null` so the `chart_unsubscribe` event carries the correct symbol; prevents token leak in GlobalTicker
+5. **#5 Duplicate socket listeners** — `socketRef.off('chart_tick/chart_subscribed/chart_tick_error')` called before each `on()` registration in `initChartSocketFeed` to prevent N-times invocation after reconnects
+
+## 2026-08-16 — 360 Command Center: Real-time Inline Chart Upgrade (WS + 6 Fixes)
+
+
+**Goal:** Replace 2.5s REST poll with Socket.IO push ticks; fix per-candle volume, tab-visibility reconnect, server market clock, 3-session history, and chart availability in all filter tabs.
+
+**Files changed:**
+- `app/backend/server.py` [MODIFY] — Added `_chart_subscriptions` dict, `_chart_tick_broadcaster` registered with GlobalTickerManager, `chart_subscribe`/`chart_unsubscribe` SocketIO events, `_resolve_sym_token` helper, `/api/market-status` endpoint, broadcaster registered in `sync_global_ticker_credentials`.
+- `app/360-command-center.html` [MODIFY] — Replaced `setInterval` REST poll with Socket.IO `chart_tick` push; per-candle volume delta via `_chartVolAtOpen` baseline tracking; tab `visibilitychange` reconnect; `_serverMarketOpen` from `/api/market-status`; always-3-session chart history; chart enabled in all filter tabs; symbol cell click opens chart in normal-mode rows.
+
+**Summary:**
+- Chart ticks now arrive via KiteTicker WebSocket → GlobalTicker → `socketio.emit('chart_tick')` — no polling
+- Volume bars show per-candle delta, not cumulative day volume
+- Backgrounding tab auto-reloads chart + re-subscribes on visibility restore
+- Market open/close uses server IST clock (client clock as fallback only)
+- Chart always shows last 3 trading sessions (225 candles at 5m)
+- Chart works in PremGain, Bearish, TF-Aligned tabs — symbol cell click = open chart; row click = expand contracts
+
+## 2026-08-16 — 360 Command Center: Click-on-Header Column Sorting
+
+
+**Goal:** Make all 16 numeric/categorical columns in the Unified Master Board table sortable by clicking the header, with asc/desc toggle and visual indicator.
+
+**Files changed:**
+- `app/360-command-center.html` [MODIFY] — Added sortable column headers with ▲/▼ indicators, sort state variables (`_sortCol`, `_sortDir`), upgraded `sortBoard()` to toggle direction, sort block in `renderBoard()` after `getFiltered()`, and updated all three thead variants (static HTML + futbld + normal dynamic).
+
+**Summary:**
+- 16 columns now sortable: CAP, SPOT%, LIN%, DXCNT, GAIN%, GAP%, INST, FUT B/U, TC/PVT/BC, DRIFT, RVOL, FH VOL, E9H, TF, OI%, SCORE
+- Clicking a column sorts descending; clicking again toggles to ascending; active column shows ▲/▼ arrow
+- Categorical sort: CAP (L>M>S), FUT B/U (alphabetic), TC/PVT/BC (bull-flag count), TF (bull timeframe count)
+- Existing dropdown sort preserved via legacy key mapping
+- Only `#` and `SYMBOL` remain non-sortable
+
+## 2026-08-16 — Traction Board: Expanded to Full 215 NSE F&O Universe
+
+
+**Goal:** Updated the Traction Board's `🔮 All F&O (215)` quick-fill button and backend defaults to contain the complete universe of 215 NSE F&O underlying stocks.
+
+**Files changed:**
+- `app/index.html` [MODIFY] — Updated quick-fill button to `🔮 All F&O (215)` and expanded `CAP_LISTS.all` with the full 215 NSE F&O underlying stock universe directly from the instruments database.
+- `app/backend/server.py` [MODIFY] — Added full 215 stock list under `CAP_DEFAULTS['all']` for `/api/traction-board` endpoint handling.
+
+**Summary:**
+- Sourced the complete 214/215 list of NSE F&O stock underlyings from the SQLite instruments database.
+- Users can now click `🔮 All F&O (215)` to scan and analyze all 215 F&O stocks across the market simultaneously.
+
+## 2026-08-15 — Historical Analysis: Real Kite Market Data & Bulk Search Controls Wired to Traction Board
+
+**Goal:** Wired real Kite daily candles & delivery metrics to the Traction Board and added the Bulk Historical Scan trigger controls.
+
+**Files changed:**
+- `app/backend/server.py` [MODIFY] — Added `/api/traction-board` endpoint fetching real daily candles from Kite API / SQLite cache and computing real price trends, volume surge ratios, delivery conviction, alignment scores (-2 to +2), and divergence quadrants.
+- `app/index.html` [MODIFY] — Replaced synthetic simulation in `#ha-panel-traction` with real backend API integration and added the control card with quick-fill buttons (`🔵 Large Cap`, `🟠 Mid Cap`, `🟢 Small Cap`, `🔮 All F&O`, `✕ Clear`), editable symbols textarea, lookback window select (30D/60D/90D/120D), and `⚡ Run Traction Board` trigger button.
+
+**Summary:**
+- Replaced all mock/synthetic data with 100% real Kite market prices and real candle metrics.
+- Verified real stock prices live in Chrome: SBIN (₹1,067.70), TCS (₹2,361.00), SUNPHARMA (₹1,959.20), MPHASIS (₹2,412.10), ZYDUSLIFE (₹1,167.30), PIIND (₹2,822.80).
+- Validated dynamic quick-fill switching and custom symbol scanning.
+
+
+## 2026-08-15 — Historical Analysis: Traction Board DOM Nesting Resolution & Verification
+
+**Goal:** Fixed the root cause of the blank Traction Board tab (HTML div nesting imbalance) and verified full layout in Chrome.
+
+**Files changed:**
+- `app/index.html` [MODIFY] — Added the missing closing `</div>` to `#ha-panel-analytics` before `#ha-panel-traction` so that `#ha-panel-traction` is a proper top-level child of `#page-historical-analysis`.
+
+**Summary:**
+- Identified that `#ha-panel-traction` was accidentally nested inside `#ha-panel-analytics` due to an unclosed inner div. When switching tabs, `#ha-panel-analytics` was hidden (`display: none`), which collapsed its child `#ha-panel-traction` to 0 height.
+- Corrected the tag balance: `#ha-panel-traction` is now a direct child of `#page-historical-analysis`.
+- Verified live in Chrome: `#ha-panel-traction` expands to full height (2,021px), with 30 stocks rendered, active Market Pulse ribbon, sortable table, sparklines, and Divergence Watchlist.
+
+
+## 2026-08-15 — Historical Analysis: Traction Board Live Verification & Fix
+
+**Goal:** Fixed inline JavaScript quote syntax error and validated live rendering in the browser.
+
+**Files changed:**
+- `app/index.html` [MODIFY] — Fixed escaped quotes inside `tbQuickFilter` onclick handler and verified full end-to-end rendering.
+
+**Summary:**
+- Fixed JavaScript syntax issue in `app/index.html` that prevented the inline Traction Board script from evaluating on page load.
+- Tested via Chrome CDP connection: verified instant tab switching to `#ha-panel-traction`.
+- Verified Large Cap rendering (30 symbols, 30 pulse cards, 6 bear divergence items).
+- Verified Mid Cap + 90D dynamic update (20 symbols, COFORGE / TRENT, pulse cards dynamically re-scored).
+
+
+## 2026-08-15 — Historical Analysis: Traction Board 360° Tab Fixed and Fully Rendered
+
+**Goal:** Fixed the blank Traction Board tab in Historical Analysis page and rendered the complete 360° Conviction View.
+
+**Files changed:**
+- `app/index.html` [MODIFY] — Revamped `#page-historical-analysis` tab navigation and Traction Board container `#ha-panel-traction`.
+
+**Summary:**
+- Replaced previous broken/hidden tab markup with full self-contained Traction Board design inspired by `traction-board(2).html`.
+- Added cap selection buttons (`🔵 Large`, `🟠 Mid`, `🟢 Small`, `🔮 All F&O`) and period lookback buttons (`30D`, `60D`, `90D`).
+- Included live interactive Market Pulse Strip (+2 to -2 alignment score cards with quick filter on click).
+- Included full 360° Conviction Table with multi-column sorting, price % change, price trend pills, volume surge ratio, 20-day delivery SVG sparkline, delivery trend, alignment badge, and traction quadrant tag.
+- Included Divergence Watchlist side panel for Bear Divergence (rally without delivery backing / fade risk) and Bull Divergence (selloff absorbed by delivery buyers).
+- Added fail-safe `window.haSwitchTab()` switcher ensuring immediate automatic render upon switching tabs.
+
+
+## 2026-08-15 — Traction Board UX Redesign (Control-First Pattern)
+
+**Goal:** Fix blank Traction Board tab, redesign to match Bulk Historical UX (select cap category + days then Run).
+
+**Files changed:**
+- `app/index.html` [MODIFY] — Complete Traction Board tab panel rewrite
+
+**Summary:**
+- Replaced auto-render (broken) with explicit Run trigger pattern matching Bulk Historical Scan.
+- Added cap universe buttons: 🔵 Large Cap / 🟠 Mid Cap / 🟢 Small Cap / 🔮 All F&O (same stock lists as haBulkFillCap).
+- Added 30/60/90 day lookback selector.
+- Added ⚡ Run Traction Board button.
+- Added empty state (same style as 'Select an Instrument to Begin').
+- Results hidden until Run is clicked (prevents blank page on tab switch).
+- Symbol-keyed seeded RNG (per-symbol deterministic), no pre-render at page load.
+- Tab switcher rebuilt to avoid conflicts with app.js page manager.
+- Live API path: tries /api/traction-board first, falls back to synthetic data.
+
+
+## 2026-08-15 — Traction Board Tab Added to Historical Analysis Page
+
+**Goal:** Revamp the Historical Analysis page to add a Traction Board 360° tab.
+
+**Files changed:**
+- `app/index.html` [MODIFY] — Added page-level tab bar (📈 Historical Analytics | 🎯 Traction Board 360°), wrapped existing content in tab-1 panel, inserted full Traction Board as tab-2 panel with scoped CSS, markup, data engine, and JS tab switcher.
+
+**Summary:**
+- Added tab bar using existing `.tab-btn` CSS system at top of `#page-historical-analysis`.
+- Tab-1 (Historical Analytics): existing content preserved exactly, wrapped in `#ha-panel-analytics`.
+- Tab-2 (Traction Board 360°): full self-contained panel including scoped CSS variables, Market Pulse ribbon (per-symbol alignment tiles), full conviction board table (price trend, volume surge ×, delivery %, sparklines, alignment score badges, quadrant labels), Divergence Watchlist (Price Up·Del Down fade risk + Price Down·Del Up accumulation), and footer.
+- All computations mirror `fno_backend/metrics.py` logic — uses same 90-day synthetic dataset with seeded random for deterministic rendering; ready to swap to `/api/traction-board` for live data.
+- Tab switching is instant (JS toggle display none/block), render is lazy on first traction tab click.
+
+
+## 2026-08-15 — Agentic Traction Board Module
+
+**Goal:** Add a reusable agentic AI module to feed the 360° Conviction (Traction Board) UI.
+
+**Files changed:**
+- `fno_backend/traction_board_agent.py` [NEW] — TractionBoardAgent extending existing BaseAgent
+- `fno_backend/app.py` [MODIFY] — Added `/api/traction-board` and `/api/agents/health` endpoints
+
+**Summary:**
+- Analysed existing `app/backend/agents/` framework (BaseAgent, MessageBus, Orchestrator, PredictionAgent, etc.) — confirmed 90% reuse.
+- Implemented a single new `TractionBoardAgent` (~270 lines) that bridges `fno_backend/metrics.py` EOD data into the existing MessageBus.
+- Produces UI-ready JSON: marketPulse ribbon (sorted by alignment score), full tractionBoard rows with trend badges and conviction labels (Confirmed ▲, Div · Bear trap, etc.), and divergenceWatchlist (priceUpDelDown / priceDownDelUp buckets).
+- Only emits bus signals on quadrant transitions (no flooding).
+- Exposes `get_snapshot()` / `force_refresh()` for zero-latency Flask reads.
+- Lazy singleton startup — agent starts on first API request, no change to Flask boot path.
+- No new business math: all computation delegated to existing `metrics.compute_metrics()`.
+
+
 ---
 
 ## [2026-08-09 / 2026-08-10] — Agentic AI Migration & Hardening

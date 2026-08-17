@@ -108,6 +108,10 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--t1);min-hei
 .tbl thead th{padding:5px 6px;font-size:8px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;
   color:var(--t2);border-bottom:1px solid var(--b);white-space:nowrap;background:rgba(5,12,26,.8);
   position:sticky;top:0;z-index:10;text-align:left;}
+.tbl thead th.sortable{cursor:pointer;user-select:none;}
+.tbl thead th.sortable:hover{color:var(--t1);background:rgba(59,130,246,.12);}
+.tbl thead th.sort-asc::after{content:' ▲';color:var(--acc);font-size:7px;}
+.tbl thead th.sort-desc::after{content:' ▼';color:var(--acc);font-size:7px;}
 .tbl tbody tr{border-bottom:1px solid rgba(55,110,210,.1);transition:background .15s,box-shadow .15s;cursor:pointer;}
 .tbl tbody tr:hover{background:rgba(59,130,246,.05);}
 .tbl tbody tr.selected{background:rgba(59,130,246,.1)!important;}
@@ -268,6 +272,7 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--t1);min-hei
 .gain-pct.gain-fire{color:#ff8c40;background:rgba(239,120,40,.18);border:1px solid rgba(239,120,40,.35);text-shadow:0 0 6px rgba(255,140,64,.4);}
 .gain-pct.gain-rocket{color:var(--bull);background:rgba(34,197,94,.15);border:1px solid rgba(34,197,94,.28);}
 .gain-pct.gain-up{color:var(--acc);background:rgba(59,130,246,.12);border:1px solid rgba(59,130,246,.25);}
+.gain-badge.gain-stale{color:var(--t3);background:rgba(120,120,120,.1);border:1px solid rgba(120,120,120,.2);font-style:italic;}
 
 /* Bulls / Bears Card Upgrades */
 .bb-subfilter{display:flex;gap:4px;padding:4px 8px;background:rgba(0,0,0,.2);border-bottom:1px solid var(--b);}
@@ -425,11 +430,24 @@ select.sel:focus{outline:none;border-color:var(--acc);}
     <div class="cb" id="board-body">
       <table class="tbl" id="board-tbl">
         <thead><tr>
-          <th>#</th><th>SYMBOL</th><th>CAP</th><th>SPOT%</th><th>LTP</th>
-          <th>RVOL</th><th>LIN%</th><th>DXCNT</th>
-          <th>GAIN%</th><th>GAP%</th><th>INST</th><th>E9H</th>
-          <th>FH VOL</th><th>FUT B/U</th><th>TC/PVT/BC</th><th>DRIFT</th>
-          <th>TF</th><th>OI%</th><th>SCORE</th>
+          <th>#</th><th>SYMBOL</th>
+          <th class="sortable" onclick="sortBoard('cap')">CAP</th>
+          <th class="sortable" onclick="sortBoard('spot')">SPOT%</th>
+          <th>LTP</th>
+          <th class="sortable" onclick="sortBoard('rvol')">RVOL</th>
+          <th class="sortable" onclick="sortBoard('lin')">LIN%</th>
+          <th class="sortable" onclick="sortBoard('dxcnt')">DXCNT</th>
+          <th class="sortable" onclick="sortBoard('gain')">GAIN%</th>
+          <th class="sortable" onclick="sortBoard('gap')">GAP%</th>
+          <th class="sortable" onclick="sortBoard('inst')">INST</th>
+          <th class="sortable" onclick="sortBoard('e9h')">E9H</th>
+          <th class="sortable" onclick="sortBoard('fhS')">FH VOL</th>
+          <th class="sortable" onclick="sortBoard('fut')">FUT B/U</th>
+          <th class="sortable" onclick="sortBoard('tcpvt')">TC/PVT/BC</th>
+          <th class="sortable" onclick="sortBoard('drift')">DRIFT</th>
+          <th class="sortable" onclick="sortBoard('tf')">TF</th>
+          <th class="sortable" onclick="sortBoard('oiChg')">OI%</th>
+          <th class="sortable" onclick="sortBoard('score')">SCORE</th>
         </tr></thead>
         <tbody id="board-rows"></tbody>
       </table>
@@ -519,12 +537,23 @@ select.sel:focus{outline:none;border-color:var(--acc);}
 // --- LIVE DATA (populated by fetchAll + Socket.IO) ---
 let STOCKS = [];
 let ALERTS = [];
+let PREM_ALERTS = [];   // Premium Spike Alerts from /api/option-gainers-alerts
+let _lastPremSeq = 0;   // incremental poll cursor
 let OI_SPURTS = [];
 let BULLS = [];
 let BEARS = [];
 let _boardLoading = false;
 let _boardLoadingMsg = '';
+let _boardLoadingIsEod = false;
 const CONF_LABELS = ['15m','1h','Day','OI','Vol','Fut','DX','Drift'];
+let _sortCol = null;   // active sort column key
+let _sortDir = -1;     // -1 = desc, +1 = asc
+
+// ── Chart WebSocket Feed State ──
+let _chartSocket = null;         // shared Socket.IO reference
+let _chartVolAtOpen = {};        // sym → cumulative vol when candle opened (for delta)
+let _serverMarketOpen = null;    // server-authoritative market status (null = unknown yet)
+let _visibilityListenerAdded = false;
 
 function calcScore(s){
   let sc=0, dir=s.conf[0];
@@ -629,8 +658,9 @@ function toggleStockContracts(sym){
 
 function toggleStockChart(sym){
   if(_activeChartStock === sym) {
+    // FIX #4: stop feed BEFORE nulling _activeChartStock (stopInlineChartTickFeed reads it)
+    stopInlineChartTickFeed();
     _activeChartStock = null;
-    if(typeof stopInlineChartTickFeed === 'function') stopInlineChartTickFeed();
   } else {
     _activeChartStock = sym;
   }
@@ -701,29 +731,76 @@ function renderBoard(){
 
   const isFutBld = activeFilter === 'futbld';
   const thead = document.querySelector('#board-tbl thead');
+  const _sc=(key)=>{
+    const asc=_sortDir>0?'sort-asc':'sort-desc';
+    return `sortable${_sortCol===key?' '+asc:''}`;
+  };
   if(thead){
     if(isFutBld){
       thead.innerHTML = `<tr>
-        <th>#</th><th>SYMBOL</th><th>CAP</th><th>SPOT%</th><th>SPOT PRICE</th>
-        <th>DXCNT</th>
-        <th>GAP%</th><th>INST</th>
-        <th>FUT B/U</th><th>TC/PVT/BC</th><th>DRIFT</th>
-        <th>RVOL</th><th>FH VOL</th><th>E9H</th>
-        <th>TF</th><th>OI%</th><th>SCORE</th>
+        <th>#</th><th>SYMBOL</th>
+        <th class="${_sc('cap')}" onclick="sortBoard('cap')">CAP</th>
+        <th class="${_sc('spot')}" onclick="sortBoard('spot')">SPOT%</th>
+        <th>SPOT PRICE</th>
+        <th class="${_sc('dxcnt')}" onclick="sortBoard('dxcnt')">DXCNT</th>
+        <th class="${_sc('gap')}" onclick="sortBoard('gap')">GAP%</th>
+        <th class="${_sc('inst')}" onclick="sortBoard('inst')">INST</th>
+        <th class="${_sc('fut')}" onclick="sortBoard('fut')">FUT B/U</th>
+        <th class="${_sc('tcpvt')}" onclick="sortBoard('tcpvt')">TC/PVT/BC</th>
+        <th class="${_sc('drift')}" onclick="sortBoard('drift')">DRIFT</th>
+        <th class="${_sc('rvol')}" onclick="sortBoard('rvol')">RVOL</th>
+        <th class="${_sc('fhS')}" onclick="sortBoard('fhS')">FH VOL</th>
+        <th class="${_sc('e9h')}" onclick="sortBoard('e9h')">E9H</th>
+        <th class="${_sc('tf')}" onclick="sortBoard('tf')">TF</th>
+        <th class="${_sc('oiChg')}" onclick="sortBoard('oiChg')">OI%</th>
+        <th class="${_sc('score')}" onclick="sortBoard('score')">SCORE</th>
       </tr>`;
     } else {
       thead.innerHTML = `<tr>
-        <th>#</th><th>SYMBOL</th><th>CAP</th><th>SPOT%</th>
-        <th>LIN%</th><th>DXCNT</th>
-        <th>GAIN%</th><th>GAP%</th><th>INST</th>
-        <th>FUT B/U</th><th>TC/PVT/BC</th><th>DRIFT</th>
-        <th>RVOL</th><th>FH VOL</th><th>E9H</th>
-        <th>TF</th><th>OI%</th><th>SCORE</th>
+        <th>#</th><th>SYMBOL</th>
+        <th class="${_sc('cap')}" onclick="sortBoard('cap')">CAP</th>
+        <th class="${_sc('spot')}" onclick="sortBoard('spot')">SPOT%</th>
+        <th class="${_sc('lin')}" onclick="sortBoard('lin')">LIN%</th>
+        <th class="${_sc('dxcnt')}" onclick="sortBoard('dxcnt')">DXCNT</th>
+        <th class="${_sc('gain')}" onclick="sortBoard('gain')">GAIN%</th>
+        <th class="${_sc('gap')}" onclick="sortBoard('gap')">GAP%</th>
+        <th class="${_sc('inst')}" onclick="sortBoard('inst')">INST</th>
+        <th class="${_sc('fut')}" onclick="sortBoard('fut')">FUT B/U</th>
+        <th class="${_sc('tcpvt')}" onclick="sortBoard('tcpvt')">TC/PVT/BC</th>
+        <th class="${_sc('drift')}" onclick="sortBoard('drift')">DRIFT</th>
+        <th class="${_sc('rvol')}" onclick="sortBoard('rvol')">RVOL</th>
+        <th class="${_sc('fhS')}" onclick="sortBoard('fhS')">FH VOL</th>
+        <th class="${_sc('e9h')}" onclick="sortBoard('e9h')">E9H</th>
+        <th class="${_sc('tf')}" onclick="sortBoard('tf')">TF</th>
+        <th class="${_sc('oiChg')}" onclick="sortBoard('oiChg')">OI%</th>
+        <th class="${_sc('score')}" onclick="sortBoard('score')">SCORE</th>
       </tr>`;
     }
   }
 
   const rows=getFiltered();
+  if(_sortCol){
+    const _capOrd={L:3,M:2,S:1};
+    const _sortFn={
+      cap:   s=>_capOrd[s.cap]||0,
+      spot:  s=>s.spot,
+      lin:   s=>s.lin,
+      dxcnt: s=>s.dxcnt,
+      gain:  s=>s.gain,
+      gap:   s=>s.gap,
+      inst:  s=>parseFloat(s.inst)||0,
+      fut:   s=>(s.fut||'').charCodeAt(0)||0,
+      tcpvt: s=>(s.tc==='b'?1:0)+(s.pvt==='b'?1:0)+(s.bc==='b'?1:0),
+      drift: s=>parseFloat(s.driftRaw)||0,
+      rvol:  s=>s.rvol,
+      fhS:   s=>s.fhS,
+      e9h:   s=>parseFloat(s.e9hText)||0,
+      tf:    s=>(s.conf||[]).filter(c=>c==='b').length,
+      oiChg: s=>s.oiChg,
+      score: s=>calcScore(s),
+    }[_sortCol];
+    if(_sortFn) rows.sort((a,b)=>_sortDir*(_sortFn(b)-_sortFn(a)));
+  }
   const mcEl=document.getElementById('mc');
   if(mcEl) mcEl.textContent=rows.length;
   const tbody=document.getElementById('board-rows');
@@ -733,8 +810,8 @@ function renderBoard(){
     if(_boardLoading){
       tbody.innerHTML=`<tr><td colspan="19" style="text-align:center;padding:48px 16px;color:var(--t2);">
         <div style="font-size:24px;margin-bottom:8px;">📸</div>
-        <div style="font-size:12px;font-weight:700;color:var(--t1);margin-bottom:4px;">${_boardLoadingMsg||'Rebuilding EOD Snapshot…'}</div>
-        <div style="font-size:10px;color:var(--t2);">Fetching end-of-day data — auto-refreshing in 30s.</div>
+        <div style="font-size:12px;font-weight:700;color:var(--t1);margin-bottom:4px;">${_boardLoadingMsg||(_boardLoadingIsEod?'Rebuilding EOD Snapshot…':'Initializing Live Board…')}</div>
+        <div style="font-size:10px;color:var(--t2);">${_boardLoadingIsEod?'Fetching end-of-day data':'Fetching live data'} — auto-refreshing in 30s.</div>
       </td></tr>`;
     } else {
       tbody.innerHTML=`<tr><td colspan="19" style="text-align:center;padding:48px 16px;color:var(--t2);">
@@ -812,7 +889,7 @@ function renderBoard(){
           </td>
         </tr>` : '';
 
-      return `<tr class="${dir} ${glow} ${isChartOpen?'selected':''}" style="cursor:pointer;" onclick="toggleStockChart('${s.sym}')">
+    return `<tr class="${dir} ${glow} ${isChartOpen?'selected':''}" style="cursor:pointer;" onclick="toggleStockChart('${s.sym}')">
         <td class="rank">${s.rank}</td><td class="sym">${expChartIcon}${s.sym}</td>
         <td>${capBadge(s.cap)}</td>
         <td class="mono"><div class="gain-cell"><span class="spot-badge ${sCls}">${s.spot>0?'+':''}${s.spot}%</span>${sp}</div></td>
@@ -832,15 +909,18 @@ function renderBoard(){
       </tr>${chartSubrowHtml}`;
     }
 
-    const expIcon=s.contracts&&s.contracts.length?`<span style="display:inline-block;font-size:8px;margin-right:4px;color:var(--t2);transform:${isExp?'rotate(90deg)':'none'};transition:transform .15s;">▶</span>`:'';
-    const subrowHtml = (isExp && s.contracts && s.contracts.length) ? `
-      <tr class="contracts-subrow">
+    const expIcon=(s.hasOptionGain)?`<span style="display:inline-block;font-size:8px;margin-right:4px;color:var(--t2);transform:${isExp?'rotate(90deg)':'none'};transition:transform .15s;">▶</span>`:'';
+
+    const subrowHtml = isExp ? (
+      (s.contracts && s.contracts.length)
+        ? `<tr class="contracts-subrow">
         <td colspan="19" style="padding:0;">
           <div class="contracts-container">
             ${s.contracts.map(c=>{
               const gainVal = c.gain_pct != null ? +c.gain_pct : 0;
-              const gClass = gainVal >= 100 ? 'gain-fire' : (gainVal >= 50 ? 'gain-rocket' : 'gain-up');
-              const emoji = gainVal >= 100 ? '🔥' : (gainVal >= 50 ? '🚀' : '📈');
+              const isStale = !!c.ltp_stale;
+              const gClass = isStale ? 'gain-stale' : (gainVal >= 100 ? 'gain-fire' : (gainVal >= 50 ? 'gain-rocket' : 'gain-up'));
+              const emoji = isStale ? '⏳' : (gainVal >= 100 ? '🔥' : (gainVal >= 50 ? '🚀' : '📈'));
               const isOpening = !!c.is_opening;
               const tag = isOpening ? '⭐' : '🏃';
               const tagCls = isOpening ? 'gold' : 'run';
@@ -848,6 +928,7 @@ function renderBoard(){
               const openPrem = (c.open_prem != null ? +c.open_prem : 0).toFixed(1);
               const curLtp = (c.ltp != null ? +c.ltp : 0).toFixed(1);
               const gPct = gainVal.toFixed(1);
+              const staleNote = isStale ? '<span style="font-size:8px;color:var(--t3);margin-left:4px;">no tick yet</span>' : '';
               return `<div class="option-card">
                 <div class="opt-left">
                   <span class="layer-tag ${tagCls}" title="${isOpening ? 'Opening strike (locked at 09:15)' : 'Running strike (accumulated)'}">${tag}</span>
@@ -859,18 +940,21 @@ function renderBoard(){
                     <div class="premium-flow">
                       <span class="flow-open" title="Strike open price">&#8377;${openPrem}</span>
                       <span class="flow-arrow">→</span>
-                      <span class="flow-ltp" title="Current LTP">&#8377;${curLtp}</span>
+                      <span class="flow-ltp" title="Current LTP" style="${isStale?'color:var(--t3);':''}">&#8377;${curLtp}</span>
+                      ${staleNote}
                     </div>
                   </div>
                 </div>
                 <div class="opt-right">
-                  <span class="gain-badge ${gClass}">${emoji} +${gPct}%</span>
+                  <span class="gain-badge ${gClass}">${emoji} ${isStale ? 'STALE' : '+' + gPct + '%'}</span>
                 </div>
               </div>`;
             }).join('')}
           </div>
         </td>
-      </tr>` : '';
+      </tr>`
+        : `<tr class="contracts-subrow"><td colspan="19" style="padding:10px 16px;color:var(--t2);font-size:10px;text-align:center;">⏳ Loading premium contracts… refresh in a moment.</td></tr>`
+    ) : '';
 
     return `<tr class="${dir} ${glow} ${isExp?'selected':''}" style="cursor:pointer;" onclick="toggleStockContracts('${s.sym}')">
       <td class="rank">${s.rank}</td><td class="sym">${expIcon}${s.sym}</td>
@@ -893,7 +977,7 @@ function renderBoard(){
     </tr>${subrowHtml}`;
   }).join('');
 
-  if (isFutBld && _activeChartStock) {
+  if (_activeChartStock) {
     const activeStock = rows.find(s => s.sym === _activeChartStock);
     if (activeStock) {
       const pdhVal = activeStock.pdh;
@@ -916,7 +1000,7 @@ function renderBoard(){
    NATIVE IN-LINE INTRADAY CANDLESTICK & CPR CHART ENGINE
 ============================================================ */
 let _inlineChartTf = 5;
-let _inlineChartTickTimer = null;
+// _inlineChartTickTimer removed: replaced by Socket.IO push (chart_tick event)
 const _tokenCache = {};
 const _chartCandlesCache = {};
 const _chartMouseHandlers = {};
@@ -933,43 +1017,78 @@ function isMarketOpen() {
 
 function switchInlineChartTf(sym, tf) {
   _inlineChartTf = tf;
+  // FIX #2: reset volume baseline so next tick delta is correct for new TF
+  delete _chartVolAtOpen[sym];
+  // Invalidate cache so initInlineChart re-fetches with new interval
+  if (_chartCandlesCache[sym]) delete _chartCandlesCache[sym];
   renderBoard();
 }
 
-function stopInlineChartTickFeed() {
-  if (_inlineChartTickTimer) {
-    clearInterval(_inlineChartTickTimer);
-    _inlineChartTickTimer = null;
-  }
+// stopInlineChartTickFeed defined below via Socket.IO emit
+
+// ── Socket.IO push-based chart tick feed (replaces setInterval REST polling) ──
+
+function initChartSocketFeed(socketRef) {
+  _chartSocket = socketRef;
+
+  // FIX #5: remove existing listeners before adding to prevent duplicates on reconnect
+  socketRef.off('chart_tick');
+  socketRef.off('chart_subscribed');
+  socketRef.off('chart_tick_error');
+
+  socketRef.on('chart_tick', (d) => {
+    if (d.sym !== _activeChartStock) return;
+    if (_serverMarketOpen === false) return; // server says market closed
+    const data = _chartCandlesCache[d.sym];
+    if (!data || !data.candles || !data.candles.length) return;
+
+    // Per-candle volume delta: track baseline at each candle boundary
+    const tf = (data.tf || 5) * 60000;
+    const boundary = Math.floor(d.ts / tf) * tf;
+    const lastCandle = data.candles[data.candles.length - 1];
+    if (boundary > lastCandle.timestamp) {
+      // New candle started: set new baseline
+      _chartVolAtOpen[d.sym] = d.volume;
+    }
+    const volDelta = Math.max(0, (d.volume || 0) - (_chartVolAtOpen[d.sym] || 0));
+    applyLiveTickToInlineChart(d.sym, d.ltp, volDelta, d.ts);
+  });
+
+  socketRef.on('chart_subscribed', (d) => {
+    console.log('[Chart] WS subscribed:', d.sym);
+  });
+  socketRef.on('chart_tick_error', (d) => {
+    console.warn('[Chart] WS error:', d.sym, d.msg);
+  });
 }
 
 function startInlineChartTickFeed(sym) {
-  stopInlineChartTickFeed();
-  if (!isMarketOpen()) return; // Never poll live ticks outside market hours
-  _inlineChartTickTimer = setInterval(async () => {
-    if (_activeChartStock !== sym || !isMarketOpen()) {
-      stopInlineChartTickFeed();
-      return;
+  // Only start if market is open (or unknown — will be validated by server)
+  if (_serverMarketOpen === false) return;
+  if (_chartSocket) {
+    _chartSocket.emit('chart_subscribe', { sym });
+    // Initialize candle-open volume baseline
+    const data = _chartCandlesCache[sym];
+    if (data && data.candles && data.candles.length) {
+      const last = data.candles[data.candles.length - 1];
+      _chartVolAtOpen[sym] = last.volume || 0;
     }
-    try {
-      const res = await fetch(`/kite/quote?symbols=${encodeURIComponent(sym)}`);
-      if (res.ok) {
-        const json = await res.json();
-        const q = json.data && json.data[sym];
-        if (q && q.last_price) {
-          applyLiveTickToInlineChart(sym, q.last_price, q.volume, Date.now());
-        }
-      }
-    } catch (e) {
-      // Background tick poll error handler
-    }
-  }, 2500);
+  }
+}
+
+function stopInlineChartTickFeed() {
+  if (_chartSocket && _activeChartStock) {
+    _chartSocket.emit('chart_unsubscribe', { sym: _activeChartStock });
+  }
 }
 
 function applyLiveTickToInlineChart(sym, ltp, volume, timestamp) {
-  if (!isMarketOpen()) return; // Never mutate chart candles outside market hours
+  // Market check uses server authority; fallback to client clock
+  const mktOpen = _serverMarketOpen !== null ? _serverMarketOpen : isMarketOpen();
+  if (!mktOpen) return;
   const data = _chartCandlesCache[sym];
   if (!data || !data.candles || !data.candles.length || !data.rawCandles || !data.rawCandles.length) return;
+
 
   const tfMinutes = data.tf || 5;
   const intervalMs = tfMinutes * 60 * 1000;
@@ -1044,8 +1163,10 @@ function calcVWAP(candles) {
 }
 
 function attachChartMouseHandlers(sym, container, canvas) {
-  if (_chartMouseHandlers[sym]) return;
-  _chartMouseHandlers[sym] = true;
+  // Guard against duplicate attach on the SAME node, but re-attach when
+  // renderBoard() rebuilds the DOM (new node object after innerHTML reset).
+  if (_chartMouseHandlers[sym] === container) return;
+  _chartMouseHandlers[sym] = container;   // store node ref, not boolean
   container.addEventListener('mousemove', (e) => {
     const rect = canvas.getBoundingClientRect();
     const mouseX = e.clientX - rect.left;
@@ -1053,11 +1174,10 @@ function attachChartMouseHandlers(sym, container, canvas) {
     drawInlineCandleCanvas(sym, { x: mouseX, y: mouseY });
   });
   container.addEventListener('mouseleave', () => {
-    const hud = document.getElementById(`ichart-hud-${sym}`);
-    if (hud) hud.style.display = 'none';
     drawInlineCandleCanvas(sym, null);
   });
 }
+
 
 async function initInlineChart(sym, levels = {}) {
   const container = document.getElementById(`ichart-container-${sym}`);
@@ -1074,8 +1194,9 @@ async function initInlineChart(sym, levels = {}) {
     if (loadingEl) loadingEl.style.display = 'none';
     drawInlineCandleCanvas(sym, null);
 
-    // If market is closed or cache is very fresh (<30s), don't refetch
-    if (!isMarketOpen() || (Date.now() - (cached.lastFetch || 0) < 30000)) {
+    // FIX #1: use server-authoritative market status for cache freshness, not client clock
+    const marketIsOpen = _serverMarketOpen !== null ? _serverMarketOpen : isMarketOpen();
+    if (!marketIsOpen || (Date.now() - (cached.lastFetch || 0) < 30000)) {
       startInlineChartTickFeed(sym);
       attachChartMouseHandlers(sym, container, canvas);
       return;
@@ -1134,11 +1255,12 @@ async function initInlineChart(sym, levels = {}) {
 
   if (loadingEl) loadingEl.style.display = 'none';
 
-  // Filter to latest trading session
-  const latestTs = candles[candles.length - 1].timestamp;
-  const latestDayStr = new Date(latestTs).toISOString().split('T')[0];
-  const sessionCandles = candles.filter(c => new Date(c.timestamp).toISOString().split('T')[0] === latestDayStr);
-  const activeCandles = sessionCandles.length >= 3 ? sessionCandles : candles.slice(-50);
+  // FIX #3: TF-aware session candle count (75 per 5m session, 25 per 15m session)
+  const candlesPerSession = Math.round(375 / _inlineChartTf);
+  const THREE_SESSION_CANDLES = 3 * candlesPerSession;
+  const activeCandles = candles.length > THREE_SESSION_CANDLES
+    ? candles.slice(-THREE_SESSION_CANDLES)
+    : candles;
 
   // Indicators calculated over full fetched window (warmup), then sliced
   const fullCloses = candles.map(c => c.close);
@@ -1161,8 +1283,22 @@ async function initInlineChart(sym, levels = {}) {
 
   drawInlineCandleCanvas(sym, null);
 
-  // Start Live Tick Polling for active stock (market hours only)
+  // Start live tick feed via Socket.IO (market hours only)
   startInlineChartTickFeed(sym);
+
+  // Tab visibility reconnect (added once globally)
+  if (!_visibilityListenerAdded) {
+    _visibilityListenerAdded = true;
+    document.addEventListener('visibilitychange', () => {
+      if (document.visibilityState === 'visible' && _activeChartStock) {
+        // Re-subscribe (socket may have reconnected while tab was hidden)
+        startInlineChartTickFeed(_activeChartStock);
+        // Reload to fill missed candles
+        const lvls = (_chartCandlesCache[_activeChartStock] || {}).levels || {};
+        initInlineChart(_activeChartStock, lvls);
+      }
+    });
+  }
 
   // Mousemove Crosshair & HUD Listener
   attachChartMouseHandlers(sym, container, canvas);
@@ -1174,11 +1310,14 @@ function drawInlineCandleCanvas(sym, hoverPos = null) {
   const data = _chartCandlesCache[sym];
   if (!canvas || !data || !data.candles || !data.candles.length) return;
 
+  // Hide HTML HUD — all OHLCV info is now rendered directly on canvas
+  if (hud) hud.style.display = 'none';
+
   const { candles, ema9, ema21, vwap, levels } = data;
   const ctx = canvas.getContext('2d');
   const dpr = window.devicePixelRatio || 1;
   const rect = canvas.getBoundingClientRect();
-  
+
   const width = rect.width || canvas.parentElement.clientWidth || 800;
   const height = 380;
 
@@ -1190,32 +1329,28 @@ function drawInlineCandleCanvas(sym, hoverPos = null) {
   ctx.save();
   ctx.scale(dpr, dpr);
 
-  // Solid White Canvas Background
+  // Background
   ctx.fillStyle = '#ffffff';
   ctx.fillRect(0, 0, width, height);
 
-  const pl = 14, pr = 78, pt = 16, pb = 26;
+  // Layout — pt=42 reserves top space for 2-line OHLCV info bar
+  const pl = 14, pr = 78, pt = 42, pb = 26;
   const cw = width - pl - pr;
   const ch = height - pt - pb;
   const n = candles.length;
 
-  // Compute Min & Max bounds
-  let minPrice = Infinity;
-  let maxPrice = -Infinity;
+  // ── Price Bounds ──────────────────────────────────────────────────────────
+  let minPrice = Infinity, maxPrice = -Infinity;
   candles.forEach(c => {
-    if (c.low < minPrice) minPrice = c.low;
+    if (c.low  < minPrice) minPrice = c.low;
     if (c.high > maxPrice) maxPrice = c.high;
   });
-
-  // Include Key Levels in bounds
-  const checkLevels = [levels.pdh, levels.pdl, levels.tc, levels.piv, levels.bc];
-  checkLevels.forEach(lvl => {
+  [levels.pdh, levels.pdl, levels.tc, levels.piv, levels.bc].forEach(lvl => {
     if (lvl != null && Number.isFinite(lvl)) {
       if (lvl < minPrice) minPrice = lvl;
       if (lvl > maxPrice) maxPrice = lvl;
     }
   });
-
   const pRange = Math.max(1, maxPrice - minPrice);
   minPrice -= pRange * 0.03;
   maxPrice += pRange * 0.03;
@@ -1225,7 +1360,88 @@ function drawInlineCandleCanvas(sym, hoverPos = null) {
   const getX = i => pl + (i + 0.5) * (cw / n);
   const candleW = Math.max(2.5, Math.min(16, (cw / n) * 0.7));
 
-  // Horizontal Grid Lines & Right Price Axis
+  // ── OHLCV Info Bar (canvas top-left, always rendered) ────────────────────
+  // Default: last candle; hover: hovered candle
+  let infoIdx = n - 1;
+  if (hoverPos && hoverPos.x >= pl && hoverPos.x <= width - pr &&
+      hoverPos.y >= pt && hoverPos.y <= pt + ch) {
+    const idx = Math.floor(((hoverPos.x - pl) / cw) * n);
+    infoIdx = Math.max(0, Math.min(n - 1, idx));
+  }
+  const ic   = candles[infoIdx];
+  const icChg    = ic.close - ic.open;
+  const icChgPct = (icChg / Math.max(0.01, ic.open)) * 100;
+  const icColor  = icChg >= 0 ? '#16a34a' : '#dc2626';
+  const fmtV = v => v > 1e6 ? (v/1e6).toFixed(2)+'M' : v > 1e3 ? (v/1e3).toFixed(1)+'K' : String(v||0);
+  const fmtP = v => v.toFixed(2);
+
+  // — Line 1: Symbol · TF  O: H: L: C:  Δ  Vol:
+  const L1Y = 13;
+  let cx = pl;
+  ctx.font = 'bold 10px Inter,system-ui,sans-serif';
+  ctx.fillStyle = '#1e293b';
+  const hdrTxt = `${sym} · ${data.tf||5}m   `;
+  ctx.fillText(hdrTxt, cx, L1Y);
+  cx += ctx.measureText(hdrTxt).width;
+
+  const ohlc = [
+    { lbl:'O:', val: fmtP(ic.open),  col:'#64748b' },
+    { lbl:'H:', val: fmtP(ic.high),  col:'#16a34a' },
+    { lbl:'L:', val: fmtP(ic.low),   col:'#dc2626' },
+    { lbl:'C:', val: fmtP(ic.close), col: icColor  },
+  ];
+  for (const o of ohlc) {
+    ctx.font = '9px Inter,system-ui,sans-serif';
+    ctx.fillStyle = '#94a3b8';
+    ctx.fillText(o.lbl, cx, L1Y);
+    cx += ctx.measureText(o.lbl).width + 1;
+    ctx.font = 'bold 10px Inter,system-ui,sans-serif';
+    ctx.fillStyle = o.col;
+    ctx.fillText(o.val + '  ', cx, L1Y);
+    cx += ctx.measureText(o.val + '  ').width;
+  }
+  // Change
+  ctx.font = 'bold 10px Inter,system-ui,sans-serif';
+  ctx.fillStyle = icColor;
+  const chgTxt = `${icChg>=0?'+':''}${icChg.toFixed(2)} (${icChgPct>=0?'+':''}${icChgPct.toFixed(2)}%)`;
+  ctx.fillText(chgTxt, cx, L1Y);
+  cx += ctx.measureText(chgTxt).width + 8;
+  // Volume
+  ctx.font = '9px Inter,system-ui,sans-serif';
+  ctx.fillStyle = '#94a3b8';
+  ctx.fillText('Vol:', cx, L1Y);
+  cx += ctx.measureText('Vol:').width + 2;
+  ctx.font = 'bold 9.5px Inter,system-ui,sans-serif';
+  ctx.fillStyle = '#475569';
+  ctx.fillText(fmtV(ic.volume), cx, L1Y);
+
+  // — Line 2: Indicator values
+  const L2Y = 28;
+  let cx2 = pl;
+  const inds = [
+    { lbl:'EMA9',  val: ema9[infoIdx]?.toFixed(2)  || '—', col:'#2563eb' },
+    { lbl:'EMA21', val: ema21[infoIdx]?.toFixed(2) || '—', col:'#dc2626' },
+    { lbl:'VWAP',  val: vwap[infoIdx]?.toFixed(2)  || '—', col:'#16a34a' },
+  ];
+  for (const ind of inds) {
+    ctx.font = '9px Inter,system-ui,sans-serif';
+    ctx.fillStyle = '#94a3b8';
+    ctx.fillText(ind.lbl + ': ', cx2, L2Y);
+    cx2 += ctx.measureText(ind.lbl + ': ').width;
+    ctx.font = 'bold 9px Inter,system-ui,sans-serif';
+    ctx.fillStyle = ind.col;
+    ctx.fillText(ind.val + '    ', cx2, L2Y);
+    cx2 += ctx.measureText(ind.val + '    ').width;
+  }
+
+  // Separator line under info bar
+  ctx.strokeStyle = 'rgba(0,0,0,0.07)';
+  ctx.setLineDash([]);
+  ctx.lineWidth = 0.5;
+  ctx.beginPath(); ctx.moveTo(0, pt-2); ctx.lineTo(width, pt-2); ctx.stroke();
+  // ─────────────────────────────────────────────────────────────────────────
+
+  // ── Horizontal Grid Lines & Right Price Axis ──────────────────────────────
   const numGridTicks = 6;
   ctx.lineWidth = 1;
   ctx.font = '10px monospace';
@@ -1233,186 +1449,138 @@ function drawInlineCandleCanvas(sym, hoverPos = null) {
   for (let i = 0; i <= numGridTicks; i++) {
     const p = minPrice + (effectiveRange / numGridTicks) * i;
     const y = getY(p);
-    ctx.strokeStyle = 'rgba(0, 0, 0, 0.07)';
-    ctx.setLineDash([4, 4]);
-    ctx.beginPath();
-    ctx.moveTo(pl, y);
-    ctx.lineTo(width - pr, y);
-    ctx.stroke();
-
+    ctx.strokeStyle = 'rgba(0,0,0,0.07)';
+    ctx.setLineDash([4,4]);
+    ctx.beginPath(); ctx.moveTo(pl,y); ctx.lineTo(width-pr,y); ctx.stroke();
     ctx.setLineDash([]);
-    ctx.fillText('₹' + (p >= 100 ? p.toFixed(1) : p.toFixed(2)), width - pr + 8, y + 3.5);
+    ctx.fillStyle = '#475569';
+    ctx.fillText('₹'+(p>=100?p.toFixed(1):p.toFixed(2)), width-pr+8, y+3.5);
   }
 
-  // Vertical Grid Lines & Time Labels
-  const step = Math.max(1, Math.floor(n / 6));
+  // ── Vertical Grid Lines & Time Labels ─────────────────────────────────────
+  const step = Math.max(1, Math.floor(n/6));
+  ctx.font = '10px monospace';
   for (let i = 0; i < n; i += step) {
     const x = getX(i);
-    const c = candles[i];
-    const d = new Date(c.timestamp);
-    const hh = String(d.getHours()).padStart(2, '0');
-    const mm = String(d.getMinutes()).padStart(2, '0');
-    const timeStr = `${hh}:${mm}`;
-
-    ctx.strokeStyle = 'rgba(0, 0, 0, 0.05)';
-    ctx.setLineDash([3, 3]);
-    ctx.beginPath();
-    ctx.moveTo(x, pt);
-    ctx.lineTo(x, pt + ch);
-    ctx.stroke();
-
+    const d = new Date(candles[i].timestamp);
+    const timeStr = `${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`;
+    ctx.strokeStyle = 'rgba(0,0,0,0.05)';
+    ctx.setLineDash([3,3]);
+    ctx.beginPath(); ctx.moveTo(x,pt); ctx.lineTo(x,pt+ch); ctx.stroke();
     ctx.setLineDash([]);
-    ctx.fillText(timeStr, x - 14, height - 8);
+    ctx.fillStyle = '#475569';
+    ctx.fillText(timeStr, x-14, height-8);
   }
 
-  // Volume Sub-Histogram (Bottom 20%)
-  const maxVol = Math.max(...candles.map(c => c.volume || 1), 1);
-  const volBaseY = pt + ch;
-  const volMaxH = ch * 0.22;
-  candles.forEach((c, i) => {
+  // ── Volume Histogram ───────────────────────────────────────────────────────
+  const maxVol = Math.max(...candles.map(c=>c.volume||1), 1);
+  const volBaseY = pt+ch, volMaxH = ch*0.22;
+  candles.forEach((c,i) => {
     const x = getX(i);
-    const vH = ((c.volume || 0) / maxVol) * volMaxH;
-    const isUp = c.close >= c.open;
-    ctx.fillStyle = isUp ? 'rgba(22, 163, 74, 0.22)' : 'rgba(220, 38, 38, 0.22)';
-    ctx.fillRect(x - candleW / 2, volBaseY - vH, candleW, vH);
+    const vH = ((c.volume||0)/maxVol)*volMaxH;
+    ctx.fillStyle = c.close>=c.open ? 'rgba(22,163,74,0.22)' : 'rgba(220,38,38,0.22)';
+    ctx.fillRect(x-candleW/2, volBaseY-vH, candleW, vH);
   });
 
-  // CPR & Key Level Lines
+  // ── CPR / Key Level Lines ──────────────────────────────────────────────────
   function drawLevelLine(val, label, color) {
-    if (val == null || !Number.isFinite(val)) return;
+    if (val==null||!Number.isFinite(val)) return;
     const y = getY(val);
-    if (y < pt - 5 || y > pt + ch + 5) return;
-
-    ctx.strokeStyle = color;
-    ctx.setLineDash([5, 4]);
-    ctx.lineWidth = 1.2;
-    ctx.beginPath();
-    ctx.moveTo(pl, y);
-    ctx.lineTo(width - pr, y);
-    ctx.stroke();
-
-    // Right-edge level badge
+    if (y < pt-5 || y > pt+ch+5) return;
+    ctx.strokeStyle = color; ctx.setLineDash([5,4]); ctx.lineWidth = 1.2;
+    ctx.beginPath(); ctx.moveTo(pl,y); ctx.lineTo(width-pr,y); ctx.stroke();
     ctx.setLineDash([]);
-    const txt = `${label} ₹${val >= 100 ? val.toFixed(1) : val.toFixed(2)}`;
+    const txt = `${label} ₹${val>=100?val.toFixed(1):val.toFixed(2)}`;
     ctx.font = 'bold 9px monospace';
     const tw = ctx.measureText(txt).width;
     ctx.fillStyle = '#ffffff';
-    ctx.fillRect(width - pr + 4, y - 8, tw + 8, 16);
-    ctx.strokeStyle = color;
-    ctx.strokeRect(width - pr + 4, y - 8, tw + 8, 16);
+    ctx.fillRect(width-pr+4, y-8, tw+8, 16);
+    ctx.strokeStyle = color; ctx.strokeRect(width-pr+4, y-8, tw+8, 16);
     ctx.fillStyle = color;
-    ctx.fillText(txt, width - pr + 8, y + 3.5);
+    ctx.fillText(txt, width-pr+8, y+3.5);
   }
-
-  drawLevelLine(levels.pdh, 'PDH', '#16a34a');
-  drawLevelLine(levels.pdl, 'PDL', '#dc2626');
+  drawLevelLine(levels.pdh,'PDH','#16a34a');
+  drawLevelLine(levels.pdl,'PDL','#dc2626');
   drawLevelLine(levels.tc, 'TC', '#9333ea');
-  drawLevelLine(levels.piv, 'PIV', '#0284c7');
+  drawLevelLine(levels.piv,'PIV','#0284c7');
   drawLevelLine(levels.bc, 'BC', '#4f46e5');
 
-  // Technical Indicators Lines
-  function drawIndicatorLine(series, color, lineWidth = 1.5) {
-    if (!series || !series.length) return;
-    ctx.strokeStyle = color;
-    ctx.lineWidth = lineWidth;
-    ctx.beginPath();
-    let started = false;
-    for (let i = 0; i < n; i++) {
-      const v = series[i];
-      if (v == null || !Number.isFinite(v)) continue;
-      const x = getX(i);
-      const y = getY(v);
-      if (!started) { ctx.moveTo(x, y); started = true; }
-      else { ctx.lineTo(x, y); }
+  // ── Indicator Lines ────────────────────────────────────────────────────────
+  function drawIndicatorLine(series, color, lw=1.5) {
+    if (!series||!series.length) return;
+    ctx.strokeStyle=color; ctx.lineWidth=lw; ctx.setLineDash([]); ctx.beginPath();
+    let started=false;
+    for (let i=0;i<n;i++) {
+      const v=series[i]; if(v==null||!Number.isFinite(v)) continue;
+      const x=getX(i), y=getY(v);
+      if(!started){ctx.moveTo(x,y);started=true;}else{ctx.lineTo(x,y);}
     }
     ctx.stroke();
   }
+  drawIndicatorLine(ema9, '#2563eb', 1.5);
+  drawIndicatorLine(ema21,'#dc2626', 1.5);
+  drawIndicatorLine(vwap, '#16a34a', 1.5);
 
-  drawIndicatorLine(ema9, '#2563eb', 1.5);   // EMA 9 (Blue)
-  drawIndicatorLine(ema21, '#dc2626', 1.5);  // EMA 21 (Red)
-  drawIndicatorLine(vwap, '#16a34a', 1.5);   // VWAP (Green)
-
-  // Candlesticks
-  candles.forEach((c, i) => {
-    const x = getX(i);
-    const yO = getY(c.open);
-    const yC = getY(c.close);
-    const yH = getY(c.high);
-    const yL = getY(c.low);
-    const isUp = c.close >= c.open;
+  // ── Candlesticks ───────────────────────────────────────────────────────────
+  candles.forEach((c,i) => {
+    const x=getX(i), yO=getY(c.open), yC=getY(c.close), yH=getY(c.high), yL=getY(c.low);
+    const isUp = c.close>=c.open;
     const color = isUp ? '#16a34a' : '#dc2626';
-
-    // Wick
-    ctx.strokeStyle = color;
-    ctx.lineWidth = 1;
-    ctx.beginPath();
-    ctx.moveTo(x, yH);
-    ctx.lineTo(x, yL);
-    ctx.stroke();
-
-    // Body
-    const topY = Math.min(yO, yC);
-    const bodyH = Math.max(1.5, Math.abs(yC - yO));
-    ctx.fillStyle = color;
-    ctx.fillRect(x - candleW / 2, topY, candleW, bodyH);
+    ctx.strokeStyle=color; ctx.lineWidth=1;
+    ctx.beginPath(); ctx.moveTo(x,yH); ctx.lineTo(x,yL); ctx.stroke();
+    const topY=Math.min(yO,yC), bodyH=Math.max(1.5,Math.abs(yC-yO));
+    ctx.fillStyle=color;
+    ctx.fillRect(x-candleW/2, topY, candleW, bodyH);
   });
 
-  // Crosshair & Hover HUD
-  if (hoverPos && hoverPos.x >= pl && hoverPos.x <= width - pr && hoverPos.y >= pt && hoverPos.y <= pt + ch) {
-    let idx = Math.floor(((hoverPos.x - pl) / cw) * n);
-    idx = Math.max(0, Math.min(n - 1, idx));
+  // ── Crosshair (only when hovering inside chart area) ─────────────────────
+  if (hoverPos && hoverPos.x>=pl && hoverPos.x<=width-pr &&
+      hoverPos.y>=pt && hoverPos.y<=pt+ch) {
+    let idx = Math.floor(((hoverPos.x-pl)/cw)*n);
+    idx = Math.max(0, Math.min(n-1, idx));
     const hCandle = candles[idx];
     const hx = getX(idx);
     const hy = hoverPos.y;
 
-    // Crosshair Lines
-    ctx.strokeStyle = 'rgba(0, 0, 0, 0.35)';
-    ctx.lineWidth = 0.8;
-    ctx.setLineDash([4, 4]);
-
-    // Vertical line
-    ctx.beginPath();
-    ctx.moveTo(hx, pt);
-    ctx.lineTo(hx, pt + ch);
-    ctx.stroke();
-
-    // Horizontal line
-    ctx.beginPath();
-    ctx.moveTo(pl, hy);
-    ctx.lineTo(width - pr, hy);
-    ctx.stroke();
+    // Dashed crosshair lines
+    ctx.strokeStyle='rgba(0,0,0,0.28)'; ctx.lineWidth=0.8; ctx.setLineDash([4,4]);
+    ctx.beginPath(); ctx.moveTo(hx,pt); ctx.lineTo(hx,pt+ch); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(pl,hy); ctx.lineTo(width-pr,hy); ctx.stroke();
     ctx.setLineDash([]);
 
-    // Price indicator on Y-axis
-    const hoverPrice = minPrice + (1 - (hy - pt) / ch) * effectiveRange;
-    ctx.fillStyle = '#1e293b';
-    ctx.fillRect(width - pr + 2, hy - 8, 70, 16);
-    ctx.fillStyle = '#ffffff';
-    ctx.font = 'bold 9px monospace';
-    ctx.fillText('₹' + (hoverPrice >= 100 ? hoverPrice.toFixed(1) : hoverPrice.toFixed(2)), width - pr + 6, hy + 3.5);
-
-    // Update HUD
-    if (hud && hCandle) {
-      hud.style.display = 'block';
-      const d = new Date(hCandle.timestamp);
-      const timeStr = `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;
-      const volStr = hCandle.volume > 1e6 ? (hCandle.volume / 1e6).toFixed(1) + 'M' : hCandle.volume > 1e3 ? (hCandle.volume / 1e3).toFixed(1) + 'K' : hCandle.volume;
-      const cChg = ((hCandle.close - hCandle.open) / hCandle.open * 100);
-      const chgCls = cChg >= 0 ? '#16a34a' : '#dc2626';
-
-      hud.innerHTML = `
-        <span style="color:#64748b;">${timeStr}</span> |
-        O: <b style="color:#0f172a;">&#8377;${hCandle.open.toFixed(2)}</b> |
-        H: <b style="color:#0f172a;">&#8377;${hCandle.high.toFixed(2)}</b> |
-        L: <b style="color:#0f172a;">&#8377;${hCandle.low.toFixed(2)}</b> |
-        C: <b style="color:${chgCls};">&#8377;${hCandle.close.toFixed(2)} (${cChg>=0?'+':''}${cChg.toFixed(2)}%)</b> |
-        Vol: <b style="color:#334155;">${volStr}</b> |
-        <span style="color:#2563eb;font-weight:700;">EMA9: ${ema9[idx]?.toFixed(1)||'—'}</span> |
-        <span style="color:#dc2626;font-weight:700;">EMA21: ${ema21[idx]?.toFixed(1)||'—'}</span> |
-        <span style="color:#16a34a;font-weight:700;">VWAP: ${vwap[idx]?.toFixed(1)||'—'}</span>
-      `;
+    // ── Y-axis price pill (right) ──
+    const hoverPrice = minPrice + (1-(hy-pt)/ch)*effectiveRange;
+    const priceLabel = '₹'+(hoverPrice>=100?hoverPrice.toFixed(2):hoverPrice.toFixed(2));
+    ctx.font='bold 9.5px monospace';
+    const plw = ctx.measureText(priceLabel).width + 14;
+    ctx.fillStyle='#1e293b';
+    if (ctx.roundRect) {
+      ctx.beginPath(); ctx.roundRect(width-pr+2, hy-9, plw, 18, 3); ctx.fill();
+    } else {
+      ctx.fillRect(width-pr+2, hy-9, plw, 18);
     }
+    ctx.fillStyle='#ffffff';
+    ctx.fillText(priceLabel, width-pr+8, hy+4.5);
+
+    // ── X-axis datetime pill (bottom) ──
+    const hd = new Date(hCandle.timestamp);
+    const DAYS=['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+    const MONS=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+    const dateLabel = `${DAYS[hd.getDay()]} ${hd.getDate()} ${MONS[hd.getMonth()]} '${String(hd.getFullYear()).slice(2)} ${String(hd.getHours()).padStart(2,'0')}:${String(hd.getMinutes()).padStart(2,'0')}`;
+    ctx.font='bold 9px Inter,system-ui,sans-serif';
+    const dlw = ctx.measureText(dateLabel).width + 14;
+    const dlx = Math.max(pl, Math.min(hx - dlw/2, width-pr-dlw));
+    const dly = pt+ch+4, dlh = 16;
+    ctx.fillStyle='#1e293b';
+    if (ctx.roundRect) {
+      ctx.beginPath(); ctx.roundRect(dlx, dly, dlw, dlh, 3); ctx.fill();
+    } else {
+      ctx.fillRect(dlx, dly, dlw, dlh);
+    }
+    ctx.fillStyle='#ffffff';
+    ctx.fillText(dateLabel, dlx+7, dly+11);
   }
+  // ─────────────────────────────────────────────────────────────────────────
 
   ctx.restore();
 }
@@ -1425,9 +1593,13 @@ function fil(type,btn){
   renderBoard();
 }
 
-function sortBoard(by){
-  const keys={score:s=>-calcScore(s),gain:s=>-s.gain,rvol:s=>-s.rvol,oiChg:s=>-s.oiChg,spot:s=>-Math.abs(s.spot)};
-  STOCKS.sort(keys[by]||(s=>-calcScore(s)));renderBoard();
+function sortBoard(col){
+  // Dropdown still sends legacy keys; map them to new keys
+  const legacyMap={score:'score',gain:'gain',rvol:'rvol',oiChg:'oiChg',spot:'spot'};
+  const key=legacyMap[col]||col;
+  if(_sortCol===key) _sortDir*=-1;
+  else{_sortCol=key;_sortDir=-1;}
+  renderBoard();
 }
 
 /* ALERT FEED */
@@ -1436,13 +1608,70 @@ function cfbHTML(c,lbl){
   return `<div class="cfb"><div class="cfb-bar-wrap"><div class="cfb-bar ${cls}">${c==='b'?'▲':c==='r'?'▼':'—'}</div></div><div class="cfb-lbl">${lbl}</div></div>`;
 }
 
+function _fmtMoney(v){ const n=Number(v); return Number.isFinite(n)?'₹'+n.toFixed(2):'—'; }
+function _fmtNum(v){ const n=Number(v); return Number.isFinite(n)?n.toFixed(2):'-'; }
+
 function renderAlerts(){
+  const feed=document.getElementById('afeed');
+  if(!feed) return;
+
+  // ── Prem Spikes tab: render PREM_ALERTS ───────────────────────────────────
+  if(_activeAlertTab==='prem'){
+    if(!PREM_ALERTS.length){
+      feed.innerHTML='<div class="empty"><div class="ei">✓</div><div class="et">No alerts</div><div class="es">Waiting for premium spikes…</div></div>';
+      return;
+    }
+    feed.innerHTML=PREM_ALERTS.map(a=>{
+      const isCE=a.opt_type==='CE';
+      const isBull=a.direction==='BULLISH';
+      const isOpening=a.layer==='opening';
+      const layerTag=isOpening?'⭐ STAR':'🏃 RUN';
+      const layerCls=isOpening?'gold':'run';
+      const sideCls=isCE?'CE':'PE';
+      const spotCls=(a.spot_spike_pct||0)>=0?'bull':'bear';
+      const spikePct=_fmtNum(a.premium_spike_pct);
+      const boardPct=_fmtNum(a.board_gain_pct);
+      const consPct=_fmtNum(a.consistency);
+      const premFlow=`${_fmtMoney(a.old_ltp)} → ${_fmtMoney(a.ltp)}`;
+      const spotFlow=`${_fmtMoney(a.old_spot)} → ${_fmtMoney(a.spot)}`;
+      const spotChg=(a.spot_spike_pct||0)>=0?`+${_fmtNum(a.spot_spike_pct)}`:`${_fmtNum(a.spot_spike_pct)}`;
+      const trace=`${a.direction||'-'} matched ${a.opt_type||'-'} premium velocity while board tracked this contract`;
+      return `<div class="ac prem-spike-card" style="border-left:3px solid ${isBull?'var(--bull)':'var(--bear)'};">
+        <div class="ah" style="gap:6px;flex-wrap:wrap;">
+          <div style="flex:1;min-width:0;">
+            <div style="display:flex;align-items:center;gap:5px;flex-wrap:wrap;">
+              <span class="ac-pulse-dot" style="background:${isBull?'var(--bull)':'var(--bear)'};"></span>
+              <span class="asym" style="cursor:pointer;" onclick="flashSymbolInBoard('${a.symbol}')">${a.symbol}</span>
+              <span class="aside ${sideCls}" style="font-size:9px;">${a.opt_type}</span>
+              <span class="layer-tag ${layerCls}" style="font-size:8px;padding:1px 5px;border-radius:3px;">${layerTag}</span>
+              <span style="font-size:8px;color:var(--t2);">${a.strike} ${a.label||''}</span>
+            </div>
+            <div style="font-size:9px;color:var(--t2);margin-top:2px;">${trace}</div>
+          </div>
+          <div style="text-align:right;">
+            <div style="font-size:13px;font-weight:700;color:${isBull?'var(--bull)':'var(--bear)'};">+${spikePct}%</div>
+            <div class="atime">${a.time||''}</div>
+          </div>
+        </div>
+        <div class="am" style="grid-template-columns:repeat(5,1fr);margin-top:4px;">
+          <div class="mb"><div class="mbl">Prem Flow</div><div class="mbv ${isCE?'bull':'bear'}" style="font-size:9px;">${premFlow}</div></div>
+          <div class="mb"><div class="mbl">Board Gain</div><div class="mbv bull">+${boardPct}%</div></div>
+          <div class="mb"><div class="mbl">Spot Move</div><div class="mbv ${spotCls}">${spotChg}%</div></div>
+          <div class="mb"><div class="mbl">Spot Flow</div><div class="mbv" style="font-size:9px;">${spotFlow}</div></div>
+          <div class="mb"><div class="mbl">Consistency</div><div class="mbv cyn">${consPct}%</div></div>
+        </div>
+      </div>`;
+    }).join('');
+    return;
+  }
+
+  // ── Orchestrator signals (legacy ALERTS array) ────────────────────────────
   const qf=document.getElementById('qf').value;
   let a=[...ALERTS];
   if(qf==='A') a=a.filter(x=>x.q==='A');
   if(qf==='AB') a=a.filter(x=>['A','B'].includes(x.q));
-  if(!a.length){document.getElementById('afeed').innerHTML='<div class="empty"><div class="ei">✓</div><div class="et">No alerts</div><div class="es">Broaden filter</div></div>';return;}
-  document.getElementById('afeed').innerHTML=a.map(al=>{
+  if(!a.length){feed.innerHTML='<div class="empty"><div class="ei">✓</div><div class="et">No alerts</div><div class="es">Broaden filter</div></div>';return;}
+  feed.innerHTML=a.map(al=>{
     const isCE=al.side==='CE';
     return `<div class="ac ${al.q} flash new-alert">
       <div class="ah">
@@ -1475,7 +1704,7 @@ function renderAlerts(){
   }).join('');
 }
 
-function clearAlerts(){ALERTS=[];renderAlerts();}
+function clearAlerts(){ALERTS=[];PREM_ALERTS=[];_lastPremSeq=0;renderAlerts();}
 
 /* TAB SWITCHING & BULLS/BEARS */
 let _bbFilterBulls = 'all';
@@ -1677,10 +1906,11 @@ function updateSessionStats(board, futMap){
   const aCnt=ALERTS.filter(a=>a.q==='A').length;
   const bCnt=ALERTS.filter(a=>a.q==='B').length;
   const cCnt=ALERTS.filter(a=>a.q==='C').length;
+  const totalAlerts=ALERTS.length+PREM_ALERTS.length;
 
   const setT=(id,val)=>{const e=document.getElementById(id);if(e)e.textContent=val;};
-  setT('stat-alerts', ALERTS.length);
-  setT('stat-alerts-sub', `A: ${aCnt} · B: ${bCnt} · C: ${cCnt}`);
+  setT('stat-alerts', totalAlerts);
+  setT('stat-alerts-sub', `Prem: ${PREM_ALERTS.length} · A: ${aCnt} · B: ${bCnt}`);
   setT('stat-spurts', spurts);
   setT('stat-spurts-sub', `≥15%: ${spurts15} stocks`);
   setT('stat-lb', lbs);
@@ -2151,11 +2381,22 @@ function mapAlertPayload(payload){
 function initSocketIO(){
   try{
     const socket=io('/',{transports:['websocket','polling'],reconnectionAttempts:10,reconnectionDelay:3000});
-    socket.on('connect',()=>{
+    socket.on('connect',async ()=>{
       if(!_boardLoading) setStatusMode('live');
+      // Fetch authoritative market status from server
+      try {
+        const r = await fetch('/api/market-status');
+        const j = await r.json();
+        _serverMarketOpen = !!j.is_open;
+      } catch(e) {
+        _serverMarketOpen = isMarketOpen(); // fallback to client clock
+      }
+      // Re-subscribe if chart was open during reconnect
+      if (_activeChartStock) startInlineChartTickFeed(_activeChartStock);
     });
     socket.on('disconnect',()=>{
       setStatusMode('stale','DISCONNECTED');
+      _serverMarketOpen = null; // unknown until reconnect
     });
     socket.on('tradesignal_alert',(payload)=>{
       try{
@@ -2170,6 +2411,8 @@ function initSocketIO(){
       }catch(e){console.warn('[360] Alert map error',e);}
     });
     socket.on('board_update',()=>{ fetchBoard(); });
+    // Initialize chart Socket.IO feed with the shared connection
+    initChartSocketFeed(socket);
   }catch(e){console.warn('[360] Socket.IO init failed',e);}
 }
 
@@ -2199,6 +2442,7 @@ async function fetchBoard(){
 
     if(isEodLoading){
       _boardLoading=true;
+      _boardLoadingIsEod=isEod;
       _boardLoadingMsg=board.message || (isEod ? 'Rebuilding EOD Snapshot…' : 'Initializing Live Board…');
       setStatusMode('loading', isEod ? '📸 REBUILDING EOD…' : 'LOADING…');
       updateCountsPill(board);
@@ -2208,6 +2452,7 @@ async function fetchBoard(){
 
     _boardLoading=false;
     _boardLoadingMsg='';
+    _boardLoadingIsEod=false;
     STOCKS=mapBoardToStocks(board, confMap, futMap, oiMap);
     OI_SPURTS=buildOISpurts(spurtList);
 
@@ -2251,11 +2496,44 @@ async function fetchQuotes(){
 
 async function fetchAll(){ await Promise.all([fetchBoard(), fetchBreakouts(), fetchQuotes()]); }
 
+/* ── Premium Spike Alerts poller ─────────────────────────────────────────── */
+async function fetchPremSpikes(){
+  try{
+    const res=await fetch('/api/option-gainers-alerts?after='+_lastPremSeq);
+    if(!res.ok) return;
+    const data=await res.json();
+    const fresh=data.alerts||[];
+    if(!fresh.length) return;
+    let added=0;
+    fresh.forEach(a=>{
+      if(!PREM_ALERTS.some(x=>x.seq===a.seq)){
+        PREM_ALERTS.unshift(a);
+        _lastPremSeq=Math.max(_lastPremSeq,a.seq||0);
+        added++;
+      }
+    });
+    if(!added) return;
+    PREM_ALERTS=PREM_ALERTS.slice(0,200);
+    if(_activeAlertTab==='prem') renderAlerts();
+    fresh.forEach(a=>{
+      flashSymbolInBoard(a.symbol);
+      renderHotZone();
+    });
+    // Update stat counter
+    const el=document.getElementById('stat-alerts');
+    if(el) el.textContent=ALERTS.length+PREM_ALERTS.length;
+    const sub=document.getElementById('stat-alerts-sub');
+    if(sub) sub.textContent=`Prem: ${PREM_ALERTS.length} · A: ${ALERTS.filter(a=>a.q==='A').length} · B: ${ALERTS.filter(a=>a.q==='B').length}`;
+  }catch(e){console.warn('[360] PremSpikes fetch error',e);}
+}
+
 function startPolling(){
   fetchAll();
+  fetchPremSpikes();                      // initial load on start
   setInterval(fetchBoard,    30000);
   setInterval(fetchBreakouts,30000);
   setInterval(fetchQuotes,   15000);
+  setInterval(fetchPremSpikes, 20000);    // poll every 20s
 }
 </script>
 </body>
