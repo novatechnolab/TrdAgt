@@ -31,10 +31,14 @@ class SynergyAgent(BaseAgent):
 
     def on_tick(self):
         """
-        Poll real synergy_scanner BUY-class alerts every ~200ms cycle.
+        Poll real synergy_scanner BUY-class alerts every ~200ms cycle during market hours.
         Emits a signal on the bus when a symbol transitions to a new BUY-class profile.
         """
         try:
+            from session_utils import is_market_hours
+            if not is_market_hours():
+                return
+
             from synergy_scanner import get_buy_alerts
             alerts = get_buy_alerts()
         except Exception:

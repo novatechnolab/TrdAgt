@@ -605,3 +605,75 @@ Zero changes to alert eligibility logic. All EMA crossover, pre-cross, live brea
 
 **Files Changed:**
 - `app/360-command-center.html` — Updated `:root` CSS variables with deep midnight navy background (`#040916`), high-contrast dark indigo glass containers, cyan/indigo border highlights (`rgba(56,189,248,0.18)`), crisp off-white primary text (`#f8fafc`), and saturated neon signal colors.
+
+## 2026-08-18 — EMA Convergence Watchlist Agent
+
+**Session Goal:** Build an agentic pre-crossover watchlist that ranks F&O stocks by proximity to an EMA 9/21 cross (convergence scoring), to surface bull→bear and bear→bull candidates before they cross.
+
+**Agent Reuse Audit:**
+- `EMAAgent` reviewed and ruled OUT — it tracks completed crossovers; new feature is pre-cross proximity (different lifecycle stage).
+- `BaseAgent`, `Orchestrator`, `MessageBus` reused as-is.
+- `ema_crossover_scanner.get_ema_crossover_state()` reused as sole data source — zero new Kite API calls.
+- Existing `squeeze.ema_gap` and `state_5m` fields from scanner reused directly in scoring.
+
+**Files Changed:**
+- `app/backend/agents/ema_convergence_agent.py` [NEW] — EMAConvergenceAgent extending BaseAgent. Polls scanner state every 30s, scores all 215 F&O symbols using dual-component formula (40% gap position, 60% slope/velocity of EMA gap convergence). Returns top 50 ranked. Publishes to `watchlist/ema_convergence` on MessageBus.
+- `app/backend/agents/__init__.py` [MODIFIED] — Added EMAConvergenceAgent import and __all__ export.
+- `app/backend/server.py` [MODIFIED] — Added EMAConvergenceAgent to orchestrator startup (import, instantiate, register), cached `_agentic_convergence_agent` global, added `GET /api/ema_convergence_watchlist` endpoint with `?direction=bear_setup|bull_setup|all` filter.
+
+**Scoring Formula:**
+- Gap Score (40%): `max(0, 100 - (gap_pct / 2.0) * 100)` — where gap is in session (rolls each cycle)
+- Slope Score (60%): derived from gap_delta between 30s cycles (`-gap_delta * 500`) — leading indicator
+- Modifiers: +15 if in BB squeeze, +20 if in collision zone (<0.15%), capped at 30 if already crossed
+- Both bear_setup and bull_setup directions shown; top 50 returned
+
+**UI:** Deferred to next session — REST + SocketIO API is live and ready.
+
+## 2026-08-18 — EMA PreCross Tab in 360 Command Center Alert Feed
+
+**Session Goal:** Add a 6th "📉 PreCross" tab to the Alert Feed panel in 360-command-center.html that displays the live EMA 9/21 convergence watchlist from the new EMAConvergenceAgent.
+
+**Files Changed:**
+- `app/360-command-center.html` [MODIFIED]:
+  - Added `📉 PreCross` tab button (L477) to existing 5-tab bar — no CSS change needed, flex:1 redistributes automatically
+  - Added `if(type==='ema_conv')` dispatch in `aTab()` (L1832)
+  - Added `fetchEMAConv()` async function — polls `/api/ema_convergence_watchlist` every 30s; only re-renders if tab is active
+  - Added `renderEMAConv()` function — renders top-50 cards with: rank, symbol, direction badge (Bear/Bull), score, colored 4px progress bar (orange=bear, teal=bull, purple=collision zone), gap%, zone/squeeze badges, LTP
+  - Added 9 CSS classes (`.conv-row`, `.conv-bar`, `.conv-dir.*`, etc.) consistent with existing dashboard card design
+  - Wired `fetchEMAConv` into `startPolling()` with 30s interval + immediate initial call
+
+**Agent Reuse:** No new agents. EMAConvergenceAgent (created same session) provides data via REST; 360 CC polls it.
+
+## 2026-08-18 — Fix: Missing /api/ema-crossovers endpoint
+
+**Session Goal:** Fix pre-existing 404 on /api/ema-crossovers discovered during audit.
+
+**Root Cause:** The 360 Command Center's fetchBreakouts() and fetchAll() both poll /api/ema-crossovers but no Flask route existed. This silently broke: Bulls/Bears tab (BULLS/BEARS arrays empty), confMap enrichment of the main board (all EMA state fields missing), and Live Breakouts right panel.
+
+**Files Changed:**
+- `app/backend/server.py` [MODIFIED] — Added `GET /api/ema-crossovers` endpoint:
+  - Returns `crossovers` dict from `get_ema_crossover_state()`
+  - Returns `live_breakouts` (triggered_alerts) + `collision_alerts` from `get_live_breakout_state()`
+  - Returns `status` and `last_update` for diagnostics
+  - Key correction: `triggered_alerts` (not `alerts`) per actual scanner return dict
+
+**Agent Reuse:** No agent changes — pure missing REST route.
+
+## 2026-08-18 — Fix: Suppress Agentic Alerts and Polling During Out-of-Market Hours
+
+**Session Goal:** Prevent agentic framework from executing alert processing loops and dispatching live trade notifications (Telegram, Discord, Socket.IO) during off-market hours.
+
+**Root Cause:**
+Agent background threads ran their 200ms `on_tick` loops continuously without verifying market session state. Out of market hours, when static EOD/offline crossover cache was present in memory, signal agents (`EMAAgent`, `FNOTrapAgent`, `MarketAgent`, `SynergyAgent`) interpreted the static data as new events and emitted bus signals to `PredictionAgent` and `AlertDispatchAgent`, resulting in an active alert dispatch loop.
+
+**Files Changed:**
+- `app/backend/agents/alert_dispatch_agent.py` [MODIFIED]: Added `is_market_hours()` guard in `handle_message()` before Telegram, Discord, or Socket.IO emissions.
+- `app/backend/agents/ema_agent.py` [MODIFIED]: Added `is_market_hours()` guard at start of `on_tick()`.
+- `app/backend/agents/fno_trap_agent.py` [MODIFIED]: Added `is_market_hours()` guard at start of `on_tick()`.
+- `app/backend/agents/market_agent.py` [MODIFIED]: Added `is_market_hours()` guard at start of `on_tick()`.
+- `app/backend/agents/synergy_agent.py` [MODIFIED]: Added `is_market_hours()` guard at start of `on_tick()`.
+- `app/backend/server.py` [MODIFIED]:
+  - Added `lazy_start_ema_crossover_scanner()` and `notify_ema_client()` to `/api/ema-crossovers` and `/api/ema_convergence_watchlist`.
+  - Removed orphaned/duplicate `api_ema_crossovers` function definition.
+
+**Agent Reuse:** Guarded existing agents (`AlertDispatchAgent`, `EMAAgent`, `FNOTrapAgent`, `MarketAgent`, `SynergyAgent`). No new agents created.

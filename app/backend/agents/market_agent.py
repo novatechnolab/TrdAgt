@@ -34,11 +34,15 @@ class MarketAgent(BaseAgent):
 
     def on_tick(self):
         """
-        Poll the real bias-score cache from server.py every ~200ms cycle.
+        Poll the real bias-score cache from server.py every ~200ms cycle during market hours.
         Only publishes a market_bias context message when bias zone changes.
         Falls back to Nifty tick-based change if cache is empty (market just opened).
         """
         try:
+            from session_utils import is_market_hours
+            if not is_market_hours():
+                return
+
             from server import nifty_cache_get, zone_for_score
             cached = nifty_cache_get("bias_score_data", max_age_seconds=60)
             if cached:

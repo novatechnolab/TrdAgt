@@ -108,6 +108,16 @@ class AlertDispatchAgent(BaseAgent):
         if not symbol:
             return
 
+        # Market hours guard — suppress outward alerts (Telegram, Discord, Socket.IO) when market is closed
+        try:
+            from session_utils import is_market_hours
+            if not is_market_hours():
+                self.alerts_suppressed_count += 1
+                logger.debug(f"[{self.name}] Market closed — suppressed outward alert for {symbol}")
+                return
+        except Exception:
+            pass
+
         # Prioritize prediction confluence setups over raw scanner pings
         is_prediction = topic.startswith("alerts/prediction")
         conviction = payload.get("conviction_score", payload.get("conviction", 60))

@@ -474,6 +474,7 @@ select.sel:focus{outline:none;border-color:var(--acc);}
       <div class="tab" onclick="aTab('brk_events',this)">📡 Breakouts</div>
       <div class="tab" onclick="aTab('oi2',this)">⚡ OI Events</div>
       <div class="tab" onclick="aTab('bup',this)">📈 B/U Shift</div>
+      <div class="tab" onclick="aTab('ema_conv',this)">📉 PreCross</div>
     </div>
     <div class="cb" id="afeed" style="padding:6px;"></div>
   </div>
@@ -1828,6 +1829,7 @@ function aTab(type,el){
   el.classList.add('on');
   if(type==='prem'||type==='brk_events'){renderAlerts();return;}
   if(type==='bb'){renderBBView();return;}
+  if(type==='ema_conv'){ renderEMAConv(); return; }
   if(type==='oi2'){
     document.getElementById('afeed').innerHTML=`<div style="padding:8px;">${OI_SPURTS.map(s=>`
       <div class="oi-row" style="cursor:pointer;" onclick="flashSymbolInBoard('${s.sym}')">
@@ -2622,7 +2624,81 @@ function startPolling(){
   setInterval(fetchBreakouts,30000);
   setInterval(fetchQuotes,   15000);
   setInterval(fetchPremSpikes, 20000);    // poll every 20s
+  setInterval(fetchEMAConv,    30000);    // EMA PreCross convergence, every 30s
+  fetchEMAConv();                         // initial load
+}
+
+/* ── EMA PreCross Convergence Watchlist ─────────────────────────────────── */
+let _convData = [];   // last fetched watchlist
+
+async function fetchEMAConv(){
+  try{
+    const res = await fetch('/api/ema_convergence_watchlist');
+    if(!res.ok) return;
+    const json = await res.json();
+    _convData = json.watchlist || [];
+    if(_activeAlertTab === 'ema_conv') renderEMAConv();
+  }catch(e){ console.warn('[360] EMA Conv fetch error', e); }
+}
+
+function renderEMAConv(){
+  const feed = document.getElementById('afeed');
+  if(!feed) return;
+  if(!_convData.length){
+    feed.innerHTML = `<div class="empty" style="padding:20px 8px;">
+      <div class="ei">📉</div>
+      <div class="et">No convergence data</div>
+      <div class="es">Scanner may not have run yet — check back after 09:15 IST</div>
+    </div>`;
+    return;
+  }
+  const rows = _convData.map(r => {
+    const isBear = r.direction === 'bear_setup';
+    const isColl = r.in_collision;
+    const isSq   = r.in_squeeze;
+    const dirLbl = isBear ? '⬇ Bear' : '⬆ Bull';
+    const dirCls = isBear ? 'bear' : 'bull';
+    const barClr = isColl ? '#a855f7' : (isBear ? '#f97316' : '#22d3ee');
+    const barW   = Math.min(100, Math.max(2, r.score));
+    const gapStr = r.gap_pct != null ? r.gap_pct.toFixed(3)+'%' : '—';
+    const badges = [
+      isColl ? `<span class="btag" style="background:rgba(168,85,247,.18);color:#a855f7;border-color:rgba(168,85,247,.35);">⚡Zone</span>` : '',
+      isSq   ? `<span class="btag" style="background:rgba(234,179,8,.14);color:var(--amb);border-color:rgba(234,179,8,.3);">⊡Sq</span>`   : '',
+    ].filter(Boolean).join('');
+    return `<div class="conv-row" onclick="flashSymbolInBoard('${r.symbol}')">
+      <div class="conv-top">
+        <span class="conv-rank">${r.rank}</span>
+        <span class="conv-sym">${r.symbol}</span>
+        <span class="conv-dir ${dirCls}">${dirLbl}</span>
+        <span class="conv-score">${r.score.toFixed(0)}</span>
+      </div>
+      <div class="conv-bar-wrap"><div class="conv-bar" style="width:${barW}%;background:${barClr};"></div></div>
+      <div class="conv-meta">
+        <span>Gap ${gapStr}</span>${badges}${r.ltp ? `<span style="margin-left:auto;">&#8377;${r.ltp}</span>` : ''}
+      </div>
+    </div>`;
+  }).join('');
+  feed.innerHTML = `<div class="conv-header">
+      <span style="font-size:8px;color:var(--t2);flex:1;">EMA 9/21 PreCross &mdash; Top 50 by score</span>
+      <span style="font-size:8px;color:var(--acc);">Score &#9660;</span>
+    </div>
+    <div style="overflow-y:auto;height:calc(100% - 22px);padding:4px;">${rows}</div>`;
 }
 </script>
+<style>
+.conv-header{display:flex;align-items:center;padding:4px 8px 3px;border-bottom:1px solid var(--b);flex-shrink:0;}
+.conv-row{background:var(--card);border:1px solid var(--b);border-radius:var(--rs);margin-bottom:3px;padding:5px 8px;cursor:pointer;transition:all .12s;}
+.conv-row:hover{border-color:var(--bhi);background:rgba(255,255,255,.04);}
+.conv-top{display:flex;align-items:center;gap:5px;margin-bottom:3px;}
+.conv-rank{font-size:8px;color:var(--t2);width:14px;text-align:right;font-family:var(--mono);flex-shrink:0;}
+.conv-sym{font-size:11px;font-weight:700;color:var(--t1);flex:1;}
+.conv-dir{font-size:8px;font-weight:700;padding:1px 5px;border-radius:3px;}
+.conv-dir.bear{background:rgba(239,68,68,.14);color:var(--bear);border:1px solid rgba(239,68,68,.28);}
+.conv-dir.bull{background:rgba(34,197,94,.14);color:var(--bull);border:1px solid rgba(34,197,94,.28);}
+.conv-score{font-size:10px;font-weight:800;font-family:var(--mono);color:var(--t1);width:24px;text-align:right;}
+.conv-bar-wrap{width:100%;height:4px;background:rgba(255,255,255,.06);border-radius:2px;overflow:hidden;margin-bottom:3px;}
+.conv-bar{height:4px;border-radius:2px;transition:width .4s ease;}
+.conv-meta{display:flex;align-items:center;gap:4px;font-size:8px;color:var(--t2);}
+</style>
 </body>
 </html>

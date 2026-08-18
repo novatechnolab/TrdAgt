@@ -31,10 +31,14 @@ class FNOTrapAgent(BaseAgent):
 
     def on_tick(self):
         """
-        Poll real trap engine cached cards each ~200ms cycle.
+        Poll real trap engine cached cards each ~200ms cycle during market hours.
         Emits a signal when a symbol's trap_direction transitions.
         """
         try:
+            from session_utils import is_market_hours
+            if not is_market_hours():
+                return
+
             from fno_trap.trap_engine import _card_cache, _card_lock
             with _card_lock:
                 cards_snapshot = dict(_card_cache)

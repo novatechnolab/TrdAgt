@@ -32,10 +32,14 @@ class EMAAgent(BaseAgent):
 
     def on_tick(self):
         """
-        Poll the real EMA crossover scanner state every ~200ms.
+        Poll the real EMA crossover scanner state every ~200ms during market hours.
         Emit a signal only when a new confirmed crossover is detected.
         """
         try:
+            from session_utils import is_market_hours
+            if not is_market_hours():
+                return
+
             from ema_crossover_scanner import get_ema_crossover_state
             state = get_ema_crossover_state()
             crossovers = state.get("crossovers", {})

@@ -12,6 +12,7 @@ from .fno_trap_agent import FNOTrapAgent
 from .market_agent import MarketAgent
 from .prediction_agent import PredictionAgent
 from .alert_dispatch_agent import AlertDispatchAgent
+from .ema_convergence_agent import EMAConvergenceAgent
 
 __all__ = [
     'BaseAgent',
@@ -26,4 +27,5 @@ __all__ = [
     'MarketAgent',
     'PredictionAgent',
     'AlertDispatchAgent',
+    'EMAConvergenceAgent',
 ]

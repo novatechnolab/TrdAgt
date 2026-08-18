@@ -84,6 +84,7 @@ BACKEND_BUILD = 'server.py:kite-session-debug-2026-05-08'
 # ── Agentic Framework Initialization ─────────────────────────────────────────
 _global_orchestrator = None
 _agentic_data_agent = None  # Fix5: cached at startup — zero per-tick lock acquisitions
+_agentic_convergence_agent = None  # EMAConvergenceAgent — cached for REST access
 
 def get_agentic_orchestrator():
     global _global_orchestrator
@@ -95,12 +96,14 @@ def get_agentic_orchestrator():
                 try:
                     from agents import (
                         Orchestrator, KiteDataAgent, SynergyAgent, EMAAgent,
-                        FNOTrapAgent, MarketAgent, PredictionAgent, AlertDispatchAgent
+                        FNOTrapAgent, MarketAgent, PredictionAgent, AlertDispatchAgent,
+                        EMAConvergenceAgent
                     )
                 except ImportError:
                     from app.backend.agents import (
                         Orchestrator, KiteDataAgent, SynergyAgent, EMAAgent,
-                        FNOTrapAgent, MarketAgent, PredictionAgent, AlertDispatchAgent
+                        FNOTrapAgent, MarketAgent, PredictionAgent, AlertDispatchAgent,
+                        EMAConvergenceAgent
                     )
                 orch = Orchestrator()
                 data_agent = KiteDataAgent(name="KiteDataAgent")
@@ -109,6 +112,7 @@ def get_agentic_orchestrator():
                 trap_agent = FNOTrapAgent(name="FNOTrapAgent")
                 market_agent = MarketAgent(name="MarketAgent")
                 prediction_agent = PredictionAgent(name="PredictionAgent")
+                convergence_agent = EMAConvergenceAgent(name="EMAConvergenceAgent")
                 dispatch_agent = AlertDispatchAgent(
                     name="AlertDispatchAgent",
                     telegram_token=os.environ.get('TELEGRAM_BOT_TOKEN', '').strip() or None,
@@ -123,6 +127,7 @@ def get_agentic_orchestrator():
                 orch.register_agent(market_agent)
                 orch.register_agent(prediction_agent)
                 orch.register_agent(dispatch_agent)
+                orch.register_agent(convergence_agent)
 
                 dispatch_agent.attach_socketio(socketio)
                 orch.start_all()
@@ -136,6 +141,9 @@ def get_agentic_orchestrator():
                 # Fix5: Cache data_agent reference — eliminates per-tick lock acquisitions
                 global _agentic_data_agent
                 _agentic_data_agent = orch.get_agent("KiteDataAgent")
+                # Cache convergence agent reference for REST endpoint
+                global _agentic_convergence_agent
+                _agentic_convergence_agent = orch.get_agent("EMAConvergenceAgent")
                 # D9: Register graceful shutdown hook
                 import atexit as _atexit
                 _atexit.register(lambda: _global_orchestrator.stop_all(timeout=2.0) if _global_orchestrator else None)
@@ -156,6 +164,78 @@ def agentic_health():
     return jsonify({
         'enabled': False,
         'message': 'Agentic architecture not active or flag disabled.'
+    })
+
+
+@app.route('/api/ema-crossovers')
+def ema_crossovers():
+    """EMA crossover scanner state for the 360 Command Center.
+
+    Returns:
+      crossovers  — per-symbol dict with state_5m/15m/1h/day, alignment, squeeze, etc.
+      live_breakouts — list of recent triggered breakout/pre-cross alerts
+      status      — scanner status string
+      last_update — ISO timestamp of last scan cycle
+    """
+    try:
+        lazy_start_ema_crossover_scanner()
+        from ema_crossover_scanner import get_ema_crossover_state, get_live_breakout_state, notify_ema_client
+        notify_ema_client()
+        state      = get_ema_crossover_state()
+        brk_state  = get_live_breakout_state()
+        return jsonify({
+            'crossovers':     state.get('crossovers', {}),
+            'live_breakouts': brk_state.get('triggered_alerts', []),
+            'collision_alerts': brk_state.get('collision_alerts', []),
+            'status':         state.get('status', 'idle'),
+            'last_update':    state.get('last_update'),
+        })
+    except Exception as e:
+        logging.warning(f"[/api/ema-crossovers] {e}")
+        return jsonify({'crossovers': {}, 'live_breakouts': [], 'status': 'error'})
+
+
+@app.route('/api/ema_convergence_watchlist')
+def ema_convergence_watchlist():
+    """Returns the top-50 F&O symbols ranked by EMA 9/21 convergence score.
+
+    Query params:
+      direction: 'bear_setup' | 'bull_setup' | 'all' (default 'all')
+
+    Response fields per symbol:
+      symbol, rank, score, gap_pct, gap_delta, gap_score, slope_score,
+      direction, trend_5m, cross_5m, in_squeeze, in_collision, ltp,
+      alignment, ema9_hold
+    """
+    lazy_start_ema_crossover_scanner()
+    try:
+        from ema_crossover_scanner import notify_ema_client
+        notify_ema_client()
+    except Exception:
+        pass
+
+    direction_filter = request.args.get('direction', 'all').lower()
+    agent = _agentic_convergence_agent
+    if agent is None:
+        # Attempt lazy init (agent may not have started yet)
+        orch = get_agentic_orchestrator()
+        if orch:
+            agent = orch.get_agent('EMAConvergenceAgent')
+    if agent is None:
+        return jsonify({'error': 'EMAConvergenceAgent not available', 'watchlist': []}), 503
+
+    watchlist = agent.get_watchlist()
+    if direction_filter in ('bear_setup', 'bull_setup'):
+        watchlist = [r for r in watchlist if r.get('direction') == direction_filter]
+        # Re-rank after filter
+        for i, r in enumerate(watchlist, start=1):
+            r['rank'] = i
+
+    return jsonify({
+        'watchlist':  watchlist,
+        'count':      len(watchlist),
+        'direction':  direction_filter,
+        'stats':      agent.get_stats(),
     })
 
 
@@ -5332,18 +5412,6 @@ def api_eod_alert_summary():
     except Exception as e:
         logging.error(f"[EOD Alert Summary API] Exception: {e}")
         return jsonify({"error": str(e), "ok": False}), 500
-
-
-
-def api_ema_crossovers():
-    """
-    Returns cached real-time EMA 9 / EMA 21 crossovers and alignment
-    for all active F&O symbols across Daily, 1 Hour, and 15 Minutes.
-    """
-    lazy_start_ema_crossover_scanner()
-    from ema_crossover_scanner import get_ema_crossover_state, notify_ema_client
-    notify_ema_client()  # heartbeat: page is open
-    return jsonify(get_ema_crossover_state())
 
 
 @app.route('/api/nifty-candle-analysis')
