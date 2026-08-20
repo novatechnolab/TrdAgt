@@ -1,5 +1,294 @@
 # TradeSignal — Change Log
 
+## 2026-08-21 — 360° Command Center: Device-Agnostic Responsive Layout
+
+**Goal:** Make the 360 Command Center fully usable across mobile, tablet, laptop, and desktop without degraded performance or data loss.
+
+**Files changed:**
+- `app/360-command-center.html` [MODIFY] — removed OI Spurt Live ticker, compacted Hot Zone, added responsive CSS media queries, mobile bottom nav bar, and `showMobileCol` JS
+
+**Agent Reuse Decision:** Frontend-only change; no backend or agent modifications.
+
+**Changes:**
+1. **OI Spurt Live Ticker Removed:** `div.otk`, all `.otk-*` CSS, `renderTicker()` function calls cleaned up. OI data still accessible in right panel & main table.
+2. **Hot Zone Compacted:** Padding reduced from `8px 10px` → `4px 8px`, card padding from `10px 12px` → `5px 10px`, recovering ~35px of vertical space for the Unified Master Board.
+3. **Tablet Layout (768–1199px):** 2-column grid (Board + Alert Feed); right panel hidden.
+4. **Mobile Layout (<768px):** Full-width single column; fixed bottom tab nav (📊 Board / ⚡ Alerts / 📈 Panels); tables horizontally scrollable (`min-width: 700px`) preserving all columns; milestone modal goes full-screen from bottom; all touch targets ≥40×40px; iOS momentum scrolling enabled.
+
+## 2026-08-21 — 360° Command Center: Primary Equity OHLCV Volume on Milestone Cards
+
+**Goal:** Set the primary `Vol:` display on each 20% milestone card to the underlying stock's 1-minute candlestick cash volume (e.g. `Vol: 3.57K`), aligning with TradingView and terminal candlestick charts.
+
+**Files changed:**
+- `app/360-command-center.html` [MODIFY] — updated milestone card `Vol:` to show cash equity candle volume directly
+
+**Agent Reuse Decision:** Frontend UI display refinement.
+
+**Changes:**
+1. **Primary Volume Alignment:** Formatted `Vol:` to display the 1-minute cash equity volume (e.g. `Vol: 3.57K` at 10:27) so traders can immediately cross-reference the stock chart volume.
+
+## 2026-08-21 — Option Gainers: Smart Multi-Day Historical Lookback Auto-Fallback
+
+**Goal:** Prevent `No option candle data available` errors when inspecting contracts after midnight, during pre-market, or across market non-trading dates by auto-falling back to the most recent active session with candle data.
+
+**Files changed:**
+- `app/backend/option_gainers_scanner.py` [MODIFY] — enabled automatic multi-day historical lookback fallback
+
+**Agent Reuse Decision:** Backend data resilience improvement.
+
+**Changes:**
+1. **Unconditional Candle Fallback:** If candle query for `target_date_str` returns 0 candles (such as after midnight or on non-trading days), the engine automatically scans backwards up to 6 trading sessions to locate and serve the most recent active session's complete milestone data.
+
+## 2026-08-20 — 360° Command Center: Option Traded Volume vs Cash Equity Volume in Milestones
+
+**Goal:** Provide clear differentiation between Option Contract Traded Volume (`Opt Vol`) and Underlying Stock Cash Equity Volume (`Eq Vol`) in the 20% milestone timeline cards.
+
+**Files changed:**
+- `app/backend/option_gainers_scanner.py` [MODIFY] — populated `spot_volume` alongside `opt_volume`
+- `app/360-command-center.html` [MODIFY] — rendered `Opt Vol` and `Eq Vol` separately with explanatory tooltips
+
+**Agent Reuse Decision:** Frontend milestone card formatting and data mapping refinement.
+
+**Changes:**
+1. **Dual Volume Mapping:** Added underlying stock 1-minute cash equity volume (`spot_volume`) into each milestone record alongside option contract volume (`opt_volume`).
+2. **Clear Card Labeling:** Formatted milestone details to display `Opt Vol: X` (option contracts executed) and `Eq Vol: Y.k` (underlying cash equity shares traded on NSE).
+
+## 2026-08-20 — Option Gainers & EOD Snapshot: Live Window Alignment to 15:40 IST
+
+**Goal:** Ensure all live session scanning, historical candle fetches, and EOD snapshot triggers run across the full 09:15 to 15:40 IST window (accounting for post-market closing price auctions and settlement).
+
+**Files changed:**
+- `app/backend/option_gainers_scanner.py` [MODIFY] — aligned candle fetch upper bound to `15:40 IST`
+- `app/backend/option_gainers_alerts.py` [MODIFY] — aligned EOD snapshot trigger check to `15:40 IST`
+
+**Agent Reuse Decision:** Backend scanning window alignment.
+
+**Changes:**
+1. **Historical Candle Horizon:** Updated `to_dt` in `get_contract_milestones` to `15:40 IST` so that post-market settlement trades and final settlement values are fully captured in the milestone timeline.
+2. **EOD Trigger Guard:** Aligned EOD snapshot build trigger in `option_gainers_alerts.py` to `15:40 IST`.
+
+## 2026-08-20 — 360° Command Center: 20% Incremental Milestone Timeline for Option Gainers
+
+**Goal:** Implement an interactive 20% incremental milestone timeline for option contracts on the PremGain / Option Gainers board. Clicking any contract opens a modal displaying the exact timeline of every +20% gain step crossed starting from 09:15 AM (Live market & EOD replay).
+
+**Files changed:**
+- `app/backend/option_gainers_scanner.py` [MODIFY] — implemented `get_contract_milestones`
+- `app/backend/server.py` [MODIFY] — added `GET /api/option-gainers/timeline` & included token in `/api/option-gainers-board`
+- `app/360-command-center.html` [MODIFY] — added milestone modal, styles, controller, click bindings, and resolved date variable scoping
+
+**Agent Reuse Decision:** Reused backend scanner historical candle pipeline and data model without creating extraneous agent layers.
+
+**Changes:**
+1. **Milestone Engine (`option_gainers_scanner.py`):** Calculates all cumulative +20% steps from 09:15 opening baseline, mapping exact minute timestamps, target prices, candle peaks, concurrent spot equity movement, and elapsed time deltas with in-memory TTL caching.
+2. **Timeline API (`server.py`):** Added `/api/option-gainers/timeline` supporting query by token, symbol, strike, opt_type, date, and step %. Included `token` directly in `/api/option-gainers-board` contract list for instant $(<0.1\text{ms})$ client parameter passing.
+3. **Interactive Timeline Drawer (`360-command-center.html`):** Added Midnight Navy styled modal drawer with stepped visual timeline, step size selector (20%, 50%, 100%), live in-progress next target tracker, and 15s live polling. Fixed `_activeDate` variable scope to ensure instant `<500ms` rendering.
+
+## 2026-08-20 — 360° Command Center: Midnight Navy Dark Theme Palette
+
+**Goal:** Apply the user's custom Midnight Navy theme palette (`#0c1932` background, `#102041` cards/panels, `#18305d` borders, `#224482` highlights) to the 360° Command Center dark mode.
+
+**Files changed:**
+- `app/360-command-center.html` [MODIFY]
+
+**Agent Reuse Decision:** Frontend theme palette update.
+
+**Changes:**
+1. **Midnight Navy Palette Integration:** Updated `:root` and `[data-theme="dark"]` CSS variables (`--bg: #0c1932`, `--card: #102041`, `--card2: #14284e`, `--b: #18305d`, `--bhi: #224482`, `--tb-bg`, `--th-bg`, `--chart-bg`).
+2. **Surface & Border Harmony:** Enhanced visual depth, table row contrast, and card boundary definitions across all panels.
+
+## 2026-08-20 — 360° Command Center: Prominent Total Gain Display in Prem Spike Alerts
+
+**Goal:** Display the Total All-Day Gain (`board_gain_pct`) prominently alongside 3-minute velocity spike percentage in the 360° Command Center master alert card header and nested multi-strike history subrows.
+
+**Files changed:**
+- `app/360-command-center.html` [MODIFY]
+
+**Agent Reuse Decision:** Frontend UI enhancement in 360 Command Center alert feed.
+
+**Changes:**
+1. **Master Card Header Badges:** Added amber-tinted `+X% 🔥` badge in master card top-right header alongside `+Y% ⚡` 3-minute velocity spike.
+2. **Metric Grid Labeling:** Renamed `Board Gain` to `Total Gain` with amber highlight (`#f59e0b`).
+3. **Sub-Row Formatting:** Highlighted `+X% ⚡` spike velocity, price flow, and `+Y% 🔥` total day gain for each strike in the collapsible history.
+
+## 2026-08-20 — Option Gainers & Premium Spikes: 10 OTM Universe Expansion & EOD Fix
+
+**Goal:** Expand Option Gainers Board and Premium Spike alert live tracking universe from 2 OTM to 10 OTM (ATM $\pm$ 10 strikes) to ensure deep out-of-the-money momentum surges (such as GLENMARK 2380 CE) are actively tracked live; resolve post-market EOD snapshot crash (`NameError: name 'now_val' is not defined`).
+
+**Files changed:**
+- `app/backend/option_gainers_scanner.py` [MODIFY] — expanded targets from OTM2 to OTM10
+- `app/backend/option_gainers_alerts.py` [MODIFY] — fixed `now_val` variable initialization in `get_eod_snapshot()`
+
+**Agent Reuse Decision:** Backend scanner data pipeline and alert engine refinement.
+
+**Changes:**
+1. **10 OTM Strike Expansion:** Extended `targets` in `_build_atm_otm2_contracts` (`option_gainers_scanner.py`) to generate 22 contracts per stock (ATM, OTM1 through OTM10 for both CE and PE), ensuring full visibility into deep OTM momentum breakouts while running within Kite API 500-token batch limits.
+2. **EOD Snapshot Fix:** Added `now_val = now_ist()` in `get_eod_snapshot()` in `option_gainers_alerts.py`, eliminating the post-market `NameError` crash and enabling automated background snapshot reconstruction for post-market viewing.
+
+## 2026-08-20 — 360° Command Center: Group Premium Spike Alerts by Stock
+
+**Goal:** Group multiple strike alerts for the same stock into a unified master card in the 360° Command Center Alert Feed ("🔥 Prem Spikes" tab), with collapsible multi-strike history, preserving identical real-time chronological ordering and 20s background refresh management as in `premium-spike-alerts.html`.
+
+**Files changed:**
+- `app/360-command-center.html` [MODIFY]
+
+**Agent Reuse Decision:** Frontend UI refinement in 360 Command Center alert rendering pipeline. No backend/agent changes needed.
+
+**Changes:**
+1. **Grouped Stock Feed Pipeline:** Refactored `renderAlerts()` for `'prem'` tab to group incoming alerts by `a.symbol`, sorting master groups by newest spike timestamp and sorting inner strikes chronologically descending.
+2. **Interactive Expand / Collapse:** Added `_premExpanded` Set and `togglePremSymbol()` to let users expand/collapse historical strikes (`[▶ N Spikes]`) per stock without losing expanded state during 20s background polling refreshes.
+3. **Sub-Contract History Styling:** Added `.prem-expand-pill`, `.prem-subrows-wrap`, and `.prem-subrow` with theme-adaptive styling and mobile-responsive layouts.
+4. **Flash Timing:** Attached `received_at` timestamp on fresh arrivals in `fetchPremSpikes()`.
+
+## 2026-08-20 — Server: Silence [SESSION] Token Saved Console Log
+
+**Goal:** Disable the `[SESSION] Token saved to .../.kite_session.json` print statement in `server.py` to reduce console noise while keeping file persistence and exception handling intact.
+
+**Files changed:**
+- `app/backend/server.py` [MODIFY]
+
+**Agent Reuse Decision:** Backend server utility log suppression. No agent modifications required.
+
+**Changes:**
+- Removed `print(f'  [SESSION] Token saved to {_SESSION_FILE}')` from `_save_kite_session()` in `app/backend/server.py`.
+
+## 2026-08-20 — Apex Dashboard: Chart Chronological Ordering & Realistic Base Price Fix
+
+**Goal:** Resolve chart rendering issue in Apex Dashboard (`app/apex-dashboard.html` and `app/backend/server.py`) where GLENMARK and other offline/fallback symbols rendered with inverted date order (showing Aug 19 at the right edge) and mismatched baseline price (~1000 vs ~2340 CPR levels).
+
+**Files changed:**
+- `app/backend/server.py` [MODIFY]
+- `app/apex-dashboard.html` [MODIFY]
+
+**Agent Reuse Decision:** Backend demo generator and client-side chart data pipeline refinement.
+
+**Changes:**
+1. **Server Demo Generator (`generate_demo_candles`):**
+   - Replaced backward iteration with chronological loop (`reversed(range(days_back))`) and added final ascending timestamp sort (`candles.sort(key=lambda x: str(x.get('date', '')))`).
+   - Added automatic SQLite fallback lookup to fetch the latest daily close for the instrument token (`ohlcv` table), generating candles aligned with real stock levels (e.g. ₹2,320 for Glenmark).
+2. **Client-Side Pipeline (`fetchCandles`):**
+   - Added defensive `.sort((a, b) => a.timestamp - b.timestamp)` across cached, live, and fallback fetch paths in `apex-dashboard.html`.
+
+## 2026-08-20 — 360° Command Center: Universal High-Contrast Bold Typography Across All Components
+
+**Goal:** Apply heavy bold typography, deep high-contrast colors, and enhanced visual clarity across all tables, headers, data columns, sector cards, hot zone cards, OI spurts, alert feed, and top bar in `app/360-command-center.html`.
+
+**Files changed:**
+- `app/360-command-center.html` [MODIFY]
+
+**Agent Reuse Decision:** Frontend UI refinement across existing DOM hierarchy.
+
+**Changes:**
+1. **Master Board & Table Columns:** Set heavy bold typography across table headers (`.tbl thead th`, `#1e293b`), symbols (`.sym`, `#0f172a`, `font-weight: 800`), spot prices, rank, DX count (`#15803d` / `#b91c1c`), GAP%, INST%, DRIFT, RVOL, FH volume, E9H status, timeframe alignment, and OI% (`#6d28d9`).
+2. **Sparklines:** Thickened stroke (`1.8px`) and larger end dot (`2px`) with theme-adaptive green (`#15803d`) / red (`#b91c1c`) colors.
+3. **Sector Cards & Drilldown Matrix:** Applied bold dark typography for sector names (`#0f172a`), stats labels (`#475569`), metrics, and all 13 constituent stock columns.
+4. **Hot Zone, OI Spurts & Alert Feed:** Bold dark symbols (`#0f172a`), heavy score badges, saturated OI percentage badges, and high-contrast alert levels.
+
+## 2026-08-20 — 360° Command Center: High-Contrast Bold Typography for Badges & Pallets
+
+**Goal:** Enhance legibility across all metric badges, percentage move chips, market cap tags, and buildup indicators in `app/360-command-center.html` by applying heavy bold weights (`font-weight: 800`/`900`) and deep, high-contrast dark tones against light tint background pallets.
+
+**Files changed:**
+- `app/360-command-center.html` [MODIFY]
+
+**Agent Reuse Decision:** Frontend CSS styling refinement.
+
+**Changes:**
+1. **Pill & Badge Typography:** Set `font-weight: 800`/`900` across all `.spot-badge`, `.cap-*`, `.fb-*`, `.flag.*`, `.tf.*`, and `.lvl-badge` elements.
+2. **Light Theme Contrast Overrides:** Defined deep, saturated foreground colors (`#15803d` dark green, `#b91c1c` dark red, `#b45309` dark amber, `#0369a1` dark blue, `#6d28d9` dark purple) against translucent tint pallets (`rgba(..., 0.12 - 0.15)`), guaranteeing crisp contrast and eliminating washed-out text.
+3. **Sector Heatmap & Alert Feed Enhancements:** Applied darker, high-contrast text to sector return badges, mini buildup badges, conviction grades, and CPR pivot level badges.
+
+## 2026-08-20 — Unified Master Board: Futures % Movement Column in Futures Buildup View
+
+**Goal:** Add a dedicated, sortable `FUT%` (Futures % Movement) column to the Futures Buildup tab in the 360° Command Center (`app/360-command-center.html`), displaying near-month futures contract price percentage changes with dynamic color badges alongside Spot % and Buildup classification.
+
+**Files changed:**
+- `app/360-command-center.html` [MODIFY]
+
+**Agent Reuse Decision:** Frontend UI column rendering. Leveraged existing `futChg` data delivered by the `/api/futures-buildup` endpoint without extra backend overhead.
+
+**Changes:**
+1. **Master Table Header (`renderBoard`):** Added sortable `FUT%` column header to the `isFutBld` layout.
+2. **Data Cell & Badge:** Added `<td class="mono"><span class="spot-badge ${fCls}">${futChgStr}</span></td>` for near-month futures price percentage move with positive/negative color tags.
+3. **Sorting Handler:** Added `futChg` sorting key in `_sortFn` for instant ascending/descending table sorting.
+4. **Chart Subrow Colspan:** Adjusted `colspan="18"` to account for the additional column.
+
+## 2026-08-20 — 360° Command Center: Light Theme & Theme Switcher Implementation
+
+**Goal:** Implement a sleek, institutional light theme and persistent `☀️ Light / 🌙 Dark` toggle for the 360° Command Center (`app/360-command-center.html`), with tailored palette contrast, clean card styling, adaptive Sector Heatmap gradients, and instant `localStorage` persistence.
+
+**Files changed:**
+- `app/360-command-center.html` [MODIFY]
+
+**Agent Reuse Decision:** Frontend-only UI/UX theming. Leveraged existing CSS custom properties architecture and DOM state dispatch.
+
+**Changes:**
+1. **Light Theme Tokens (`[data-theme="light"]`):**
+   - Configured high-contrast typography (`--t1: #0f172a`, `--t2: #475569`), crisp white cards (`--card: #ffffff`, `--card2: #f1f5f9`), and subtle borders (`--b: #e2e8f0`).
+   - Adapted table headers (`--th-bg`), column headers (`--ch-bg`), and stats bar (`--stat-bar-bg`).
+2. **Heatmap & Chart Styling:**
+   - Tailored green-to-red sector background gradients for light mode (`rgba(22,163,74,.18)` to `rgba(220,38,38,.18)`).
+   - Ensured chart HUD, badges, and canvas borders seamlessly harmonize in light and dark modes.
+3. **Theme Switcher & Persistence:**
+   - Added `☀️ Light / 🌙 Dark` toggle button in top bar.
+   - Handled persistent theme caching in `localStorage.ts_360_theme` with immediate pre-render application to eliminate theme flicker.
+
+## 2026-08-20 — Unified Master Board: NSE Sectoral Heatmap & Futures Buildup Drilldown
+
+**Goal:** Implement 23 official NSE sectoral indices heatmap in the Unified Master Board with +5% to -5% color gradients, live/EOD returns, constituent stock counts, and 13-column stock matrix drilldown with futures buildup sub-filters, OI spurts, CPR levels, and inline charts.
+
+**Files changed:**
+- `app/backend/server.py` [MODIFY]
+- `app/360-command-center.html` [MODIFY]
+- `app/js/kite-api.js` [MODIFY]
+
+**Agent Reuse Decision:** Zero additional Kite API overhead. Reused existing in-memory calculations from `KiteDataAgent` and `/api/futures-buildup`, exposing `fut_chg_pct` and `fut_ltp`. Added SQLite table `fno_futures_buildup_snapshot` in `tradesignal_cache.db` to guarantee 24/7 offline / weekend fallback. No new agents created.
+
+**Changes:**
+1. **Backend Snapshot Persistence & Price Delta (`server.py`):**
+   - Added SQLite table `fno_futures_buildup_snapshot` in `tradesignal_cache.db` and automatic snapshot caching.
+   - Exposed `fut_chg_pct` and `fut_ltp` in `/api/futures-buildup` response.
+2. **23 Official NSE Sectoral Indices Grid (`360-command-center.html`):**
+   - Added `🗺️ NSE Heatmap` tab button to Unified Master Board header.
+   - Defined `NSE_SECTOR_LIST` (all 23 official NSE Sectoral Indices) and `NSE_STOCK_SECTOR_MAP` mapping ~190 F&O stocks.
+   - Built `renderHeatmap()` with color gradient cards (+5% to -5%), stock count, and mini buildup badges (`LB`, `SC`, `SB`, `LU`, `FLAT`).
+3. **Sector Drilldown 13-Column Stock Matrix (`360-command-center.html`):**
+   - On-click sector drilldown to full 13-column matrix with sub-filters, sorting, and inline candlestick & CPR pivot charts.
+4. **Socket.IO Transport Hardening (`360-command-center.html`, `kite-api.js`):**
+   - Configured Socket.IO transport to `polling` to prevent Werkzeug WSGI `AssertionError` (500) during browser connections.
+5. **Scoping & Loading UX:**
+   - Explicit top-level declarations for all state variables (`_selectedSector`, `_selectedSectorBuildupFilter`, `_secSortCol`, `_secSortDir`, `fmtNum`).
+   - Improved empty state messaging with `📸 Loading EOD Snapshot…` during baseline warmup.
+
+## 2026-08-19 — Agentic Alert Pipeline: Confluence Criteria Gating, LTP Correction & Rich Formatting
+
+**Goal:** Fix agentic alerts prematurely dispatching raw unconfluent scanner signals, fix LTP defaulting to ₹0.00, gate trap signals on actionable trade setups, and enrich Telegram notifications with trade levels (targets, stop loss, strikes, expiry, market context).
+
+**Files changed:**
+- `app/backend/agents/alert_dispatch_agent.py` [MODIFY]
+- `app/backend/agents/synergy_agent.py` [MODIFY]
+- `app/backend/agents/fno_trap_agent.py` [MODIFY]
+- `app/backend/agents/prediction_agent.py` [MODIFY]
+- `app/backend/tests/test_phase4_agents.py` [MODIFY]
+
+**Agent Reuse Decision:** Reused and hardened existing agent classes (`AlertDispatchAgent`, `SynergyAgent`, `FNOTrapAgent`, `PredictionAgent`). Corrected pub/sub topic subscription boundaries so that `AlertDispatchAgent` only subscribes to synthesized `alerts/#` from `PredictionAgent` rather than raw scanner `signals/#`. No new agents were created.
+
+**Changes:**
+1. **Confluence Criteria Gating (`alert_dispatch_agent.py`):**
+   - Removed direct subscription to `signals/#` from `AlertDispatchAgent.on_start()`. The agent now only listens to `alerts/#`, ensuring raw scanner pings are synthesized by `PredictionAgent` (requiring confluence count and conviction >= 75%) before triggering outward dispatches.
+   - Added `enforce_market_hours` constructor flag to cleanly support unit tests while maintaining strict live-session market hours guards.
+2. **LTP Key Correction (`synergy_agent.py`):**
+   - Corrected spot price extraction from `result.get("ltp") or result.get("spot_ltp", 0.0)` in `SynergyAgent.on_tick()`, eliminating the ₹0.00 LTP bug.
+   - Attached CPR position and intraday zone metadata to signal payloads.
+3. **Actionable State Gating & Rich Levels (`fno_trap_agent.py`):**
+   - Gated `FNOTrapAgent` signal generation on actionable states (`action in ('BUY_CALL', 'BUY_PUT', 'ENTER')` / `card_state in ('TRADE_READY', 'ACTIVE')`), suppressing passive market-closed or non-entry card state updates.
+   - Extracted `spot` price, recommended strikes, near expiry, target levels (`target_1`, `target_2`), stop loss (`spot_inval`), and rationale (`why`).
+4. **Confluence Trade Level Propagation (`prediction_agent.py`):**
+   - Enhanced `PredictionAgent._prune_and_evaluate()` to preserve valid non-zero LTPs, target levels, stop-loss anchors, and plain-language reasoning from contributing signals into the synthesized prediction payload.
+5. **Rich Telegram Notification Formatting (`alert_dispatch_agent.py`):**
+   - Updated `_format_telegram_message()` to display formatted strike & expiry, targets (T1, T2), stop loss (SL), confluence agent list, market regime, and comprehensive rationale.
+6. **Unit Tests & Regression Validation (`test_phase4_agents.py`):**
+   - Updated Phase 4 alert dispatch unit tests to test the new `alerts/prediction/*` topic boundary and validated that all phase tests pass.
+
 ## 2026-08-17 — EOD Alert Persistence: Prem Spikes and Live Breakouts
 
 **Goal:** Persist Prem Spike alerts and Live Breakout alerts to SQLite during the trading day with date/time, prevent stale alert leakage into live market hours, and re-display persistent alert logs in 360 Command Center during EOD mode.

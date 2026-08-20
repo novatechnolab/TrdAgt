@@ -110,20 +110,52 @@ class PredictionAgent(BaseAgent):
         # Only emit prediction setup if conviction is HIGH (>= 75)
         if conviction_score >= 75:
             self.predictions_emitted += 1
-            latest_price = valid_signals[-1].get("ltp", 0.0)
+            latest_price = 0.0
+            target_1 = None
+            target_2 = None
+            stop_loss = None
+            strike = None
+            expiry = None
+            why_notes = []
+
+            for sig in reversed(valid_signals):
+                p = float(sig.get("ltp") or 0.0)
+                if p > 0 and latest_price == 0.0:
+                    latest_price = p
+                if not target_1 and sig.get("target_1"):
+                    target_1 = sig.get("target_1")
+                if not target_2 and sig.get("target_2"):
+                    target_2 = sig.get("target_2")
+                if not stop_loss and sig.get("stop_loss"):
+                    stop_loss = sig.get("stop_loss")
+                if not strike and sig.get("strike"):
+                    strike = sig.get("strike")
+                if not expiry and sig.get("expiry"):
+                    expiry = sig.get("expiry")
+                if sig.get("why"):
+                    why_notes.append(sig.get("why"))
+
+            agreeing_list = list(bullish_sources if dominant_direction == "BULLISH" else bearish_sources)
+            base_rationale = f"Confluence of {confluence_count} scanner agent(s) ({', '.join(agreeing_list)}) aligned {dominant_direction} under {self.market_bias} market regime."
+            full_rationale = f"{base_rationale} {' | '.join(why_notes)}" if why_notes else base_rationale
 
             prediction_payload = {
                 "symbol": symbol,
                 "direction": dominant_direction,
                 "conviction_score": conviction_score,
                 "confluence_count": confluence_count,
-                "agreeing_agents": list(bullish_sources if dominant_direction == "BULLISH" else bearish_sources),
+                "agreeing_agents": agreeing_list,
                 "setup_types": list(set(setup_types)),
                 "ltp": latest_price,
+                "strike": strike,
+                "expiry": expiry,
+                "target_1": target_1,
+                "target_2": target_2,
+                "stop_loss": stop_loss,
                 "market_context": self.market_bias,
                 "timestamp": now,
-                "rationale": f"Confluence of {confluence_count} scanner agent(s) aligned {dominant_direction} under {self.market_bias} market regime."
+                "rationale": full_rationale
             }
 
             self.send(topic=f"alerts/prediction/{symbol}", payload=prediction_payload)
-            logger.info(f"[{self.name}] EMITTED PREDICTION SETUP for {symbol}: {dominant_direction} (Score: {conviction_score}%)")
+            logger.info(f"[{self.name}] EMITTED PREDICTION SETUP for {symbol}: {dominant_direction} (Score: {conviction_score}%, LTP: {latest_price})")

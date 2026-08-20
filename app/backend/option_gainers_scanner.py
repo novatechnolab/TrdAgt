@@ -267,12 +267,28 @@ def _build_atm_otm2_contracts(nfo_data, spot_prices, mode):
         near_expiry = min(active_expiries)
 
         targets = {
-            "ATM_CE":  (atm_strike,          "CE"),
-            "ATM_PE":  (atm_strike,          "PE"),
-            "OTM1_CE": (atm_strike + step,   "CE"),
-            "OTM1_PE": (atm_strike - step,   "PE"),
-            "OTM2_CE": (atm_strike + 2*step, "CE"),
-            "OTM2_PE": (atm_strike - 2*step, "PE"),
+            "ATM_CE":   (atm_strike,            "CE"),
+            "ATM_PE":   (atm_strike,            "PE"),
+            "OTM1_CE":  (atm_strike + step,     "CE"),
+            "OTM1_PE":  (atm_strike - step,     "PE"),
+            "OTM2_CE":  (atm_strike + 2*step,   "CE"),
+            "OTM2_PE":  (atm_strike - 2*step,   "PE"),
+            "OTM3_CE":  (atm_strike + 3*step,   "CE"),
+            "OTM3_PE":  (atm_strike - 3*step,   "PE"),
+            "OTM4_CE":  (atm_strike + 4*step,   "CE"),
+            "OTM4_PE":  (atm_strike - 4*step,   "PE"),
+            "OTM5_CE":  (atm_strike + 5*step,   "CE"),
+            "OTM5_PE":  (atm_strike - 5*step,   "PE"),
+            "OTM6_CE":  (atm_strike + 6*step,   "CE"),
+            "OTM6_PE":  (atm_strike - 6*step,   "PE"),
+            "OTM7_CE":  (atm_strike + 7*step,   "CE"),
+            "OTM7_PE":  (atm_strike - 7*step,   "PE"),
+            "OTM8_CE":  (atm_strike + 8*step,   "CE"),
+            "OTM8_PE":  (atm_strike - 8*step,   "PE"),
+            "OTM9_CE":  (atm_strike + 9*step,   "CE"),
+            "OTM9_PE":  (atm_strike - 9*step,   "PE"),
+            "OTM10_CE": (atm_strike + 10*step,  "CE"),
+            "OTM10_PE": (atm_strike - 10*step,  "PE"),
         }
 
         contract_map = {
@@ -1225,4 +1241,223 @@ def resolve_all_spot_tokens():
     return token_map
 
 _load_prev_close_cache()
+
+# ── 20% Milestone Timeline Computation ──
+_milestone_cache = {}
+_MILESTONE_CACHE_TTL = 15.0
+
+def get_contract_milestones(token=None, symbol=None, strike=None, opt_type=None, date_str=None, step_pct=20.0):
+    """
+    Computes cumulative +20% incremental milestones from 09:15 AM opening baseline.
+    Returns structured timeline for live session or EOD replay.
+    """
+    from session_utils import IST, now_ist, is_market_hours
+    from datetime import datetime, date, time as dt_time
+
+    now_val = now_ist()
+    today_str = now_val.strftime("%Y-%m-%d")
+    target_date_str = date_str or today_str
+
+    cache_key = f"{token}_{symbol}_{strike}_{opt_type}_{target_date_str}_{step_pct}"
+    now_ts = time.time()
+    if cache_key in _milestone_cache:
+        cached_ts, cached_res = _milestone_cache[cache_key]
+        if (now_ts - cached_ts) < _MILESTONE_CACHE_TTL or (target_date_str < today_str):
+            return cached_res
+
+    # 1. Resolve Instrument Token and Tradingsymbol from DB if needed
+    tradingsymbol = None
+    sym_name = symbol
+    resolved_strike = float(strike) if strike is not None else None
+    resolved_type = (opt_type or "").upper()
+    resolved_token = int(token) if token else None
+
+    conn = _get_db_conn()
+    c = conn.cursor()
+    try:
+        if resolved_token:
+            c.execute(
+                "SELECT instrument_token, tradingsymbol, strike, instrument_type, name FROM instruments WHERE instrument_token = ? LIMIT 1",
+                (resolved_token,)
+            )
+            row = c.fetchone()
+            if row:
+                resolved_token, tradingsymbol, resolved_strike, resolved_type, sym_name = row
+        elif sym_name and resolved_strike and resolved_type:
+            c.execute(
+                "SELECT instrument_token, tradingsymbol, strike, instrument_type, name FROM instruments WHERE name = ? AND strike = ? AND instrument_type = ? ORDER BY expiry ASC LIMIT 1",
+                (sym_name, resolved_strike, resolved_type)
+            )
+            row = c.fetchone()
+            if row:
+                resolved_token, tradingsymbol, resolved_strike, resolved_type, sym_name = row
+
+        # Resolve spot token
+        spot_token = None
+        if sym_name:
+            c.execute(
+                "SELECT instrument_token FROM instruments WHERE exchange = 'NSE' AND tradingsymbol = ? LIMIT 1",
+                (sym_name,)
+            )
+            s_row = c.fetchone()
+            if s_row:
+                spot_token = s_row[0]
+    finally:
+        conn.close()
+
+    if not resolved_token:
+        return {"success": False, "error": "Option contract not found"}
+
+    kite = _get_kite()
+    if not kite:
+        return {"success": False, "error": "Kite session not connected"}
+
+    # 2. Fetch Historical 1-Minute Candles for Option & Spot
+    from datetime import timedelta
+    try:
+        y, m, d = map(int, target_date_str.split("-"))
+        t_date = date(y, m, d)
+    except Exception:
+        t_date = now_val.date()
+        target_date_str = t_date.strftime("%Y-%m-%d")
+
+    from_dt = datetime.combine(t_date, dt_time(9, 15), tzinfo=IST)
+    to_dt = datetime.combine(t_date, dt_time(15, 40), tzinfo=IST)
+
+    opt_candles = []
+    try:
+        opt_candles = kite.historical_data(resolved_token, from_dt, to_dt, "minute")
+    except Exception as e:
+        logging.warning(f"[Milestones] Error fetching option candles: {e}")
+
+    # Fallback to most recent available trading day if target date has no data (e.g. midnight rollover / weekend)
+    if not opt_candles:
+        for delta in range(1, 7):
+            fallback_date = t_date - timedelta(days=delta)
+            f_from = datetime.combine(fallback_date, dt_time(9, 15), tzinfo=IST)
+            f_to = datetime.combine(fallback_date, dt_time(15, 40), tzinfo=IST)
+            try:
+                test_cds = kite.historical_data(resolved_token, f_from, f_to, "minute")
+                if test_cds:
+                    opt_candles = test_cds
+                    t_date = fallback_date
+                    target_date_str = fallback_date.strftime("%Y-%m-%d")
+                    from_dt = f_from
+                    to_dt = f_to
+                    break
+            except Exception:
+                pass
+
+    if not opt_candles:
+        return {"success": False, "error": f"No option candle data available for {target_date_str}"}
+
+    spot_map = {}
+    open_spot = 0.0
+    if spot_token:
+        try:
+            s_candles = kite.historical_data(spot_token, from_dt, to_dt, "minute")
+            if s_candles:
+                open_spot = s_candles[0].get("open", 0.0)
+                for sc in s_candles:
+                    t_str = sc["date"].strftime("%H:%M")
+                    spot_map[t_str] = sc
+        except Exception as e:
+            logging.warning(f"[Milestones] Error fetching spot candles: {e}")
+
+    # 3. Compute Step-by-Step Milestones
+    open_prem = opt_candles[0].get("open", 0.0)
+    if open_prem <= 0:
+        for cd in opt_candles:
+            if cd.get("open", 0) > 0:
+                open_prem = cd["open"]
+                break
+    if open_prem <= 0:
+        open_prem = 0.10
+
+    curr_target_pct = float(step_pct)
+    milestones = []
+    prev_milestone_time = None
+    step_num = 1
+
+    for cd in opt_candles:
+        high = cd.get("high", 0.0)
+        close = cd.get("close", 0.0)
+        t_str = cd["date"].strftime("%H:%M")
+        t_mins = (cd["date"].hour * 60 + cd["date"].minute) - (9 * 60 + 15)
+
+        while True:
+            target_price = round(open_prem * (1.0 + curr_target_pct / 100.0), 2)
+            if high >= target_price:
+                if prev_milestone_time is None:
+                    delta_mins = max(0, t_mins)
+                else:
+                    prev_h, prev_m = map(int, prev_milestone_time.split(":"))
+                    delta_mins = max(0, (cd["date"].hour * 60 + cd["date"].minute) - (prev_h * 60 + prev_m))
+
+                sc = spot_map.get(t_str)
+                spot_price = sc["close"] if sc else None
+                spot_move_pct = round(((spot_price - open_spot) / open_spot) * 100.0, 2) if (spot_price and open_spot > 0) else None
+                spot_volume = sc.get("volume", 0) if sc else 0
+                opt_volume = cd.get("volume", 0)
+
+                multiplier = round(1.0 + curr_target_pct / 100.0, 1)
+                mult_label = f"{multiplier:g}x" if multiplier >= 2.0 else ""
+
+                milestones.append({
+                    "step": step_num,
+                    "milestone_pct": round(curr_target_pct, 1),
+                    "mult_label": mult_label,
+                    "target_price": target_price,
+                    "time": t_str,
+                    "candle_high": high,
+                    "candle_close": close,
+                    "volume": opt_volume,
+                    "opt_volume": opt_volume,
+                    "spot_volume": spot_volume,
+                    "spot_price": spot_price,
+                    "spot_move_pct": spot_move_pct,
+                    "elapsed_mins": max(0, t_mins),
+                    "delta_mins": delta_mins,
+                })
+
+                prev_milestone_time = t_str
+                curr_target_pct += step_pct
+                step_num += 1
+            else:
+                break
+
+    last_candle = opt_candles[-1]
+    current_ltp = last_candle.get("close", open_prem)
+    total_gain_pct = round(((current_ltp - open_prem) / open_prem) * 100.0, 2) if open_prem > 0 else 0.0
+
+    # In-progress next milestone
+    next_target_pct = round(curr_target_pct, 1)
+    next_target_price = round(open_prem * (1.0 + next_target_pct / 100.0), 2)
+    points_needed = max(0.0, round(next_target_price - current_ltp, 2))
+    pct_needed = max(0.0, round(((next_target_price - current_ltp) / current_ltp) * 100.0, 2)) if current_ltp > 0 else 0.0
+
+    res = {
+        "success": True,
+        "symbol": sym_name,
+        "tradingsymbol": tradingsymbol,
+        "strike": resolved_strike,
+        "opt_type": resolved_type,
+        "token": resolved_token,
+        "date": target_date_str,
+        "open_price": open_prem,
+        "current_ltp": current_ltp,
+        "max_high": max(c.get("high", 0) for c in opt_candles),
+        "total_gain_pct": total_gain_pct,
+        "milestones": milestones,
+        "in_progress": {
+            "is_market_hours": is_market_hours() if target_date_str == today_str else False,
+            "next_milestone_pct": next_target_pct,
+            "next_target_price": next_target_price,
+            "points_needed": points_needed,
+            "pct_needed": pct_needed,
+        }
+    }
+
+    _milestone_cache[cache_key] = (now_ts, res)
+    return res
 

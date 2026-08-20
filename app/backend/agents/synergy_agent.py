@@ -52,16 +52,20 @@ class SynergyAgent(BaseAgent):
                 self.symbol_profiles[symbol] = new_profile
                 self.signals_emitted += 1
 
+                ltp = float(result.get("ltp") or result.get("spot_ltp") or 0.0)
                 signal_payload = {
                     "symbol": symbol,
                     "profile": new_profile,
                     "action": result.get("action", ""),
                     "is_buy_signal": result.get("is_buy_signal", True),
-                    "ltp": result.get("spot_ltp", 0.0),
+                    "ltp": ltp,
                     "setup_type": "SYNERGY_BUY",
                     "direction": "BULLISH",
                     "conviction": 90,
                     "agent_name": self.name,
+                    "cpr_pos": result.get("cpr_pos"),
+                    "intraday_zone": result.get("intraday_zone"),
+                    "intraday_action": result.get("intraday_action"),
                     "timestamp": time.time(),
                 }
                 self.send(topic=f"signals/synergy/{symbol}", payload=signal_payload)

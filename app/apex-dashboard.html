@@ -5791,7 +5791,7 @@
           const result = (json.candles || []).map(c => ({
             timestamp: floorToInterval(new Date(c.date || c.timestamp).getTime(), tf),
             open: c.open, high: c.high, low: c.low, close: c.close, volume: c.volume, oi: c.oi || null
-          }));
+          })).sort((a, b) => a.timestamp - b.timestamp);
           if (result.length >= minCandles) {
             console.log(`[FETCH] Success: ${result.length} candles from api/historical (${json.source || 'unknown'})`);
             return result;
@@ -5814,7 +5814,7 @@
         const result = (json.candles || []).map(c => ({
           timestamp: floorToInterval(new Date(c.timestamp).getTime(), tf),
           open: c.open, high: c.high, low: c.low, close: c.close, volume: c.volume, oi: c.oi
-        }));
+        })).sort((a, b) => a.timestamp - b.timestamp);
         console.log(`[FETCH] Got ${result.length} candles from kite/historical`);
         if (result.length >= minCandles) {
           console.log(`[FETCH] Success: ${result.length} candles from kite/historical`);
@@ -5835,7 +5835,7 @@
         const result = (json.candles || []).map(c => ({
           timestamp: floorToInterval(new Date(c.date || c.timestamp).getTime(), tf),
           open: c.open, high: c.high, low: c.low, close: c.close, volume: c.volume, oi: c.oi || null
-        }));
+        })).sort((a, b) => a.timestamp - b.timestamp);
         console.log(`[FETCH] Fallback success: ${result.length} candles from api/historical (${json.source || 'unknown'})`);
         return result;
       } catch (e) {

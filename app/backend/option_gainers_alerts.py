@@ -490,6 +490,7 @@ def get_eod_snapshot():
     if is_market_hours() or is_premarket():
         return None
 
+    now_val = now_ist()
     now_ts = time.time()
     expected_date = _expected_trading_date()
     expected_date_str = expected_date.strftime("%Y-%m-%d")
@@ -513,7 +514,7 @@ def get_eod_snapshot():
         except Exception as exc:
             logger.warning("[Premium Alerts EOD] Disk load failed: %s", exc)
 
-    is_past_close = (now_val.hour > 15 or (now_val.hour == 15 and now_val.minute >= 30))
+    is_past_close = (now_val.hour > 15 or (now_val.hour == 15 and now_val.minute >= 40))
     market_is_closed = (expected_date < now_val.date()) or (expected_date == now_val.date() and is_past_close)
 
     if market_is_closed and not _eod_snapshot_cache["running"]:

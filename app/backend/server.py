@@ -975,7 +975,7 @@ def get_cache_stats(db):
 
 
 def generate_demo_candles(token, from_date, to_date, interval):
-    """Generate demo OHLCV data for offline mode."""
+    """Generate demo OHLCV data for offline mode with chronological sorting and realistic base price."""
     import random
     from datetime import datetime, timedelta
 
@@ -988,18 +988,36 @@ def generate_demo_candles(token, from_date, to_date, interval):
         341249: 1600,   # HDFCBANK
     }
 
-    base_price = base_prices.get(token, 1000)
+    base_price = base_prices.get(token)
+    if base_price is None:
+        try:
+            conn = sqlite3.connect(DB_PATH)
+            c = conn.cursor()
+            c.execute(
+                "SELECT close FROM ohlcv WHERE instrument_token = ? AND interval = 'day' ORDER BY date DESC LIMIT 1",
+                (int(token),)
+            )
+            row = c.fetchone()
+            conn.close()
+            if row and row[0]:
+                base_price = float(row[0])
+        except Exception:
+            pass
+
+    if base_price is None or base_price <= 0:
+        base_price = 1000
+
     candles = []
 
     # Generate candles for the last 5 trading days
     current_date = datetime.now().replace(hour=9, minute=15, second=0, microsecond=0)
 
-    # For intraday, generate bars from 9:15 to 15:30
+    # For intraday, generate bars from 9:15 to 15:30 in chronological order
     if interval in ('5minute', '15minute'):
         interval_minutes = 5 if interval == '5minute' else 15
         days_back = 2  # Last 2 days
 
-        for day in range(days_back):
+        for day in reversed(range(days_back)):
             day_start = current_date - timedelta(days=day)
             if day_start.weekday() >= 5:  # Skip weekends
                 continue
@@ -1029,8 +1047,8 @@ def generate_demo_candles(token, from_date, to_date, interval):
                 base_price = close_price  # Carry over to next candle
 
     else:
-        # For daily data, generate daily bars
-        for day in range(30):  # Last 30 days
+        # For daily data, generate daily bars in chronological order
+        for day in reversed(range(30)):  # Last 30 days
             day_date = current_date - timedelta(days=day)
             if day_date.weekday() >= 5:  # Skip weekends
                 continue
@@ -1053,6 +1071,8 @@ def generate_demo_candles(token, from_date, to_date, interval):
 
             base_price = close_price
 
+    # Ensure strictly sorted by timestamp ascending
+    candles.sort(key=lambda x: str(x.get('date', '')))
     return candles
 
 
@@ -1069,7 +1089,6 @@ def _save_kite_session(api_key: str, access_token: str):
     try:
         with open(_SESSION_FILE, 'w') as f:
             json.dump({'api_key': api_key, 'access_token': access_token}, f)
-        print(f'  [SESSION] Token saved to {_SESSION_FILE}')
     except Exception as e:
         print(f'  [SESSION] WARNING: Could not save session file: {e}')
 
@@ -5186,6 +5205,7 @@ def option_gainers_board():
             if gain_pct <= 0:
                 continue
             results.append({
+                "token":      int(token_int),
                 "symbol":     info["symbol"],
                 "opt_type":   info["opt_type"],
                 "strike":     info["strike"],
@@ -5304,6 +5324,42 @@ def option_gainers_board():
     except Exception as e:
         logging.error(f"[Gainers API] Exception: {e}")
         return jsonify({"error": str(e), "stocks": [], "last_updated": None}), 500
+
+
+@app.route('/api/option-gainers/timeline')
+def option_gainers_timeline():
+    """
+    Computes cumulative 20% incremental milestone timeline for an option contract.
+    Params:
+      token: instrument_token
+      symbol: stock symbol (e.g. PIIND, GLENMARK)
+      strike: float strike price (e.g. 2200)
+      opt_type: 'CE' or 'PE'
+      date: 'YYYY-MM-DD' (optional, defaults to current trading date)
+      step: float milestone step % (default 20.0)
+    """
+    lazy_start_option_scanners()
+    try:
+        from option_gainers_scanner import get_contract_milestones
+        token = request.args.get('token', type=int)
+        symbol = request.args.get('symbol')
+        strike = request.args.get('strike', type=float)
+        opt_type = request.args.get('opt_type')
+        date_str = request.args.get('date')
+        step_pct = request.args.get('step', default=20.0, type=float)
+
+        res = get_contract_milestones(
+            token=token,
+            symbol=symbol,
+            strike=strike,
+            opt_type=opt_type,
+            date_str=date_str,
+            step_pct=step_pct
+        )
+        return jsonify(res)
+    except Exception as e:
+        logging.error(f"[Timeline API] Exception: {e}")
+        return jsonify({"success": False, "error": str(e)}), 500
 
 
 @app.route('/api/option-gainers-alerts')
@@ -11802,7 +11858,7 @@ _CAP_CATEGORY = {
     "DIVISLAB": "Mid Cap", "DIXON": "Mid Cap", "DLF": "Mid Cap",
     "DMART": "Mid Cap", "ESCORTS": "Mid Cap", "EXIDEIND": "Mid Cap",
     "FEDERALBNK": "Mid Cap", "GAIL": "Mid Cap", "GLENMARK": "Mid Cap",
-    "GMRINFRA": "Mid Cap", "GODREJCP": "Mid Cap", "GODREJPROP": "Mid Cap",
+    "GMRINFRA": "Mid Cap", "GMRAIRPORT": "Mid Cap", "GODREJCP": "Mid Cap", "GODREJPROP": "Mid Cap",
     "GRANULES": "Mid Cap", "HAL": "Mid Cap", "HAVELLS": "Mid Cap",
     "HDFCAMC": "Mid Cap", "HINDPETRO": "Mid Cap", "HINDZINC": "Mid Cap",
     "ICICIPRULI": "Mid Cap", "IDEA": "Mid Cap", "IDFCFIRSTB": "Mid Cap",
@@ -11828,60 +11884,76 @@ _CAP_CATEGORY = {
     "ZOMATO": "Mid Cap", "ZYDUSLIFE": "Mid Cap",
 }
 
-def _classify_fut_buildup(oi_chg_pct: float, price_chg_pct: float) -> str:
-    """Classify futures position buildup from OI% change and price% change.
+def _get_fut_buildup_db_snapshot():
+    """Retrieve latest futures buildup snapshot from SQLite for off-market hours."""
+    try:
+        db_path = os.path.join(os.path.dirname(__file__), "tradesignal_cache.db")
+        if not os.path.exists(db_path):
+            return None
+        import sqlite3
+        conn = sqlite3.connect(db_path)
+        cur = conn.cursor()
+        cur.execute("""
+            CREATE TABLE IF NOT EXISTS fno_futures_buildup_snapshot (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                date TEXT,
+                timestamp TEXT,
+                payload_json TEXT
+            )
+        """)
+        cur.execute("SELECT payload_json, date, timestamp FROM fno_futures_buildup_snapshot ORDER BY id DESC LIMIT 1")
+        row = cur.fetchone()
+        conn.close()
+        if row and row[0]:
+            data = json.loads(row[0])
+            data["is_eod_snapshot"] = True
+            data["snapshot_date"] = row[1]
+            data["snapshot_ts"] = row[2]
+            return data
+    except Exception as e:
+        logging.warning(f"[FutBuildup] DB snapshot read failed: {e}")
+    return None
 
-    Enhanced Option B+ logic:
-    - True Flat requires BOTH OI and price to be below their noise floors.
-    - If either signal is meaningful, classify by direction.
-    - When OI is silent but price moves, still classify by price direction
-      (covers early-session cold-start where oi_day_low ≈ curr_oi).
-
-    Noise floors (anchored to market reality):
-      PRICE_NOISE_FLOOR = 0.10%  — below this, price move is random tick noise
-      OI_NOISE_FLOOR    = 0.05%  — below this, OI move is sub-lot rounding noise
-    """
-    PRICE_NOISE_FLOOR = 0.10   # %
-    OI_NOISE_FLOOR    = 0.05   # %
-
-    price_meaningful = abs(price_chg_pct) >= PRICE_NOISE_FLOOR
-    oi_meaningful    = abs(oi_chg_pct)    >= OI_NOISE_FLOOR
-
-    # True Flat: neither OI nor price is moving meaningfully
-    if not price_meaningful and not oi_meaningful:
-        return "Flat"
-
-    oi_up    = oi_chg_pct   > 0
-    price_up = price_chg_pct > 0
-
-    if oi_meaningful:
-        # Classical 4-way matrix — both signals present
-        if oi_up and price_up:     return "Long Buildup"
-        if oi_up and not price_up: return "Short Buildup"
-        if not oi_up and price_up: return "Short Covering"
-        return "Long Unwinding"
-    else:
-        # OI silent but price is meaningful — price-direction-only signal.
-        # Covers early-session where oi_day_low baseline hasn't diverged yet.
-        return "Short Covering" if price_up else "Long Unwinding"
-
+def _save_fut_buildup_db_snapshot(payload):
+    """Save latest futures buildup snapshot to SQLite."""
+    try:
+        if not payload or not payload.get("stocks"):
+            return
+        db_path = os.path.join(os.path.dirname(__file__), "tradesignal_cache.db")
+        import sqlite3
+        conn = sqlite3.connect(db_path)
+        cur = conn.cursor()
+        cur.execute("""
+            CREATE TABLE IF NOT EXISTS fno_futures_buildup_snapshot (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                date TEXT,
+                timestamp TEXT,
+                payload_json TEXT
+            )
+        """)
+        today_str = datetime.date.today().isoformat()
+        now_str = datetime.datetime.now().strftime("%H:%M:%S")
+        cur.execute(
+            "INSERT INTO fno_futures_buildup_snapshot (date, timestamp, payload_json) VALUES (?, ?, ?)",
+            (today_str, now_str, json.dumps(payload))
+        )
+        conn.commit()
+        # Keep last 10 snapshots
+        cur.execute("DELETE FROM fno_futures_buildup_snapshot WHERE id NOT IN (SELECT id FROM fno_futures_buildup_snapshot ORDER BY id DESC LIMIT 10)")
+        conn.commit()
+        conn.close()
+    except Exception as e:
+        logging.warning(f"[FutBuildup] DB snapshot save failed: {e}")
 
 def _get_ce_sc_above_atm(symbol, spot_ltp, kite):
-    """Return True if any CE strike at or above ATM shows Short Covering (OI down).
-    Primary:  reads _spurt_history ticks already populated by the OI scanner — zero Kite calls.
-    Fallback: spawns a background thread (semaphore-capped, duplicate-guarded) that calls
-              get_option_chain() — same underlying function as /api/oi/symbol/<sym>.
-    Returns True/False (from cache) or None (not yet computed; no highlight this cycle).
-    """
+    """Return True if any CE strike at or above ATM shows Short Covering (OI down)."""
     today_str = datetime.date.today().isoformat()
 
-    # ─ 1: Serve from cache if fresh (5-min TTL, same day) ─────────────────────────
     with _chain_signal_lock:
         cached = _chain_signal_cache.get(symbol)
     if cached and cached["date"] == today_str and time.time() - cached["ts"] < 300:
         return cached["ce_sc_above_atm"]
 
-    # ─ 2: Primary — _spurt_history ticks (zero Kite calls) ──────────────────────
     try:
         from oi_spurt_routes import _spurt_history, _spurt_lock
         with _spurt_lock:
@@ -11904,15 +11976,14 @@ def _get_ce_sc_above_atm(symbol, spot_ltp, kite):
     except Exception:
         pass
 
-    # ─ 3: Fallback — background get_option_chain() (semaphore-capped + duplicate-guarded) ─
     with _chain_signal_lock:
         if symbol in _chain_signal_pending:
-            return None   # already in flight
+            return None
         _chain_signal_pending.add(symbol)
 
     def _bg():
         try:
-            with _chain_signal_sem:          # max 3 concurrent Kite option-chain calls
+            with _chain_signal_sem:
                 from oi_spurt_routes import get_option_chain
                 chain, *_ = get_option_chain(kite, symbol)
                 if chain and spot_ltp > 0:
@@ -11936,21 +12007,94 @@ def _get_ce_sc_above_atm(symbol, spot_ltp, kite):
                 _chain_signal_pending.discard(symbol)
 
     threading.Thread(target=_bg, daemon=True).start()
-    return None   # not yet computed; row rendered without highlight this cycle
+    return None
+
+def _classify_fut_buildup(oi_chg_pct: float, price_chg_pct: float) -> str:
+    """Classify futures position buildup from OI% change and price% change."""
+    PRICE_NOISE_FLOOR = 0.10   # %
+    OI_NOISE_FLOOR    = 0.05   # %
+
+    price_meaningful = abs(price_chg_pct) >= PRICE_NOISE_FLOOR
+    oi_meaningful    = abs(oi_chg_pct)    >= OI_NOISE_FLOOR
+
+    if not price_meaningful and not oi_meaningful:
+        return "Flat"
+
+    oi_up    = oi_chg_pct   > 0
+    price_up = price_chg_pct > 0
+
+    if oi_meaningful:
+        if oi_up and price_up:     return "Long Buildup"
+        if oi_up and not price_up: return "Short Buildup"
+        if not oi_up and price_up: return "Short Covering"
+        return "Long Unwinding"
+    else:
+        return "Short Covering" if price_up else "Long Unwinding"
+
+_CAP_CATEGORY = {
+    # NIFTY 50 / Large Cap
+    "RELIANCE": "Large Cap", "TCS": "Large Cap", "HDFCBANK": "Large Cap", "ICICIBANK": "Large Cap",
+    "INFY": "Large Cap", "BHARTIARTL": "Large Cap", "ITC": "Large Cap", "SBIN": "Large Cap",
+    "LICI": "Large Cap", "HINDUNILVR": "Large Cap", "LT": "Large Cap", "BAJFINANCE": "Large Cap",
+    "HCLTECH": "Large Cap", "MARUTI": "Large Cap", "SUNPHARMA": "Large Cap", "ADANIENT": "Large Cap",
+    "TATAMOTORS": "Large Cap", "KOTAKBANK": "Large Cap", "NTPC": "Large Cap", "AXISBANK": "Large Cap",
+    "TITAN": "Large Cap", "ONGC": "Large Cap", "POWERGRID": "Large Cap", "TATACONSUM": "Large Cap",
+    "COALINDIA": "Large Cap", "BAJAJFINSV": "Large Cap", "ASIANPAINT": "Large Cap", "M&M": "Large Cap",
+    "JSWSTEEL": "Large Cap", "TATASTEEL": "Large Cap", "ADANIPORTS": "Large Cap", "NESTLEIND": "Large Cap",
+    "ULTRACEMCO": "Large Cap", "WIPRO": "Large Cap", "GRASIM": "Large Cap", "HINDALCO": "Large Cap",
+    "VEDL": "Large Cap", "TECHM": "Large Cap", "IOC": "Large Cap", "SBILIFE": "Large Cap",
+    "DRREDDY": "Large Cap", "BPCL": "Large Cap", "BRITANNIA": "Large Cap", "DIVISLAB": "Large Cap",
+    "EICHERMOT": "Large Cap", "CIPLA": "Large Cap", "APOLLOHOSP": "Large Cap", "HEROMOTOCO": "Large Cap",
+    "BEL": "Large Cap", "HAL": "Large Cap", "SHRIRAMFIN": "Large Cap", "INDUSINDBK": "Large Cap",
+    "BAJAJ-AUTO": "Large Cap", "DLF": "Large Cap", "PFC": "Large Cap", "RECLTD": "Large Cap",
+    "SIEMENS": "Large Cap", "TRENT": "Large Cap", "ZOMATO": "Large Cap", "JIOFIN": "Large Cap",
+    "MOTHERSON": "Large Cap", "CHOLAFIN": "Large Cap", "HDFCLIFE": "Large Cap", "TVSMOTOR": "Large Cap",
+    "GODREJCP": "Large Cap", "GAIL": "Large Cap", "ABB": "Large Cap", "BOSCHLTD": "Large Cap",
+    "PIDILITIND": "Large Cap", "DABUR": "Large Cap", "HAVELLS": "Large Cap", "AMBUJACEM": "Large Cap",
+    "CUMMINSIND": "Large Cap", "POLYCAB": "Large Cap", "LTIM": "Large Cap",
+    # Mid Cap
+    "AUROPHARMA": "Mid Cap", "PERSISTENT": "Mid Cap", "COFORGE": "Mid Cap", "MPHASIS": "Mid Cap",
+    "FEDERALBNK": "Mid Cap", "IDFCFIRSTB": "Mid Cap", "BANDHANBNK": "Mid Cap", "AUBANK": "Mid Cap",
+    "BANKBARODA": "Mid Cap", "PNB": "Mid Cap", "CANBK": "Mid Cap", "UNIONBANK": "Mid Cap",
+    "INDIANB": "Mid Cap", "ASHOKLEY": "Mid Cap", "BALKRISIND": "Mid Cap", "MRF": "Mid Cap",
+    "BHARATFORG": "Mid Cap", "ESCORTS": "Mid Cap", "TIINDIA": "Mid Cap", "APOLLOTYRE": "Mid Cap",
+    "EXIDEIND": "Mid Cap", "VOLTAS": "Mid Cap", "BLUESTARCO": "Mid Cap", "CROMPTON": "Mid Cap",
+    "DIXON": "Mid Cap", "WHIRLPOOL": "Mid Cap", "KAYNES": "Mid Cap", "AMBER": "Mid Cap",
+    "JUBLFOOD": "Mid Cap", "DEVYANI": "Mid Cap", "RADICO": "Mid Cap", "MARICO": "Mid Cap",
+    "COLPAL": "Mid Cap", "UBL": "Mid Cap", "UNITDSPR": "Mid Cap", "PAGEIND": "Mid Cap",
+    "METROPOLIS": "Mid Cap", "LALPATHLAB": "Mid Cap", "SYNGENE": "Mid Cap", "GLAND": "Mid Cap",
+    "ALKEM": "Mid Cap", "TORNTPHARM": "Mid Cap", "IPCALAB": "Mid Cap", "BIOCON": "Mid Cap",
+    "GLENMARK": "Mid Cap", "LUPIN": "Mid Cap", "ZYDUSLIFE": "Mid Cap", "LAURUSLABS": "Mid Cap",
+    "COROMANDEL": "Mid Cap", "PIIND": "Mid Cap", "UPL": "Mid Cap", "DEEPAKNTR": "Mid Cap",
+    "TATACHEM": "Mid Cap", "AARTIIND": "Mid Cap", "SRF": "Mid Cap", "NAVINFLUOR": "Mid Cap",
+    "ATUL": "Mid Cap", "GUJGASLTD": "Mid Cap", "IGL": "Mid Cap", "MGL": "Mid Cap",
+    "PETRONET": "Mid Cap", "OIL": "Mid Cap", "HINDPETRO": "Mid Cap", "GSPL": "Mid Cap",
+    "OBEROIRLTY": "Mid Cap", "GODREJPROP": "Mid Cap", "PHOENIXLTD": "Mid Cap", "PRESTIGE": "Mid Cap",
+    "BRIGADE": "Mid Cap", "SOBHA": "Mid Cap", "LODHA": "Mid Cap", "SUNTECK": "Mid Cap",
+    "BATAINDIA": "Mid Cap", "RELAXO": "Mid Cap", "KALYANKJIL": "Mid Cap", "TITAGARH": "Mid Cap",
+    "BHEL": "Mid Cap", "RVNL": "Mid Cap", "IRCON": "Mid Cap", "RAILTEL": "Mid Cap",
+    "MAZDOCK": "Mid Cap", "COCHINSHIP": "Mid Cap", "GRSE": "Mid Cap", "BDL": "Mid Cap",
+    "ABCAPITAL": "Mid Cap", "L&TFH": "Mid Cap", "M&MFIN": "Mid Cap", "MUTHOOTFIN": "Mid Cap",
+    "MANAPPURAM": "Mid Cap", "POONAWALLA": "Mid Cap", "LICHSGFIN": "Mid Cap", "PNBHOUSING": "Mid Cap",
+    "HDFCAMC": "Mid Cap", "NAM-INDIA": "Mid Cap", "UTIAMC": "Mid Cap", "CAMS": "Mid Cap",
+    "KFINTECH": "Mid Cap", "BSE": "Mid Cap", "MCX": "Mid Cap", "CDSL": "Mid Cap",
+    "IEX": "Mid Cap", "NAUKRI": "Mid Cap", "PAYTM": "Mid Cap", "POLICYBZR": "Mid Cap",
+    "NYKAA": "Mid Cap", "DELHIVERY": "Mid Cap", "INDIGO": "Mid Cap", "IRCTC": "Mid Cap",
+    "PVRINOX": "Mid Cap", "ZEEL": "Mid Cap", "SUNTV": "Mid Cap", "SAIL": "Mid Cap",
+    "NMDC": "Mid Cap", "NATIONALUM": "Mid Cap", "JINDALSTEL": "Mid Cap", "HINDCOPPER": "Mid Cap",
+}
 
 
-@app.route("/api/futures-buildup")
+@app.route('/api/futures-buildup', methods=['GET'])
 def futures_buildup_board():
+    """Returns near-month futures buildup data for all tracked F&O symbols.
+    Calculates Spot % Move, Future % Move, Future LTP, OI % Change, and Buildup classification.
+    Zero Kite API calls: reuses in-memory KiteDataAgent cache and persists snapshots to SQLite.
     """
-    Returns futures buildup data for all F&O stocks, grouped by cap category.
-    Cost: 2 bulk kite.quote() calls (futures + spot). Cached 60s.
-    """
-    import time as _time
-
     # Serve from cache if fresh (dynamically enrich any newly ready chain signals)
     with _fut_buildup_lock:
         cached = _fut_buildup_cache.get("data")
-        age    = _time.time() - _fut_buildup_cache.get("ts", 0.0)
+        age    = time.time() - _fut_buildup_cache.get("ts", 0.0)
         if cached is not None and age < 60:
             today_str = datetime.date.today().isoformat()
             with _chain_signal_lock:
@@ -11963,6 +12107,9 @@ def futures_buildup_board():
 
     kite = get_kite()
     if not kite:
+        snapshot = _get_fut_buildup_db_snapshot()
+        if snapshot:
+            return jsonify(snapshot)
         return jsonify({"error": "Kite not connected", "stocks": []}), 400
 
     try:
@@ -11985,6 +12132,9 @@ def futures_buildup_board():
                 fut_map[name] = inst
 
         if not fut_map:
+            snapshot = _get_fut_buildup_db_snapshot()
+            if snapshot:
+                return jsonify(snapshot)
             return jsonify({"error": "No futures instruments found", "stocks": []}), 500
 
         # Build quote key lists
@@ -12033,9 +12183,6 @@ def futures_buildup_board():
         except Exception:
             _cpr_available = False
 
-        # ── EOD OI baseline infrastructure (reuses option chain SQLite cache) ──
-        # Provides true previous-day closing OI so oi_chg_pct can be negative,
-        # enabling Short Covering and Long Unwinding to be populated correctly.
         today_str      = today.isoformat()
         _eod_bl_ok     = False
         _get_cached_bl = None
@@ -12048,7 +12195,6 @@ def futures_buildup_board():
             )
             import oi_spurt_routes as _oir
             _eod_bl_ok = True
-            # Ensure background worker thread is alive to populate cache
             if _oir._worker_thread is None or not _oir._worker_thread.is_alive():
                 _oir._worker_thread = threading.Thread(target=_baseline_worker, daemon=True)
                 _oir._worker_thread.start()
@@ -12120,8 +12266,8 @@ def futures_buildup_board():
             fh_tag     = sym_ema.get("fh_spurt_tag")      # str or None
 
             # Auto-warm CPR pivots in background if any symbols are missing from cache
-            if _cpr_available and _time.time() - getattr(futures_buildup_board, '_last_cpr_warm', 0) > 300:
-                futures_buildup_board._last_cpr_warm = _time.time()
+            if _cpr_available and time.time() - getattr(futures_buildup_board, '_last_cpr_warm', 0) > 300:
+                futures_buildup_board._last_cpr_warm = time.time()
                 missing_cpr = {}
                 for sym, spot_key in symbol_to_spot_key.items():
                     sq_val = spot_quotes.get(spot_key)
@@ -12166,6 +12312,8 @@ def futures_buildup_board():
                 "symbol":          symbol,
                 "ltp":             round(spot_ltp, 2),
                 "spot_chg_pct":    round(spot_chg_pct, 2),
+                "fut_ltp":         round(fut_ltp, 2),
+                "fut_chg_pct":     round(fut_price_chg, 2),
                 "buildup":         buildup,
                 "cap":             cap,
                 "oi_chg_pct":      round(oi_chg_pct, 2),
@@ -12190,14 +12338,20 @@ def futures_buildup_board():
             "updated_at": dt.now().strftime("%H:%M:%S"),
         }
 
+        # Persist to SQLite snapshot for 24/7 offline / weekend fallback
+        _save_fut_buildup_db_snapshot(payload)
+
         with _fut_buildup_lock:
             _fut_buildup_cache["data"] = payload
-            _fut_buildup_cache["ts"]   = _time.time()
+            _fut_buildup_cache["ts"]   = time.time()
 
         return jsonify(payload)
 
     except Exception as e:
         logging.exception("[FutBuildup] Unhandled error")
+        snapshot = _get_fut_buildup_db_snapshot()
+        if snapshot:
+            return jsonify(snapshot)
         return jsonify({"error": str(e), "stocks": []}), 500
 
 

@@ -48,6 +48,15 @@ class FNOTrapAgent(BaseAgent):
             return
 
         for symbol, card in cards_snapshot.items():
+            card_state = card.get("card_state", "")
+            action = card.get("action")
+
+            # Gating: Suppress non-actionable or market-closed states
+            if card_state in ("MARKET_CLOSED", "SETTLEMENT_EARLY", "BLOCKED"):
+                continue
+            if action in (None, "WAIT", "AVOID", "BLOCKED", ""):
+                continue
+
             new_direction = card.get("trap_direction") or card.get("trap_dir", "")
             if not new_direction:
                 continue
@@ -62,8 +71,8 @@ class FNOTrapAgent(BaseAgent):
                 # PUT_BUYER_TRAP → CE buy → BULLISH
                 # CALL_BUYER_TRAP → PE buy → BEARISH
                 direction = "BULLISH" if new_direction == "PUT_BUYER_TRAP" else "BEARISH"
-                trap_score = card.get("trap_score", card.get("score", 80))
-                ltp = card.get("spot_ltp", card.get("spot", 0.0))
+                trap_score = card.get("trap_score", card.get("score", card.get("confidence", 80)))
+                ltp = float(card.get("spot") or card.get("spot_ltp") or 0.0)
 
                 signal_payload = {
                     "symbol": symbol,
@@ -71,6 +80,12 @@ class FNOTrapAgent(BaseAgent):
                     "direction": direction,
                     "trap_score": trap_score,
                     "ltp": ltp,
+                    "strike": card.get("strike"),
+                    "expiry": card.get("expiry"),
+                    "target_1": card.get("spot_t1"),
+                    "target_2": card.get("spot_t2"),
+                    "stop_loss": card.get("spot_inval") or card.get("stop"),
+                    "why": card.get("why"),
                     "setup_type": "FNO_TRAP_CLEAR",
                     "agent_name": self.name,
                     "timestamp": time.time(),
@@ -78,5 +93,5 @@ class FNOTrapAgent(BaseAgent):
                 self.send(topic=f"signals/trap/{symbol}", payload=signal_payload)
                 logger.info(
                     f"[{self.name}] Trap direction transition for {symbol}: "
-                    f"'{prev_direction}' → '{new_direction}' (Score: {trap_score})"
+                    f"'{prev_direction}' → '{new_direction}' (Score: {trap_score}, LTP: {ltp})"
                 )

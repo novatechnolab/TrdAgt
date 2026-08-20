@@ -25,13 +25,15 @@ class AlertDispatchAgent(BaseAgent):
         telegram_token: Optional[str] = None,
         telegram_chat_id: Optional[str] = None,
         discord_webhook_url: Optional[str] = None,
-        cooldown_seconds: float = 900.0  # 15-minute symbol cooldown
+        cooldown_seconds: float = 900.0,  # 15-minute symbol cooldown
+        enforce_market_hours: bool = True
     ):
         super().__init__(name=name, bus=bus)
         self.telegram_token = telegram_token
         self.telegram_chat_id = telegram_chat_id
         self.discord_webhook_url = (discord_webhook_url or "").replace('discordapp.com', 'discord.com') or None
         self.cooldown_seconds = cooldown_seconds
+        self.enforce_market_hours = enforce_market_hours
         self.symbol_last_alert: Dict[str, float] = {}  # symbol -> timestamp of last dispatch
         self.dispatched_alerts: Dict[str, Any] = {}
         self.alerts_dispatched_count = 0
@@ -47,11 +49,10 @@ class AlertDispatchAgent(BaseAgent):
         logger.info(f"[{self.name}] Socket.IO attached for real-time alert broadcasting.")
 
     def on_start(self):
-        """Subscribe to all prediction and raw alert topics."""
+        """Subscribe to all validated prediction and system alert topics."""
         if self.bus:
             self.bus.subscribe("alerts/#", self)
-            self.bus.subscribe("signals/#", self)
-            logger.info(f"[{self.name}] Subscribed to 'alerts/#' and 'signals/#'.")
+            logger.info(f"[{self.name}] Subscribed to 'alerts/#'.")
 
     def _run_loop(self):
         """
@@ -109,14 +110,15 @@ class AlertDispatchAgent(BaseAgent):
             return
 
         # Market hours guard — suppress outward alerts (Telegram, Discord, Socket.IO) when market is closed
-        try:
-            from session_utils import is_market_hours
-            if not is_market_hours():
-                self.alerts_suppressed_count += 1
-                logger.debug(f"[{self.name}] Market closed — suppressed outward alert for {symbol}")
-                return
-        except Exception:
-            pass
+        if self.enforce_market_hours:
+            try:
+                from session_utils import is_market_hours
+                if not is_market_hours():
+                    self.alerts_suppressed_count += 1
+                    logger.debug(f"[{self.name}] Market closed — suppressed outward alert for {symbol}")
+                    return
+            except Exception:
+                pass
 
         # Prioritize prediction confluence setups over raw scanner pings
         is_prediction = topic.startswith("alerts/prediction")
@@ -170,18 +172,43 @@ class AlertDispatchAgent(BaseAgent):
         direction = payload.get("direction", "NEUTRAL")
         icon = "🚀 BULLISH" if direction == "BULLISH" else ("🔻 BEARISH" if direction == "BEARISH" else "⚠️ ALERT")
         conviction = payload.get("conviction_score", payload.get("conviction", 0))
-        ltp = payload.get("ltp", 0.0)
+        ltp = float(payload.get("ltp") or 0.0)
         rationale = payload.get("rationale", payload.get("setup_type", "Signal Triggered"))
         agreeing = payload.get("agreeing_agents", [])
+        strike = payload.get("strike")
+        expiry = payload.get("expiry")
+        target_1 = payload.get("target_1")
+        target_2 = payload.get("target_2")
+        stop_loss = payload.get("stop_loss")
+        market_context = payload.get("market_context")
 
         lines = [
             f"⚡ *TRADESIGNAL AGENTIC ALERT* | {icon}",
             f"*Symbol:* `{symbol}` | *LTP:* `₹{ltp:.2f}`",
             f"*Conviction Score:* `{conviction}%`",
-            f"*Rationale:* {rationale}",
         ]
+        if strike:
+            strike_line = f"*Strike:* `{strike}`"
+            if expiry:
+                strike_line += f" | *Expiry:* `{expiry}`"
+            lines.append(strike_line)
+
+        if target_1 or target_2 or stop_loss:
+            targets_str = []
+            if target_1:
+                targets_str.append(f"T1: `{target_1}`")
+            if target_2:
+                targets_str.append(f"T2: `{target_2}`")
+            if stop_loss:
+                targets_str.append(f"SL: `{stop_loss}`")
+            lines.append(f"*Levels:* {' | '.join(targets_str)}")
+
         if agreeing:
             lines.append(f"*Confluence Agents:* `{', '.join(agreeing)}`")
+        if market_context:
+            lines.append(f"*Market Regime:* `{market_context}`")
+
+        lines.append(f"*Rationale:* {rationale}")
         lines.append(f"*Time:* `{time.strftime('%H:%M:%S IST')}`")
 
         return "\n".join(lines)
