@@ -1,5 +1,18 @@
 # TradeSignal — Change Log
 
+## 2026-08-21 — Futures Buildup: Unify Classification with Layer 1 Asset-Class Noise Filter
+
+**Goal:** Standardize `_classify_fut_buildup()` in `app/backend/server.py` to use the Layer 1 `get_layer1_noise_threshold()` matrix from `oi_spurt_routes.py`, ensuring 100% consistent buildup categorization and noise filtering across all devices and endpoints.
+
+**Files changed:**
+- `app/backend/server.py` [MODIFY]
+
+**Agent Reuse Decision:** Backend standardization using existing Layer 1 noise threshold engine in `oi_spurt_routes.py`.
+
+**Changes:**
+1. **Price Noise-First Gate:** Updated `_classify_fut_buildup()` to evaluate `abs(price_chg_pct) <= get_layer1_noise_threshold(symbol)` before evaluating direction, preventing negligible price ticks from creating false Short Covering / Long Unwinding signals on unchanged stocks.
+2. **Unified Categorization:** Passed `symbol=symbol` in `futures_buildup_board()` so all 214 F&O stocks are categorized identically between the OI Spurt Scanner (Layer 1) and the 360° Command Center.
+
 ## 2026-08-21 — 360° Command Center: Latency & Bottleneck Optimizations
 
 **Goal:** Eliminate major latency bottlenecks and redundant network requests in the 360° Command Center and backend API.

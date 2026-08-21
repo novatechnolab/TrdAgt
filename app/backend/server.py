@@ -12025,27 +12025,33 @@ def _get_ce_sc_above_atm(symbol, spot_ltp, kite):
     threading.Thread(target=_bg, daemon=True).start()
     return None
 
-def _classify_fut_buildup(oi_chg_pct: float, price_chg_pct: float) -> str:
-    """Classify futures position buildup from OI% change and price% change."""
-    PRICE_NOISE_FLOOR = 0.10   # %
-    OI_NOISE_FLOOR    = 0.05   # %
+def _classify_fut_buildup(oi_chg_pct: float, price_chg_pct: float, symbol: str = "") -> str:
+    """Classify futures position buildup from OI% change and price% change using Layer 1 asset-class noise filter."""
+    if symbol:
+        try:
+            from oi_spurt_routes import get_layer1_noise_threshold
+            noise_th = get_layer1_noise_threshold(symbol)
+        except Exception:
+            noise_th = 0.10
+    else:
+        noise_th = 0.10
 
-    price_meaningful = abs(price_chg_pct) >= PRICE_NOISE_FLOOR
-    oi_meaningful    = abs(oi_chg_pct)    >= OI_NOISE_FLOOR
+    # 1. Price noise filter — matches Layer 1 matrix exactly
+    if abs(price_chg_pct) <= noise_th:
+        return "Flat"
 
-    if not price_meaningful and not oi_meaningful:
+    # 2. OI noise filter
+    OI_NOISE_FLOOR = 0.05   # %
+    if abs(oi_chg_pct) < OI_NOISE_FLOOR:
         return "Flat"
 
     oi_up    = oi_chg_pct   > 0
     price_up = price_chg_pct > 0
 
-    if oi_meaningful:
-        if oi_up and price_up:     return "Long Buildup"
-        if oi_up and not price_up: return "Short Buildup"
-        if not oi_up and price_up: return "Short Covering"
-        return "Long Unwinding"
-    else:
-        return "Short Covering" if price_up else "Long Unwinding"
+    if oi_up and price_up:     return "Long Buildup"
+    if oi_up and not price_up: return "Short Buildup"
+    if not oi_up and price_up: return "Short Covering"
+    return "Long Unwinding"
 
 _CAP_CATEGORY = {
     # NIFTY 50 / Large Cap
@@ -12316,7 +12322,7 @@ def futures_buildup_board():
                         bc=cpr_info.get("bc")
                     )
 
-            buildup = _classify_fut_buildup(oi_chg_pct, fut_price_chg)
+            buildup = _classify_fut_buildup(oi_chg_pct, fut_price_chg, symbol=symbol)
             cap     = _CAP_CATEGORY.get(symbol.upper(), "Small Cap")
 
             # CE SC above ATM — only computed for SC/LB rows (others skipped for performance)
