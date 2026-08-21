@@ -18,10 +18,15 @@ warn()    { echo -e "${YELLOW}⚠️  $*${NC}"; }
 error()   { echo -e "${RED}❌ $*${NC}"; exit 1; }
 section() { echo -e "\n${GREEN}━━━ $* ━━━${NC}"; }
 
-# ── 0. Verify we are on Termux ──────────────────────────────────────────────
+# ── 0. Verify we are on Termux & Acquire Wake Lock ──────────────────────────
 if [ ! -d /data/data/com.termux ]; then
     warn "Not running inside Termux. Use launch_tradesignal.sh instead."
 else
+    # Prevent Android from throttling CPU/network during setup and runtime
+    termux-wake-lock 2>/dev/null || true
+    info "Acquired Termux wake-lock to prevent background throttling."
+    # Ensure all scripts are executable
+    chmod +x "$DIR/launch_tradesignal.sh" "$DIR/setup_termux.sh" 2>/dev/null || true
     # Resolve Termux venv symbol loading bug (cannot locate symbol: pyexc_warning)
     PY_VER=$(python3 -c 'import sys; print(f"{sys.version_info.major}.{sys.version_info.minor}")' 2>/dev/null || python -c 'import sys; print(f"{sys.version_info.major}.{sys.version_info.minor}")' 2>/dev/null || echo "3.13")
     export LD_PRELOAD="/data/data/com.termux/files/usr/lib/libpython${PY_VER}.so"
@@ -128,18 +133,27 @@ else
     fi
 fi
 
-section "Step 7: Creating launch alias"
-BASHRC="$HOME/.bashrc"
-ALIAS_LINE="alias tradesignal='bash $DIR/launch_tradesignal.sh'"
+section "Step 7: Creating launch alias and global command"
+# 1. Force update aliases in ~/.bashrc and ~/.zshrc (remove stale paths from old repos)
+for rc_file in "$HOME/.bashrc" "$HOME/.zshrc"; do
+    if [ -f "$rc_file" ] || [ "$rc_file" = "$HOME/.bashrc" ]; then
+        touch "$rc_file"
+        sed -i '/alias tradesignal=/d' "$rc_file" 2>/dev/null || true
+        echo "" >> "$rc_file"
+        echo "# TradeSignal launcher (configured for $DIR)" >> "$rc_file"
+        echo "alias tradesignal='bash $DIR/launch_tradesignal.sh'" >> "$rc_file"
+        info "Configured 'tradesignal' alias in $(basename "$rc_file") -> $DIR"
+    fi
+done
 
-if ! grep -qF "alias tradesignal=" "$BASHRC" 2>/dev/null; then
-    echo "" >> "$BASHRC"
-    echo "# TradeSignal launcher" >> "$BASHRC"
-    echo "$ALIAS_LINE" >> "$BASHRC"
-    info "Added 'tradesignal' alias to ~/.bashrc"
-    info "Run: source ~/.bashrc  — then type: tradesignal"
-else
-    info "'tradesignal' alias already present in ~/.bashrc"
+# 2. Install a global executable wrapper in Termux bin ($PREFIX/bin/tradesignal)
+if [ -n "$PREFIX" ] && [ -d "$PREFIX/bin" ] && [ -w "$PREFIX/bin" ]; then
+    cat > "$PREFIX/bin/tradesignal" << WRAPPER_EOF
+#!/data/data/com.termux/files/usr/bin/bash
+exec bash "$DIR/launch_tradesignal.sh" "\$@"
+WRAPPER_EOF
+    chmod +x "$PREFIX/bin/tradesignal"
+    info "Installed global command: $PREFIX/bin/tradesignal"
 fi
 
 section "Step 8: Smoke-test imports"

@@ -1,5 +1,19 @@
 # TradeSignal — Change Log
 
+## 2026-08-21 — Termux Setup: Global Launcher, Wake Lock & Dynamic Alias Replacement
+
+**Goal:** Enhance `setup_termux.sh` to automatically acquire `termux-wake-lock`, replace stale aliases in `~/.bashrc` and `~/.zshrc` pointing to old directories, and install `$PREFIX/bin/tradesignal` global executable.
+
+**Files changed:**
+- `setup_termux.sh` [MODIFY]
+
+**Agent Reuse Decision:** Deployment and environment script enhancement for Android/Termux mobile instances.
+
+**Changes:**
+1. **Dynamic Path & Alias Cleanup:** `setup_termux.sh` automatically cleans up any stale `alias tradesignal=` lines in `~/.bashrc` and `~/.zshrc` and configures them to the active repository directory.
+2. **Global Command Wrapper:** Installed `$PREFIX/bin/tradesignal` wrapper so `tradesignal` command runs anywhere in Termux.
+3. **Automated Wake Lock & Permissions:** Automatically acquires `termux-wake-lock` and sets `chmod +x` on all launch scripts.
+
 ## 2026-08-21 — Futures Buildup: Unify Classification with Layer 1 Asset-Class Noise Filter
 
 **Goal:** Standardize `_classify_fut_buildup()` in `app/backend/server.py` to use the Layer 1 `get_layer1_noise_threshold()` matrix from `oi_spurt_routes.py`, ensuring 100% consistent buildup categorization and noise filtering across all devices and endpoints.
