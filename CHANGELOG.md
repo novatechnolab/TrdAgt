@@ -1,5 +1,22 @@
 # TradeSignal — Change Log
 
+## 2026-08-21 — 360 Command Center: Layout Overhaul + Grouped Breakout Alerts
+
+**Goal:** Remove Hot Zone strip, shrink right panel by 30% giving width to master board, and group Breakouts tab alerts by symbol ordered by time.
+
+**Files changed:** `app/360-command-center.html` [MODIFY]
+
+**Summary:**
+- Grid: `auto 460px 1fr` → `1fr 460px 320px` (right panel fixed 320px, master board expands to fill remaining space).
+- `#hz-strip` DOM removed; all `renderHotZone()` call sites eliminated.
+- `brk_events` tab groups alerts by symbol with compact sub-rows per event, sorted by `trigger_epoch` (newest first); groups sorted by latest event time.
+- Fixed mobile / touchscreen inline chart crosshair: bound `touchstart`, `touchmove`, `touchend`, `touchcancel` with `touch-action: none` to enable fluid scrubbing without getting stuck.
+- Enhanced text contrast across dark theme: updated table column headers, stats cards labels, column titles, and legend text to high-visibility `#ffffff` / `#cbd5e1` to eliminate low-contrast text against dark blue backgrounds.
+- Colorized OI % column in Unified Master Board: positive OI rendered in green (`.bull`), negative OI in red (`.bear`), and 0% OI in clean white (`.oi-zero`).
+- Mobile-Adaptive Zoom & Pan for Inline Charts: added windowed candle slice rendering with dynamic price scaling, single-finger drag to pan through past history, two-finger pinch-to-zoom, mouse wheel zoom, and dedicated topbar `🔍+`, `🔍−`, `↺` zoom/reset controls.
+
+**Agent Reuse Decision:** Frontend-only; no backend agents modified.
+
 ## 2026-08-21 — Termux Setup: Global Launcher, Wake Lock & Dynamic Alias Replacement
 
 **Goal:** Enhance `setup_termux.sh` to automatically acquire `termux-wake-lock`, replace stale aliases in `~/.bashrc` and `~/.zshrc` pointing to old directories, and install `$PREFIX/bin/tradesignal` global executable.
@@ -227,7 +244,6 @@
 **Agent Reuse Decision:** Frontend-only CSS layout change; no backend or agent modifications.
 
 ## 2026-08-21 — 360° Command Center: Remove TC/PVT/BC and DRIFT Columns from Unified Master Board
-
 
 **Goal:** Clean up the Unified Master Board in 360 Command Center UI by removing `TC/PVT/BC` and `DRIFT` columns.
 

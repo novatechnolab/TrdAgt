@@ -11,7 +11,7 @@
   --b:#18305d; --bhi:#224482;
   --acc:#38bdf8; --accg:rgba(56,189,248,.22);
   --bull:#22c55e; --bear:#ef4444; --neu:#eab308;
-  --t1:#f8fafc; --t2:#94a3b8; --t3:#64748b;
+  --t1:#ffffff; --t2:#cbd5e1; --t3:#94a3b8;
   --amb:#f59e0b; --pur:#a855f7; --cyn:#06b6d4; --grn:#10b981;
   --mono:'JetBrains Mono',monospace; --r:10px; --rs:6px;
   --tb-bg:rgba(12,25,50,.96); --ch-bg:rgba(16,32,65,.85); --th-bg:#0d1c37;
@@ -108,14 +108,14 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--t1);min-hei
 .hz-gain{font-size:11px;font-weight:800;font-family:var(--mono);}
 
 /* LAYOUT */
-.lay{display:grid;grid-template-columns:auto 460px 1fr;overflow:hidden;}
+.lay{display:grid;grid-template-columns:1fr 460px 320px;overflow:hidden;}
 .col{border-right:1px solid var(--b);display:flex;flex-direction:column;overflow:hidden;}
 .col:last-child{border-right:none;}
 
 /* COL HEADER */
 .ch{padding:9px 12px;border-bottom:1px solid var(--b);background:var(--ch-bg);
   display:flex;align-items:center;justify-content:space-between;flex-shrink:0;gap:8px;}
-.ct{font-size:12.5px;font-weight:700;letter-spacing:.07em;text-transform:uppercase;display:flex;align-items:center;gap:7px;}
+.ct{font-size:12.5px;font-weight:700;letter-spacing:.07em;text-transform:uppercase;display:flex;align-items:center;gap:7px;color:#ffffff;}
 .cbadge{font-size:10px;font-weight:600;padding:2px 7px;border-radius:10px;background:var(--card2);color:var(--acc);border:1px solid var(--b);}
 .cb{flex:1;overflow-y:auto;padding:6px;}
 .cb::-webkit-scrollbar{width:3px;}
@@ -130,7 +130,7 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--t1);min-hei
 /* MASTER TABLE */
 .tbl{width:100%;border-collapse:collapse;font-size:11px;}
 .tbl thead th{padding:5px 4px;font-size:9.5px;font-weight:800;text-transform:uppercase;letter-spacing:.06em;
-  color:var(--t2);border-bottom:1px solid var(--b);white-space:nowrap;background:var(--th-bg);
+  color:#ffffff;border-bottom:1px solid var(--b);white-space:nowrap;background:var(--th-bg);
   position:sticky;top:0;z-index:10;text-align:left;}
 .tbl thead th.sortable{cursor:pointer;user-select:none;}
 .tbl thead th.sortable:hover{color:var(--t1);background:var(--accg);}
@@ -160,7 +160,7 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--t1);min-hei
 .sym{font-weight:800;font-size:12px;}
 .mono{font-family:var(--mono);font-weight:700;}
 .bull{color:var(--bull);font-weight:800;}.bear{color:var(--bear);font-weight:800;}.neu{color:var(--neu);font-weight:800;}
-.amb{color:var(--amb);font-weight:800;}.pur{color:var(--pur);font-weight:800;}.cyn{color:var(--cyn);font-weight:800;}
+.amb{color:var(--amb);font-weight:800;}.pur{color:var(--pur);font-weight:800;}.cyn{color:var(--cyn);font-weight:800;}.oi-zero{color:#ffffff;font-weight:700;}
 .cap-l{background:rgba(59,130,246,.18);color:var(--acc);font-size:10px;font-weight:800;padding:1px 5px;border-radius:3px;border:1px solid rgba(59,130,246,.35);}
 .cap-m{background:rgba(234,179,8,.15);color:var(--amb);font-size:10px;font-weight:800;padding:1px 5px;border-radius:3px;border:1px solid rgba(234,179,8,.35);}
 .cap-s{background:rgba(168,85,247,.15);color:var(--pur);font-size:10px;font-weight:800;padding:1px 5px;border-radius:3px;border:1px solid rgba(168,85,247,.3);}
@@ -253,7 +253,7 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--t1);min-hei
 .ps-table-shell::-webkit-scrollbar{height:4px;width:4px;}
 .ps-table-shell::-webkit-scrollbar-thumb{background:var(--b);border-radius:2px;}
 .ps-table{width:100%;border-collapse:collapse;min-width:440px;font-size:9.5px;table-layout:fixed;}
-.ps-table thead{background:var(--th-bg,#111827);color:var(--t2);text-transform:uppercase;letter-spacing:.03em;font-size:8px;font-weight:800;position:sticky;top:0;z-index:5;}
+.ps-table thead{background:var(--th-bg,#111827);color:#ffffff;text-transform:uppercase;letter-spacing:.03em;font-size:8px;font-weight:800;position:sticky;top:0;z-index:5;}
 .ps-table th,.ps-table td{border-bottom:1px solid var(--b);padding:3.5px 3px;text-align:left;vertical-align:middle;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
 .ps-table tbody tr{background:var(--card);transition:background .12s;}
 .ps-table tbody tr:nth-child(even){background:rgba(255,255,255,.015);}
@@ -353,7 +353,7 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--t1);min-hei
 .fb-stat-card{background:var(--card);border:1px solid var(--b);border-radius:8px;padding:7px 10px;text-align:center;cursor:pointer;transition:all .18s cubic-bezier(.4,0,.2,1);user-select:none;}
 .fb-stat-card:hover{border-color:var(--bhi);transform:translateY(-1px);}
 .fb-stat-card.active{background:var(--accg);border-color:var(--acc);box-shadow:0 0 12px var(--accg);}
-.fb-stat-lbl{font-size:8px;font-weight:800;letter-spacing:.06em;color:var(--t2);text-transform:uppercase;margin-bottom:3px;}
+.fb-stat-lbl{font-size:8px;font-weight:800;letter-spacing:.06em;color:#ffffff;text-transform:uppercase;margin-bottom:3px;}
 .fb-stat-val{font-size:16px;font-weight:800;font-family:var(--mono);line-height:1;}
 .fb-stat-val.val-lb{color:var(--bull);}
 .fb-stat-val.val-sb{color:var(--bear);}
@@ -465,6 +465,10 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--t1);min-hei
 [data-theme="light"] .hz-tag.a{background:rgba(217,119,6,.15);color:#b45309;border-color:rgba(217,119,6,.4);font-weight:800;}
 
 /* Universal Board & Card Typography Overrides for Light Mode */
+[data-theme="light"] .ct{color:#0f172a;}
+[data-theme="light"] .rp-sh{color:#0f172a;}
+[data-theme="light"] .fb-stat-lbl{color:#475569;}
+[data-theme="light"] .ps-table thead{color:#1e293b;}
 [data-theme="light"] .tbl thead th{color:#1e293b;font-weight:800;}
 [data-theme="light"] .tbl td{color:#0f172a;}
 [data-theme="light"] .sym{color:#0f172a;font-weight:800;font-size:11.5px;}
@@ -476,6 +480,7 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--t1);min-hei
 [data-theme="light"] .pur{color:#6d28d9;font-weight:800;}
 [data-theme="light"] .cyn{color:#0369a1;font-weight:800;}
 [data-theme="light"] .mono{font-weight:700;}
+[data-theme="light"] .oi-zero{color:#0f172a;font-weight:700;}
 [data-theme="light"] .oi-pct{color:#6d28d9;font-weight:800;}
 [data-theme="light"] .oi-sym{color:#0f172a;font-weight:800;}
 [data-theme="light"] .oi-rank{color:#475569;font-weight:800;}
@@ -535,14 +540,23 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--t1);min-hei
 .lvl-badge.tc{background:rgba(168,85,247,.12);color:var(--pur);border:1px solid rgba(168,85,247,.35);}
 .lvl-badge.piv{background:rgba(6,182,212,.12);color:var(--cyn);border:1px solid rgba(6,182,212,.35);}
 .lvl-badge.bc{background:rgba(129,140,248,.12);color:#818cf8;border:1px solid rgba(129,140,248,.35);}
-.ichart-actions{display:flex;gap:8px;align-items:center;}
+.ichart-actions{display:flex;gap:6px;align-items:center;flex-wrap:wrap;}
 .tf-btn-group{display:flex;border:1px solid var(--b);border-radius:4px;overflow:hidden;}
-.ichart-tf-btn{font-size:9px;font-weight:800;padding:3px 8px;background:var(--card2);color:var(--t2);border:none;cursor:pointer;transition:all .15s;}
+.ichart-tf-btn{font-size:9.5px;font-weight:800;padding:4px 8px;background:var(--card2);color:#cbd5e1;border:none;cursor:pointer;transition:all .15s;user-select:none;min-height:26px;}
+.ichart-tf-btn:hover{background:var(--bhi);color:#ffffff;}
+.ichart-tf-btn:active{background:var(--accg);}
 .ichart-tf-btn.active{background:var(--acc);color:#ffffff;}
-.chart-popout-btn{font-size:9px;font-weight:700;padding:3px 8px;background:var(--accg);color:var(--acc);border:1px solid var(--b);border-radius:4px;text-decoration:none;transition:all .15s;}
+.chart-popout-btn{font-size:9px;font-weight:700;padding:4px 8px;background:var(--accg);color:var(--acc);border:1px solid var(--b);border-radius:4px;text-decoration:none;transition:all .15s;display:inline-flex;align-items:center;min-height:26px;}
 .chart-popout-btn:hover{background:var(--acc);color:#ffffff;}
-.ichart-canvas-container{position:relative;width:100%;height:380px;background:var(--chart-bg);border:1px solid var(--b);border-top:none;border-radius:0 0 6px 6px;overflow:hidden;}
-.ichart-canvas{width:100%;height:100%;display:block;}
+.ichart-canvas-container{position:relative;width:100%;height:380px;background:var(--chart-bg);border:1px solid var(--b);border-top:none;border-radius:0 0 6px 6px;overflow:hidden;touch-action:none;}
+.ichart-canvas{width:100%;height:100%;display:block;touch-action:none;}
+@media (max-width: 767px){
+  .inline-chart-box{padding:4px 0 8px;}
+  .inline-chart-topbar{padding:6px 8px;gap:6px;}
+  .ichart-canvas-container{height:320px;}
+  .ichart-tf-btn{padding:5px 9px;font-size:10px;min-height:32px;}
+  .chart-popout-btn{padding:5px 8px;font-size:9.5px;min-height:32px;}
+}
 .ichart-loading{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);font-size:11px;font-weight:700;color:var(--t2);letter-spacing:1px;font-family:var(--mono);}
 .ichart-crosshair-hud{position:absolute;top:8px;left:12px;font-size:10px;font-family:var(--mono);color:var(--t1);background:var(--card);padding:4px 8px;border-radius:4px;border:1px solid var(--b);box-shadow:0 4px 12px rgba(0,0,0,.12);pointer-events:none;display:none;z-index:10;}
 
@@ -550,7 +564,7 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--t1);min-hei
 .rp{display:flex;flex-direction:column;overflow:hidden;}
 .rp-section{border-bottom:1px solid var(--b);flex-shrink:0;}
 .rp-sh{padding:7px 10px;font-size:10px;font-weight:700;letter-spacing:.07em;text-transform:uppercase;
-  display:flex;align-items:center;justify-content:space-between;}
+  display:flex;align-items:center;justify-content:space-between;color:#ffffff;}
 
 /* v2: OI ranked bar chart */
 .oi-row{display:flex;align-items:center;gap:6px;padding:4px 10px;border-bottom:1px solid rgba(55,110,210,.1);transition:background .3s,box-shadow .3s;}
@@ -671,10 +685,7 @@ select.sel:focus{outline:none;border-color:var(--acc);}
 
 <!-- OI Spurt Live ticker removed -->
 
-<!-- HOT ZONE: Top 3 Confluent Stocks -->
-<div class="hz-strip" id="hz-strip">
-  <div class="hz-lbl">🔥 HOT ZONE</div>
-  <div class="hz-cards" id="hz-cards"></div>
+<!-- HOT ZONE removed: space reclaimed by unified master board -->
 </div>
 
 <div class="lay" id="main-lay">
@@ -705,13 +716,13 @@ select.sel:focus{outline:none;border-color:var(--acc);}
       <button class="fbtn" onclick="fil('aligned',this)">✅ TF Aligned</button>
     </div>
     <div id="futbld-stats-container" style="display:none;"></div>
-    <div id="conf-legend-bar" style="padding:4px 8px;font-size:8px;color:var(--t2);border-bottom:1px solid var(--b);
+    <div id="conf-legend-bar" style="padding:4px 8px;font-size:8px;color:#cbd5e1;border-bottom:1px solid var(--b);
       display:flex;gap:10px;align-items:center;background:rgba(3,9,18,.5);flex-shrink:0;">
-      <span style="color:var(--t1);font-weight:700;">Confluence Dots:</span>
+      <span style="color:#ffffff;font-weight:700;">Confluence Dots:</span>
       <span><span class="dot b"></span> Bull</span>
       <span><span class="dot r"></span> Bear</span>
       <span><span class="dot n"></span> Neutral</span>
-      <span style="margin-left:4px;color:var(--t3);">15m · 1h · Day · OI · Vol · Fut · DXCNT · Drift</span>
+      <span style="margin-left:4px;color:#cbd5e1;">15m · 1h · Day · OI · Vol · Fut · DXCNT · Drift</span>
       <span style="margin-left:auto;color:var(--grn);font-weight:600;">Row glow = score intensity</span>
     </div>
     <div class="cb" id="board-body">
@@ -1292,7 +1303,9 @@ function renderHeatmap(){
           const sCls = s.spot > 0 ? 'bull' : s.spot < 0 ? 'bear' : '';
           const futChgVal = s.futChg != null ? s.futChg : s.spot;
           const fCls = futChgVal > 0 ? 'bull' : futChgVal < 0 ? 'bear' : '';
-          const oiCls = s.oiChg >= 15 ? 'oi-badge-pulse' : 'pur';
+          const oiColorCls = s.oiChg > 0 ? 'bull' : (s.oiChg < 0 ? 'bear' : 'oi-zero');
+          const oiPulseCls = (s.oiChg >= 15 || s.oiChanged) ? 'oi-badge-pulse' : '';
+          const oiCls = `${oiColorCls} ${oiPulseCls}`.trim();
           const isChartOpen = _activeChartStock === s.sym;
           const expChartIcon = `<span style="display:inline-block;font-size:8px;margin-right:4px;color:var(--t2);transform:${isChartOpen?'rotate(90deg)':'none'};transition:transform .15s;">▶</span>`;
 
@@ -1643,7 +1656,9 @@ function renderBoard(){
     const dCls=s.dxcnt>0?'bull':s.dxcnt<0?'bear':'';
     const bullDir=s.conf.slice(0,3).filter(c=>c==='b').length>=2;
     const sp=sparkSVG(s.sp,bullDir,30,11);
-    const oiCls=s.oiChanged?'oi-badge-pulse':'pur';
+    const oiColorCls = s.oiChg > 0 ? 'bull' : (s.oiChg < 0 ? 'bear' : 'oi-zero');
+    const oiPulseCls = s.oiChanged ? 'oi-badge-pulse' : '';
+    const oiCls = `${oiColorCls} ${oiPulseCls}`.trim();
     const isExp=_expandedStocks.has(s.sym);
 
     if (isFutBld) {
@@ -1693,6 +1708,11 @@ function renderBoard(){
                   <div class="tf-btn-group">
                     <button class="ichart-tf-btn ${_inlineChartTf===5?'active':''}" onclick="event.stopPropagation();switchInlineChartTf('${s.sym}', 5)">5m</button>
                     <button class="ichart-tf-btn ${_inlineChartTf===15?'active':''}" onclick="event.stopPropagation();switchInlineChartTf('${s.sym}', 15)">15m</button>
+                  </div>
+                  <div class="tf-btn-group" style="display:inline-flex;align-items:center;">
+                    <button class="ichart-tf-btn" onclick="event.stopPropagation();zoomInlineChart('${s.sym}', -1)" title="Zoom In (Fewer bars, wider view)">🔍+</button>
+                    <button class="ichart-tf-btn" onclick="event.stopPropagation();zoomInlineChart('${s.sym}', 1)" title="Zoom Out (More bars, broader view)">🔍−</button>
+                    <button class="ichart-tf-btn" onclick="event.stopPropagation();resetInlineChartZoom('${s.sym}')" title="Reset to default zoom">↺</button>
                   </div>
                   <a href="apex-dashboard.html?symbol=${encodeURIComponent(s.sym)}" target="_blank" class="chart-popout-btn">↗ Full APEX Dashboard</a>
                   <button class="ibtn" style="font-size:12px;padding:2px 6px;" onclick="event.stopPropagation();toggleStockChart('${s.sym}')">✕</button>
@@ -1990,18 +2010,179 @@ function calcVWAP(candles) {
   });
 }
 
+let _chartViewState = {}; // { [sym]: { visibleCount: 45, offsetRight: 0 } }
+
+function getChartViewState(sym, totalCandles) {
+  if (!_chartViewState[sym]) {
+    _chartViewState[sym] = {
+      visibleCount: Math.min(totalCandles || 50, 45),
+      offsetRight: 0
+    };
+  }
+  const vs = _chartViewState[sym];
+  vs.visibleCount = Math.max(10, Math.min(totalCandles, vs.visibleCount || 45));
+  vs.offsetRight = Math.max(0, Math.min(totalCandles - vs.visibleCount, vs.offsetRight || 0));
+  return vs;
+}
+
+function zoomInlineChart(sym, direction) {
+  const data = _chartCandlesCache[sym];
+  if (!data || !data.candles || !data.candles.length) return;
+  const total = data.candles.length;
+  const vs = getChartViewState(sym, total);
+  if (direction < 0) {
+    // Zoom IN: fewer candles
+    vs.visibleCount = Math.max(10, Math.round(vs.visibleCount * 0.75));
+  } else {
+    // Zoom OUT: more candles
+    vs.visibleCount = Math.min(total, Math.round(vs.visibleCount * 1.35));
+  }
+  vs.offsetRight = Math.max(0, Math.min(total - vs.visibleCount, vs.offsetRight));
+  drawInlineCandleCanvas(sym, null);
+}
+
+function resetInlineChartZoom(sym) {
+  const data = _chartCandlesCache[sym];
+  if (!data || !data.candles || !data.candles.length) return;
+  const total = data.candles.length;
+  _chartViewState[sym] = {
+    visibleCount: Math.min(total, 45),
+    offsetRight: 0
+  };
+  drawInlineCandleCanvas(sym, null);
+}
+
 function attachChartMouseHandlers(sym, container, canvas) {
-  // Guard against duplicate attach on the SAME node, but re-attach when
-  // renderBoard() rebuilds the DOM (new node object after innerHTML reset).
   if (_chartMouseHandlers[sym] === container) return;
-  _chartMouseHandlers[sym] = container;   // store node ref, not boolean
+  _chartMouseHandlers[sym] = container;
+
+  let isMouseDown = false;
+  let mouseStartX = 0;
+  let mouseStartOffsetRight = 0;
+  let isMouseDragging = false;
+
+  // Touch tracking state
+  let touchStartX = 0;
+  let touchStartOffsetRight = 0;
+  let isTouchDragging = false;
+  let pinchStartDist = 0;
+  let pinchStartVisible = 45;
+
+  const handlePointer = (clientX, clientY) => {
+    const rect = canvas.getBoundingClientRect();
+    const mouseX = clientX - rect.left;
+    const mouseY = clientY - rect.top;
+    drawInlineCandleCanvas(sym, { x: mouseX, y: mouseY });
+  };
+
+  container.addEventListener('mousedown', (e) => {
+    isMouseDown = true;
+    isMouseDragging = false;
+    mouseStartX = e.clientX;
+    const data = _chartCandlesCache[sym];
+    const total = data && data.candles ? data.candles.length : 50;
+    const vs = getChartViewState(sym, total);
+    mouseStartOffsetRight = vs.offsetRight;
+  });
+
+  window.addEventListener('mouseup', () => {
+    isMouseDown = false;
+    isMouseDragging = false;
+  });
+
   container.addEventListener('mousemove', (e) => {
     const rect = canvas.getBoundingClientRect();
     const mouseX = e.clientX - rect.left;
     const mouseY = e.clientY - rect.top;
+
+    if (isMouseDown) {
+      const dx = e.clientX - mouseStartX;
+      if (Math.abs(dx) > 3) {
+        isMouseDragging = true;
+        const data = _chartCandlesCache[sym];
+        if (data && data.candles && data.candles.length) {
+          const total = data.candles.length;
+          const vs = getChartViewState(sym, total);
+          const cw = (rect.width || 800) - 14 - 78;
+          const candleWidthPx = Math.max(1, cw / vs.visibleCount);
+          const deltaCandles = Math.round(dx / candleWidthPx);
+          vs.offsetRight = Math.max(0, Math.min(total - vs.visibleCount, mouseStartOffsetRight + deltaCandles));
+        }
+      }
+    }
     drawInlineCandleCanvas(sym, { x: mouseX, y: mouseY });
   });
+
   container.addEventListener('mouseleave', () => {
+    if (!isMouseDown) drawInlineCandleCanvas(sym, null);
+  });
+
+  // Mouse wheel zoom
+  container.addEventListener('wheel', (e) => {
+    e.preventDefault();
+    zoomInlineChart(sym, e.deltaY < 0 ? -1 : 1);
+  }, { passive: false });
+
+  // Touch handlers for mobile & touchscreens
+  container.addEventListener('touchstart', (e) => {
+    const data = _chartCandlesCache[sym];
+    const total = data && data.candles ? data.candles.length : 50;
+    const vs = getChartViewState(sym, total);
+
+    if (e.touches.length === 1) {
+      touchStartX = e.touches[0].clientX;
+      touchStartOffsetRight = vs.offsetRight;
+      isTouchDragging = false;
+      const rect = canvas.getBoundingClientRect();
+      handlePointer(e.touches[0].clientX, e.touches[0].clientY);
+    } else if (e.touches.length >= 2) {
+      pinchStartDist = Math.hypot(
+        e.touches[0].clientX - e.touches[1].clientX,
+        e.touches[0].clientY - e.touches[1].clientY
+      );
+      pinchStartVisible = vs.visibleCount;
+    }
+  }, { passive: false });
+
+  container.addEventListener('touchmove', (e) => {
+    if (e.cancelable) e.preventDefault();
+    const data = _chartCandlesCache[sym];
+    if (!data || !data.candles || !data.candles.length) return;
+    const total = data.candles.length;
+    const vs = getChartViewState(sym, total);
+    const rect = canvas.getBoundingClientRect();
+    const cw = (rect.width || 800) - 14 - 78;
+
+    if (e.touches.length === 1) {
+      const dx = e.touches[0].clientX - touchStartX;
+      if (Math.abs(dx) > 3) {
+        isTouchDragging = true;
+        const candleWidthPx = Math.max(1, cw / vs.visibleCount);
+        const deltaCandles = Math.round(dx / candleWidthPx);
+        vs.offsetRight = Math.max(0, Math.min(total - vs.visibleCount, touchStartOffsetRight + deltaCandles));
+      }
+      handlePointer(e.touches[0].clientX, e.touches[0].clientY);
+    } else if (e.touches.length >= 2) {
+      const dist = Math.hypot(
+        e.touches[0].clientX - e.touches[1].clientX,
+        e.touches[0].clientY - e.touches[1].clientY
+      );
+      if (dist > 10 && pinchStartDist > 10) {
+        const scale = pinchStartDist / dist;
+        vs.visibleCount = Math.max(10, Math.min(total, Math.round(pinchStartVisible * scale)));
+        vs.offsetRight = Math.max(0, Math.min(total - vs.visibleCount, vs.offsetRight));
+        drawInlineCandleCanvas(sym, null);
+      }
+    }
+  }, { passive: false });
+
+  container.addEventListener('touchend', (e) => {
+    if (e.touches.length === 0) {
+      drawInlineCandleCanvas(sym, null);
+    }
+  });
+
+  container.addEventListener('touchcancel', () => {
     drawInlineCandleCanvas(sym, null);
   });
 }
@@ -2142,12 +2323,13 @@ function drawInlineCandleCanvas(sym, hoverPos = null) {
   if (hud) hud.style.display = 'none';
 
   const { candles, ema9, ema21, vwap, levels } = data;
+  const total = candles.length;
   const ctx = canvas.getContext('2d');
   const dpr = window.devicePixelRatio || 1;
   const rect = canvas.getBoundingClientRect();
 
-  const width = rect.width || canvas.parentElement.clientWidth || 800;
-  const height = 380;
+  const width = rect.width || canvas.parentElement?.clientWidth || 800;
+  const height = width < 600 ? 320 : 380;
 
   if (canvas.width !== width * dpr || canvas.height !== height * dpr) {
     canvas.width = width * dpr;
@@ -2165,14 +2347,33 @@ function drawInlineCandleCanvas(sym, hoverPos = null) {
   const pl = 14, pr = 78, pt = 42, pb = 26;
   const cw = width - pl - pr;
   const ch = height - pt - pb;
-  const n = candles.length;
 
-  // ── Price Bounds ──────────────────────────────────────────────────────────
+  // View state calculation (windowed slice)
+  const vs = getChartViewState(sym, total);
+  const visibleCount = Math.max(10, Math.min(total, vs.visibleCount || 45));
+  const offsetRight = Math.max(0, Math.min(total - visibleCount, vs.offsetRight || 0));
+  const startIdx = total - offsetRight - visibleCount;
+  const endIdx = total - offsetRight;
+  const n = endIdx - startIdx;
+
+  const visibleCandles = candles.slice(startIdx, endIdx);
+
+  // ── Price Bounds for visible window ───────────────────────────────────────
   let minPrice = Infinity, maxPrice = -Infinity;
-  candles.forEach(c => {
+  visibleCandles.forEach(c => {
     if (c.low  < minPrice) minPrice = c.low;
     if (c.high > maxPrice) maxPrice = c.high;
   });
+  // Check indicators in visible slice
+  for (let i = startIdx; i < endIdx; i++) {
+    if (ema9[i] && ema9[i] < minPrice) minPrice = ema9[i];
+    if (ema9[i] && ema9[i] > maxPrice) maxPrice = ema9[i];
+    if (ema21[i] && ema21[i] < minPrice) minPrice = ema21[i];
+    if (ema21[i] && ema21[i] > maxPrice) maxPrice = ema21[i];
+    if (vwap[i] && vwap[i] < minPrice) minPrice = vwap[i];
+    if (vwap[i] && vwap[i] > maxPrice) maxPrice = vwap[i];
+  }
+  // Include pivot levels only if reasonably close
   [levels.pdh, levels.pdl, levels.tc, levels.piv, levels.bc].forEach(lvl => {
     if (lvl != null && Number.isFinite(lvl)) {
       if (lvl < minPrice) minPrice = lvl;
@@ -2185,30 +2386,31 @@ function drawInlineCandleCanvas(sym, hoverPos = null) {
   const effectiveRange = maxPrice - minPrice;
 
   const getY = p => pt + ch * (1 - (p - minPrice) / effectiveRange);
-  const getX = i => pl + (i + 0.5) * (cw / n);
-  const candleW = Math.max(2.5, Math.min(16, (cw / n) * 0.7));
+  const getX = localIdx => pl + (localIdx + 0.5) * (cw / n);
+  const candleW = Math.max(2.5, Math.min(24, (cw / n) * 0.7));
 
-  // ── OHLCV Info Bar (canvas top-left, always rendered) ────────────────────
-  // Default: last candle; hover: hovered candle
-  let infoIdx = n - 1;
+  // ── OHLCV Info Bar ───────────────────────────────────────────────────────
+  let infoGlobalIdx = endIdx - 1;
   if (hoverPos && hoverPos.x >= pl && hoverPos.x <= width - pr &&
       hoverPos.y >= pt && hoverPos.y <= pt + ch) {
-    const idx = Math.floor(((hoverPos.x - pl) / cw) * n);
-    infoIdx = Math.max(0, Math.min(n - 1, idx));
+    const localIdx = Math.floor(((hoverPos.x - pl) / cw) * n);
+    const clampedLocal = Math.max(0, Math.min(n - 1, localIdx));
+    infoGlobalIdx = startIdx + clampedLocal;
   }
-  const ic   = candles[infoIdx];
-  const icChg    = ic.close - ic.open;
+  const ic = candles[infoGlobalIdx] || candles[candles.length - 1];
+  const icChg = ic.close - ic.open;
   const icChgPct = (icChg / Math.max(0.01, ic.open)) * 100;
-  const icColor  = icChg >= 0 ? '#16a34a' : '#dc2626';
+  const icColor = icChg >= 0 ? '#16a34a' : '#dc2626';
   const fmtV = v => v > 1e6 ? (v/1e6).toFixed(2)+'M' : v > 1e3 ? (v/1e3).toFixed(1)+'K' : String(v||0);
   const fmtP = v => v.toFixed(2);
 
-  // — Line 1: Symbol · TF  O: H: L: C:  Δ  Vol:
+  // Line 1: Header
   const L1Y = 13;
   let cx = pl;
   ctx.font = 'bold 10px Inter,system-ui,sans-serif';
   ctx.fillStyle = '#1e293b';
-  const hdrTxt = `${sym} · ${data.tf||5}m   `;
+  const navHint = offsetRight > 0 ? ` (scrolled -${offsetRight})` : '';
+  const hdrTxt = `${sym} · ${data.tf||5}m${navHint}   `;
   ctx.fillText(hdrTxt, cx, L1Y);
   cx += ctx.measureText(hdrTxt).width;
 
@@ -2243,13 +2445,13 @@ function drawInlineCandleCanvas(sym, hoverPos = null) {
   ctx.fillStyle = '#475569';
   ctx.fillText(fmtV(ic.volume), cx, L1Y);
 
-  // — Line 2: Indicator values
+  // Line 2: Indicators
   const L2Y = 28;
   let cx2 = pl;
   const inds = [
-    { lbl:'EMA9',  val: ema9[infoIdx]?.toFixed(2)  || '—', col:'#2563eb' },
-    { lbl:'EMA21', val: ema21[infoIdx]?.toFixed(2) || '—', col:'#dc2626' },
-    { lbl:'VWAP',  val: vwap[infoIdx]?.toFixed(2)  || '—', col:'#16a34a' },
+    { lbl:'EMA9',  val: ema9[infoGlobalIdx]?.toFixed(2)  || '—', col:'#2563eb' },
+    { lbl:'EMA21', val: ema21[infoGlobalIdx]?.toFixed(2) || '—', col:'#dc2626' },
+    { lbl:'VWAP',  val: vwap[infoGlobalIdx]?.toFixed(2)  || '—', col:'#16a34a' },
   ];
   for (const ind of inds) {
     ctx.font = '9px Inter,system-ui,sans-serif';
@@ -2267,9 +2469,8 @@ function drawInlineCandleCanvas(sym, hoverPos = null) {
   ctx.setLineDash([]);
   ctx.lineWidth = 0.5;
   ctx.beginPath(); ctx.moveTo(0, pt-2); ctx.lineTo(width, pt-2); ctx.stroke();
-  // ─────────────────────────────────────────────────────────────────────────
 
-  // ── Horizontal Grid Lines & Right Price Axis ──────────────────────────────
+  // Horizontal Grid Lines & Price Axis
   const numGridTicks = 6;
   ctx.lineWidth = 1;
   ctx.font = '10px monospace';
@@ -2285,12 +2486,13 @@ function drawInlineCandleCanvas(sym, hoverPos = null) {
     ctx.fillText('₹'+(p>=100?p.toFixed(1):p.toFixed(2)), width-pr+8, y+3.5);
   }
 
-  // ── Vertical Grid Lines & Time Labels ─────────────────────────────────────
-  const step = Math.max(1, Math.floor(n/6));
+  // Vertical Grid Lines & Time Labels (for visible slice)
+  const timeStep = Math.max(1, Math.floor(n / 6));
   ctx.font = '10px monospace';
-  for (let i = 0; i < n; i += step) {
+  for (let i = 0; i < n; i += timeStep) {
+    const gIdx = startIdx + i;
     const x = getX(i);
-    const d = new Date(candles[i].timestamp);
+    const d = new Date(candles[gIdx].timestamp);
     const timeStr = `${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`;
     ctx.strokeStyle = 'rgba(0,0,0,0.05)';
     ctx.setLineDash([3,3]);
@@ -2300,17 +2502,17 @@ function drawInlineCandleCanvas(sym, hoverPos = null) {
     ctx.fillText(timeStr, x-14, height-8);
   }
 
-  // ── Volume Histogram ───────────────────────────────────────────────────────
-  const maxVol = Math.max(...candles.map(c=>c.volume||1), 1);
+  // Volume Histogram for visible window
+  const maxVol = Math.max(...visibleCandles.map(c=>c.volume||1), 1);
   const volBaseY = pt+ch, volMaxH = ch*0.22;
-  candles.forEach((c,i) => {
+  visibleCandles.forEach((c, i) => {
     const x = getX(i);
     const vH = ((c.volume||0)/maxVol)*volMaxH;
     ctx.fillStyle = c.close>=c.open ? 'rgba(22,163,74,0.22)' : 'rgba(220,38,38,0.22)';
     ctx.fillRect(x-candleW/2, volBaseY-vH, candleW, vH);
   });
 
-  // ── CPR / Key Level Lines ──────────────────────────────────────────────────
+  // CPR / Key Level Lines
   function drawLevelLine(val, label, color) {
     if (val==null||!Number.isFinite(val)) return;
     const y = getY(val);
@@ -2333,14 +2535,15 @@ function drawInlineCandleCanvas(sym, hoverPos = null) {
   drawLevelLine(levels.piv,'PIV','#0284c7');
   drawLevelLine(levels.bc, 'BC', '#4f46e5');
 
-  // ── Indicator Lines ────────────────────────────────────────────────────────
+  // Indicator Lines for visible window
   function drawIndicatorLine(series, color, lw=1.5) {
     if (!series||!series.length) return;
     ctx.strokeStyle=color; ctx.lineWidth=lw; ctx.setLineDash([]); ctx.beginPath();
     let started=false;
-    for (let i=0;i<n;i++) {
-      const v=series[i]; if(v==null||!Number.isFinite(v)) continue;
-      const x=getX(i), y=getY(v);
+    for (let i=0; i<n; i++) {
+      const gIdx = startIdx + i;
+      const v = series[gIdx]; if(v==null||!Number.isFinite(v)) continue;
+      const x = getX(i), y = getY(v);
       if(!started){ctx.moveTo(x,y);started=true;}else{ctx.lineTo(x,y);}
     }
     ctx.stroke();
@@ -2349,8 +2552,8 @@ function drawInlineCandleCanvas(sym, hoverPos = null) {
   drawIndicatorLine(ema21,'#dc2626', 1.5);
   drawIndicatorLine(vwap, '#16a34a', 1.5);
 
-  // ── Candlesticks ───────────────────────────────────────────────────────────
-  candles.forEach((c,i) => {
+  // Candlesticks for visible window
+  visibleCandles.forEach((c, i) => {
     const x=getX(i), yO=getY(c.open), yC=getY(c.close), yH=getY(c.high), yL=getY(c.low);
     const isUp = c.close>=c.open;
     const color = isUp ? '#16a34a' : '#dc2626';
@@ -2361,54 +2564,56 @@ function drawInlineCandleCanvas(sym, hoverPos = null) {
     ctx.fillRect(x-candleW/2, topY, candleW, bodyH);
   });
 
-  // ── Crosshair (only when hovering inside chart area) ─────────────────────
+  // Crosshair
   if (hoverPos && hoverPos.x>=pl && hoverPos.x<=width-pr &&
       hoverPos.y>=pt && hoverPos.y<=pt+ch) {
-    let idx = Math.floor(((hoverPos.x-pl)/cw)*n);
-    idx = Math.max(0, Math.min(n-1, idx));
-    const hCandle = candles[idx];
-    const hx = getX(idx);
-    const hy = hoverPos.y;
+    const localIdx = Math.floor(((hoverPos.x-pl)/cw)*n);
+    const clampedLocal = Math.max(0, Math.min(n-1, localIdx));
+    const gIdx = startIdx + clampedLocal;
+    const hCandle = candles[gIdx];
+    if (hCandle) {
+      const hx = getX(clampedLocal);
+      const hy = hoverPos.y;
 
-    // Dashed crosshair lines
-    ctx.strokeStyle='rgba(0,0,0,0.28)'; ctx.lineWidth=0.8; ctx.setLineDash([4,4]);
-    ctx.beginPath(); ctx.moveTo(hx,pt); ctx.lineTo(hx,pt+ch); ctx.stroke();
-    ctx.beginPath(); ctx.moveTo(pl,hy); ctx.lineTo(width-pr,hy); ctx.stroke();
-    ctx.setLineDash([]);
+      // Dashed crosshair lines
+      ctx.strokeStyle='rgba(0,0,0,0.28)'; ctx.lineWidth=0.8; ctx.setLineDash([4,4]);
+      ctx.beginPath(); ctx.moveTo(hx,pt); ctx.lineTo(hx,pt+ch); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(pl,hy); ctx.lineTo(width-pr,hy); ctx.stroke();
+      ctx.setLineDash([]);
 
-    // ── Y-axis price pill (right) ──
-    const hoverPrice = minPrice + (1-(hy-pt)/ch)*effectiveRange;
-    const priceLabel = '₹'+(hoverPrice>=100?hoverPrice.toFixed(2):hoverPrice.toFixed(2));
-    ctx.font='bold 9.5px monospace';
-    const plw = ctx.measureText(priceLabel).width + 14;
-    ctx.fillStyle='#1e293b';
-    if (ctx.roundRect) {
-      ctx.beginPath(); ctx.roundRect(width-pr+2, hy-9, plw, 18, 3); ctx.fill();
-    } else {
-      ctx.fillRect(width-pr+2, hy-9, plw, 18);
+      // Y-axis price pill (right)
+      const hoverPrice = minPrice + (1-(hy-pt)/ch)*effectiveRange;
+      const priceLabel = '₹'+(hoverPrice>=100?hoverPrice.toFixed(2):hoverPrice.toFixed(2));
+      ctx.font='bold 9.5px monospace';
+      const plw = ctx.measureText(priceLabel).width + 14;
+      ctx.fillStyle='#1e293b';
+      if (ctx.roundRect) {
+        ctx.beginPath(); ctx.roundRect(width-pr+2, hy-9, plw, 18, 3); ctx.fill();
+      } else {
+        ctx.fillRect(width-pr+2, hy-9, plw, 18);
+      }
+      ctx.fillStyle='#ffffff';
+      ctx.fillText(priceLabel, width-pr+8, hy+4.5);
+
+      // X-axis datetime pill (bottom)
+      const hd = new Date(hCandle.timestamp);
+      const DAYS=['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+      const MONS=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+      const dateLabel = `${DAYS[hd.getDay()]} ${hd.getDate()} ${MONS[hd.getMonth()]} '${String(hd.getFullYear()).slice(2)} ${String(hd.getHours()).padStart(2,'0')}:${String(hd.getMinutes()).padStart(2,'0')}`;
+      ctx.font='bold 9px Inter,system-ui,sans-serif';
+      const dlw = ctx.measureText(dateLabel).width + 14;
+      const dlx = Math.max(pl, Math.min(hx - dlw/2, width-pr-dlw));
+      const dly = pt+ch+4, dlh = 16;
+      ctx.fillStyle='#1e293b';
+      if (ctx.roundRect) {
+        ctx.beginPath(); ctx.roundRect(dlx, dly, dlw, dlh, 3); ctx.fill();
+      } else {
+        ctx.fillRect(dlx, dly, dlw, dlh);
+      }
+      ctx.fillStyle='#ffffff';
+      ctx.fillText(dateLabel, dlx+7, dly+11);
     }
-    ctx.fillStyle='#ffffff';
-    ctx.fillText(priceLabel, width-pr+8, hy+4.5);
-
-    // ── X-axis datetime pill (bottom) ──
-    const hd = new Date(hCandle.timestamp);
-    const DAYS=['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
-    const MONS=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
-    const dateLabel = `${DAYS[hd.getDay()]} ${hd.getDate()} ${MONS[hd.getMonth()]} '${String(hd.getFullYear()).slice(2)} ${String(hd.getHours()).padStart(2,'0')}:${String(hd.getMinutes()).padStart(2,'0')}`;
-    ctx.font='bold 9px Inter,system-ui,sans-serif';
-    const dlw = ctx.measureText(dateLabel).width + 14;
-    const dlx = Math.max(pl, Math.min(hx - dlw/2, width-pr-dlw));
-    const dly = pt+ch+4, dlh = 16;
-    ctx.fillStyle='#1e293b';
-    if (ctx.roundRect) {
-      ctx.beginPath(); ctx.roundRect(dlx, dly, dlw, dlh, 3); ctx.fill();
-    } else {
-      ctx.fillRect(dlx, dly, dlw, dlh);
-    }
-    ctx.fillStyle='#ffffff';
-    ctx.fillText(dateLabel, dlx+7, dly+11);
   }
-  // ─────────────────────────────────────────────────────────────────────────
 
   ctx.restore();
 }
@@ -2460,34 +2665,38 @@ function renderAlerts(){
       feed.innerHTML='<div class="empty"><div class="ei">⚡</div><div class="et">No breakout alerts</div><div class="es">Waiting for EMA crossover events…</div></div>';
       return;
     }
-    feed.innerHTML=BREAKOUT_ALERTS.map(a=>{
-      const isBull=a.direction==='bullish'||a.direction==='BULL';
-      const moveStr = (a.move_pct != null) ? `${Number(a.move_pct).toFixed(2)}%` : '—';
-      const volStr = (a.vol_multiplier != null && a.vol_multiplier > 0) ? `${Number(a.vol_multiplier).toFixed(1)}x` : '—';
-      const ltpStr = a.ltp ? `₹${Number(a.ltp).toFixed(2)}` : '—';
-      return `<div class="ac prem-spike-card" style="border-left:3px solid ${isBull?'var(--bull)':'var(--bear)'};">
-        <div class="ah" style="gap:6px;flex-wrap:wrap;">
-          <div style="flex:1;min-width:0;">
-            <div style="display:flex;align-items:center;gap:5px;flex-wrap:wrap;">
-              <span class="ac-pulse-dot" style="background:${isBull?'var(--bull)':'var(--bear)'};"></span>
-              <span class="asym" style="cursor:pointer;" onclick="flashSymbolInBoard('${a.symbol}')">${a.symbol}</span>
-              <span class="btag ${isBull?'b':'r'}" style="font-size:9px;">${isBull?'🟢 BULLISH':'🔴 BEARISH'}</span>
-              <span class="layer-tag run" style="font-size:8px;padding:1px 5px;border-radius:3px;">${a.grade||'5M Cross'}</span>
-            </div>
-            <div style="font-size:9px;color:var(--t2);margin-top:2px;">Live 5-Min EMA Crossover breakout event</div>
-          </div>
-          <div style="text-align:right;">
-            <div style="font-size:13px;font-weight:700;color:${isBull?'var(--bull)':'var(--bear)'};">${ltpStr}</div>
-            <div class="atime">${a.time||''}</div>
-          </div>
-        </div>
-        <div class="am" style="grid-template-columns:repeat(4,1fr);margin-top:4px;">
-          <div class="mb"><div class="mbl">Stock LTP</div><div class="mbv ${isBull?'bull':'bear'}" style="font-size:9px;">${ltpStr}</div></div>
-          <div class="mb"><div class="mbl">Move %</div><div class="mbv ${isBull?'bull':'bear'}">${moveStr}</div></div>
-          <div class="mb"><div class="mbl">Volume Ratio</div><div class="mbv cyn">${volStr}</div></div>
-          <div class="mb"><div class="mbl">Signal Type</div><div class="mbv amb" style="font-size:9px;">${a.grade||'EMA Cross'}</div></div>
-        </div>
-      </div>`;
+    // Group by symbol, sort within group by newest trigger_epoch first
+    const brkGroups = {};
+    BREAKOUT_ALERTS.forEach(a => {
+      const sym = a.symbol || '?';
+      if (!brkGroups[sym]) brkGroups[sym] = [];
+      brkGroups[sym].push(a);
+    });
+    Object.values(brkGroups).forEach(evts => {
+      evts.sort((x, y) => {
+        const ex = x.trigger_epoch || 0, ey = y.trigger_epoch || 0;
+        if (ex !== ey) return ey - ex;
+        return (y.time || '').localeCompare(x.time || '');
+      });
+    });
+    // Sort groups by latest event time (most recent first)
+    const brkSyms = Object.keys(brkGroups).sort((a, b) =>
+      (brkGroups[b][0].trigger_epoch || 0) - (brkGroups[a][0].trigger_epoch || 0)
+    );
+    feed.innerHTML = brkSyms.map(sym => {
+      const evts = brkGroups[sym];
+      const latest = evts[0];
+      const isBull = latest.direction === 'bullish' || latest.direction === 'BULL';
+      const ltpStr = latest.ltp ? `₹${Number(latest.ltp).toFixed(2)}` : '—';
+      const accent = isBull ? 'var(--bull)' : 'var(--bear)';
+      const cnt = evts.length;
+      const evtRows = evts.map(a => {
+        const bull = a.direction === 'bullish' || a.direction === 'BULL';
+        const mv = a.move_pct != null ? `${Number(a.move_pct).toFixed(2)}%` : '—';
+        const vr = (a.vol_multiplier != null && a.vol_multiplier > 0) ? `${Number(a.vol_multiplier).toFixed(1)}x` : '—';
+        return `<div style="display:flex;align-items:center;gap:6px;padding:4px 8px;border-top:1px solid var(--b);font-size:9px;"><span style="width:6px;height:6px;border-radius:50%;background:${bull?'var(--bull)':'var(--bear)'};flex-shrink:0;"></span><span style="color:${bull?'var(--bull)':'var(--bear)'};font-weight:700;min-width:54px;">${bull?'▲ BULL':'▼ BEAR'}</span><span style="color:var(--t2);min-width:46px;">${a.time||'—'}</span><span style="color:var(--amb);font-family:var(--mono);min-width:42px;">Mv ${mv}</span><span style="color:var(--cyn);font-family:var(--mono);min-width:42px;">Vol ${vr}</span><span style="margin-left:auto;color:var(--t2);font-size:8px;">${a.grade||'5M'}</span></div>`;
+      }).join('');
+      return `<div class="ac prem-spike-card" style="border-left:3px solid ${accent};padding:0;overflow:hidden;margin-bottom:4px;"><div class="ah" style="gap:6px;padding:6px 8px;cursor:pointer;" onclick="flashSymbolInBoard('${sym}')"><div style="flex:1;min-width:0;"><div style="display:flex;align-items:center;gap:5px;flex-wrap:wrap;"><span class="ac-pulse-dot" style="background:${accent};"></span><span class="asym">${sym}</span><span class="btag ${isBull?'b':'r'}" style="font-size:9px;">${isBull?'🟢 BULLISH':'🔴 BEARISH'}</span><span style="background:rgba(99,102,241,.15);color:#818cf8;border:1px solid rgba(99,102,241,.3);font-size:8px;font-weight:700;padding:1px 5px;border-radius:3px;">${cnt} event${cnt>1?'s':''}</span></div><div style="font-size:9px;color:var(--t2);margin-top:2px;">Latest: ${latest.time||''} · ${latest.grade||'5M Cross'}</div></div><div style="text-align:right;flex-shrink:0;"><div style="font-size:13px;font-weight:700;color:${accent};">${ltpStr}</div></div></div>${evtRows}</div>`;
     }).join('');
     return;
   }
@@ -3125,7 +3334,7 @@ function fixHeight(){
 document.addEventListener('DOMContentLoaded',()=>{
   initTheme();
   startClock();
-  renderBoard(); renderOIBoard(); renderHotZone(); renderAlerts();
+  renderBoard(); renderOIBoard(); renderAlerts();
   fixHeight(); window.addEventListener('resize',fixHeight);
   if(window.innerWidth <= 767) showMobileCol(0);
   initSocketIO();
@@ -3590,7 +3799,7 @@ function initSocketIO(){
           if(ALERTS.length>60) ALERTS.pop();
           renderAlerts();
           flashSymbolInBoard(alert.sym);
-          renderHotZone();
+          /* renderHotZone removed */
         }
       }catch(e){console.warn('[360] Alert map error',e);}
     });
@@ -3601,7 +3810,7 @@ function initSocketIO(){
           if(BREAKOUT_ALERTS.length>200) BREAKOUT_ALERTS.pop();
           if(_activeAlertTab==='brk_events') renderAlerts();
           flashSymbolInBoard(alert.symbol);
-          renderHotZone();
+          /* renderHotZone removed */
           const el=document.getElementById('stat-alerts');
           if(el) el.textContent=ALERTS.length+PREM_ALERTS.length+BREAKOUT_ALERTS.length;
         }
@@ -3668,7 +3877,7 @@ async function fetchBoard(){
     OI_SPURTS=buildOISpurts(spurtList);
 
     renderBoard();
-    renderHotZone();
+    /* renderHotZone removed */
     renderOIBoard();
     /* renderTicker removed */
     updateCountsPill(board);
@@ -3782,7 +3991,7 @@ async function fetchPremSpikes(){
     if(_activeAlertTab==='prem') renderAlerts();
     fresh.forEach(a=>{
       flashSymbolInBoard(a.symbol);
-      renderHotZone();
+      /* renderHotZone removed */
     });
     // Update stat counter
     const el=document.getElementById('stat-alerts');
