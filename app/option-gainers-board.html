@@ -1202,7 +1202,7 @@
 
     .stock-row-header {
       display: grid;
-      grid-template-columns: 125px 65px 60px 60px 65px 70px 60px 60px 45px 50px 65px 1fr 95px;
+      grid-template-columns: 125px 65px 60px 60px 65px 70px 60px 60px 45px 50px 65px 1fr;
       gap: 8px;
       align-items: center;
       padding: 10px 16px;
@@ -1271,13 +1271,6 @@
 
     .col-futbuild {
       text-align: center;
-    }
-
-    .col-netdrift {
-      text-align: center;
-      font-size: 0.78rem;
-      font-family: var(--mono);
-      font-weight: 700;
     }
 
     .col-timeframes {
@@ -1381,7 +1374,7 @@
 
     .stock-board-header {
       display: grid;
-      grid-template-columns: 125px 65px 60px 60px 65px 70px 60px 60px 45px 50px 65px 1fr 95px;
+      grid-template-columns: 125px 65px 60px 60px 65px 70px 60px 60px 45px 50px 65px 1fr;
       gap: 8px;
       align-items: center;
       padding: 8px 16px;
@@ -1774,22 +1767,6 @@
       return `<span class="badge" style="background:${bg}; color:${color}; border:1px solid ${border}; font-size:9px; padding:2px 6px; border-radius:4px; font-weight:700;">${text}</span>`;
     }
 
-    function getDriftHtml(sym) {
-      const cached = spurtCache[sym];
-      if (!cached || (Date.now() - cached.fetchedAt > 180000)) {
-        return `<span style="font-size:0.75rem; color:var(--text-muted)">Not live</span>`;
-      }
-      const d = cached.net_drift;
-      let color = 'var(--text-muted)';
-      if (d.includes('Bullish') || d.includes('Lifting')) {
-        color = 'var(--green)';
-      } else if (d.includes('Bearish') || d.includes('Sinking')) {
-        color = 'var(--red)';
-      } else if (d.includes('Range')) {
-        color = 'var(--yellow)';
-      }
-      return `<span style="color:${color}; font-weight:700; font-size:0.78rem;">${d}</span>`;
-    }
 
     function toggleDetails(headerEl) {
       const container = headerEl.parentElement;
@@ -2050,20 +2027,6 @@
             };
             valA = getBuildupWeight(a);
             valB = getBuildupWeight(b);
-          } else if (currentSortColumn === 'netdrift') {
-            const getDriftWeight = (s) => {
-              const cached = spurtCache[s.symbol];
-              if (!cached || (Date.now() - cached.fetchedAt > 180000)) return 0;
-              const d = cached.net_drift || '';
-              if (d.includes('Bullish Breakout')) return 5;
-              if (d.includes('Lifting')) return 4;
-              if (d.includes('Range-Bound')) return 3;
-              if (d.includes('Sinking')) return 2;
-              if (d.includes('Bearish Breakout')) return 1;
-              return 0;
-            };
-            valA = getDriftWeight(a);
-            valB = getDriftWeight(b);
           }
 
           if (valA !== valB) {
@@ -2229,10 +2192,6 @@
               ${getBuildupBadge(s.symbol)}
             </div>
 
-            <!-- Column 10c: Net Drift -->
-            <div class="col-netdrift">
-              ${getDriftHtml(s.symbol)}
-            </div>
             
             <!-- Column 11: Confluence Badges & Expand Arrow -->
             <div class="col-timeframes">
@@ -2275,7 +2234,6 @@
             <div class="col-e9h sortable" onclick="handleHeaderSort('e9h')">E9H${getSortArrow('e9h')}</div>
             <div class="col-fhvol sortable" onclick="handleHeaderSort('fhvol')">FH Vol${getSortArrow('fhvol')}</div>
             <div class="col-futbuild sortable" onclick="handleHeaderSort('futbuild')">Fut Buildup${getSortArrow('futbuild')}</div>
-            <div class="col-netdrift sortable" onclick="handleHeaderSort('netdrift')">Net Drift${getSortArrow('netdrift')}</div>
             <div class="col-timeframes" style="padding-right: 24px;">Confluence</div>
           </div>
           ${cardsHtml}
@@ -2921,7 +2879,6 @@
             const resData = await response.json();
             spurtCache[sym] = {
               futures_buildup: resData.futures_data?.buildup || '–',
-              net_drift: resData.transition_conviction?.net_drift || 'Not live',
               fetchedAt: Date.now()
             };
             if (lastData) renderBoard(lastData);

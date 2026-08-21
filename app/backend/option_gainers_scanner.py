@@ -709,9 +709,9 @@ def get_eod_snapshot():
             # was generated before market close (e.g. premarket or midday) or is empty,
             # trigger a background rebuild so the user gets actual post-market data.
             snap_time = _dt2.strptime(saved.get('last_updated', ''), '%Y-%m-%dT%H:%M:%S')
-            is_past_close = (_now.hour > 15 or (_now.hour == 15 and _now.minute >= 30))
+            is_past_close = (_now.hour > 15 or (_now.hour == 15 and _now.minute >= 40))
             market_is_closed = (expected_date < _now.date()) or (expected_date == _now.date() and is_past_close)
-            snap_is_pre_close = (snap_time.hour < 15 or (snap_time.hour == 15 and snap_time.minute < 30))
+            snap_is_pre_close = (snap_time.hour < 15 or (snap_time.hour == 15 and snap_time.minute < 40))
             is_incomplete = (len(saved.get("stocks", [])) == 0)
             if market_is_closed and (snap_is_pre_close or is_incomplete) and not _eod_snapshot_cache["running"]:
                 logging.info("[Gainers EOD] Saved snapshot is pre-close or empty for a closed market. Triggering background rebuild...")
@@ -721,7 +721,7 @@ def get_eod_snapshot():
         except Exception as ex:
             logging.warning(f"[Gainers EOD] Disk load failed: {ex}")
 
-    is_past_close = (_now.hour > 15 or (_now.hour == 15 and _now.minute >= 30))
+    is_past_close = (_now.hour > 15 or (_now.hour == 15 and _now.minute >= 40))
     market_is_closed = (expected_date < _now.date()) or (expected_date == _now.date() and is_past_close)
     if market_is_closed and not _eod_snapshot_cache["running"]:
         threading.Thread(target=_run_eod_snapshot_bg, daemon=True).start()
@@ -1262,7 +1262,7 @@ def get_contract_milestones(token=None, symbol=None, strike=None, opt_type=None,
     now_ts = time.time()
     if cache_key in _milestone_cache:
         cached_ts, cached_res = _milestone_cache[cache_key]
-        if (now_ts - cached_ts) < _MILESTONE_CACHE_TTL or (target_date_str < today_str):
+        if (now_ts - cached_ts) < _MILESTONE_CACHE_TTL or (target_date_str < today_str and cached_res.get("success")):
             return cached_res
 
     # 1. Resolve Instrument Token and Tradingsymbol from DB if needed

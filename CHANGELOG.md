@@ -1,5 +1,234 @@
 # TradeSignal — Change Log
 
+## 2026-08-21 — 360° Command Center: Latency & Bottleneck Optimizations
+
+**Goal:** Eliminate major latency bottlenecks and redundant network requests in the 360° Command Center and backend API.
+
+**Files changed:**
+- `app/360-command-center.html` [MODIFY]
+- `app/backend/server.py` [MODIFY]
+
+**Agent Reuse Decision:** Frontend network polling consolidation and backend in-memory cache optimization.
+
+**Changes:**
+1. **Dead Request Loop Eradication:** Removed `fetchOITransitionDrifts()` and `_driftCache`, eliminating 30 heavy sequential HTTP requests (`/api/oi/symbol/<symbol>`) on every board cycle.
+2. **Network Polling Consolidation:** Shared the `/api/ema-crossovers` response (`crossRes`) in `fetchBoard()` directly with Breakout panels via `applyCrossoverData()`, removing redundant concurrent requests in `fetchAll()` and duplicate 30s timers in `startPolling()`.
+3. **In-Memory Shareholding Cache:** Added thread-safe `_inst_holding_cache` and `get_inst_holding_map()` in `server.py`, eliminating disk SQLite queries on every `/api/option-gainers-board` request.
+4. **Pre-Mapped Token Cache:** Pre-populated `_tokenCache` with known F&O instrument tokens and dynamically cached discovered tokens, enabling instant candlestick/CPR chart loading with zero token search network latency.
+
+## 2026-08-21 — 360° Command Center: Adjust Prem Spikes Columns & Eliminate Table Overflow
+
+**Goal:** Eliminate horizontal overflow in the 360° Command Center Prem Spikes feed table by removing the redundant `BOARD GAIN` column and compacting column widths, badges, and typography to fit cleanly within the 460px pane.
+
+**Files changed:**
+- `app/360-command-center.html` [MODIFY]
+
+**Agent Reuse Decision:** Frontend UI responsiveness and table compaction in 360 Command Center alert feed.
+
+**Changes:**
+1. **Redundancy Elimination:** Removed duplicate `BOARD GAIN` column in favor of the newly added `TOTAL GAIN` column displaying cumulative strike gain % from opening baseline.
+2. **Column Width & Header Optimization:** Configured compact column widths (`TIME: 48px`, `SYMBOL: 74px`, `STRIKE: 42px`, `SIDE: 26px`, `LAYER: 44px`, `SPIKE: 48px`, `FLOW: 78px`, `SPOT: 42px`, `TOTAL GAIN: 54px` totaling ~456px) and crisp, short headers.
+3. **Typography & Badge Ergonomics:** Updated `.ps-table` `min-width` to `440px`, reduced cell padding to `3.5px 3px`, and formatted badges and mono numbers with crisp, non-overflowing font sizes.
+
+## 2026-08-21 — 360° Command Center: Add TOTAL GAIN Column to Prem Spikes Table
+
+**Goal:** Add a new `TOTAL GAIN` column at the end of the 360° Command Center Prem Spikes table displaying the cumulative total gain % for each strike at the time of the alert.
+
+**Files changed:**
+- `app/360-command-center.html` [MODIFY]
+
+**Agent Reuse Decision:** Frontend UI table enhancement in 360 Command Center alert feed.
+
+**Changes:**
+1. **TOTAL GAIN Table Column (`360-command-center.html`):** Added `<col style="width:80px;">` and `<th>TOTAL GAIN</th>` to the table header at the end (after `SPOT MOVE`).
+2. **Cumulative Gain Calculation & Rendering:** Computed cumulative total gain % from open baseline (`a.board_gain_pct` / `((ltp - open_prem) / open_prem) * 100`) and rendered formatted values (`+XX.XX%`) with high-contrast bold green styling.
+
+## 2026-08-21 — 360° Command Center: Strike Price Only in Prem Spikes Contract Column
+
+**Goal:** Simplify the `CONTRACT` column in the 360° Command Center Prem Spikes table to display only the numerical strike price, removing redundant `ATM_PE` / `OTM_CE` label text since side is already clearly shown in the adjacent `SIDE` badge column.
+
+**Files changed:**
+- `app/360-command-center.html` [MODIFY]
+
+**Agent Reuse Decision:** Frontend UI template adjustment in 360 Command Center alert feed.
+
+**Changes:**
+1. **Strike Price Formatting (`360-command-center.html`):** Updated `buildPremRowHtml` to render `<td class="mono" title="${a.tradingsymbol || ''}">${a.strike || '-'}</td>`, eliminating cluttered `ATM/OTM` labels while maintaining full contract details in the hover tooltip.
+
+## 2026-08-21 — Premium Gainers Board: Remove NET DRIFT Column & Backend Logic
+
+**Goal:** Remove the NET DRIFT column from the Premium Gainers Board UI and eliminate the net drift calculation logic from the backend OI transition engine.
+
+**Files changed:**
+- `app/option-gainers-board.html` [MODIFY]
+- `app/backend/oi_transition_engine.py` [MODIFY]
+
+**Agent Reuse Decision:** Simplified and cleaned existing UI and transition engine. No new agents created.
+
+**Changes:**
+1. **Frontend Grid & Table Updates (`option-gainers-board.html`):**
+   - Removed `.col-netdrift` CSS style class.
+   - Updated `.stock-row-header` and `.stock-board-header` `grid-template-columns` from 13 to 12 columns, dedicating fluid `1fr` width to `.col-timeframes`.
+   - Removed Net Drift column header and stock row data cell.
+   - Removed `getDriftHtml()`, `handleHeaderSort('netdrift')` sorting condition, and `net_drift` caching in `spurtCache`.
+2. **Backend Engine Cleanup (`oi_transition_engine.py`):**
+   - Removed `above_sum` and `below_sum` score aggregation and resulting `net_drift` calculation logic.
+   - Removed `net_drift` field from `process_symbol_transitions` dictionary payload.
+
+## 2026-08-21 — 360° Command Center: White Symbol Color in Bulls/Bears Cards (Dark Theme)
+
+**Goal:** Set the stock symbol name in Bulls and Bears cards to white color (`#ffffff`) in the dark theme for improved contrast and readability, while preserving dynamic green/red indicators for price change and momentum badges.
+
+**Files changed:**
+- `app/360-command-center.html` [MODIFY]
+
+**Agent Reuse Decision:** Frontend UI visual enhancement in 360 Command Center Bulls/Bears panel.
+
+**Changes:**
+1. **White Symbol Typography:** Updated `.brow-sym` CSS to enforce `color: #ffffff !important;` in the default dark theme.
+2. **Light Theme Preservation:** Retained high-contrast `#0f172a !important` for `[data-theme="light"] .brow-sym`.
+3. **Cleaned Element Classes:** Refactored `renderBBCard` and fallback `renderBB` templates to render clean `.brow-sym` elements without redundant bull/bear class overrides.
+
+## 2026-08-21 — 360° Command Center: Reorganize Prem Spikes as Time-Ordered High-Density Table
+
+**Goal:** Reorganize the "🔥 Prem Spikes" alert feed tab into a compact, high-density table ordered descending by time, matching `premium-spike-alerts.html`, featuring search & filter controls, CE/PE & layer toggles, tree-based grouping by stock symbol, and responsive horizontal scrolling.
+
+**Files changed:**
+- `app/360-command-center.html` [MODIFY]
+
+**Agent Reuse Decision:** Frontend UI/UX table reorganization in 360 Command Center alert feed.
+
+**Changes:**
+1. **Interactive Filter Toolbar:** Added symbol/contract search input, CE/PE segmented buttons, Opening/Running layer buttons, and a `GROUP BY SYMBOL` checkbox.
+2. **High-Density Table View:** Structured columns for `TIME`, `SYMBOL`, `CONTRACT`, `SIDE`, `LAYER`, `PREMIUM MOVE`, `BOARD GAIN`, `PREMIUM FLOW`, and `SPOT MOVE`.
+3. **Time Ordering & Tree Grouping:** Sorted master symbol rows and sub-strikes descending by alert time (`(b.time || '').localeCompare(a.time || '')`), with tree connector indicators (`└─ SYMBOL`) when expanded and flat time-ordered view when unchecked.
+4. **Device-Agnostic Responsiveness:** Styled `.ps-table-shell` with smooth horizontal scrolling and ergonomic touch expand/collapse triggers.
+
+
+
+## 2026-08-21 — 360° Command Center: White Background for NSE Heatmap Cards
+
+**Goal:** Set the background color of only the sector cards in the NSE Heatmap to solid white with dark high-contrast typography, while maintaining the performance-coded dark green, glowing dark red, and black borders.
+
+**Files changed:**
+- `app/360-command-center.html` [MODIFY]
+
+**Agent Reuse Decision:** Frontend visual styling refinement.
+
+**Changes:**
+1. **White Sector Card Background:** Set `.sec-card` background to `#ffffff !important` with subtle elevation shadow (`box-shadow: 0 2px 6px rgba(0,0,0,0.12)`).
+2. **High-Contrast Internal Typography:** Styled `.sec-card-name` (`#0f172a`), `.sec-card-stats` (`#475569`), change badges, and buildup pills with crisp contrast against the white background.
+3. **Preserved Border Accents:** Kept `.is-green` (dark green `#065f46`), `.is-red` (glowing dark red `#991b1b`), and `.is-zero` (black `#000000`) border styles intact.
+
+## 2026-08-21 — 360° Command Center: Heatmap Sector Borders & OI Spurt Green Bar Styling
+
+**Goal:** Enhance sector card contrast in the NSE Heatmap by adding colored borders (dark green for positive, glowing dark red for negative, black for 0.00%/flat), and restyle the OI Spurt Board with vibrant green gradient spurt bars and crisp white percentage text.
+
+**Files changed:**
+- `app/360-command-center.html` [MODIFY]
+
+**Agent Reuse Decision:** Frontend visual refinement in 360 Command Center components.
+
+**Changes:**
+1. **NSE Heatmap Dynamic Sector Borders:**
+   - Tagged positive sector cards (`> 0%`) with `.is-green` (`border: 1.5px solid #065f46`).
+   - Tagged negative sector cards (`< 0%`) with `.is-red` (`border: 1.5px solid #991b1b` + red glowing aura box-shadow).
+   - Tagged 0.00% / flat cards with `.is-zero` (`border: 1.5px solid #000000`).
+2. **OI Spurt Board Restyling:**
+   - Changed `.oi-bar` to vibrant green gradient (`linear-gradient(90deg, #059669, #10b981, #34d399)`) with emerald glowing aura on top rank bar.
+   - Changed `.oi-pct` text color to crisp white (`#ffffff`).
+   - Adjusted `.oi-bar-wrap` background to subtle emerald tint (`rgba(34, 197, 94, 0.14)`).
+
+## 2026-08-21 — 360° Command Center: Bull/Bear Cards Anti-Overflow & Badge Layout Fix
+
+**Goal:** Eliminate content clipping and horizontal overflow in Bull and Bear cards within the 360° Command Center (`app/360-command-center.html`).
+
+**Files changed:**
+- `app/360-command-center.html` [MODIFY]
+
+**Agent Reuse Decision:** Frontend CSS/HTML refinement on existing DOM components.
+
+**Changes:**
+1. **Compact Timeframe Badges:** Added `.brow .tf` rule (`font-size: 7.5px; padding: 1px 3px; border-radius: 2px; flex-shrink: 0; gap: 1.5px;`) so all 4 TF pills (`[5M] [15M] [1H] [D]`) fit comfortably without clipping `[D]`.
+2. **Dedicated Flex Containers:** Structured `.brow-top` into `.brow-left` (symbol + change % with text-overflow protection) and `.brow-tfs`, and `.brow-mid` into a flex group (trend state + date/time) and `.brow-cross` badge.
+3. **Card Micro-Padding:** Tuned `.brow` padding (`4px 6px`) and `overflow: hidden` to guarantee zero boundary spills across all screen sizes.
+
+
+**Goal:** Synchronize 360° Command Center (`app/360-command-center.html`) with Premium Gainers Board (`app/option-gainers-board.html`): (1) sort Bulls and Bears strictly by date & time (`cross_epoch_5m` desc) and candle size (`cross_candle_size_5m` desc) with 5M crossovers on top, (2) display precise crossover timestamps, (3) integrate live breakouts (including EMA Collisions) and dynamic Squeeze and EMA Coil Watchlists in the Right Panel.
+
+**Files changed:**
+- `app/360-command-center.html` [MODIFY]
+
+**Agent Reuse Decision:** Frontend synchronization reusing existing backend endpoints (`/api/ema-crossovers` and `/api/live-breakouts`) populated by `EMAAgent` and `ema_crossover_scanner`. No new backend agents or ad-hoc polling loops added.
+
+**Changes:**
+1. **Bull / Bear Sorting & Time Synchronization:**
+   - Updated `get5mCrossDirection()` to include `isTodayEpoch` and `state_5m` checks matching `option-gainers-board.html`.
+   - Updated `mapCrossoversToBB()` to extract `cross_time_5m` (e.g. `21 Aug, 15:30`) and candle size `cross_candle_size_5m`.
+   - Implemented exact multi-tier sort hierarchy: (1) 5M Crossovers first, (2) `cross_epoch_5m` descending (newest first), (3) `cross_candle_size_5m` descending, (4) alphabetical tie-breaker.
+2. **Live Breakouts & EMA Collisions Integration:**
+   - Added `fetchLiveBreakouts()` polling `/api/live-breakouts` every 15s.
+   - Merged triggered breakout alerts and EMA collisions into unified live breakouts feed sorted descending by trigger epoch.
+3. **Squeeze & EMA Coil Watchlists:**
+   - Added dynamic Squeeze Watchlist rendering Bollinger Band squeezes with duration badge (`⏳ Xm`) and consolidation tooltip.
+   - Added dynamic EMA Coil Watchlist rendering EMA coil stocks with gap percentage (`Δgap%`) and first-seen timestamp.
+
+
+**Goal:** (1) Show full date+time in BB cards (was only showing time); (2) fix [D] badge clipping by adding flex-shrink:0; (3) compress Unified Master Board column from 1fr to max 320px to give more space to right panels.
+
+**Files changed:**
+- `app/360-command-center.html` [MODIFY] — CSS: `.lay` grid changed from `1fr 460px 260px` → `minmax(0,320px) 460px 260px`; JS: `mapCrossoversToBB()` timeStr now parses ISO timestamp to `"DD Mon, HH:MM"` format; `renderBBCard()` top row and mid row elements got `flex-shrink:0` to prevent badge clipping.
+
+**Agent Reuse Decision:** Frontend-only CSS/JS changes. No agent or backend code modified.
+
+
+
+**Goal:** Three UI improvements to the Alert Feed and right panel: (1) BB card layout match to Premium Gainer Board, (2) Live Breakouts sidebar upgraded to show price/move%/time from BREAKOUT_ALERTS, (3) OI Spurt Board removed from right panel and merged into Alert Feed's "OI Spurt" tab as a full ranked board.
+
+**Files changed:**
+- `app/360-command-center.html` [MODIFY] — CSS: added `.brk-item`, `.brk-sym` classes; HTML: renamed Alert Feed "OI Events" tab → "OI Spurt"; removed OI Spurt Board section from right panel col; expanded Live Breakouts `max-height 155px→300px`, Squeeze Watchlist `75px→140px`; JS: `renderBBCard()` — TF badges moved to top-right row, crossBadge moved to bottom-right row; `aTab('oi2')` branch upgraded to full ranked OI Spurt Board with rank numbers, gradient bars, delta badges; `renderSideBreakouts()` rewritten to use `BREAKOUT_ALERTS` global for rich entries (symbol + grade badge + price + move% + time).
+
+**Agent Reuse Decision:** Frontend-only UI changes; `renderSideBreakouts()` now reads the existing `BREAKOUT_ALERTS` global populated by the existing poller/socket — no new agent or API endpoint created.
+
+## 2026-08-21 — 360° Command Center: UMB Width Reduction (~25%) + Alert Feed Expansion
+
+**Goal:** Reduce Unified Master Board column width by ~25%, giving the freed space to the Alert Feed panel. Compact table internals to prevent data clutter at smaller width.
+
+**Files changed:**
+- `app/360-command-center.html` [MODIFY] — Grid layout: `1fr 340px 260px` → `1fr 460px 260px` (Alert Feed +120px); table font-size `12px→11px`; `thead th` padding `7px 6px→5px 4px`, font `10.5px→9.5px`; `tbody td` padding `6px 7px→4px 5px`; `.sym` font `13px→12px`; tablet breakpoint Alert Feed `300px→380px`.
+
+**Agent Reuse Decision:** Frontend-only CSS layout change; no backend or agent modifications.
+
+## 2026-08-21 — 360° Command Center: Remove TC/PVT/BC and DRIFT Columns from Unified Master Board
+
+
+**Goal:** Clean up the Unified Master Board in 360 Command Center UI by removing `TC/PVT/BC` and `DRIFT` columns.
+
+**Files changed:**
+- `app/360-command-center.html` [MODIFY] — Removed `TC/PVT/BC` and `DRIFT` column headers from static and dynamic `<thead>` templates; removed corresponding `<td>` data cells from stock row templates (standard and Future Buildup); updated subrow and empty state `colspan` values.
+
+**Agent Reuse Decision:** Frontend-only UI streamlining; no backend or agent modifications.
+
+## 2026-08-21 — Option Gainers Board HTTP 500 NameError Fix
+
+**Goal:** Fix HTTP 500 error on `/api/option-gainers-board` during live market hours caused by undefined `token_int` variable.
+
+**Files changed:**
+- `app/backend/server.py` [MODIFY] — Fixed `token_int` reference to `token` in live option gainers results formatting and ensured `token` is included for stale items.
+
+**Agent Reuse Decision:** Single bugfix in server route; no agent structure altered.
+
+## 2026-08-21 — 360° Command Center & Scanner: Layout & Cutoff Audit Fixes
+
+**Goal:** Resolve critical and medium gaps found during comprehensive codebase audit across backend and frontend.
+
+**Files changed:**
+- `app/backend/option_gainers_scanner.py` [MODIFY] — aligned EOD snapshot trigger/rebuild cutoff times to 15:40 IST; updated milestone cache to avoid locking failed responses on past dates.
+- `app/js/kite-api.js` [MODIFY] — restored WebSocket-first transport with fallback to polling for real-time responsiveness.
+- `app/360-command-center.html` [MODIFY] — removed 28px ghost ticker height calculation in `fixHeight()`; added column IDs (`col-alerts`, `col-panels`); initialized `showMobileCol(0)` on DOMContentLoaded; added mobile guard to `fixHeight()`.
+
+**Agent Reuse Decision:** Routine audit and stabilization of existing agents and frontend rendering.
+
 ## 2026-08-21 — 360° Command Center: Device-Agnostic Responsive Layout
 
 **Goal:** Make the 360 Command Center fully usable across mobile, tablet, laptop, and desktop without degraded performance or data loss.

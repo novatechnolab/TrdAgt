@@ -448,32 +448,12 @@ def process_symbol_transitions(symbol, chain_rows, expiry, ltp, iv_event_windows
     realtime_composite = sum(realtime_scores)
     conn.close()
 
-    # Calculate net drift based on above/below ATM strike scores
-    above_sum = sum(d["composite"] for d in strike_details if d["strike"] > ltp)
-    below_sum = sum(d["composite"] for d in strike_details if d["strike"] < ltp)
-
-    if above_sum > 0 and below_sum > 0:
-        net_drift = "Bullish (Lifting)"
-    elif above_sum < 0 and below_sum < 0:
-        net_drift = "Bearish (Sinking)"
-    elif above_sum < 0 and below_sum > 0:
-        net_drift = "Range-Bound"
-    else:
-        # Expansion / Breakout: resolve direction based on relative strength
-        if above_sum > abs(below_sum):
-            net_drift = "Bullish Breakout"
-        elif above_sum < abs(below_sum):
-            net_drift = "Bearish Breakout"
-        else:
-            net_drift = "Bullish Breakout" if realtime_composite >= 0 else "Bearish Breakout"
-
     # 5. Return JSON payload matching UI specifications
     return {
         "symbol": symbol,
         "atm_strike": atm_strike,
         "composite_score": realtime_composite,
         "bias": last_confirmed_bias,       # Active confirmed label (C_t)
-        "net_drift": net_drift,
         "strike_details": strike_details,
         "alerts": [],
         "is_event_window": False

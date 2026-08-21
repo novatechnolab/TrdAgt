@@ -108,7 +108,7 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--t1);min-hei
 .hz-gain{font-size:11px;font-weight:800;font-family:var(--mono);}
 
 /* LAYOUT */
-.lay{display:grid;grid-template-columns:1fr 340px 260px;overflow:hidden;}
+.lay{display:grid;grid-template-columns:auto 460px 1fr;overflow:hidden;}
 .col{border-right:1px solid var(--b);display:flex;flex-direction:column;overflow:hidden;}
 .col:last-child{border-right:none;}
 
@@ -128,8 +128,8 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--t1);min-hei
 .fbtn:hover,.fbtn.on{background:var(--accg);border-color:var(--acc);color:var(--t1);}
 
 /* MASTER TABLE */
-.tbl{width:100%;border-collapse:collapse;font-size:12px;}
-.tbl thead th{padding:7px 6px;font-size:10.5px;font-weight:800;text-transform:uppercase;letter-spacing:.06em;
+.tbl{width:100%;border-collapse:collapse;font-size:11px;}
+.tbl thead th{padding:5px 4px;font-size:9.5px;font-weight:800;text-transform:uppercase;letter-spacing:.06em;
   color:var(--t2);border-bottom:1px solid var(--b);white-space:nowrap;background:var(--th-bg);
   position:sticky;top:0;z-index:10;text-align:left;}
 .tbl thead th.sortable{cursor:pointer;user-select:none;}
@@ -140,7 +140,7 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--t1);min-hei
 .tbl tbody tr:hover{background:var(--row-hover);}
 .tbl tbody tr:nth-child(even){background:var(--row-alt);}
 .tbl tbody tr.selected{background:var(--accg)!important;}
-.tbl td{padding:6px 7px;white-space:nowrap;vertical-align:middle;}
+.tbl td{padding:4px 5px;white-space:nowrap;vertical-align:middle;}
 
 /* Row direction borders */
 .tbl tbody tr.BR td:first-child{border-left:3px solid var(--bull);}
@@ -157,7 +157,7 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--t1);min-hei
 
 /* field styles */
 .rank{font-size:10px;color:var(--t2);font-family:var(--mono);font-weight:800;}
-.sym{font-weight:800;font-size:13px;}
+.sym{font-weight:800;font-size:12px;}
 .mono{font-family:var(--mono);font-weight:700;}
 .bull{color:var(--bull);font-weight:800;}.bear{color:var(--bear);font-weight:800;}.neu{color:var(--neu);font-weight:800;}
 .amb{color:var(--amb);font-weight:800;}.pur{color:var(--pur);font-weight:800;}.cyn{color:var(--cyn);font-weight:800;}
@@ -239,13 +239,35 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--t1);min-hei
 .mbl{font-size:7px;color:var(--t2);text-transform:uppercase;letter-spacing:.05em;}
 .mbv{font-size:11px;font-weight:800;font-family:var(--mono);margin-top:1px;}
 
-/* PREM SPIKES GROUPING & SUBROWS */
-.prem-expand-pill{display:inline-flex;align-items:center;gap:3px;background:rgba(59,130,246,.14);border:1px solid rgba(59,130,246,.35);color:var(--acc);padding:1px 6px;border-radius:4px;font-size:8.5px;font-weight:800;cursor:pointer;transition:all .15s;vertical-align:middle;margin-left:2px;}
-.prem-expand-pill:hover{background:rgba(59,130,246,.28);border-color:var(--acc);}
-.prem-subrows-wrap{background:rgba(0,0,0,.22);border-top:1px solid var(--b);padding:6px 10px 8px;display:flex;flex-direction:column;gap:4px;}
-.prem-subrow{display:flex;align-items:center;justify-content:space-between;gap:6px;padding:4px 6px;border-radius:4px;background:rgba(255,255,255,.025);border:1px solid rgba(255,255,255,.04);font-size:9px;font-family:var(--mono);}
-.prem-subrow:hover{background:rgba(255,255,255,.05);}
-.prem-subrow.is-latest{border-color:rgba(59,130,246,.25);background:rgba(59,130,246,.04);}
+/* PREM SPIKES TABLE IN 360 CC */
+.ps-wrap{display:flex;flex-direction:column;height:100%;min-width:0;}
+.ps-controls{display:flex;align-items:center;gap:5px;padding:5px 8px;background:rgba(0,0,0,.25);border-bottom:1px solid var(--b);flex-shrink:0;flex-wrap:wrap;}
+.ps-search{flex:1;min-width:100px;background:var(--card);border:1px solid var(--b);border-radius:4px;color:var(--t1);outline:none;padding:3px 6px;font-size:9.5px;font-family:inherit;}
+.ps-search:focus{border-color:var(--acc);}
+.ps-seg{display:flex;gap:1px;background:var(--card);border:1px solid var(--b);border-radius:4px;padding:1px;}
+.ps-seg button{border:0;background:transparent;color:var(--t2);border-radius:3px;padding:2px 5px;font-size:8.5px;font-weight:700;cursor:pointer;line-height:1.1;}
+.ps-seg button.active{background:rgba(59,130,246,.22);color:var(--acc);font-weight:800;}
+.ps-check-lbl{display:inline-flex;align-items:center;gap:3px;font-size:8.5px;font-weight:700;color:var(--t2);cursor:pointer;user-select:none;white-space:nowrap;}
+.ps-check-lbl input{cursor:pointer;accent-color:var(--acc);margin:0;}
+.ps-table-shell{flex:1;overflow-x:auto;overflow-y:auto;border-radius:0;}
+.ps-table-shell::-webkit-scrollbar{height:4px;width:4px;}
+.ps-table-shell::-webkit-scrollbar-thumb{background:var(--b);border-radius:2px;}
+.ps-table{width:100%;border-collapse:collapse;min-width:440px;font-size:9.5px;table-layout:fixed;}
+.ps-table thead{background:var(--th-bg,#111827);color:var(--t2);text-transform:uppercase;letter-spacing:.03em;font-size:8px;font-weight:800;position:sticky;top:0;z-index:5;}
+.ps-table th,.ps-table td{border-bottom:1px solid var(--b);padding:3.5px 3px;text-align:left;vertical-align:middle;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.ps-table tbody tr{background:var(--card);transition:background .12s;}
+.ps-table tbody tr:nth-child(even){background:rgba(255,255,255,.015);}
+.ps-table tbody tr:hover{background:rgba(59,130,246,.08);}
+.ps-table tr.master-row{cursor:pointer;}
+.ps-table tr.detail-row{background:rgba(0,0,0,.26);}
+.ps-table tr.detail-row:hover{background:rgba(59,130,246,.12);}
+.ps-expand-btn{display:inline-flex;align-items:center;justify-content:center;width:13px;font-size:7.5px;color:var(--acc);cursor:pointer;user-select:none;}
+.ps-count-pill{display:inline-block;font-size:8px;font-weight:800;padding:1px 4.5px;border-radius:8px;background:rgba(59,130,246,.2);color:var(--acc);margin-left:3px;border:1px solid rgba(59,130,246,.35);}
+.ps-badge{display:inline-flex;align-items:center;justify-content:center;min-width:20px;border-radius:3px;padding:1px 3px;font-size:8px;font-weight:800;font-family:var(--mono);}
+.ps-badge.ce{color:var(--bull);background:rgba(34,197,94,.16);border:1px solid rgba(34,197,94,.3);}
+.ps-badge.pe{color:var(--bear);background:rgba(239,68,68,.16);border:1px solid rgba(239,68,68,.3);}
+.ps-layer-star{color:#ffd700;font-weight:800;font-size:7.5px;background:rgba(255,215,0,.1);padding:1px 3px;border-radius:3px;border:1px solid rgba(255,215,0,.25);}
+.ps-layer-run{color:#58a6ff;font-weight:800;font-size:7.5px;background:rgba(88,166,255,.1);padding:1px 3px;border-radius:3px;border:1px solid rgba(88,166,255,.25);}
 
 /* v2: 8-factor filled bars */
 .acf{padding:5px 10px 8px;border-top:1px solid var(--b);}
@@ -261,21 +283,23 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--t1);min-hei
 .anote{padding:3px 10px 7px;font-size:8px;color:var(--t2);font-style:italic;}
 
 /* BULLS/BEARS */
-.bb-cols{display:grid;grid-template-columns:1fr 1fr;height:100%;}
-.bb-col{border-right:1px solid var(--b);display:flex;flex-direction:column;overflow:hidden;}
+.bb-cols{display:grid;grid-template-columns:1fr 1fr;height:100%;min-width:0;}
+.bb-col{border-right:1px solid var(--b);display:flex;flex-direction:column;overflow:hidden;min-width:0;}
 .bb-col:last-child{border-right:none;}
-.bb-hdr{padding:7px 10px;border-bottom:1px solid var(--b);display:flex;align-items:center;gap:8px;flex-shrink:0;}
-.bb-title{font-size:12px;font-weight:800;}
-.bb-cnt{font-size:10px;font-weight:700;font-family:var(--mono);}
-.bb-body{flex:1;overflow-y:auto;padding:4px;}
+.bb-hdr{padding:6px 8px;border-bottom:1px solid var(--b);display:flex;align-items:center;gap:6px;flex-shrink:0;}
+.bb-title{font-size:11.5px;font-weight:800;}
+.bb-cnt{font-size:9.5px;font-weight:700;font-family:var(--mono);}
+.bb-body{flex:1;overflow-y:auto;padding:3px 4px;}
 .bb-body::-webkit-scrollbar{width:3px;}
 .bb-body::-webkit-scrollbar-thumb{background:var(--b);border-radius:2px;}
-.brow{background:var(--card);border:1px solid var(--b);border-radius:var(--rs);margin-bottom:3px;padding:6px 8px;cursor:pointer;transition:all .12s;}
+.brow{background:var(--card);border:1px solid var(--b);border-radius:var(--rs);margin-bottom:3px;padding:4px 6px;cursor:pointer;transition:all .12s;overflow:hidden;}
 .brow:hover{border-color:var(--bhi);}
-.brow-top{display:flex;align-items:center;gap:6px;margin-bottom:4px;}
-.brow-sym{font-size:11px;font-weight:700;}
-.brow-chg{font-size:10px;font-weight:700;font-family:var(--mono);}
-.brow-tags{display:flex;gap:3px;flex-wrap:wrap;}
+.brow-top{display:flex;align-items:center;justify-content:space-between;gap:4px;margin-bottom:2px;}
+.brow-left{display:flex;align-items:center;gap:4px;min-width:0;overflow:hidden;}
+.brow-sym{font-size:10px;font-weight:800;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:#ffffff!important;}
+.brow-chg{font-size:8.5px;font-weight:700;font-family:var(--mono);flex-shrink:0;}
+.brow-tfs{display:flex;gap:1.5px;flex-shrink:0;align-items:center;}
+.brow .tf{font-size:7.5px;font-weight:800;padding:1px 3px;border-radius:2px;line-height:1.1;flex-shrink:0;letter-spacing:0;}
 .btag{font-size:8px;font-weight:700;padding:1px 4px;border-radius:3px;border:1px solid;}
 .btag.b{background:rgba(34,197,94,.15);color:var(--bull);border-color:rgba(34,197,94,.3);}
 .btag.r{background:rgba(239,68,68,.12);color:var(--bear);border-color:rgba(239,68,68,.22);}
@@ -311,13 +335,18 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--t1);min-hei
 .bb-subfilter{display:flex;gap:4px;padding:4px 8px;background:rgba(0,0,0,.2);border-bottom:1px solid var(--b);}
 .bb-sbtn{background:transparent;border:1px solid var(--b);color:var(--t2);font-size:9px;padding:2px 8px;border-radius:3px;cursor:pointer;}
 .bb-sbtn.active{background:var(--card);color:var(--t1);border-color:var(--acc);font-weight:700;}
-.brow-mid{display:flex;align-items:center;justify-content:space-between;margin-bottom:3px;font-size:9px;color:var(--t2);}
-.brow-trnd{font-size:8px;font-weight:800;padding:1px 4px;border-radius:2px;background:rgba(255,255,255,.06);}
+.brow-mid{display:flex;align-items:center;justify-content:space-between;gap:3px;font-size:8px;color:var(--t2);margin-top:1px;}
+.brow-trnd{font-size:7.5px;font-weight:800;padding:1px 3.5px;border-radius:2px;background:rgba(255,255,255,.06);white-space:nowrap;flex-shrink:0;}
 .brow-trnd.bull{color:var(--bull);}
 .brow-trnd.bear{color:var(--bear);}
-.brow-cross{font-size:8px;font-weight:800;padding:1px 4px;border-radius:3px;font-family:var(--mono);}
+.brow-time{font-size:7.5px;color:var(--t2);font-family:var(--mono);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.brow-cross{font-size:7.5px;font-weight:800;padding:1px 4px;border-radius:2.5px;font-family:var(--mono);white-space:nowrap;flex-shrink:0;}
 .brow-cross.bull{background:rgba(34,197,94,.18);color:var(--bull);border:1px solid rgba(34,197,94,.3);}
 .brow-cross.bear{background:rgba(239,68,68,.18);color:var(--bear);border:1px solid rgba(239,68,68,.3);}
+.brk-item{padding:5px 8px;border-bottom:1px solid var(--b);cursor:pointer;transition:background .12s;}
+.brk-item:hover{background:rgba(255,255,255,.04);}
+.brk-item:last-child{border-bottom:none;}
+.brk-sym{font-size:11px;font-weight:800;}
 
 /* Futures Buildup Stats Grid */
 .futbld-stats-bar{display:grid;grid-template-columns:repeat(5,1fr);gap:8px;padding:8px 12px;background:var(--stat-bar-bg);border-bottom:1px solid var(--b);}
@@ -347,9 +376,28 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--t1);min-hei
 .hm-leg-m5{background:#991b1b;}
 
 .sec-grid{display:grid;grid-template-columns:repeat(auto-fill, minmax(170px, 1fr));gap:8px;margin-bottom:12px;}
-.sec-card{background:var(--card);border:1px solid var(--b);border-radius:8px;padding:9px 10px;cursor:pointer;transition:all .18s cubic-bezier(.4,0,.2,1);user-select:none;display:flex;flex-direction:column;gap:5px;position:relative;overflow:hidden;}
-.sec-card:hover{transform:translateY(-2px);box-shadow:0 6px 16px rgba(0,0,0,.15);border-color:var(--bhi);}
-.sec-card.selected{border-color:var(--acc);box-shadow:0 0 14px var(--accg);background:var(--accg)!important;}
+.sec-card{background:#ffffff !important;border:1.5px solid var(--b);border-radius:8px;padding:9px 10px;cursor:pointer;transition:all .18s cubic-bezier(.4,0,.2,1);user-select:none;display:flex;flex-direction:column;gap:5px;position:relative;overflow:hidden;box-shadow:0 2px 6px rgba(0,0,0,0.12);}
+.sec-card:hover{transform:translateY(-2px);box-shadow:0 6px 18px rgba(0,0,0,.22);border-color:var(--bhi);}
+.sec-card.selected{border-color:var(--acc)!important;box-shadow:0 0 14px var(--accg)!important;background:#ffffff!important;}
+
+/* Heatmap Sector Card Performance Borders */
+.sec-card.is-green{border:1.5px solid #065f46 !important;}
+.sec-card.is-green:hover{border-color:#059669 !important;box-shadow:0 6px 16px rgba(6,95,70,.35);}
+.sec-card.is-red{border:1.5px solid #991b1b !important;box-shadow:0 0 10px rgba(220,38,38,.45),inset 0 0 8px rgba(153,27,27,.08);}
+.sec-card.is-red:hover{border-color:#dc2626 !important;box-shadow:0 0 16px rgba(239,68,68,.65),inset 0 0 12px rgba(185,28,28,.14);}
+.sec-card.is-zero{border:1.5px solid #000000 !important;}
+.sec-card.is-zero:hover{border-color:#000000 !important;box-shadow:0 4px 14px rgba(0,0,0,.45);}
+
+.sec-card .sec-card-name{font-size:10px;font-weight:800;letter-spacing:.04em;color:#0f172a !important;text-transform:uppercase;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.sec-card .sec-card-stats{display:flex;align-items:center;justify-content:space-between;font-size:9px;color:#475569 !important;font-weight:700;font-family:var(--mono);}
+.sec-card .sec-card-chg.pos{background:rgba(22,163,74,.14);color:#15803d;border:1px solid rgba(22,163,74,.4);font-weight:800;}
+.sec-card .sec-card-chg.neg{background:rgba(220,38,38,.14);color:#b91c1c;border:1px solid rgba(220,38,38,.4);font-weight:800;}
+.sec-card .sec-card-chg.neu{background:rgba(100,116,139,.14);color:#334155;border:1px solid rgba(100,116,139,.4);font-weight:800;}
+.sec-card .sec-buildup-mini.lb{background:rgba(22,163,74,.14);color:#15803d;border:1px solid rgba(22,163,74,.35);font-weight:800;}
+.sec-card .sec-buildup-mini.sb{background:rgba(220,38,38,.14);color:#b91c1c;border:1px solid rgba(220,38,38,.35);font-weight:800;}
+.sec-card .sec-buildup-mini.sc{background:rgba(217,119,6,.14);color:#b45309;border:1px solid rgba(217,119,6,.35);font-weight:800;}
+.sec-card .sec-buildup-mini.lu{background:rgba(124,58,237,.14);color:#6d28d9;border:1px solid rgba(124,58,237,.35);font-weight:800;}
+.sec-card .sec-buildup-mini.flat{background:rgba(100,116,139,.14);color:#475569;border:1px solid rgba(100,116,139,.35);font-weight:700;}
 
 .hm-bg-p5{background:linear-gradient(135deg, rgba(0,102,68,.4), rgba(0,102,68,.18));border-color:rgba(0,168,107,.5);}
 .hm-bg-p3{background:linear-gradient(135deg, rgba(0,135,90,.35), rgba(0,135,90,.15));border-color:rgba(54,179,126,.45);}
@@ -359,6 +407,9 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--t1);min-hei
 .hm-bg-m3{background:linear-gradient(135deg, rgba(127,29,29,.35), rgba(127,29,29,.15));border-color:rgba(229,57,53,.45);}
 .hm-bg-m5{background:linear-gradient(135deg, rgba(153,27,27,.45), rgba(153,27,27,.2));border-color:rgba(255,82,82,.55);}
 
+[data-theme="light"] .sec-card.is-green{border:1.5px solid #065f46 !important;}
+[data-theme="light"] .sec-card.is-red{border:1.5px solid #b91c1c !important;box-shadow:0 0 8px rgba(220,38,38,.35);}
+[data-theme="light"] .sec-card.is-zero{border:1.5px solid #000000 !important;background:#f8fafc;}
 [data-theme="light"] .hm-bg-p5{background:linear-gradient(135deg, rgba(22,163,74,.18), rgba(22,163,74,.06));border-color:rgba(22,163,74,.35);}
 [data-theme="light"] .hm-bg-p3{background:linear-gradient(135deg, rgba(22,163,74,.13), rgba(22,163,74,.04));border-color:rgba(22,163,74,.25);}
 [data-theme="light"] .hm-bg-p1{background:linear-gradient(135deg, rgba(22,163,74,.09), rgba(22,163,74,.02));border-color:rgba(22,163,74,.2);}
@@ -431,7 +482,7 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--t1);min-hei
 [data-theme="light"] .asym{color:#0f172a;font-weight:800;}
 [data-theme="light"] .mbv{color:#0f172a;font-weight:800;}
 [data-theme="light"] .mbl{color:#475569;font-weight:700;}
-[data-theme="light"] .brow-sym{color:#0f172a;font-weight:800;}
+[data-theme="light"] .brow-sym{color:#0f172a!important;font-weight:800;}
 [data-theme="light"] .brow-chg{font-weight:800;}
 [data-theme="light"] .hz-sym{color:#0f172a;font-weight:900;}
 [data-theme="light"] .hz-rank{color:#b45309;font-weight:900;}
@@ -508,13 +559,13 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--t1);min-hei
 .oi-sym{font-size:11px;font-weight:700;flex:1;min-width:60px;display:flex;align-items:center;gap:4px;}
 .oi-delta{font-size:7px;font-weight:800;padding:1px 3px;border-radius:3px;font-family:var(--mono);}
 .oi-delta.yellow{background:rgba(234,179,8,.25);color:#facc15;border:1px solid rgba(234,179,8,.4);}
-.oi-pct{font-size:10px;font-weight:800;font-family:var(--mono);color:var(--pur);width:42px;text-align:right;transition:color .3s;}
+.oi-pct{font-size:10px;font-weight:800;font-family:var(--mono);color:#ffffff;width:42px;text-align:right;transition:color .3s;}
 .oi-pct.oi-pct-flash{color:#facc15!important;text-shadow:0 0 6px rgba(250,204,21,.7);animation:oipulse 1.5s ease-out 2;}
 @keyframes oipulse{0%{transform:scale(1.15);}50%{transform:scale(1);}100%{transform:scale(1.15);}}
-.oi-bar-wrap{flex:2;height:8px;background:rgba(168,85,247,.1);border-radius:4px;overflow:hidden;}
-.oi-bar{height:8px;border-radius:4px;background:linear-gradient(90deg,#6d28d9,#a855f7,#c084fc);
+.oi-bar-wrap{flex:2;height:8px;background:rgba(34,197,94,.14);border-radius:4px;overflow:hidden;}
+.oi-bar{height:8px;border-radius:4px;background:linear-gradient(90deg,#059669,#10b981,#34d399);
   transition:width .6s cubic-bezier(.4,0,.2,1),background .4s;}
-.oi-bar.top1{background:linear-gradient(90deg,#7c3aed,#a855f7,#e879f9);box-shadow:0 0 6px rgba(168,85,247,.5);}
+.oi-bar.top1{background:linear-gradient(90deg,#10b981,#22c55e,#86efac);box-shadow:0 0 8px rgba(34,197,94,.5);}
 .oi-bar.bar-yellow{background:linear-gradient(90deg,#ca8a04,#eab308,#fef08a)!important;box-shadow:0 0 8px rgba(234,179,8,.6)!important;}
 
 .oi-badge-pulse{display:inline-block;padding:1px 4px;border-radius:3px;background:rgba(234,179,8,.2);color:#facc15!important;font-weight:800;border:1px solid rgba(234,179,8,.38);box-shadow:0 0 6px rgba(234,179,8,.35);}
@@ -541,7 +592,7 @@ select.sel:focus{outline:none;border-color:var(--acc);}
 
 /* Tablet: 768–1199px */
 @media (max-width:1199px){
-  .lay{grid-template-columns:1fr 300px;}
+  .lay{grid-template-columns:1fr 380px;}
   .rp.col{display:none;}
   .hz-cards{flex-wrap:nowrap;overflow-x:auto;-webkit-overflow-scrolling:touch;}
 }
@@ -680,8 +731,6 @@ select.sel:focus{outline:none;border-color:var(--acc);}
           <th class="sortable" onclick="sortBoard('e9h')">E9H</th>
           <th class="sortable" onclick="sortBoard('fhS')">FH VOL</th>
           <th class="sortable" onclick="sortBoard('fut')">FUT B/U</th>
-          <th class="sortable" onclick="sortBoard('tcpvt')">TC/PVT/BC</th>
-          <th class="sortable" onclick="sortBoard('drift')">DRIFT</th>
           <th class="sortable" onclick="sortBoard('tf')">TF</th>
           <th class="sortable" onclick="sortBoard('oiChg')">OI%</th>
           <th class="sortable" onclick="sortBoard('score')">SCORE</th>
@@ -692,7 +741,7 @@ select.sel:focus{outline:none;border-color:var(--acc);}
   </div>
 
   <!-- COL 2: ALERT FEED -->
-  <div class="col">
+  <div class="col" id="col-alerts">
     <div class="ch">
       <div class="ct">⚡ Alert Feed</div>
       <div style="display:flex;gap:5px;align-items:center;">
@@ -709,7 +758,7 @@ select.sel:focus{outline:none;border-color:var(--acc);}
       <div class="tab on" onclick="aTab('prem',this)">🔥 Prem Spikes</div>
       <div class="tab" onclick="aTab('bb',this)">📊 Bulls/Bears</div>
       <div class="tab" onclick="aTab('brk_events',this)">📡 Breakouts</div>
-      <div class="tab" onclick="aTab('oi2',this)">⚡ OI Events</div>
+      <div class="tab" onclick="aTab('oi2',this)">⚡ OI Spurt</div>
       <div class="tab" onclick="aTab('bup',this)">📈 B/U Shift</div>
       <div class="tab" onclick="aTab('ema_conv',this)">📉 PreCross</div>
     </div>
@@ -717,20 +766,24 @@ select.sel:focus{outline:none;border-color:var(--acc);}
   </div>
 
   <!-- COL 3: RIGHT PANEL -->
-  <div class="rp col">
+  <div class="rp col" id="col-panels">
     <div class="rp-section" style="max-height:220px;display:flex;flex-direction:column;">
-      <div class="rp-sh"><span>⚡ OI Spurt Board</span><span class="cbadge" id="oi-cnt">0</span></div>
-      <div style="overflow-y:auto;flex:1;" id="oi-board"></div>
-    </div>
-    <div class="rp-section" style="max-height:155px;display:flex;flex-direction:column;">
-      <div class="rp-sh"><span>🚀 Live Breakouts</span><span class="cbadge" id="brk-cnt">EMA: 0</span></div>
+      <div class="rp-sh"><span>🚀 Live Breakouts</span><span class="cbadge" id="brk-cnt">0</span></div>
       <div style="overflow-y:auto;flex:1;" id="brk-body">
         <div class="empty" style="padding:16px 8px;"><div class="ei">⚡</div><div class="et">No active breakouts</div><div class="es">Scanning EMA crossovers</div></div>
       </div>
     </div>
-    <div class="rp-section" style="max-height:75px;display:flex;flex-direction:column;">
-      <div class="rp-sh"><span>🏹 Squeeze Watchlist</span><span class="cbadge">0</span></div>
-      <div style="overflow-y:auto;flex:1;padding:8px;font-size:9px;color:var(--t2);text-align:center;">No active squeezes</div>
+    <div class="rp-section" style="max-height:140px;display:flex;flex-direction:column;">
+      <div class="rp-sh"><span>🏹 Squeeze Watchlist</span><span class="cbadge" id="squeeze-cnt">0</span></div>
+      <div style="overflow-y:auto;flex:1;" id="squeeze-body">
+        <div style="padding:8px;font-size:9px;color:var(--t2);text-align:center;">No active squeezes</div>
+      </div>
+    </div>
+    <div class="rp-section" style="max-height:140px;display:flex;flex-direction:column;">
+      <div class="rp-sh"><span>🌀 EMA Coil Watchlist</span><span class="cbadge" id="coil-cnt">0</span></div>
+      <div style="overflow-y:auto;flex:1;" id="coil-body">
+        <div style="padding:8px;font-size:9px;color:var(--t2);text-align:center;">No EMA coil stocks</div>
+      </div>
     </div>
     <div class="rp-section" style="padding:8px 10px;">
       <div style="font-size:9px;font-weight:700;color:var(--t1);margin-bottom:6px;text-transform:uppercase;letter-spacing:.07em;">Confluence Scoring</div>
@@ -778,6 +831,12 @@ let STOCKS = [];
 let ALERTS = [];
 let PREM_ALERTS = [];       // Premium Spike Alerts from /api/option-gainers-alerts
 let _premExpanded = new Set(); // Expanded stock symbols for grouped Prem Spikes
+let _premTypeFilter = 'all';    // 'all', 'CE', 'PE'
+let _premLayerFilter = 'all';   // 'all', 'opening', 'running'
+let _premSearchQuery = '';
+let _premGroupBySymbol = true;  // Group by symbol with expandable subrows by default
+let _searchHadFocus = false;
+let _searchCursorPos = 0;
 let BREAKOUT_ALERTS = [];   // Live Breakout / EMA Crossover Alerts
 let _lastPremSeq = 0;       // incremental poll cursor
 let OI_SPURTS = [];
@@ -1046,11 +1105,12 @@ const NSE_STOCK_SECTOR_MAP = {
   'BHARTIARTL':'NIFTY MEDIA', 'IDEA':'NIFTY MEDIA',
 };
 
-function getSectorBgClass(chg){
+function getSectorBgClass(chg, count){
+  if (count === 0 || Math.abs(chg) < 0.0001) return 'hm-bg-0p';
   if (chg >= 5.0) return 'hm-bg-p5';
   if (chg >= 3.0) return 'hm-bg-p3';
   if (chg >= 1.0) return 'hm-bg-p1';
-  if (chg >= 0.0) return 'hm-bg-0p';
+  if (chg > 0.0) return 'hm-bg-0p';
   if (chg >= -1.0) return 'hm-bg-0m';
   if (chg >= -3.0) return 'hm-bg-m3';
   return 'hm-bg-m5';
@@ -1338,13 +1398,17 @@ function renderHeatmap(){
     html += `<div class="sec-grid" style="${_selectedSector ? 'margin-top:14px;' : ''}">`;
     NSE_SECTOR_LIST.forEach(sec => {
       const st = sectorStats[sec.name];
-      const bgCls = getSectorBgClass(st.avgSpot);
+      const bgCls = getSectorBgClass(st.avgSpot, st.count);
       const isSelected = _selectedSector === sec.name;
-      const sign = st.avgSpot > 0 ? '+' : '';
-      const chgCls = st.avgSpot > 0 ? 'pos' : st.avgSpot < 0 ? 'neg' : 'neu';
+      const isZero = st.count === 0 || Math.abs(st.avgSpot) < 0.0001;
+      const isPos = !isZero && st.avgSpot > 0;
+      const isNeg = !isZero && st.avgSpot < 0;
+      const stateCls = isPos ? 'is-green' : isNeg ? 'is-red' : 'is-zero';
+      const sign = isPos ? '+' : '';
+      const chgCls = isPos ? 'pos' : isNeg ? 'neg' : 'neu';
 
       html += `
-        <div class="sec-card ${bgCls} ${isSelected ? 'selected' : ''}" onclick="selectHeatmapSector('${sec.name}')">
+        <div class="sec-card ${bgCls} ${stateCls} ${isSelected ? 'selected' : ''}" onclick="selectHeatmapSector('${sec.name}')">
           <div class="sec-card-hdr">
             <span class="sec-card-name" title="${sec.name}">${sec.name}</span>
             <span class="sec-card-chg ${chgCls}">${sign}${st.avgSpot.toFixed(2)}%</span>
@@ -1496,8 +1560,6 @@ function renderBoard(){
         <th class="${_sc('gap')}" onclick="sortBoard('gap')">GAP%</th>
         <th class="${_sc('inst')}" onclick="sortBoard('inst')">INST</th>
         <th class="${_sc('fut')}" onclick="sortBoard('fut')">FUT B/U</th>
-        <th class="${_sc('tcpvt')}" onclick="sortBoard('tcpvt')">TC/PVT/BC</th>
-        <th class="${_sc('drift')}" onclick="sortBoard('drift')">DRIFT</th>
         <th class="${_sc('rvol')}" onclick="sortBoard('rvol')">RVOL</th>
         <th class="${_sc('fhS')}" onclick="sortBoard('fhS')">FH VOL</th>
         <th class="${_sc('e9h')}" onclick="sortBoard('e9h')">E9H</th>
@@ -1516,8 +1578,6 @@ function renderBoard(){
         <th class="${_sc('gap')}" onclick="sortBoard('gap')">GAP%</th>
         <th class="${_sc('inst')}" onclick="sortBoard('inst')">INST</th>
         <th class="${_sc('fut')}" onclick="sortBoard('fut')">FUT B/U</th>
-        <th class="${_sc('tcpvt')}" onclick="sortBoard('tcpvt')">TC/PVT/BC</th>
-        <th class="${_sc('drift')}" onclick="sortBoard('drift')">DRIFT</th>
         <th class="${_sc('rvol')}" onclick="sortBoard('rvol')">RVOL</th>
         <th class="${_sc('fhS')}" onclick="sortBoard('fhS')">FH VOL</th>
         <th class="${_sc('e9h')}" onclick="sortBoard('e9h')">E9H</th>
@@ -1559,7 +1619,7 @@ function renderBoard(){
 
   if(rows.length===0){
     if(_boardLoading || STOCKS.length===0){
-      tbody.innerHTML=`<tr><td colspan="19" style="text-align:center;padding:48px 16px;color:var(--t2);">
+      tbody.innerHTML=`<tr><td colspan="17" style="text-align:center;padding:48px 16px;color:var(--t2);">
         <div style="font-size:24px;margin-bottom:8px;">📸</div>
         <div style="font-size:12px;font-weight:700;color:var(--t1);margin-bottom:4px;">${_boardLoadingMsg||(_boardLoadingIsEod?'Rebuilding EOD Snapshot…':'Loading EOD Snapshot / Initializing Live Board…')}</div>
         <div style="font-size:10px;color:var(--t2);">${_boardLoadingIsEod?'Fetching end-of-day data':'Fetching scanner baseline data'} — auto-refreshing in 30s.</div>
@@ -1568,7 +1628,7 @@ function renderBoard(){
       const hintMsg = (activeFilter === 'all' && STOCKS.length > 0)
         ? `${STOCKS.length} F&O stocks available. Switch to Futures Buildup or NSE Heatmap tab.`
         : "Try selecting 'Futures Buildup' or 'NSE Heatmap'";
-      tbody.innerHTML=`<tr><td colspan="19" style="text-align:center;padding:48px 16px;color:var(--t2);">
+      tbody.innerHTML=`<tr><td colspan="17" style="text-align:center;padding:48px 16px;color:var(--t2);">
         <div style="font-size:24px;margin-bottom:8px;">🔍</div>
         <div style="font-size:12px;font-weight:700;color:var(--t1);margin-bottom:4px;">No stocks match filter</div>
         <div style="font-size:10px;color:var(--t2);">${hintMsg}</div>
@@ -1614,7 +1674,7 @@ function renderBoard(){
 
       const chartSubrowHtml = isChartOpen ? `
         <tr class="chart-subrow">
-          <td colspan="18" style="padding:0;">
+          <td colspan="16" style="padding:0;">
             <div class="inline-chart-box">
               <div class="inline-chart-topbar">
                 <div class="ichart-info">
@@ -1657,8 +1717,6 @@ function renderBoard(){
         <td class="mono ${s.gap>0?'bull':s.gap<0?'bear':''}">${s.gap>0?'+':''}${s.gap}%</td>
         <td class="mono" style="font-size:9px;color:${s.instHi?'var(--cyn)':'var(--t1)'};">${ s.inst}</td>
         <td>${futBadge(s.fut)}</td>
-        <td style="white-space:nowrap;"><span class="flag ${s.tc}">${s.tc}</span><span class="flag ${s.pvt}">${s.pvt}</span><span class="flag ${s.bc}">${s.bc}</span></td>
-        <td class="mono ${s.driftCls}" style="font-size:9px;" title="${s.driftRaw||s.drift}">${s.driftLabel}</td>
         <td class="mono"><span class="${s.rvol>=3?'bull':s.rvol<1?'bear':''}">${s.rvol>=3?'▲':'▽'} ${s.rvol}x</span></td>
         <td class="mono" style="font-size:9px;"><span class="bull">${s.fhS}x</span><br/><span style="color:var(--t3);">${s.fhC}x</span></td>
         <td class="mono" style="font-size:9px;"><span class="${s.e9hCls}">${s.e9hText}</span></td>
@@ -1673,7 +1731,7 @@ function renderBoard(){
     const subrowHtml = isExp ? (
       (s.contracts && s.contracts.length)
         ? `<tr class="contracts-subrow">
-        <td colspan="19" style="padding:0;">
+        <td colspan="16" style="padding:0;">
           <div class="contracts-container">
             ${s.contracts.map(c=>{
               const gainVal = c.gain_pct != null ? +c.gain_pct : 0;
@@ -1712,7 +1770,7 @@ function renderBoard(){
           </div>
         </td>
       </tr>`
-        : `<tr class="contracts-subrow"><td colspan="19" style="padding:10px 16px;color:var(--t2);font-size:10px;text-align:center;">⏳ Loading premium contracts… refresh in a moment.</td></tr>`
+        : `<tr class="contracts-subrow"><td colspan="16" style="padding:10px 16px;color:var(--t2);font-size:10px;text-align:center;">⏳ Loading premium contracts… refresh in a moment.</td></tr>`
     ) : '';
 
     return `<tr class="${dir} ${glow} ${isExp?'selected':''}" style="cursor:pointer;" onclick="toggleStockContracts('${s.sym}')">
@@ -1725,8 +1783,6 @@ function renderBoard(){
       <td class="mono ${s.gap>0?'bull':s.gap<0?'bear':''}">${s.gap>0?'+':''}${s.gap}%</td>
       <td class="mono" style="font-size:9px;color:${s.instHi?'var(--cyn)':'var(--t1)'};">${s.inst}</td>
       <td>${futBadge(s.fut)}</td>
-      <td style="white-space:nowrap;"><span class="flag ${s.tc}">${s.tc}</span><span class="flag ${s.pvt}">${s.pvt}</span><span class="flag ${s.bc}">${s.bc}</span></td>
-      <td class="mono ${s.driftCls}" style="font-size:9px;" title="${s.driftRaw||s.drift}">${s.driftLabel}</td>
       <td class="mono"><span class="${s.rvol>=3?'bull':s.rvol<1?'bear':''}">${s.rvol>=3?'▲':'▽'} ${s.rvol}x</span></td>
       <td class="mono" style="font-size:9px;"><span class="bull">${s.fhS}x</span><br/><span style="color:var(--t3);">${s.fhC}x</span></td>
       <td class="mono" style="font-size:9px;"><span class="${s.e9hCls}">${s.e9hText}</span></td>
@@ -1760,7 +1816,20 @@ function renderBoard(){
 ============================================================ */
 let _inlineChartTf = 5;
 // _inlineChartTickTimer removed: replaced by Socket.IO push (chart_tick event)
-const _tokenCache = {};
+const _tokenCache = {
+  'NIFTY': 256265, 'NIFTY50': 256265, 'BANKNIFTY': 260105, 'FINNIFTY': 257801,
+  'SENSEX': 265, 'RELIANCE': 738561, 'HDFCBANK': 341249, 'INFY': 408065,
+  'TCS': 2953217, 'ICICIBANK': 1270529, 'SBIN': 779521, 'AXISBANK': 1510401,
+  'KOTAKBANK': 492033, 'LT': 2939649, 'ITC': 424961, 'BHARTIARTL': 2714625,
+  'BAJFINANCE': 81153, 'BAJAJFINSV': 4267265, 'ASIANPAINT': 60417, 'MARUTI': 2815745,
+  'TATAMOTORS': 884737, 'TATASTEEL': 895745, 'SUNPHARMA': 857857, 'TITAN': 897281,
+  'WIPRO': 969473, 'HCLTECH': 1850625, 'NTPC': 2977281, 'POWERGRID': 3812865,
+  'ONGC': 633601, 'COALINDIA': 5215745, 'JSWSTEEL': 3001089, 'HINDALCO': 348929,
+  'DRREDDY': 225537, 'CIPLA': 177665, 'DIVISLAB': 2800641, 'APOLLOHOSP': 40193,
+  'EICHERMOT': 232961, 'HEROMOTOCO': 345089, 'BRITANNIA': 140033, 'NESTLEIND': 4598529,
+  'GRASIM': 315393, 'BPCL': 134657, 'ADANIENT': 6401, 'ADANIPORTS': 3861249,
+  'BEL': 3834113, 'TRENT': 502785, 'JIOFIN': 4668673, 'TATACONSUM': 878593
+};
 const _chartCandlesCache = {};
 const _chartMouseHandlers = {};
 
@@ -1962,7 +2031,7 @@ async function initInlineChart(sym, levels = {}) {
     }
   }
 
-  // Resolve instrument token
+  // Resolve instrument token from cache (with fallback to search if unknown)
   let token = _tokenCache[sym];
   if (!token) {
     try {
@@ -2370,127 +2439,19 @@ function cfbHTML(c,lbl){
 function _fmtMoney(v){ const n=Number(v); return Number.isFinite(n)?'₹'+n.toFixed(2):'—'; }
 function _fmtNum(v){ const n=Number(v); return Number.isFinite(n)?n.toFixed(2):'-'; }
 
+function _escapeHtml(s){ return (s||'').replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
 function renderAlerts(){
   const feed=document.getElementById('afeed');
   if(!feed) return;
 
-  // ── Prem Spikes tab: render PREM_ALERTS (grouped by stock) ───────────────
+  // ── Prem Spikes tab: render PREM_ALERTS (high-density table ordered by time) ─────────
   if(_activeAlertTab==='prem'){
-    if(!PREM_ALERTS.length){
-      feed.innerHTML='<div class="empty"><div class="ei">✓</div><div class="et">No alerts</div><div class="es">Waiting for premium spikes…</div></div>';
-      return;
-    }
-
-    // Group alerts by symbol
-    const groups = {};
-    PREM_ALERTS.forEach(a => {
-      if(!groups[a.symbol]) groups[a.symbol] = [];
-      groups[a.symbol].push(a);
-    });
-
-    // Map into sorted master objects
-    const masterRows = Object.keys(groups).map(sym => {
-      groups[sym].sort((a, b) => (b.time || '').localeCompare(a.time || ''));
-      return {
-        symbol: sym,
-        masterAlert: groups[sym][0],
-        allAlerts: groups[sym]
-      };
-    });
-
-    // Sort master groups by newest alert time descending
-    masterRows.sort((a, b) => (b.masterAlert.time || '').localeCompare(a.masterAlert.time || ''));
-
-    feed.innerHTML = masterRows.map(row => {
-      const a = row.masterAlert;
-      const sym = row.symbol;
-      const isCE = a.opt_type === 'CE';
-      const isBull = a.direction === 'BULLISH' || a.direction === 'BULL';
-      const isOpening = a.layer === 'opening';
-      const layerTag = isOpening ? '⭐ STAR' : '🏃 RUN';
-      const layerCls = isOpening ? 'gold' : 'run';
-      const sideCls = isCE ? 'CE' : 'PE';
-      const spotCls = (a.spot_spike_pct || 0) >= 0 ? 'bull' : 'bear';
-      const spikePct = _fmtNum(a.premium_spike_pct);
-      const boardPct = _fmtNum(a.board_gain_pct);
-      const consPct = _fmtNum(a.consistency);
-      const premFlow = `${_fmtMoney(a.old_ltp)} → ${_fmtMoney(a.ltp)}`;
-      const spotFlow = `${_fmtMoney(a.old_spot)} → ${_fmtMoney(a.spot)}`;
-      const spotChg = (a.spot_spike_pct || 0) >= 0 ? `+${_fmtNum(a.spot_spike_pct)}` : `${_fmtNum(a.spot_spike_pct)}`;
-      const trace = `${a.direction || '-'} matched ${a.opt_type || '-'} premium velocity while board tracked this contract`;
-
-      const hasMulti = row.allAlerts.length > 1;
-      const isExpanded = _premExpanded.has(sym);
-      const expandBadge = hasMulti ? `
-        <span class="prem-expand-pill" onclick="togglePremSymbol('${sym}', event)" title="Click to view all ${row.allAlerts.length} spikes/strikes">
-          <span>${isExpanded ? '▼' : '▶'}</span>
-          <span>${row.allAlerts.length} Spikes</span>
-        </span>` : '';
-
-      let subrowsHtml = '';
-      if(isExpanded && hasMulti){
-        subrowsHtml = `<div class="prem-subrows-wrap">
-          <div style="font-size:8px;font-weight:700;color:var(--t2);text-transform:uppercase;letter-spacing:0.06em;margin-bottom:2px;display:flex;justify-content:space-between;">
-            <span>Spikes & Strikes History (${row.allAlerts.length})</span>
-            <span>Spike Flow · Total Day Gain</span>
-          </div>` +
-          row.allAlerts.map((sub, idx) => {
-            const subIsCE = sub.opt_type === 'CE';
-            const subSideCls = subIsCE ? 'CE' : 'PE';
-            const subSpike = _fmtNum(sub.premium_spike_pct);
-            const subBoard = _fmtNum(sub.board_gain_pct);
-            const subFlow = `${_fmtMoney(sub.old_ltp)} → ${_fmtMoney(sub.ltp)}`;
-            const subLayer = sub.layer === 'opening' ? '⭐' : '🏃';
-            const isLatest = idx === 0;
-            return `<div class="prem-subrow ${isLatest ? 'is-latest' : ''}">
-              <div style="display:flex;align-items:center;gap:5px;min-width:0;overflow:hidden;text-overflow:ellipsis;">
-                <span style="color:var(--t2);font-size:8px;">${sub.time || ''}</span>
-                <span class="aside ${subSideCls}" style="font-size:7.5px;padding:1px 4px;border-radius:3px;">${sub.opt_type}</span>
-                <span style="font-size:8.5px;color:var(--t1);font-weight:700;">${sub.strike} ${sub.label || ''}</span>
-                <span style="font-size:8px;">${subLayer}</span>
-              </div>
-              <div style="display:flex;align-items:center;gap:5px;flex-shrink:0;">
-                <span style="color:${subIsCE ? 'var(--bull)' : 'var(--bear)'};font-weight:700;font-size:9.5px;">+${subSpike}% ⚡</span>
-                <span style="color:var(--t2);font-size:8px;">(${subFlow})</span>
-                <span style="font-size:8.5px;font-weight:800;color:#f59e0b;background:rgba(245,158,11,0.12);padding:1px 4px;border-radius:3px;">+${subBoard}% 🔥</span>
-              </div>
-            </div>`;
-          }).join('') +
-        `</div>`;
-      }
-
-      return `<div class="ac prem-spike-card" style="border-left:3px solid ${isBull ? 'var(--bull)' : 'var(--bear)'};">
-        <div class="ah" style="gap:6px;flex-wrap:wrap;">
-          <div style="flex:1;min-width:0;">
-            <div style="display:flex;align-items:center;gap:5px;flex-wrap:wrap;">
-              <span class="ac-pulse-dot" style="background:${isBull ? 'var(--bull)' : 'var(--bear)'};"></span>
-              <span class="asym" style="cursor:pointer;" onclick="flashSymbolInBoard('${sym}')">${sym}</span>
-              <span class="aside ${sideCls}" style="font-size:9px;">${a.opt_type}</span>
-              <span class="layer-tag ${layerCls}" style="font-size:8px;padding:1px 5px;border-radius:3px;">${layerTag}</span>
-              <span style="font-size:8px;color:var(--t2);">${a.strike} ${a.label || ''}</span>
-              ${expandBadge}
-            </div>
-            <div style="font-size:9px;color:var(--t2);margin-top:2px;">${trace}</div>
-          </div>
-          <div style="text-align:right;display:flex;flex-direction:column;align-items:flex-end;gap:1px;">
-            <div style="display:flex;align-items:center;gap:4px;">
-              <span style="font-size:12px;font-weight:800;color:${isBull ? 'var(--bull)' : 'var(--bear)'};">+${spikePct}% ⚡</span>
-              <span style="font-size:10px;font-weight:800;color:#f59e0b;background:rgba(245,158,11,0.14);border:1px solid rgba(245,158,11,0.3);padding:1px 5px;border-radius:4px;" title="Total Day Gain: +${boardPct}%">+${boardPct}% 🔥</span>
-            </div>
-            <div class="atime">${a.time || ''}</div>
-          </div>
-        </div>
-        <div class="am" style="grid-template-columns:repeat(5,1fr);margin-top:4px;">
-          <div class="mb"><div class="mbl">Prem Flow</div><div class="mbv ${isCE ? 'bull' : 'bear'}" style="font-size:9px;">${premFlow}</div></div>
-          <div class="mb"><div class="mbl">Total Gain</div><div class="mbv bull" style="color:#f59e0b;">+${boardPct}%</div></div>
-          <div class="mb"><div class="mbl">Spot Move</div><div class="mbv ${spotCls}">${spotChg}%</div></div>
-          <div class="mb"><div class="mbl">Spot Flow</div><div class="mbv" style="font-size:9px;">${spotFlow}</div></div>
-          <div class="mb"><div class="mbl">Consistency</div><div class="mbv cyn">${consPct}%</div></div>
-        </div>
-        ${subrowsHtml}
-      </div>`;
-    }).join('');
+    feed.style.padding = '0';
+    renderPremSpikesTable();
     return;
+  } else {
+    feed.style.padding = '6px';
   }
 
   // ── Breakouts tab: render BREAKOUT_ALERTS ───────────────────────────────────
@@ -2570,6 +2531,213 @@ function renderAlerts(){
   }).join('');
 }
 
+/* ── Premium Spike Alerts Table View (Ordered by Time) ────────────── */
+function renderPremSpikesTable(){
+  const feed = document.getElementById('afeed');
+  if(!feed) return;
+
+  const q = (_premSearchQuery || '').trim().toLowerCase();
+  const doGroup = _premGroupBySymbol;
+
+  // Filter PREM_ALERTS
+  const filtered = PREM_ALERTS.filter(a => {
+    if (_premTypeFilter !== 'all' && a.opt_type !== _premTypeFilter) return false;
+    if (_premLayerFilter !== 'all' && a.layer !== _premLayerFilter) return false;
+    if (q) {
+      const matchText = `${a.symbol || ''} ${a.tradingsymbol || ''} ${a.strike || ''} ${a.label || ''}`.toLowerCase();
+      if (!matchText.includes(q)) return false;
+    }
+    return true;
+  });
+
+  // Build controls toolbar matching design
+  const controlsHtml = `
+    <div class="ps-controls">
+      <input type="text" class="ps-search" id="ps-search-input" placeholder="Filter symbol or option…" value="${_premSearchQuery ? _escapeHtml(_premSearchQuery) : ''}" oninput="onPremSearch(this.value)">
+      <div class="ps-seg">
+        <button class="${_premTypeFilter === 'all' ? 'active' : ''}" onclick="setPremTypeFilter('all')">All</button>
+        <button class="${_premTypeFilter === 'CE' ? 'active' : ''}" onclick="setPremTypeFilter('CE')">CE</button>
+        <button class="${_premTypeFilter === 'PE' ? 'active' : ''}" onclick="setPremTypeFilter('PE')">PE</button>
+      </div>
+      <div class="ps-seg">
+        <button class="${_premLayerFilter === 'all' ? 'active' : ''}" onclick="setPremLayerFilter('all')">Both</button>
+        <button class="${_premLayerFilter === 'opening' ? 'active' : ''}" onclick="setPremLayerFilter('opening')">Opening</button>
+        <button class="${_premLayerFilter === 'running' ? 'active' : ''}" onclick="setPremLayerFilter('running')">Running</button>
+      </div>
+      <label class="ps-check-lbl">
+        <input type="checkbox" id="ps-chk-group" ${doGroup ? 'checked' : ''} onchange="togglePremGroupBy(this.checked)">
+        GROUP BY SYMBOL
+      </label>
+      <div style="margin-left:auto;font-size:8.5px;font-weight:700;color:var(--t2);font-family:var(--mono);">
+        ${filtered.length} ALERTS
+      </div>
+    </div>
+  `;
+
+  if (!filtered.length) {
+    feed.innerHTML = `<div class="ps-wrap">${controlsHtml}<div class="empty" style="flex:1;"><div class="ei">⚡</div><div class="et">No Premium Spikes</div><div class="es">Waiting for spike alerts or adjust filters…</div></div></div>`;
+    _restoreSearchFocus();
+    return;
+  }
+
+  let rowsHtml = '';
+  if (doGroup) {
+    // Group alerts by symbol
+    const groups = {};
+    filtered.forEach(a => {
+      if (!groups[a.symbol]) groups[a.symbol] = [];
+      groups[a.symbol].push(a);
+    });
+
+    // Map into sorted master objects
+    const masterRows = Object.keys(groups).map(sym => {
+      groups[sym].sort((a, b) => (b.time || '').localeCompare(a.time || ''));
+      return {
+        symbol: sym,
+        masterAlert: groups[sym][0],
+        allAlerts: groups[sym]
+      };
+    });
+
+    // Sort master groups descending by newest alert time
+    masterRows.sort((a, b) => (b.masterAlert.time || '').localeCompare(a.masterAlert.time || ''));
+
+    masterRows.forEach(row => {
+      const sym = row.symbol;
+      const isExpanded = _premExpanded.has(sym);
+      const hasSubrows = row.allAlerts.length > 1;
+
+      rowsHtml += buildPremRowHtml(row.masterAlert, true, hasSubrows, isExpanded, row.allAlerts.length);
+
+      if (isExpanded && hasSubrows) {
+        row.allAlerts.forEach((alert, idx) => {
+          if (idx === 0) return;
+          rowsHtml += buildPremRowHtml(alert, false, false, false, 0);
+        });
+      }
+    });
+  } else {
+    // Flat list sorted descending by time
+    const sorted = [...filtered].sort((a, b) => (b.time || '').localeCompare(a.time || ''));
+    rowsHtml = sorted.map(a => buildPremRowHtml(a, true, false, false, 0)).join('');
+  }
+
+  feed.innerHTML = `
+    <div class="ps-wrap">
+      ${controlsHtml}
+      <div class="ps-table-shell">
+        <table class="ps-table">
+          <colgroup>
+            <col style="width:48px;">
+            <col style="width:74px;">
+            <col style="width:42px;">
+            <col style="width:26px;">
+            <col style="width:44px;">
+            <col style="width:48px;">
+            <col style="width:78px;">
+            <col style="width:42px;">
+            <col style="width:54px;">
+          </colgroup>
+          <thead>
+            <tr>
+              <th>TIME</th>
+              <th>SYMBOL</th>
+              <th>STRIKE</th>
+              <th>SIDE</th>
+              <th>LAYER</th>
+              <th>SPIKE</th>
+              <th>FLOW</th>
+              <th>SPOT</th>
+              <th>TOTAL GAIN</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${rowsHtml}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  `;
+
+  _restoreSearchFocus();
+}
+
+function buildPremRowHtml(a, isMaster = true, hasSubrows = false, isExpanded = false, subrowsCount = 0) {
+  const isCE = a.opt_type === 'CE';
+  const sideCls = isCE ? 'ce' : 'pe';
+  const spotCls = (a.spot_spike_pct || 0) >= 0 ? 'bull' : 'bear';
+  const isOpening = a.layer === 'opening';
+  const layerTag = isOpening ? '<span class="ps-layer-star">⭐ STAR</span>' : '<span class="ps-layer-run">🏃 RUN</span>';
+  const spikePct = _fmtNum(a.premium_spike_pct);
+  const premFlow = `${_fmtMoney(a.old_ltp)} → ${_fmtMoney(a.ltp)}`;
+  const spotChg = (a.spot_spike_pct || 0) >= 0 ? `+${_fmtNum(a.spot_spike_pct)}` : `${_fmtNum(a.spot_spike_pct)}`;
+  const rawTotalGain = (a.board_gain_pct != null) ? a.board_gain_pct : (a.open_prem > 0 ? ((a.ltp - a.open_prem) / a.open_prem) * 100 : 0);
+  const totalGainStr = rawTotalGain >= 0 ? `+${_fmtNum(rawTotalGain)}%` : `${_fmtNum(rawTotalGain)}%`;
+
+  let symbolContent = '';
+  if (isMaster) {
+    const toggleIcon = hasSubrows 
+      ? `<span class="ps-expand-btn" onclick="togglePremSymbol('${a.symbol}', event)">${isExpanded ? '▼' : '▶'}</span>`
+      : `<span class="ps-expand-btn" style="opacity:0">▶</span>`;
+    const countBadge = hasSubrows 
+      ? `<span class="ps-count-pill" onclick="togglePremSymbol('${a.symbol}', event)" title="${subrowsCount} alerts">${subrowsCount}</span>` 
+      : '';
+    symbolContent = `<span style="display:inline-flex;align-items:center;">${toggleIcon}<span class="sym" style="cursor:pointer;" onclick="flashSymbolInBoard('${a.symbol}')">${a.symbol}</span>${countBadge}</span>`;
+  } else {
+    symbolContent = `<span style="display:inline-flex;align-items:center;padding-left:14px;color:var(--t2);font-size:9px;">└─ <span class="sym" style="cursor:pointer;margin-left:3px;" onclick="flashSymbolInBoard('${a.symbol}')">${a.symbol}</span></span>`;
+  }
+
+  const rowClass = isMaster ? 'master-row' : 'detail-row';
+  const clickHandler = (isMaster && hasSubrows) ? `onclick="togglePremSymbol('${a.symbol}', event)"` : '';
+
+  return `
+    <tr class="${rowClass}" ${clickHandler}>
+      <td class="mono" style="color:var(--t2);font-size:8.5px;">${a.time || '-'}</td>
+      <td>${symbolContent}</td>
+      <td class="mono" title="${a.tradingsymbol || ''}">${a.strike || '-'}</td>
+      <td><span class="ps-badge ${sideCls}">${a.opt_type || '-'}</span></td>
+      <td>${layerTag}</td>
+      <td class="mono" style="color:${isCE ? 'var(--bull)' : 'var(--bear)'};font-weight:800;">+${spikePct}%</td>
+      <td class="mono" style="color:var(--t2);font-size:8.5px;">${premFlow}</td>
+      <td class="mono ${spotCls}">${spotChg}%</td>
+      <td class="mono" style="color:var(--bull);font-weight:800;">${totalGainStr}</td>
+    </tr>
+  `;
+}
+
+function setPremTypeFilter(val) {
+  _premTypeFilter = val;
+  renderAlerts();
+}
+
+function setPremLayerFilter(val) {
+  _premLayerFilter = val;
+  renderAlerts();
+}
+
+function onPremSearch(val) {
+  _premSearchQuery = val;
+  const inp = document.getElementById('ps-search-input');
+  if (inp) {
+    _searchHadFocus = true;
+    _searchCursorPos = inp.selectionStart;
+  }
+  renderAlerts();
+}
+
+function togglePremGroupBy(checked) {
+  _premGroupBySymbol = checked;
+  renderAlerts();
+}
+
+function _restoreSearchFocus() {
+  const inp = document.getElementById('ps-search-input');
+  if (inp && _searchHadFocus) {
+    inp.focus();
+    try { inp.setSelectionRange(_searchCursorPos, _searchCursorPos); } catch(e){}
+  }
+}
+
 window.togglePremSymbol = function(sym, event){
   if(event) event.stopPropagation();
   if(_premExpanded.has(sym)){
@@ -2604,13 +2772,18 @@ function renderBBCard(item, side){
 
   return `<div class="brow" onclick="flashSymbolInBoard('${item.sym}')">
     <div class="brow-top">
-      <span class="brow-sym ${isBull?'bull':'bear'}">${item.sym}</span>
-      <span class="brow-chg ${item.spot_change_pct>=0?'bull':'bear'}">${item.chg}</span>
-      <span class="brow-cross ${isBull?'bull':'bear'}" style="margin-left:auto;">${item.crossBadge}</span>
+      <div class="brow-left">
+        <span class="brow-sym">${item.sym}</span>
+        <span class="brow-chg ${item.spot_change_pct>=0?'bull':'bear'}">${item.chg}</span>
+      </div>
+      <div class="brow-tfs">${tfPills}</div>
     </div>
     <div class="brow-mid">
-      <span class="brow-trnd ${isBull?'bull':'bear'}">${item.trendState} ${item.timeStr}</span>
-      <div style="display:flex;gap:2px;">${tfPills}</div>
+      <div style="display:flex;align-items:center;gap:3px;min-width:0;overflow:hidden;">
+        <span class="brow-trnd ${isBull?'bull':'bear'}">${item.trendState}</span>
+        <span class="brow-time">${item.timeStr}</span>
+      </div>
+      <span class="brow-cross ${isBull?'bull':'bear'}">${item.crossBadge}</span>
     </div>
   </div>`;
 }
@@ -2621,11 +2794,11 @@ function renderBBView(){
 
   let filtBulls = [...BULLS];
   if(_bbFilterBulls === 'aligned') filtBulls = filtBulls.filter(b => b.alignment === 'bullish');
-  else if(_bbFilterBulls === 'cross') filtBulls = filtBulls.filter(b => b.isCross);
+  else if(_bbFilterBulls === 'cross') filtBulls = filtBulls.filter(b => b.crossDir === 'bullish');
 
   let filtBears = [...BEARS];
   if(_bbFilterBears === 'aligned') filtBears = filtBears.filter(b => b.alignment === 'bearish');
-  else if(_bbFilterBears === 'cross') filtBears = filtBears.filter(b => b.isCross);
+  else if(_bbFilterBears === 'cross') filtBears = filtBears.filter(b => b.crossDir === 'bearish');
 
   container.innerHTML = `<div class="bb-cols">
     <div class="bb-col">
@@ -2663,11 +2836,33 @@ function aTab(type,el){
   if(type==='bb'){renderBBView();return;}
   if(type==='ema_conv'){ renderEMAConv(); return; }
   if(type==='oi2'){
-    document.getElementById('afeed').innerHTML=`<div style="padding:8px;">${OI_SPURTS.map(s=>`
-      <div class="oi-row" style="cursor:pointer;" onclick="flashSymbolInBoard('${s.sym}')">
-        <span class="oi-sym">${s.sym}</span><span class="oi-pct">+${s.pct}%</span>
-        <div class="oi-bar-wrap"><div class="oi-bar" style="width:${Math.min(100,s.pct*3)}%"></div></div>
-      </div>`).join('')||'<div class="empty"><div class="es">No OI events</div></div>'}</div>`;
+    const _oiEl=document.getElementById('afeed');
+    if(!_oiEl) return;
+    if(!OI_SPURTS.length){
+      _oiEl.innerHTML='<div class="empty"><div class="ei">⚡</div><div class="et">No OI Spurts</div><div class="es">Scanning real-time OI changes…</div></div>';
+      return;
+    }
+    const _maxPct=Math.max(...OI_SPURTS.map(s=>s.pct))||1;
+    _oiEl.innerHTML='<div style="padding:6px;">'
+      +'<div style="display:flex;align-items:center;justify-content:space-between;padding:4px 8px 8px;font-size:10px;font-weight:700;color:var(--t1);text-transform:uppercase;letter-spacing:.07em;">'
+      +'<span>⚡ OI Spurt Board</span><span class="cbadge">'+OI_SPURTS.length+'</span></div>'
+      +OI_SPURTS.map(function(s,i){
+        const w=Math.min(100,Math.round(s.pct/_maxPct*100));
+        let db='';
+        if(s.isNew) db='<span class="oi-delta yellow">NEW</span>';
+        else if(s.delta>0) db='<span class="oi-delta yellow">▲'+s.delta+'</span>';
+        else if(s.delta<0) db='<span class="oi-delta yellow">▼'+Math.abs(s.delta)+'</span>';
+        const rCls=(s.reordered||s.valChanged)?'oi-row order-changed':'oi-row';
+        const pCls=s.valChanged?'oi-pct oi-pct-flash':'oi-pct';
+        const bCls=s.reordered?'oi-bar bar-yellow':(i===0?'oi-bar top1':'oi-bar');
+        return '<div class="'+rCls+'" onclick="flashSymbolInBoard(\''+s.sym+'\')" style="cursor:pointer;">'
+          +'<span class="oi-rank">'+(i+1)+'</span>'
+          +'<span class="oi-sym">'+s.sym+db+'</span>'
+          +'<span class="'+pCls+'">+'+s.pct+'%</span>'
+          +'<div class="oi-bar-wrap"><div class="'+bCls+'" style="width:'+w+'%"></div></div>'
+          +'</div>';
+      }).join('')+'</div>';
+    return;
   }
   if(type==='bup'){
     _subBuildupFilter='all';
@@ -2683,11 +2878,11 @@ function aTab(type,el){
       <div class="bb-cols">
         <div class="bb-col">
           <div class="bb-hdr"><span class="bb-title bull">Long B/U & SC</span><span class="bb-cnt bull">${lbs.length+scs.length}</span></div>
-          <div class="bb-body">${[...lbs,...scs].map(s=>`<div class="brow" onclick="flashSymbolInBoard('${s.sym}')"><div class="brow-top"><span class="brow-sym bull">${s.sym}</span><span class="brow-chg bull">+${s.gain}%</span></div><div class="brow-tags"><span class="btag b">${s.fut}</span><span class="btag g">RVOL ${s.rvol}x</span></div></div>`).join('')||'<div class="empty"><div class="es">None</div></div>'}</div>
+          <div class="bb-body">${[...lbs,...scs].map(s=>`<div class="brow" onclick="flashSymbolInBoard('${s.sym}')"><div class="brow-top"><span class="brow-sym">${s.sym}</span><span class="brow-chg bull">+${s.gain}%</span></div><div class="brow-tags"><span class="btag b">${s.fut}</span><span class="btag g">RVOL ${s.rvol}x</span></div></div>`).join('')||'<div class="empty"><div class="es">None</div></div>'}</div>
         </div>
         <div class="bb-col">
           <div class="bb-hdr"><span class="bb-title bear">Short B/U & LU</span><span class="bb-cnt bear">${sbs.length+lus.length}</span></div>
-          <div class="bb-body">${[...sbs,...lus].map(s=>`<div class="brow" onclick="flashSymbolInBoard('${s.sym}')"><div class="brow-top"><span class="brow-sym bear">${s.sym}</span><span class="brow-chg bear">${s.spot}%</span></div><div class="brow-tags"><span class="btag r">${s.fut}</span><span class="btag g">OI +${s.oiChg}%</span></div></div>`).join('')||'<div class="empty"><div class="es">None</div></div>'}</div>
+          <div class="bb-body">${[...sbs,...lus].map(s=>`<div class="brow" onclick="flashSymbolInBoard('${s.sym}')"><div class="brow-top"><span class="brow-sym">${s.sym}</span><span class="brow-chg bear">${s.spot}%</span></div><div class="brow-tags"><span class="btag r">${s.fut}</span><span class="btag g">OI +${s.oiChg}%</span></div></div>`).join('')||'<div class="empty"><div class="es">None</div></div>'}</div>
         </div>
       </div>`;
   }
@@ -2744,30 +2939,146 @@ function renderTicker(){
   el.innerHTML=items+items;
 }
 
-/* LIVE BREAKOUTS SIDEBAR */
-function renderSideBreakouts(bulls, bears){
-  const el=document.getElementById('brk-body');
-  const cnt=document.getElementById('brk-cnt');
-  const total=(bulls||[]).length+(bears||[]).length;
-  if(cnt) cnt.textContent=`EMA: ${total}`;
-  if(!el) return;
-  const items=[...(bulls||[]).map(b=>({...b,dir:'b',tag:'BULLISH'})), ...(bears||[]).map(b=>({...b,dir:'r',tag:'BEARISH'}))].slice(0,6);
-  if(!items.length){
-    el.innerHTML='<div class="empty" style="padding:16px 8px;"><div class="ei">⚡</div><div class="et">No active breakouts</div><div class="es">Scanning EMA crossovers</div></div>';
-    return;
+/* LIVE BREAKOUTS & WATCHLISTS SIDEBAR */
+let _liveBreakoutData = null;
+
+function renderLiveWatchlists(){
+  const data = _liveBreakoutData;
+  if (!data) return;
+
+  const brkBody = document.getElementById('brk-body');
+  const brkCnt = document.getElementById('brk-cnt');
+  const squeezeBody = document.getElementById('squeeze-body');
+  const squeezeCnt = document.getElementById('squeeze-cnt');
+  const coilBody = document.getElementById('coil-body');
+  const coilCnt = document.getElementById('coil-cnt');
+
+  const alerts = data.triggered_alerts || [];
+  const collisions = data.collision_alerts || [];
+  const bbSqueezes = data.bb_squeezes || [];
+  const emaCoils = data.ema_coils || [];
+
+  // Update counts
+  if (squeezeCnt) squeezeCnt.textContent = bbSqueezes.length;
+  if (coilCnt) coilCnt.textContent = emaCoils.length;
+
+  // Combine live breakouts + collisions and sort descending by trigger_epoch
+  const combinedAlerts = [
+    ...alerts.map(a => ({ ...a, _kind: 'breakout' })),
+    ...collisions.map(c => ({ ...c, _kind: 'collision' }))
+  ];
+  combinedAlerts.sort((a, b) => (b.trigger_epoch || 0) - (a.trigger_epoch || 0));
+
+  if (brkCnt) brkCnt.textContent = combinedAlerts.length;
+
+  // 1. Render Live Breakouts
+  if (brkBody) {
+    if (!combinedAlerts.length) {
+      brkBody.innerHTML = '<div class="empty" style="padding:16px 8px;"><div class="ei">⚡</div><div class="et">No active breakouts</div><div class="es">Scanning EMA crossovers</div></div>';
+    } else {
+      brkBody.innerHTML = combinedAlerts.map(item => {
+        const isBull = item.direction === 'bullish' || item.direction === 'BULL' || item.direction === 'BULLISH';
+        const arrow = isBull ? '▲' : '▼';
+        const cls = isBull ? 'bull' : 'bear';
+        const tagCls = isBull ? 'b' : 'r';
+        const ltpStr = item.ltp ? '₹' + Number(item.ltp).toFixed(1) : '';
+        const volStr = item.vol_multiplier ? `×${item.vol_multiplier}` : '';
+        const raw = String(item.time || '');
+        const timeStr = raw.length >= 5 ? raw.slice(-8).slice(0, 5) : raw;
+
+        if (item._kind === 'collision') {
+          const colColor = isBull ? '#388bfd' : '#e09400';
+          const colBg = isBull ? 'rgba(56,139,253,0.12)' : 'rgba(224,148,0,0.12)';
+          const gapStr = item.gap_pct ? ` · Δ${Number(item.gap_pct).toFixed(3)}%` : '';
+          return `<div class="brk-item" onclick="flashSymbolInBoard('${item.symbol}')" style="cursor:pointer;border-left:2px solid ${colColor};background:${colBg};margin-bottom:2px;border-radius:4px;padding:5px 8px;" title="EMA9/EMA21 Coil Breakout${gapStr} · LTP: ₹${item.ltp} · ${item.time}">
+            <div style="display:flex;align-items:center;gap:4px;">
+              <span style="color:${colColor};font-size:10px;font-weight:900;width:10px;flex-shrink:0;">${arrow}</span>
+              <span class="brk-sym" style="color:${colColor};font-weight:800;">${item.symbol}</span>
+              <span class="btag" style="font-size:7px;padding:1px 4px;background:${colBg};color:${colColor};border:1px solid ${colColor}40;">EMA COLLISION</span>
+              <span style="margin-left:auto;font-size:8px;color:var(--t2);font-family:var(--mono);">${timeStr}</span>
+            </div>
+            <div style="display:flex;align-items:center;gap:6px;margin-top:1px;padding-left:14px;">
+              <span style="font-size:10px;font-weight:700;font-family:var(--mono);color:var(--t1);">${ltpStr}</span>
+              ${volStr ? `<span style="font-size:8px;color:var(--t2);font-weight:600;">${volStr}</span>` : ''}
+            </div>
+          </div>`;
+        }
+
+        const grade = item.grade || '5M Cross';
+        return `<div class="brk-item" onclick="flashSymbolInBoard('${item.symbol}')" style="cursor:pointer;" title="LTP: ₹${item.ltp} · Vol: ${volStr} · Time: ${item.time}">
+          <div style="display:flex;align-items:center;gap:4px;">
+            <span class="${cls}" style="font-size:10px;font-weight:900;width:10px;flex-shrink:0;">${arrow}</span>
+            <span class="brk-sym ${cls}">${item.symbol}</span>
+            <span class="btag ${tagCls}" style="font-size:7px;padding:1px 3px;">${grade}</span>
+            <span style="margin-left:auto;font-size:8px;color:var(--t2);font-family:var(--mono);">${timeStr}</span>
+          </div>
+          <div style="display:flex;align-items:center;gap:6px;margin-top:1px;padding-left:14px;">
+            <span style="font-size:10px;font-weight:700;font-family:var(--mono);color:var(--t1);">${ltpStr}</span>
+            ${volStr ? `<span style="font-size:8px;color:var(--t2);font-weight:600;">${volStr}</span>` : ''}
+          </div>
+        </div>`;
+      }).join('');
+    }
   }
-  el.innerHTML=items.map(b=>`
-    <div class="brk-item" style="cursor:pointer;" onclick="flashSymbolInBoard('${b.sym}')">
-      <div class="brow-top" style="margin-bottom:2px;">
-        <span class="brk-sym ${b.dir==='b'?'bull':'bear'}">${b.sym}</span>
-        <span class="btag ${b.dir}" style="margin-left:auto;">${b.tag}</span>
-      </div>
-      <div class="brk-info">
-        <span class="${b.dir==='b'?'bull':'bear'}">${b.chg}</span>
-        <span>${b.cross||'EMA CROSS'}</span>
-      </div>
-    </div>
-  `).join('');
+
+  // 2. Render BB Squeezes
+  if (squeezeBody) {
+    if (!bbSqueezes.length) {
+      squeezeBody.innerHTML = '<div style="padding:10px 8px;font-size:9px;color:var(--t2);text-align:center;">No active squeezes</div>';
+    } else {
+      const sortedSqueezes = [...bbSqueezes].sort((a, b) => (b.squeeze_duration_mins || 0) - (a.squeeze_duration_mins || 0));
+      squeezeBody.innerHTML = sortedSqueezes.map(w => {
+        const durLabel = (w.squeeze_duration_mins >= 2) ? `${w.squeeze_duration_mins}m` : '<1m';
+        const ltpStr = w.last_ltp ? `₹${Number(w.last_ltp).toFixed(1)}` : '—';
+        return `<div class="brk-item" onclick="flashSymbolInBoard('${w.symbol}')" style="cursor:pointer;padding:4px 8px;border-bottom:1px solid var(--b);" title="Consolidation Range: ₹${w.consolidation_low}–₹${w.consolidation_high}">
+          <div style="display:flex;align-items:center;justify-content:space-between;">
+            <div style="display:flex;align-items:center;gap:4px;">
+              <span style="color:#ffd700;font-size:9px;">◌</span>
+              <span style="font-size:10px;font-weight:700;color:#ffd700;">${w.symbol}</span>
+              <span style="font-size:7px;padding:0.5px 3px;border-radius:2px;background:rgba(255,215,0,0.12);color:#ffd700;font-weight:600;">Squeeze</span>
+            </div>
+            <div style="display:flex;align-items:center;gap:6px;">
+              <span style="font-size:9px;font-weight:700;font-family:var(--mono);color:var(--t1);">${ltpStr}</span>
+              <span style="font-size:8px;font-weight:700;background:rgba(210,153,34,0.18);border-radius:2px;padding:0.5px 3px;color:#e3b341;font-family:var(--mono);">⏳ ${durLabel}</span>
+            </div>
+          </div>
+        </div>`;
+      }).join('');
+    }
+  }
+
+  // 3. Render EMA Coils
+  if (coilBody) {
+    if (!emaCoils.length) {
+      coilBody.innerHTML = '<div style="padding:10px 8px;font-size:9px;color:var(--t2);text-align:center;">No EMA coil stocks</div>';
+    } else {
+      coilBody.innerHTML = emaCoils.map(w => {
+        const gapLabel = w.ema_gap_pct ? `${Number(w.ema_gap_pct).toFixed(3)}%` : '';
+        const coilTime = w.coil_time || '';
+        const ltpStr = w.last_ltp ? `₹${Number(w.last_ltp).toFixed(1)}` : '—';
+        return `<div class="brk-item" onclick="flashSymbolInBoard('${w.symbol}')" style="cursor:pointer;padding:4px 8px;border-bottom:1px solid var(--b);border-left:2px solid #388bfd;" title="EMA Gap: ${gapLabel} of LTP · First seen: ${coilTime}">
+          <div style="display:flex;align-items:center;justify-content:space-between;">
+            <div style="display:flex;align-items:center;gap:4px;">
+              <span style="color:#388bfd;font-size:9px;">⟳</span>
+              <span style="font-size:10px;font-weight:700;color:#388bfd;">${w.symbol}</span>
+              <span style="font-size:7px;padding:0.5px 3px;border-radius:2px;background:rgba(56,139,253,0.15);color:#388bfd;font-weight:600;">EMA Coil</span>
+            </div>
+            <div style="display:flex;align-items:center;gap:6px;">
+              <span style="font-size:9px;font-weight:700;font-family:var(--mono);color:var(--t1);">${ltpStr}</span>
+              ${gapLabel ? `<span style="font-size:8px;font-weight:700;background:rgba(56,139,253,0.15);border-radius:2px;padding:0.5px 3px;color:#388bfd;font-family:var(--mono);">Δ${gapLabel}</span>` : ''}
+              ${coilTime ? `<span style="font-size:8px;color:var(--t2);font-family:var(--mono);">${coilTime}</span>` : ''}
+            </div>
+          </div>
+        </div>`;
+      }).join('');
+    }
+  }
+}
+
+function renderSideBreakouts(bulls, bears){
+  if (_liveBreakoutData) {
+    renderLiveWatchlists();
+  }
 }
 
 /* SESSION STATS */
@@ -2804,8 +3115,9 @@ function startClock(){
 
 /* LAYOUT HEIGHT */
 function fixHeight(){
+  if(window.innerWidth <= 767) return; /* mobile: natural scroll, no forced height */
   const hz=document.getElementById('hz-strip');
-  const topH=48+28+(hz?hz.offsetHeight:78);
+  const topH=48+(hz?hz.offsetHeight:46);
   const mainLay=document.getElementById('main-lay');
   if(mainLay) mainLay.style.height=(window.innerHeight-topH)+'px';
 }
@@ -2815,6 +3127,7 @@ document.addEventListener('DOMContentLoaded',()=>{
   startClock();
   renderBoard(); renderOIBoard(); renderHotZone(); renderAlerts();
   fixHeight(); window.addEventListener('resize',fixHeight);
+  if(window.innerWidth <= 767) showMobileCol(0);
   initSocketIO();
   startPolling();
 });
@@ -2827,51 +3140,7 @@ let _prevOIRankMap = {};
 let _prevOIPctMap = {};
 let _hasPrevOIRank = false;
 
-let _driftCache = {};
-let _driftFetching = false;
-
-async function fetchOITransitionDrifts(symbols){
-  if(_driftFetching || !symbols || !symbols.length) return;
-  _driftFetching = true;
-  const now = Date.now();
-  const toFetch = symbols.filter(s => !_driftCache[s] || (now - _driftCache[s].ts > 120000));
-  let updated = false;
-  for(const sym of toFetch.slice(0, 30)){
-    try {
-      const res = await fetch(`/api/oi/symbol/${sym}`);
-      if(res.ok){
-        const data = await res.json();
-        const rawDrift = data.transition_conviction?.net_drift || '';
-        const bias = data.transition_conviction?.bias || '';
-        _driftCache[sym] = {
-          raw: rawDrift,
-          bias: bias,
-          ts: Date.now()
-        };
-        updated = true;
-      }
-    } catch(e){}
-    await new Promise(r => setTimeout(r, 60));
-  }
-  _driftFetching = false;
-  if(updated) renderBoard();
-}
-
 function resolveDrift(sym, spotVal){
-  const cached = _driftCache[sym];
-  if(cached && cached.raw){
-    const raw = cached.raw;
-    if(raw.startsWith('Bullish')){
-      return { drift: 'Bullish', driftLabel: raw.includes('Breakout') ? 'Brk▲' : 'Lift', driftCls: 'bull', driftRaw: raw };
-    } else if(raw.startsWith('Bearish')){
-      return { drift: 'Bearish', driftLabel: raw.includes('Breakout') ? 'Brk▼' : 'Sink', driftCls: 'bear', driftRaw: raw };
-    } else if(raw.startsWith('Range')){
-      return { drift: 'Neutral', driftLabel: 'Rng', driftCls: 'neu', driftRaw: raw };
-    } else {
-      return { drift: 'Neutral', driftLabel: 'Neut', driftCls: 'neu', driftRaw: raw };
-    }
-  }
-  // Fallback to spot direction
   if(spotVal > 0) return { drift: 'Bullish', driftLabel: 'Bull', driftCls: 'bull', driftRaw: 'Spot Positive' };
   if(spotVal < 0) return { drift: 'Bearish', driftLabel: 'Bear', driftCls: 'bear', driftRaw: 'Spot Negative' };
   return { drift: 'Neutral', driftLabel: 'Neut', driftCls: 'neu', driftRaw: 'Neutral' };
@@ -3010,6 +3279,7 @@ function mapBoardToStocks(board, confMap, futMap, oiMap = {}){
     const oiVal = oiMap[sym] != null ? oiMap[sym] : (fb.oi_chg_pct || 0);
     const spotLtp = fb.ltp || 0;
 
+    if (fb.token || fb.instrument_token) _tokenCache[sym] = fb.token || fb.instrument_token;
     result.push({
       sym,
       ltp: spotLtp,
@@ -3042,9 +3312,6 @@ function mapBoardToStocks(board, confMap, futMap, oiMap = {}){
       sp: [0, 0]
     });
   });
-
-  // Trigger background fetch of transition conviction drift for active stocks
-  fetchOITransitionDrifts(result.slice(0, 35).map(s => s.sym));
 
   return result;
 }
@@ -3079,6 +3346,13 @@ function buildOISpurts(spurtList = []){
   return spurts;
 }
 
+const isTodayEpoch = (ep) => {
+  if (!ep || ep <= 0) return false;
+  const d = new Date(ep * 1000);
+  const now = new Date();
+  return d.toDateString() === now.toDateString();
+};
+
 function get5mCrossDirection(item){
   if (!item) return 'none';
   if (item.cross_hold_5m) {
@@ -3087,6 +3361,10 @@ function get5mCrossDirection(item){
   }
   if (item.cross_5m === 'bullish') return 'bullish';
   if (item.cross_5m === 'bearish') return 'bearish';
+  if (item.cross_epoch_5m > 0 && isTodayEpoch(item.cross_epoch_5m)) {
+    if (item.state_5m === 'bullish') return 'bullish';
+    if (item.state_5m === 'bearish') return 'bearish';
+  }
   return 'none';
 }
 
@@ -3116,22 +3394,30 @@ function mapCrossoversToBB(data){
     const chgStr = `${chgPct >= 0 ? '+' : ''}${chgPct.toFixed(2)}%`;
     const tags = [mapDir(item.state_5m), mapDir(item.state_15m), mapDir(item.state_1h), mapDir(item.state_day)];
 
-    let crossBadge = 'EMA CROSS';
-    if (item.cross_hold_5m) {
-      const isY = item.cross_hold_5m.startsWith('Y');
-      crossBadge = `${isY ? '▲' : '▼'} 5M CROSS ${item.cross_hold_5m}`;
+    let crossBadge = '';
+    const holdStr = item.cross_hold_5m ? ` ${item.cross_hold_5m}` : '';
+    if (crossDir === 'bullish') {
+      crossBadge = `▲ 5M CROSS${holdStr}`;
+    } else if (crossDir === 'bearish') {
+      crossBadge = `▼ 5M CROSS${holdStr}`;
     } else if (item.cross_time_15m) {
       crossBadge = `15M CROSS ${item.cross_time_15m}`;
     } else if (item.alignment) {
       crossBadge = item.alignment.toUpperCase();
+    } else {
+      crossBadge = bullCount > bearCount ? 'BULLISH' : (bearCount > bullCount ? 'BEARISH' : 'MIXED');
     }
 
-    const trendState = item.alignment ? item.alignment.toUpperCase() : (bullCount > bearCount ? 'BULLISH' : (bearCount > bullCount ? 'BEARISH' : 'MIXED'));
-    let timeStr = '';
-    if (item.last_update) {
-      const parts = item.last_update.split(' ');
-      timeStr = parts[1] ? parts[1].substring(0, 5) : parts[0];
+    let trendState = 'MIXED';
+    if (item.alignment === 'bullish') {
+      trendState = '🔥 Bullish';
+    } else if (item.alignment === 'bearish') {
+      trendState = '❄️ Bearish';
+    } else {
+      trendState = bullCount > bearCount ? 'BULLISH' : (bearCount > bullCount ? 'BEARISH' : 'MIXED');
     }
+
+    const timeStr = item.cross_time_5m || item.cross_time_15m || (item.last_update ? item.last_update.split(' ')[1]?.substring(0, 5) : '');
 
     const row = {
       sym: k,
@@ -3141,9 +3427,11 @@ function mapCrossoversToBB(data){
       crossBadge,
       trendState,
       timeStr,
-      isCross: hasBullCross || hasBearCross,
+      crossDir,
+      isCross: crossDir === 'bullish' || crossDir === 'bearish',
       alignment: item.alignment,
-      cross_epoch_5m: item.cross_epoch_5m || 0
+      cross_epoch_5m: item.cross_epoch_5m || 0,
+      cross_candle_size_5m: item.cross_candle_size_5m || 0
     };
 
     if (isBull) bulls.push(row);
@@ -3152,9 +3440,23 @@ function mapCrossoversToBB(data){
 
   const sortList = (list) => {
     return list.sort((a, b) => {
-      if (a.isCross !== b.isCross) return b.isCross ? 1 : -1;
-      if (a.cross_epoch_5m !== b.cross_epoch_5m) return b.cross_epoch_5m - a.cross_epoch_5m;
-      return 0;
+      // Priority 1: 5M Crossovers grouped at top
+      if (a.isCross !== b.isCross) {
+        return b.isCross ? 1 : -1;
+      }
+      // Priority 2: Sort by most recent crossover epoch timestamp (newest on top)
+      const epochA = a.cross_epoch_5m || 0;
+      const epochB = b.cross_epoch_5m || 0;
+      if (epochA !== epochB) {
+        return epochB - epochA;
+      }
+      // Priority 3: Candle size (largest first)
+      const sizeA = a.cross_candle_size_5m || 0;
+      const sizeB = b.cross_candle_size_5m || 0;
+      if (Math.abs(sizeA - sizeB) > 0.01) {
+        return sizeB - sizeA;
+      }
+      return a.sym.localeCompare(b.sym);
     });
   };
 
@@ -3311,6 +3613,16 @@ function initSocketIO(){
   }catch(e){console.warn('[360] Socket.IO init failed',e);}
 }
 
+function applyCrossoverData(data){
+  if(!data || !data.crossovers) return;
+  const {bulls, bears} = mapCrossoversToBB(data);
+  BULLS = bulls;
+  BEARS = bears;
+  renderSideBreakouts(bulls, bears);
+  const activeTab = document.querySelector('#atabs .tab.on');
+  if(activeTab && activeTab.textContent.includes('Bull')) aTab('bb', activeTab);
+}
+
 let _fetchingBoard=false;
 async function fetchBoard(){
   if(_fetchingBoard) return;
@@ -3326,6 +3638,9 @@ async function fetchBoard(){
     const futMap={};
     (futRes.stocks||[]).forEach(f=>{ futMap[f.symbol]=f; });
     const confMap=crossRes.crossovers||{};
+
+    // Apply crossover data directly to Breakouts panel from shared fetch
+    applyCrossoverData(crossRes);
 
     // Match exact oi-spurt-scanner.html sorting & data
     const spurtList = (spurtRes.data || []).sort((a, b) => b.oi_change_pct - a.oi_change_pct);
@@ -3408,12 +3723,31 @@ async function fetchEodAlertSummary(dateStr){
 async function fetchBreakouts(){
   try{
     const data=await fetch('/api/ema-crossovers').then(r=>r.json());
-    const {bulls,bears}=mapCrossoversToBB(data);
-    BULLS=bulls; BEARS=bears;
-    renderSideBreakouts(bulls, bears);
-    const activeTab=document.querySelector('#atabs .tab.on');
-    if(activeTab&&activeTab.textContent.includes('Bull')) aTab('bb',activeTab);
+    applyCrossoverData(data);
   }catch(e){console.warn('[360] Breakouts error',e);}
+}
+
+async function fetchLiveBreakouts(){
+  try{
+    const res = await fetch('/api/live-breakouts');
+    if(!res.ok) return;
+    _liveBreakoutData = await res.json();
+    renderLiveWatchlists();
+
+    const alerts = _liveBreakoutData.triggered_alerts || [];
+    if(alerts.length){
+      const existingIds = new Set(BREAKOUT_ALERTS.map(x => `${x.symbol}_${x.time}_${x.direction}`));
+      alerts.forEach(al => {
+        const key = `${al.symbol}_${al.time}_${al.direction}`;
+        if (!existingIds.has(key)) {
+          BREAKOUT_ALERTS.unshift(al);
+          existingIds.add(key);
+        }
+      });
+      BREAKOUT_ALERTS.sort((a, b) => (b.trigger_epoch || 0) - (a.trigger_epoch || 0));
+      if(_activeAlertTab==='brk_events') renderAlerts();
+    }
+  }catch(e){console.warn('[360] Live breakouts error',e);}
 }
 
 async function fetchQuotes(){
@@ -3423,7 +3757,7 @@ async function fetchQuotes(){
   }catch(e){/* silent */}
 }
 
-async function fetchAll(){ await Promise.all([fetchBoard(), fetchBreakouts(), fetchQuotes()]); }
+async function fetchAll(){ await Promise.all([fetchBoard(), fetchLiveBreakouts(), fetchQuotes(), fetchEMAConv()]); }
 
 /* ── Premium Spike Alerts poller ─────────────────────────────────────────── */
 async function fetchPremSpikes(){
@@ -3461,12 +3795,11 @@ async function fetchPremSpikes(){
 function startPolling(){
   fetchAll();
   fetchPremSpikes();                      // initial load on start
-  setInterval(fetchBoard,    30000);
-  setInterval(fetchBreakouts,30000);
-  setInterval(fetchQuotes,   15000);
-  setInterval(fetchPremSpikes, 20000);    // poll every 20s
-  setInterval(fetchEMAConv,    30000);    // EMA PreCross convergence, every 30s
-  fetchEMAConv();                         // initial load
+  setInterval(fetchBoard,         30000); // also updates breakouts from crossRes
+  setInterval(fetchLiveBreakouts, 15000);
+  setInterval(fetchQuotes,        15000);
+  setInterval(fetchPremSpikes,    20000); // poll every 20s
+  setInterval(fetchEMAConv,       30000); // EMA PreCross convergence, every 30s
 }
 
 /* ── EMA PreCross Convergence Watchlist ─────────────────────────────────── */
@@ -3679,6 +4012,13 @@ function renderMilestoneTimeline(data){
 // Global escape key to close modal
 document.addEventListener('keydown', (e) => {
   if(e.key === 'Escape') closePremiumMilestones();
+});
+
+document.addEventListener('focusin', e => {
+  if (e.target && e.target.id === 'ps-search-input') _searchHadFocus = true;
+});
+document.addEventListener('focusout', e => {
+  if (e.target && e.target.id === 'ps-search-input') _searchHadFocus = false;
 });
 </script>
 

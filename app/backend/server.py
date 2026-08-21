@@ -5071,6 +5071,28 @@ def api_traction_board():
         return jsonify({'success': False, 'error': str(err)}), 500
 
 
+_inst_holding_cache = None
+_inst_holding_lock = threading.Lock()
+
+def get_inst_holding_map():
+    """Returns in-memory cached institutional holding map, queried from SQLite on first load."""
+    global _inst_holding_cache
+    if _inst_holding_cache is not None:
+        return _inst_holding_cache
+    with _inst_holding_lock:
+        if _inst_holding_cache is not None:
+            return _inst_holding_cache
+        try:
+            db = get_db()
+            cursor = db.cursor()
+            cursor.execute("SELECT symbol, total_institutional FROM fno_shareholding")
+            _inst_holding_cache = {row[0]: row[1] for row in cursor.fetchall()}
+        except Exception as db_err:
+            logging.warning(f"[Gainers API] Failed to fetch fno_shareholding: {db_err}")
+            return {}
+        return _inst_holding_cache
+
+
 # ── Option Chain ──
 @app.route('/api/option-gainers-board')
 def option_gainers_board():
@@ -5103,15 +5125,8 @@ def option_gainers_board():
         _in_market = is_market_hours()
         _in_premarket = is_premarket()
 
-        # Query cached institutional holdings
-        inst_holding_map = {}
-        try:
-            db = get_db()
-            cursor = db.cursor()
-            cursor.execute("SELECT symbol, total_institutional FROM fno_shareholding")
-            inst_holding_map = {row[0]: row[1] for row in cursor.fetchall()}
-        except Exception as db_err:
-            logging.warning(f"[Gainers API] Failed to fetch fno_shareholding: {db_err}")
+        # Query cached institutional holdings (in-memory)
+        inst_holding_map = get_inst_holding_map()
 
         # ── LIVE HOURS: board still warming (scanner hasn't captured open yet) ──
         # Must check _in_market FIRST — never serve EOD during live session.
@@ -5191,6 +5206,7 @@ def option_gainers_board():
                 # No live tick yet — include contract as stale at 0% gain so
                 # it remains visible in the premium expansion panel.
                 results.append({
+                    "token":     int(token),
                     "symbol":    info["symbol"],
                     "opt_type":  info["opt_type"],
                     "strike":    info["strike"],
@@ -5205,7 +5221,7 @@ def option_gainers_board():
             if gain_pct <= 0:
                 continue
             results.append({
-                "token":      int(token_int),
+                "token":      int(token),
                 "symbol":     info["symbol"],
                 "opt_type":   info["opt_type"],
                 "strike":     info["strike"],

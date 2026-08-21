@@ -163,7 +163,7 @@ class KiteAPI {
     // Use SocketIO for WebSocket connection
     // Socket.IO client expects the http(s) origin (it handles WS upgrade internally).
     const socketUrl = this.backendUrl;
-    this.ws = io(socketUrl, { transports: ['polling'] });
+    this.ws = io(socketUrl, { transports: ['websocket', 'polling'] });
 
     this.ws.on('connect', () => {
       this.connected = true;
