@@ -729,27 +729,23 @@
       border: 1px solid var(--b);
       border-radius: 8px;
       padding: 6px 10px;
-      cursor: text;
-      user-select: text !important;
-      -webkit-user-select: text !important;
+    }
+
+    .oi-hm-search-bar:focus-within {
+      border-color: var(--acc);
+      box-shadow: 0 0 6px rgba(56, 189, 248, 0.3);
     }
 
     .oi-hm-input {
       flex: 1;
+      width: 100%;
       background: transparent;
       border: none;
       outline: none;
-      font-size: 16px !important;
+      font-size: 14px;
       font-weight: 700;
       color: var(--t1);
-      font-family: var(--mono);
-      text-transform: uppercase;
-      cursor: text !important;
-      user-select: text !important;
-      -webkit-user-select: text !important;
-      -webkit-appearance: none;
-      appearance: none;
-      touch-action: manipulation;
+      font-family: inherit;
     }
 
     .oi-hm-sugg-box {
@@ -7101,8 +7097,8 @@
         <div class="oi-hm-wrap">
           <!-- 1. Interactive Autocomplete Search & Dynamic Tabs Pan -->
           <div class="oi-hm-search-container">
-            <div class="oi-hm-search-bar" onclick="const inp=document.getElementById('oi-hm-search-input');if(inp)inp.focus();">
-              <input type="text" class="oi-hm-input" id="oi-hm-search-input" value="" autocomplete="off" placeholder="🔍 Search F&O symbol (e.g. RELIANCE, TCS, NIFTY)..." oninput="showOIHeatmapSugg(this.value)" onkeydown="handleOIHeatmapSearchKey(event)" />
+            <div class="oi-hm-search-bar">
+              <input type="text" class="oi-hm-input" id="oi-hm-search-input" value="" autocomplete="off" autocapitalize="characters" spellcheck="false" placeholder="🔍 Search F&O symbol (e.g. RELIANCE, TCS, NIFTY)..." oninput="showOIHeatmapSugg(this.value)" onkeydown="handleOIHeatmapSearchKey(event)" />
               <button class="ibtn" style="padding:4px 10px;font-size:11px;font-weight:800;background:rgba(56,189,248,0.2);color:#38bdf8;border:1px solid #38bdf8;border-radius:6px;min-height:30px;" onclick="submitOIHeatmapSearch()">GO</button>
               ${sym ? `<button class="ibtn" style="padding:4px 8px;font-size:12px;min-height:30px;" title="Refresh" onclick="loadOIHeatmapData('${sym}', true)">↺</button>` : ''}
             </div>
