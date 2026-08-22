@@ -3,7 +3,7 @@
 
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1.0" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes" />
   <title>360° Command Center v2 — TradeSignal</title>
   <link
     href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600;700&display=swap"
@@ -83,12 +83,15 @@
       padding: 0;
     }
 
+    html,
     body {
       font-family: 'Inter', sans-serif;
       background: var(--bg);
       color: var(--t1);
       min-height: 100vh;
       overflow: hidden;
+      touch-action: pan-x pan-y pinch-zoom;
+      -webkit-text-size-adjust: 100%;
       background-image: radial-gradient(ellipse 90% 45% at 50% -10%, rgba(56, 189, 248, .08) 0%, transparent 60%),
         radial-gradient(ellipse 50% 35% at 85% 85%, rgba(99, 102, 241, .06) 0%, transparent 50%);
       transition: background-color .2s, color .2s;
@@ -703,13 +706,14 @@
     }
 
     /* ══ OI HEATMAP TAB & WIDGET (ALERT FEED) ══ */
-    /* ══ OI HEATMAP TAB & WIDGET (ALERT FEED) ══ */
     .oi-hm-wrap {
       display: flex;
       flex-direction: column;
       gap: 7px;
       padding: 6px;
       font-family: var(--font, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, monospace);
+      contain: content;
+      transform: translateZ(0);
     }
 
     .oi-hm-search-container {
@@ -882,6 +886,8 @@
       border: 1px solid var(--b);
       border-radius: 6px;
       padding: 8px 10px;
+      contain: content;
+      transform: translateZ(0);
     }
 
     .oi-hm-strip {
@@ -3979,57 +3985,77 @@
         flex: 1 !important;
         height: 100% !important;
         overflow-y: auto !important;
-        overflow-x: hidden !important;
+        overflow-x: auto !important;
         -webkit-overflow-scrolling: touch;
+        touch-action: pan-x pan-y pinch-zoom;
         padding-bottom: 24px;
       }
 
-      /* ══ Mobile Master Board Fit (100% Width) ══ */
+      /* ══ Mobile Master Board Scrollable Table (Manual Slide Left/Right) ══ */
       .tbl {
-        min-width: 100% !important;
-        width: 100% !important;
+        min-width: 960px !important;
+        width: max-content !important;
         table-layout: auto !important;
       }
 
       .tbl th,
       .tbl td {
-        padding: 6px 3px !important;
-        font-size: 8.5px !important;
+        padding: 6px 6px !important;
+        font-size: 10px !important;
         white-space: nowrap;
       }
 
+      /* Sticky Frozen Rank (#) & Symbol Columns on Mobile */
       .tbl th.rank, .tbl td.rank {
-        width: 18px !important;
-        padding-left: 3px !important;
+        position: sticky !important;
+        left: 0 !important;
+        z-index: 4 !important;
+        background: var(--th-bg) !important;
+        width: 22px !important;
+        min-width: 22px !important;
+        padding-left: 4px !important;
         padding-right: 2px !important;
       }
 
+      .tbl tbody td.rank {
+        background: var(--card) !important;
+      }
+
       .tbl th.sym, .tbl td.sym {
-        font-size: 9.5px !important;
+        position: sticky !important;
+        left: 22px !important;
+        z-index: 4 !important;
+        background: var(--th-bg) !important;
+        border-right: 1px solid var(--bhi) !important;
+        font-size: 10.5px !important;
         font-weight: 800;
+        box-shadow: 2px 0 6px rgba(0, 0, 0, .25);
       }
 
-      /* Hide low-priority desktop-only columns on mobile to fit screen */
-      .tbl th:nth-child(3), .tbl td:nth-child(3), /* CAP */
-      .tbl th:nth-child(6), .tbl td:nth-child(6), /* FUT% or DXCNT */
-      .tbl th:nth-child(7), .tbl td:nth-child(7), /* DXCNT or GAIN% */
-      .tbl th:nth-child(8), .tbl td:nth-child(8), /* GAP% */
-      .tbl th:nth-child(9), .tbl td:nth-child(9), /* INST */
-      .tbl th:nth-child(11), .tbl td:nth-child(11), /* RVOL */
-      .tbl th:nth-child(12), .tbl td:nth-child(12), /* FH VOL */
-      .tbl th:nth-child(13), .tbl td:nth-child(13), /* E9H */
-      .tbl th:nth-child(14), .tbl td:nth-child(14), /* TF */
-      .tbl th:nth-child(15), .tbl td:nth-child(15)  /* OI% */
-      {
-        display: none !important;
+      .tbl tbody td.sym {
+        background: var(--card) !important;
       }
 
-      /* Subrows (chart & contracts) span 100% full mobile width */
+      .tbl tbody tr:hover td.rank,
+      .tbl tbody tr:hover td.sym {
+        background: var(--row-hover) !important;
+      }
+
+      .tbl tbody tr.row-alt td.rank,
+      .tbl tbody tr.row-alt td.sym {
+        background: var(--row-alt) !important;
+      }
+
+      /* Subrows (chart & contracts) sticky full-width view */
       tr.chart-subrow td,
       tr.contracts-subrow td {
+        position: sticky !important;
+        left: 0 !important;
+        max-width: calc(100vw - 16px) !important;
+        width: calc(100vw - 16px) !important;
         display: table-cell !important;
-        width: 100% !important;
         padding: 0 !important;
+        box-sizing: border-box !important;
       }
 
       /* Inline Chart on Mobile */
@@ -5461,14 +5487,14 @@
       'SENSEX': 265, 'RELIANCE': 738561, 'HDFCBANK': 341249, 'INFY': 408065,
       'TCS': 2953217, 'ICICIBANK': 1270529, 'SBIN': 779521, 'AXISBANK': 1510401,
       'KOTAKBANK': 492033, 'LT': 2939649, 'ITC': 424961, 'BHARTIARTL': 2714625,
-      'BAJFINANCE': 81153, 'BAJAJFINSV': 4267265, 'ASIANPAINT': 60417, 'MARUTI': 2815745,
-      'TATAMOTORS': 884737, 'TATASTEEL': 895745, 'SUNPHARMA': 857857, 'TITAN': 897281,
-      'WIPRO': 969473, 'HCLTECH': 1850625, 'NTPC': 2977281, 'POWERGRID': 3812865,
+      'BAJFINANCE': 81153, 'BAJAJFINSV': 4268801, 'ASIANPAINT': 60417, 'MARUTI': 2815745,
+      'TATAMOTORS': 884737, 'TMPV': 884737, 'TATASTEEL': 895745, 'SUNPHARMA': 857857, 'TITAN': 897537,
+      'WIPRO': 969473, 'HCLTECH': 1850625, 'NTPC': 2977281, 'POWERGRID': 3834113,
       'ONGC': 633601, 'COALINDIA': 5215745, 'JSWSTEEL': 3001089, 'HINDALCO': 348929,
       'DRREDDY': 225537, 'CIPLA': 177665, 'DIVISLAB': 2800641, 'APOLLOHOSP': 40193,
       'EICHERMOT': 232961, 'HEROMOTOCO': 345089, 'BRITANNIA': 140033, 'NESTLEIND': 4598529,
       'GRASIM': 315393, 'BPCL': 134657, 'ADANIENT': 6401, 'ADANIPORTS': 3861249,
-      'BEL': 3834113, 'TRENT': 502785, 'JIOFIN': 4668673, 'TATACONSUM': 878593
+      'BEL': 98049, 'TRENT': 502785, 'JIOFIN': 4644609, 'TATACONSUM': 878593
     };
     const _chartCandlesCache = {};
     const _chartMouseHandlers = {};
@@ -5485,6 +5511,7 @@
 
     function switchInlineChartTf(sym, tf) {
       _inlineChartTf = tf;
+      if (_chartViewState && _chartViewState[sym]) delete _chartViewState[sym];
       // FIX #2: reset volume baseline so next tick delta is correct for new TF
       delete _chartVolAtOpen[sym];
       // Invalidate cache so initInlineChart re-fetches with new interval
@@ -5630,17 +5657,18 @@
       });
     }
 
-    let _chartViewState = {}; // { [sym]: { visibleCount: 45, offsetRight: 0 } }
+    let _chartViewState = {}; // { [sym]: { visibleCount: 75, offsetRight: 0 } }
 
     function getChartViewState(sym, totalCandles) {
+      const defaultVisible = Math.round(375 / (_inlineChartTf || 5)); // 75 for 5m (09:15 to 15:30), 25 for 15m
       if (!_chartViewState[sym]) {
         _chartViewState[sym] = {
-          visibleCount: Math.min(totalCandles || 50, 45),
+          visibleCount: Math.min(totalCandles || defaultVisible, defaultVisible),
           offsetRight: 0
         };
       }
       const vs = _chartViewState[sym];
-      vs.visibleCount = Math.max(10, Math.min(totalCandles, vs.visibleCount || 45));
+      vs.visibleCount = Math.max(10, Math.min(totalCandles, vs.visibleCount || defaultVisible));
       vs.offsetRight = Math.max(0, Math.min(totalCandles - vs.visibleCount, vs.offsetRight || 0));
       return vs;
     }
@@ -5665,8 +5693,9 @@
       const data = _chartCandlesCache[sym];
       if (!data || !data.candles || !data.candles.length) return;
       const total = data.candles.length;
+      const defaultVisible = Math.round(375 / (_inlineChartTf || 5));
       _chartViewState[sym] = {
-        visibleCount: Math.min(total, 45),
+        visibleCount: Math.min(total, defaultVisible),
         offsetRight: 0
       };
       drawInlineCandleCanvas(sym, null);
@@ -5686,7 +5715,7 @@
       let touchStartOffsetRight = 0;
       let isTouchDragging = false;
       let pinchStartDist = 0;
-      let pinchStartVisible = 45;
+      let pinchStartVisible = Math.round(375 / (_inlineChartTf || 5));
 
       const handlePointer = (clientX, clientY) => {
         const rect = canvas.getBoundingClientRect();
@@ -5969,8 +5998,9 @@
       const ch = height - pt - pb;
 
       // View state calculation (windowed slice)
+      const defaultVisible = Math.round(375 / (data.tf || _inlineChartTf || 5));
       const vs = getChartViewState(sym, total);
-      const visibleCount = Math.max(10, Math.min(total, vs.visibleCount || 45));
+      const visibleCount = Math.max(10, Math.min(total, vs.visibleCount || defaultVisible));
       const offsetRight = Math.max(0, Math.min(total - visibleCount, vs.offsetRight || 0));
       const startIdx = total - offsetRight - visibleCount;
       const endIdx = total - offsetRight;
@@ -7029,20 +7059,21 @@
     }
 
     function renderOIHeatmapView(sym) {
-      initOIHeatmapSymbols();
       const el = document.getElementById('afeed');
       if (!el) return;
       sym = (sym || _activeOIHeatmapSym || 'NIFTY').toUpperCase();
       addOISymbolTab(sym);
+
+      const hasCached = !!_cachedOIHeatmapData[sym];
 
       el.innerHTML = `
         <div class="oi-hm-wrap">
           <!-- 1. Interactive Autocomplete Search & Dynamic Tabs Pan -->
           <div class="oi-hm-search-container">
             <div class="oi-hm-search-bar">
-              <input type="text" class="oi-hm-input" id="oi-hm-search-input" value="${sym}" autocomplete="off" placeholder="🔍 Search F&O symbol (e.g. BRITANNIA, TCS)..." oninput="showOIHeatmapSugg(this.value)" onkeydown="handleOIHeatmapSearchKey(event)" />
+              <input type="text" class="oi-hm-input" id="oi-hm-search-input" value="${sym}" autocomplete="off" placeholder="🔍 Search F&O symbol (e.g. BRITANNIA, TCS)..." onfocus="initOIHeatmapSymbols()" oninput="showOIHeatmapSugg(this.value)" onkeydown="handleOIHeatmapSearchKey(event)" />
               <button class="ibtn" style="padding:2px 8px;font-size:10px;font-weight:800;background:rgba(56,189,248,0.2);color:#38bdf8;border:1px solid #38bdf8;border-radius:4px;" onclick="submitOIHeatmapSearch()">GO</button>
-              <button class="ibtn" style="padding:2px 6px;" title="Refresh (Auto 30s)" onclick="loadOIHeatmapData('${sym}', true)">↺</button>
+              <button class="ibtn" style="padding:2px 6px;" title="Refresh" onclick="loadOIHeatmapData('${sym}', true)">↺</button>
             </div>
             <div class="oi-hm-sugg-box" id="oi-hm-suggestions"></div>
             <div class="oi-hm-chips-row">
@@ -7057,21 +7088,23 @@
 
           <!-- 2. Dynamic Content Shell -->
           <div id="oi-hm-content">
-            <div class="empty" style="padding:24px 8px;"><div class="es">Loading ${sym} OI Heatmap data…</div></div>
+            ${hasCached ? '' : `<div class="empty" style="padding:24px 8px;"><div class="es">Loading ${sym} OI Heatmap data…</div></div>`}
           </div>
         </div>
       `;
 
-      loadOIHeatmapData(sym);
+      if (hasCached) {
+        renderOIHeatmapCard(_cachedOIHeatmapData[sym]);
+      }
+      loadOIHeatmapData(sym, !hasCached);
     }
 
-    async function loadOIHeatmapData(sym, force = false) {
+    async function loadOIHeatmapData(sym, isInitial = false) {
       const container = document.getElementById('oi-hm-content');
       if (!container) return;
 
-      if (!force && _cachedOIHeatmapData[sym]) {
+      if (!isInitial && _cachedOIHeatmapData[sym]) {
         renderOIHeatmapCard(_cachedOIHeatmapData[sym]);
-        return;
       }
 
       try {
@@ -7079,10 +7112,13 @@
         if (!res.ok) throw new Error('API error ' + res.status);
         const data = await res.json();
         _cachedOIHeatmapData[sym] = data;
-        renderOIHeatmapCard(data);
+        // Only render if still on the requested symbol and on the heatmap tab
+        if (_activeOIHeatmapSym === sym && _activeAlertTab === 'oi_heatmap') {
+          renderOIHeatmapCard(data);
+        }
       } catch (e) {
         console.warn('[360] OI Heatmap fetch error:', e);
-        if (container) {
+        if (container && !_cachedOIHeatmapData[sym]) {
           container.innerHTML = `<div class="empty" style="padding:24px 8px;">
             <div class="ei">⚠️</div>
             <div class="et">Data Unavailable for ${sym}</div>
@@ -8229,7 +8265,12 @@
         STOCKS = mapBoardToStocks(board, confMap, futMap, oiMap);
         OI_SPURTS = buildOISpurts(spurtList);
 
-        renderBoard();
+        if (window.innerWidth <= 767 && typeof _activeMobileColIdx !== 'undefined' && _activeMobileColIdx !== 0) {
+          _pendingBoardRender = true;
+        } else {
+          _pendingBoardRender = false;
+          renderBoard();
+        }
         /* renderHotZone removed */
         renderOIBoard();
         renderDockedOISpurt();
@@ -9032,8 +9073,12 @@
 
   <script>
     /* === MOBILE COLUMN NAV === */
+    let _activeMobileColIdx = 0;
+    let _pendingBoardRender = false;
+
     function showMobileCol(idx) {
       if (window.innerWidth > 767) return;
+      _activeMobileColIdx = idx;
       const cols = document.querySelectorAll('#main-lay > .col');
       cols.forEach((c, i) => {
         c.classList.toggle('mcol-active', i === idx);
@@ -9042,6 +9087,12 @@
         const btn = document.getElementById('mcn-' + i);
         if (btn) btn.classList.toggle('active', i === idx);
       });
+      if (idx === 0 && _pendingBoardRender) {
+        _pendingBoardRender = false;
+        requestAnimationFrame(() => { if (typeof renderBoard === 'function') renderBoard(); });
+      } else if (idx === 1 && typeof _activeAlertTab !== 'undefined' && _activeAlertTab === 'oi_heatmap') {
+        if (typeof renderOIHeatmapView === 'function') renderOIHeatmapView(_activeOIHeatmapSym || 'NIFTY');
+      }
     }
     /* On resize, restore all cols for tablet/desktop */
     window.addEventListener('resize', () => {

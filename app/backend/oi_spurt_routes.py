@@ -43,6 +43,10 @@ _spurt_lock = threading.Lock()
 _spurt_eod_cache = {}
 _spurt_eod_lock = threading.Lock()
 
+# Live / In-memory TTL Cache for /symbol/<symbol> detail: {sym: {"data": dict, "cached_at": float}}
+_oi_symbol_cache = {}
+_oi_symbol_cache_lock = threading.Lock()
+
 _housekeeping_done = False
 _housekeeping_lock = threading.Lock()
 
@@ -1242,6 +1246,17 @@ def api_symbol(symbol):
         return jsonify({"error": str(e)}), 401
 
     sym = symbol.upper()
+    force_refresh = request.args.get("force", "").lower() in ("1", "true", "yes")
+    now_ts = time.time()
+    mkt_open = is_market_hours()
+    cache_ttl = 6.0 if mkt_open else 60.0
+
+    if not force_refresh:
+        with _oi_symbol_cache_lock:
+            cached = _oi_symbol_cache.get(sym)
+            if cached and (now_ts - cached.get("cached_at", 0)) < cache_ttl:
+                return jsonify(cached["data"])
+
     ltp, price_change_pct, pivots, pivot_source, prev_close, open_gap_pct, perr = get_ltp_and_pivots(kite, sym)
     chain, expiry, futures_oi, futures_oi_prev, futures_ltp, futures_prev_close, cerr = get_option_chain(kite, sym)
 
@@ -1787,7 +1802,7 @@ def api_symbol(symbol):
     now_iso = datetime.datetime.now().isoformat()
     mkt_open = is_market_hours()
 
-    return jsonify({
+    res_data = {
         "symbol":             sym,
         "ltp":                ltp,
         "price_change_pct":   price_change_pct,  # accurate % from Kite net_change/prev_close
@@ -1826,7 +1841,18 @@ def api_symbol(symbol):
             "oi_change_pct": futures_oi_chg_pct,
             "buildup": futures_buildup
         }
-    })
+    }
+
+    with _oi_symbol_cache_lock:
+        if len(_oi_symbol_cache) >= 150:
+            # Pop oldest entry if dictionary grows
+            _oi_symbol_cache.pop(next(iter(_oi_symbol_cache)))
+        _oi_symbol_cache[sym] = {
+            "cached_at": time.time(),
+            "data": res_data
+        }
+
+    return jsonify(res_data)
 
 
 # ── F&O Synergy Scan REST Endpoint ────────────────────────────────────────────
