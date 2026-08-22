@@ -711,12 +711,14 @@
       padding: 6px;
       font-family: var(--font, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, monospace);
     }
+
     .oi-hm-search-container {
       position: relative;
       display: flex;
       flex-direction: column;
       gap: 5px;
     }
+
     .oi-hm-search-bar {
       display: flex;
       gap: 5px;
@@ -726,6 +728,7 @@
       border-radius: 6px;
       padding: 4px 6px;
     }
+
     .oi-hm-input {
       flex: 1;
       background: transparent;
@@ -737,6 +740,7 @@
       font-family: var(--mono);
       text-transform: uppercase;
     }
+
     .oi-hm-sugg-box {
       position: absolute;
       top: 36px;
@@ -751,7 +755,11 @@
       box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
       display: none;
     }
-    .oi-hm-sugg-box.open { display: block; }
+
+    .oi-hm-sugg-box.open {
+      display: block;
+    }
+
     .oi-hm-sugg-item {
       display: flex;
       align-items: center;
@@ -763,13 +771,37 @@
       font-family: var(--mono);
       transition: background .12s;
     }
+
     .oi-hm-sugg-item:hover,
     .oi-hm-sugg-item.act {
       background: var(--accg);
     }
-    .oi-hm-si-sym { font-weight: 800; color: var(--acc); min-width: 75px; }
-    .oi-hm-si-name { font-size: 9px; color: var(--t2); flex: 1; margin: 0 6px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-    .oi-hm-si-tag { font-size: 8px; font-weight: 700; color: var(--t3); background: var(--card2); border: 1px solid var(--b); padding: 1px 4px; border-radius: 3px; }
+
+    .oi-hm-si-sym {
+      font-weight: 800;
+      color: var(--acc);
+      min-width: 75px;
+    }
+
+    .oi-hm-si-name {
+      font-size: 9px;
+      color: var(--t2);
+      flex: 1;
+      margin: 0 6px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .oi-hm-si-tag {
+      font-size: 8px;
+      font-weight: 700;
+      color: var(--t3);
+      background: var(--card2);
+      border: 1px solid var(--b);
+      padding: 1px 4px;
+      border-radius: 3px;
+    }
 
     .oi-hm-chips-row {
       display: flex;
@@ -780,16 +812,20 @@
       scrollbar-width: thin;
       scrollbar-color: var(--b) transparent;
     }
+
     .oi-hm-chips-row::-webkit-scrollbar {
       height: 4px;
     }
+
     .oi-hm-chips-row::-webkit-scrollbar-track {
       background: transparent;
     }
+
     .oi-hm-chips-row::-webkit-scrollbar-thumb {
       background: var(--b);
       border-radius: 2px;
     }
+
     .oi-hm-chip {
       background: var(--card2);
       border: 1px solid var(--b);
@@ -808,17 +844,20 @@
       user-select: none;
       flex-shrink: 0;
     }
+
     .oi-hm-chip:hover {
       background: var(--accg);
       border-color: var(--bhi);
       color: var(--t1);
     }
+
     .oi-hm-chip.active {
       background: var(--accg);
       border-color: var(--acc);
       color: var(--acc);
       box-shadow: 0 0 6px var(--accg);
     }
+
     .oi-tab-close {
       display: inline-flex;
       align-items: center;
@@ -832,21 +871,25 @@
       transition: background .12s, color .12s;
       margin-left: 2px;
     }
+
     .oi-tab-close:hover {
       background: rgba(239, 68, 68, 0.25);
       color: #ef4444;
     }
+
     .oi-hm-card {
       background: var(--card);
       border: 1px solid var(--b);
       border-radius: 6px;
       padding: 8px 10px;
     }
+
     .oi-hm-strip {
       display: grid;
       grid-template-columns: 1fr 1fr 1fr 1fr 1.2fr;
       gap: 4px;
     }
+
     .oi-hm-strip-card {
       background: var(--card2);
       border: 1px solid var(--b);
@@ -856,9 +899,28 @@
       flex-direction: column;
       justify-content: center;
     }
-    .oi-hm-strip-lbl { font-size: 7.5px; color: var(--t3); font-weight: 700; text-transform: uppercase; }
-    .oi-hm-strip-val { font-size: 11px; font-weight: 800; font-family: var(--mono); margin-top: 1px; color: var(--t1); }
-    .oi-hm-strip-sub { font-size: 7.5px; color: var(--t2); margin-top: 1px; font-family: var(--mono); }
+
+    .oi-hm-strip-lbl {
+      font-size: 7.5px;
+      color: var(--t3);
+      font-weight: 700;
+      text-transform: uppercase;
+    }
+
+    .oi-hm-strip-val {
+      font-size: 11px;
+      font-weight: 800;
+      font-family: var(--mono);
+      margin-top: 1px;
+      color: var(--t1);
+    }
+
+    .oi-hm-strip-sub {
+      font-size: 7.5px;
+      color: var(--t2);
+      margin-top: 1px;
+      font-family: var(--mono);
+    }
 
     .oi-hm-badges-bar {
       display: flex;
@@ -866,6 +928,7 @@
       align-items: center;
       flex-wrap: wrap;
     }
+
     .oi-hm-tag {
       font-size: 8.5px;
       font-weight: 800;
@@ -873,21 +936,38 @@
       border-radius: 3px;
       font-family: var(--mono);
     }
-    .oi-hm-tag.bull { background: rgba(34, 197, 94, 0.15); color: var(--bull); border: 1px solid rgba(34, 197, 94, 0.3); }
-    .oi-hm-tag.bear { background: rgba(239, 68, 68, 0.15); color: var(--bear); border: 1px solid rgba(239, 68, 68, 0.3); }
-    .oi-hm-tag.neu { background: rgba(148, 163, 184, 0.15); color: var(--t3); border: 1px solid var(--b); }
+
+    .oi-hm-tag.bull {
+      background: rgba(34, 197, 94, 0.15);
+      color: var(--bull);
+      border: 1px solid rgba(34, 197, 94, 0.3);
+    }
+
+    .oi-hm-tag.bear {
+      background: rgba(239, 68, 68, 0.15);
+      color: var(--bear);
+      border: 1px solid rgba(239, 68, 68, 0.3);
+    }
+
+    .oi-hm-tag.neu {
+      background: rgba(148, 163, 184, 0.15);
+      color: var(--t3);
+      border: 1px solid var(--b);
+    }
 
     .oi-hm-grid-2 {
       display: grid;
       grid-template-columns: 1fr 1fr;
       gap: 6px;
     }
+
     .oi-hm-subcard {
       background: var(--card2);
       border: 1px solid var(--b);
       border-radius: 5px;
       padding: 6px 8px;
     }
+
     .oi-hm-subcard-title {
       font-size: 8px;
       font-weight: 700;
@@ -897,6 +977,7 @@
       display: flex;
       justify-content: space-between;
     }
+
     .oi-hm-subcard-val {
       font-size: 11px;
       font-weight: 800;
@@ -906,6 +987,7 @@
       gap: 4px;
       color: var(--t1);
     }
+
     .oi-hm-subcard-sub {
       font-size: 8px;
       color: var(--t2);
@@ -917,12 +999,14 @@
       grid-template-columns: 1fr 1fr;
       gap: 6px;
     }
+
     .oi-hm-wzone-tbl {
       width: 100%;
       border-collapse: collapse;
       font-size: 8.5px;
       font-family: var(--mono);
     }
+
     .oi-hm-wzone-tbl th {
       font-size: 7.5px;
       color: var(--t3);
@@ -930,6 +1014,7 @@
       border-bottom: 1px solid var(--b);
       text-align: left;
     }
+
     .oi-hm-wzone-tbl td {
       padding: 3px 4px;
       border-bottom: 1px solid var(--b);
@@ -942,6 +1027,7 @@
       font-size: 9px;
       margin-top: 4px;
     }
+
     .oi-hm-chain-tbl th {
       font-size: 8px;
       font-weight: 800;
@@ -955,26 +1041,31 @@
       top: 0;
       z-index: 5;
     }
+
     .oi-hm-chain-tbl td {
       padding: 3px 5px;
       border-bottom: 1px solid var(--b);
       vertical-align: middle;
     }
+
     .oi-hm-chain-tbl tr.atm-row {
       background: rgba(245, 158, 11, 0.14);
       border-left: 2px solid #fbbf24;
       border-right: 2px solid #fbbf24;
     }
+
     .oi-bar-cell-ce {
       position: relative;
       text-align: right;
       padding-right: 5px;
     }
+
     .oi-bar-cell-pe {
       position: relative;
       text-align: left;
       padding-left: 5px;
     }
+
     .oi-bar-bg-ce {
       position: absolute;
       top: 2px;
@@ -984,6 +1075,7 @@
       border-radius: 2px;
       z-index: 1;
     }
+
     .oi-bar-bg-pe {
       position: absolute;
       top: 2px;
@@ -993,12 +1085,14 @@
       border-radius: 2px;
       z-index: 1;
     }
+
     .oi-bar-txt {
       position: relative;
       z-index: 2;
       font-weight: 700;
       color: var(--t1);
     }
+
     .oi-tag-badge {
       font-size: 7.5px;
       font-weight: 800;
@@ -1007,11 +1101,31 @@
       display: inline-block;
       text-align: center;
     }
-    .oi-tag-badge.lb { background: rgba(34, 197, 94, 0.2); color: var(--bull); }
-    .oi-tag-badge.sb { background: rgba(239, 68, 68, 0.2); color: var(--bear); }
-    .oi-tag-badge.sc { background: rgba(245, 158, 11, 0.2); color: var(--amb); }
-    .oi-tag-badge.lu { background: rgba(168, 85, 247, 0.2); color: var(--pur); }
-    .oi-tag-badge.neu { background: rgba(148, 163, 184, 0.2); color: var(--t3); }
+
+    .oi-tag-badge.lb {
+      background: rgba(34, 197, 94, 0.2);
+      color: var(--bull);
+    }
+
+    .oi-tag-badge.sb {
+      background: rgba(239, 68, 68, 0.2);
+      color: var(--bear);
+    }
+
+    .oi-tag-badge.sc {
+      background: rgba(245, 158, 11, 0.2);
+      color: var(--amb);
+    }
+
+    .oi-tag-badge.lu {
+      background: rgba(168, 85, 247, 0.2);
+      color: var(--pur);
+    }
+
+    .oi-tag-badge.neu {
+      background: rgba(148, 163, 184, 0.2);
+      color: var(--t3);
+    }
 
     /* MASTER TABLE */
     .tbl {
@@ -3991,7 +4105,8 @@
       <div class="ch">
         <div class="ct">🎯 Unified Master Board <span class="cbadge" id="mc">0</span></div>
         <div style="display:flex;gap:5px;align-items:center;">
-          <button class="fbtn on" id="btn-toggle-oi-dock" onclick="toggleOIDock()" title="Toggle Docked OI Spurt Panel" style="padding:2px 8px;font-size:10px;display:flex;align-items:center;gap:3px;">⚡ OI Spurt</button>
+          <button class="fbtn on" id="btn-toggle-oi-dock" onclick="toggleOIDock()" title="Toggle Docked OI Spurt Panel"
+            style="padding:2px 8px;font-size:10px;display:flex;align-items:center;gap:3px;">⚡ OI Spurt</button>
           <select class="sel" onchange="sortBoard(this.value)">
             <option value="score">Score↓</option>
             <option value="gain">Gain%↓</option>
@@ -4005,7 +4120,7 @@
 
       <!-- ══ SPLIT CONTAINER: DOCKED OI SPURT + MASTER BOARD ══ -->
       <div class="board-split-wrap">
-        
+
         <!-- ══ 1. DOCKED OI SPURT SIDEBAR (LEFT) ══ -->
         <div class="oi-dock-panel" id="oi-dock-panel">
           <div class="oi-dock-hdr">
@@ -4014,7 +4129,8 @@
               <span class="cbadge" id="oi-dock-cnt">0</span>
             </div>
             <div class="oi-dock-search-wrap">
-              <input type="text" id="oi-dock-search" class="oi-dock-input" placeholder="🔍 Search OI..." oninput="filterDockedOI(this.value)" />
+              <input type="text" id="oi-dock-search" class="oi-dock-input" placeholder="🔍 Search OI..."
+                oninput="filterDockedOI(this.value)" />
             </div>
           </div>
           <div class="oi-dock-list" id="oi-dock-list"></div>
@@ -4100,9 +4216,9 @@
 
     <!-- COL 3: RIGHT PANEL -->
     <div class="rp col" id="col-panels">
-      <div class="rp-section" style="max-height:220px;display:flex;flex-direction:column;">
+      <div class="rp-section" style="flex:1 1 0;min-height:0;display:flex;flex-direction:column;overflow:hidden;">
         <div class="rp-sh"><span>🚀 Live Breakouts</span><span class="cbadge" id="brk-cnt">0</span></div>
-        <div style="overflow-y:auto;flex:1;" id="brk-body">
+        <div style="overflow-y:auto;overflow-x:hidden;flex:1;" id="brk-body">
           <div class="empty" style="padding:16px 8px;">
             <div class="ei">⚡</div>
             <div class="et">No active breakouts</div>
@@ -4110,52 +4226,54 @@
           </div>
         </div>
       </div>
-      <div class="rp-section" style="max-height:140px;display:flex;flex-direction:column;">
+      <div class="rp-section" style="flex:1 1 0;min-height:0;display:flex;flex-direction:column;overflow:hidden;">
         <div class="rp-sh"><span>🏹 Squeeze Watchlist</span><span class="cbadge" id="squeeze-cnt">0</span></div>
-        <div style="overflow-y:auto;flex:1;" id="squeeze-body">
+        <div style="overflow-y:auto;overflow-x:hidden;flex:1;" id="squeeze-body">
           <div style="padding:8px;font-size:9px;color:var(--t2);text-align:center;">No active squeezes</div>
         </div>
       </div>
-      <div class="rp-section" style="max-height:140px;display:flex;flex-direction:column;">
+      <div class="rp-section" style="flex:1 1 0;min-height:0;display:flex;flex-direction:column;overflow:hidden;">
         <div class="rp-sh"><span>🌀 EMA Coil Watchlist</span><span class="cbadge" id="coil-cnt">0</span></div>
-        <div style="overflow-y:auto;flex:1;" id="coil-body">
+        <div style="overflow-y:auto;overflow-x:hidden;flex:1;" id="coil-body">
           <div style="padding:8px;font-size:9px;color:var(--t2);text-align:center;">No EMA coil stocks</div>
         </div>
       </div>
-      <div class="rp-section" style="padding:6px 8px;">
-        <div style="font-size:8.5px;font-weight:700;color:var(--t1);margin-bottom:4px;text-transform:uppercase;letter-spacing:.06em;display:flex;justify-content:space-between;">
-          <span>Confluence Rules</span>
-          <span style="font-size:8px;color:var(--t3);">A:8-10 · B:5-7 · C:0-4</span>
+      <div style="flex-shrink:0;border-top:1px solid var(--b);background:var(--ch-bg);">
+        <div class="rp-section" style="padding:5px 8px;border-bottom:1px solid var(--b);">
+          <div style="font-size:8px;font-weight:700;color:var(--t1);margin-bottom:3px;text-transform:uppercase;letter-spacing:.06em;display:flex;justify-content:space-between;">
+            <span>Confluence Rules</span>
+            <span style="font-size:7.5px;color:var(--t3);">A:8-10 · B:5-7 · C:0-4</span>
+          </div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:2px 8px;font-size:7.5px;color:var(--t2);">
+            <div style="display:flex;justify-content:space-between;"><span>TF Align</span><b class="bull">+3</b></div>
+            <div style="display:flex;justify-content:space-between;"><span>OI Spurt</span><b class="pur">+2</b></div>
+            <div style="display:flex;justify-content:space-between;"><span>RVOL/FH</span><b class="cyn">+1</b></div>
+            <div style="display:flex;justify-content:space-between;"><span>Fut/DX/Drift</span><b class="amb">+1</b></div>
+          </div>
         </div>
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:2px 6px;font-size:8px;color:var(--t2);">
-          <div style="display:flex;justify-content:space-between;"><span>TF Align</span><b class="bull">+3</b></div>
-          <div style="display:flex;justify-content:space-between;"><span>OI Spurt</span><b class="pur">+2</b></div>
-          <div style="display:flex;justify-content:space-between;"><span>RVOL/FH</span><b class="cyn">+1</b></div>
-          <div style="display:flex;justify-content:space-between;"><span>Fut/DX/Drift</span><b class="amb">+1</b></div>
-        </div>
-      </div>
-      <div style="flex:1;overflow-y:auto;padding:6px;">
-        <div style="font-size:8.5px;font-weight:700;color:var(--t1);margin-bottom:4px;text-transform:uppercase;letter-spacing:.06em;">Session Stats</div>
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:4px;">
-          <div style="background:var(--card);border:1px solid var(--b);border-radius:var(--rs);padding:5px 4px;text-align:center;">
-            <div style="font-size:7.5px;color:var(--t2);font-weight:600;">ALERTS TODAY</div>
-            <div style="font-size:16px;font-weight:800;color:var(--bull);font-family:var(--mono);line-height:1.2;" id="stat-alerts">0</div>
-            <div style="font-size:7.5px;color:var(--t3);" id="stat-alerts-sub">A: 0 · B: 0 · C: 0</div>
-          </div>
-          <div style="background:var(--card);border:1px solid var(--b);border-radius:var(--rs);padding:5px 4px;text-align:center;">
-            <div style="font-size:7.5px;color:var(--t2);font-weight:600;">OI SPURTS</div>
-            <div style="font-size:16px;font-weight:800;color:var(--pur);font-family:var(--mono);line-height:1.2;" id="stat-spurts">0</div>
-            <div style="font-size:7.5px;color:var(--t3);" id="stat-spurts-sub">≥15%: 0 stocks</div>
-          </div>
-          <div style="background:var(--card);border:1px solid var(--b);border-radius:var(--rs);padding:5px 4px;text-align:center;">
-            <div style="font-size:7.5px;color:var(--t2);font-weight:600;">LONG B/U</div>
-            <div style="font-size:16px;font-weight:800;color:var(--bull);font-family:var(--mono);line-height:1.2;" id="stat-lb">0</div>
-            <div style="font-size:7.5px;color:var(--t3);" id="stat-lb-sub">L: 0 · M: 0</div>
-          </div>
-          <div style="background:var(--card);border:1px solid var(--b);border-radius:var(--rs);padding:5px 4px;text-align:center;">
-            <div style="font-size:7.5px;color:var(--t2);font-weight:600;">SHORT B/U</div>
-            <div style="font-size:16px;font-weight:800;color:var(--bear);font-family:var(--mono);line-height:1.2;" id="stat-sb">0</div>
-            <div style="font-size:7.5px;color:var(--t3);">Bear Conv.</div>
+        <div style="padding:5px 8px;">
+          <div style="font-size:8px;font-weight:700;color:var(--t1);margin-bottom:4px;text-transform:uppercase;letter-spacing:.06em;">Session Stats</div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:4px;">
+            <div style="background:var(--card);border:1px solid var(--b);border-radius:var(--rs);padding:4px;text-align:center;">
+              <div style="font-size:7px;color:var(--t2);font-weight:600;">ALERTS TODAY</div>
+              <div style="font-size:13px;font-weight:800;color:var(--bull);font-family:var(--mono);line-height:1.1;" id="stat-alerts">0</div>
+              <div style="font-size:7px;color:var(--t3);" id="stat-alerts-sub">A: 0 · B: 0 · C: 0</div>
+            </div>
+            <div style="background:var(--card);border:1px solid var(--b);border-radius:var(--rs);padding:4px;text-align:center;">
+              <div style="font-size:7px;color:var(--t2);font-weight:600;">OI SPURTS</div>
+              <div style="font-size:13px;font-weight:800;color:var(--pur);font-family:var(--mono);line-height:1.1;" id="stat-spurts">0</div>
+              <div style="font-size:7px;color:var(--t3);" id="stat-spurts-sub">≥15%: 0 stocks</div>
+            </div>
+            <div style="background:var(--card);border:1px solid var(--b);border-radius:var(--rs);padding:4px;text-align:center;">
+              <div style="font-size:7px;color:var(--t2);font-weight:600;">LONG B/U</div>
+              <div style="font-size:13px;font-weight:800;color:var(--bull);font-family:var(--mono);line-height:1.1;" id="stat-lb">0</div>
+              <div style="font-size:7px;color:var(--t3);" id="stat-lb-sub">L: 0 · M: 0</div>
+            </div>
+            <div style="background:var(--card);border:1px solid var(--b);border-radius:var(--rs);padding:4px;text-align:center;">
+              <div style="font-size:7px;color:var(--t2);font-weight:600;">SHORT B/U</div>
+              <div style="font-size:13px;font-weight:800;color:var(--bear);font-family:var(--mono);line-height:1.1;" id="stat-sb">0</div>
+              <div style="font-size:7px;color:var(--t3);">Bear Conv.</div>
+            </div>
           </div>
         </div>
       </div>
@@ -6898,14 +7016,14 @@
         // ΔOI (OI Change) Calculations
         const ceOiChg = r.ce_oi_change ?? r.ce_oi_chg ?? 0;
         const ceOiChgPct = r.ce_oi_change_pct ?? r.ce_oi_eod_chg_pct ?? 0;
-        const ceOiChgStr = ceOiChg !== 0 
+        const ceOiChgStr = ceOiChg !== 0
           ? `${ceOiChg > 0 ? '+' : ''}${formatOICompact(ceOiChg)}${ceOiChgPct !== 0 ? ` (${ceOiChgPct > 0 ? '+' : ''}${ceOiChgPct.toFixed(1)}%)` : ''}`
           : '<span style="color:#22c55e;">+—</span>';
         const ceOiChgCls = ceOiChg > 0 ? 'bull' : (ceOiChg < 0 ? 'bear' : 'bull');
 
         const peOiChg = r.pe_oi_change ?? r.pe_oi_chg ?? 0;
         const peOiChgPct = r.pe_oi_change_pct ?? r.pe_oi_eod_chg_pct ?? 0;
-        const peOiChgStr = peOiChg !== 0 
+        const peOiChgStr = peOiChg !== 0
           ? `${peOiChg > 0 ? '+' : ''}${formatOICompact(peOiChg)}${peOiChgPct !== 0 ? ` (${peOiChgPct > 0 ? '+' : ''}${peOiChgPct.toFixed(1)}%)` : ''}`
           : '<span style="color:#22c55e;">+—</span>';
         const peOiChgCls = peOiChg > 0 ? 'bull' : (peOiChg < 0 ? 'bear' : 'bull');
@@ -7294,18 +7412,19 @@
         } else {
           coilBody.innerHTML = emaCoils.map(w => {
             const gapLabel = w.ema_gap_pct ? `${Number(w.ema_gap_pct).toFixed(3)}%` : '';
-            const coilTime = w.coil_time || '';
+            const rawTime = String(w.coil_time || '');
+            const coilTime = rawTime.length >= 5 ? rawTime.slice(-8).slice(0, 5) : rawTime;
             const ltpStr = w.last_ltp ? `₹${Number(w.last_ltp).toFixed(1)}` : '—';
-            return `<div class="brk-item" onclick="flashSymbolInBoard('${w.symbol}')" style="cursor:pointer;padding:4px 8px;border-bottom:1px solid var(--b);border-left:2px solid #388bfd;" title="EMA Gap: ${gapLabel} of LTP · First seen: ${coilTime}">
-          <div style="display:flex;align-items:center;justify-content:space-between;">
-            <div style="display:flex;align-items:center;gap:4px;">
-              <span style="color:#388bfd;font-size:9px;">⟳</span>
-              <span style="font-size:10px;font-weight:700;color:#388bfd;">${w.symbol}</span>
-              <span style="font-size:7px;padding:0.5px 3px;border-radius:2px;background:rgba(56,139,253,0.15);color:#388bfd;font-weight:600;">EMA Coil</span>
+            return `<div class="brk-item" onclick="flashSymbolInBoard('${w.symbol}')" style="cursor:pointer;padding:4px 8px;border-bottom:1px solid var(--b);border-left:2px solid #388bfd;" title="EMA Gap: ${gapLabel} of LTP · First seen: ${w.coil_time || ''}">
+          <div style="display:flex;align-items:center;justify-content:space-between;gap:4px;">
+            <div style="display:flex;align-items:center;gap:3px;min-width:0;">
+              <span style="color:#388bfd;font-size:9px;flex-shrink:0;">⟳</span>
+              <span style="font-size:10px;font-weight:700;color:#388bfd;white-space:nowrap;">${w.symbol}</span>
+              <span style="font-size:7px;padding:0.5px 3px;border-radius:2px;background:rgba(56,139,253,0.15);color:#388bfd;font-weight:600;white-space:nowrap;flex-shrink:0;">Coil</span>
             </div>
-            <div style="display:flex;align-items:center;gap:6px;">
+            <div style="display:flex;align-items:center;gap:4px;flex-shrink:0;">
               <span style="font-size:9px;font-weight:700;font-family:var(--mono);color:var(--t1);">${ltpStr}</span>
-              ${gapLabel ? `<span style="font-size:8px;font-weight:700;background:rgba(56,139,253,0.15);border-radius:2px;padding:0.5px 3px;color:#388bfd;font-family:var(--mono);">Δ${gapLabel}</span>` : ''}
+              ${gapLabel ? `<span style="font-size:7.5px;font-weight:700;background:rgba(56,139,253,0.15);border-radius:2px;padding:0.5px 2px;color:#388bfd;font-family:var(--mono);">Δ${gapLabel}</span>` : ''}
               ${coilTime ? `<span style="font-size:8px;color:var(--t2);font-family:var(--mono);">${coilTime}</span>` : ''}
             </div>
           </div>
@@ -8744,5 +8863,7 @@
     });
   </script>
 </body>
+
+</html>
 
 </html>

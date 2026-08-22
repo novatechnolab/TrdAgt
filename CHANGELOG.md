@@ -1,5 +1,31 @@
 # TradeSignal — Change Log
 
+## 2026-08-22 — 360 Command Center: Right Panel Equal Spacing & Clean Sizing Reformat
+
+**Goal:** Reformat Right Panel (Column 3) in `360-command-center.html` to distribute vertical space equally across all 3 sections (Live Breakouts, Squeeze Watchlist, EMA Coil Watchlist), eliminate horizontal scrollbar overflow in EMA Coils, and polish bottom footer metrics.
+
+**Files changed:** `app/360-command-center.html` [MODIFY]
+
+**Summary:**
+- **Equal 3-Way Flex Distribution**: Applied `flex: 1 1 0; min-height: 0; display: flex; flex-direction: column; overflow: hidden;` to Live Breakouts, Squeeze Watchlist, and EMA Coil Watchlist so each gets an exact 1/3 share of vertical height with its own smooth vertical scrollbar.
+- **Horizontal Overflow Elimination**: Truncated EMA Coil timestamps to `HH:MM` (`14:31`) and added `overflow-x: hidden;` across all list bodies, removing unwanted horizontal scrollbars.
+- **Polished Footer**: Realigned Confluence Rules (`padding: 5px 8px; gap: 2px 8px;`) and Session Stats (`13px` bold counts, `min-height: 42px` cards) into a clean, balanced bottom footer.
+
+**Agent Reuse Decision:** Frontend layout refinement in `360-command-center.html`.
+
+## 2026-08-22 — 360 Command Center: Expanded Live Breakouts & Bottom-Docked Stats (Bug Fix)
+
+**Goal:** Fix the Right Panel layout in `360-command-center.html` so Live Breakouts expands to fill all available vertical screen height and Confluence Rules & Session Stats are pinned tightly at the bottom with zero empty space.
+
+**Files changed:** `app/360-command-center.html` [MODIFY]
+
+**Summary:**
+- **Dynamic Breakout Expansion**: Replaced fixed height capping on Live Breakouts with `flex: 1 1 0; min-height: 160px; overflow: hidden;` so `#brk-body` smoothly scrolls and uses all available screen height.
+- **Watchlist Sizing**: Capped Squeeze and EMA Coil watchlists at `115px` each (`flex-shrink: 0`).
+- **Bottom-Docked Footer**: Moved Confluence Rules and Session Stats into a pinned footer container (`flex-shrink: 0; border-top: 1px solid var(--b)`) with micro-compact 2x2 stat cards and rules grid that never leaves empty gaps.
+
+**Agent Reuse Decision:** Frontend layout fix in `360-command-center.html`.
+
 ## 2026-08-22 — 360 Command Center: Full-Featured OI Heatmap & Search System in Alert Feed
 
 **Goal:** Replicate the complete OI Spurt Scanner (`oi-spurt-scanner.html`) features and analytics directly into the Alert Feed (`🔥 OI Heatmap` tab) in `360-command-center.html`, including interactive autocomplete search, 5-stat header strip, Layer 1/2/3 analytics, CE/PE writing zones, and full OI chain heatmap.
@@ -1275,6 +1301,19 @@ Zero changes to alert eligibility logic. All EMA crossover, pre-cross, live brea
 **Session Goal:** Prevent agentic framework from executing alert processing loops and dispatching live trade notifications (Telegram, Discord, Socket.IO) during off-market hours.
 
 **Root Cause:**
+Agent background threads ran their 200ms `on_tick` loops continuously without verifying market session state. Out of market hours, when static EOD/offline crossover cache was present in memory, signal agents (`EMAAgent`, `FNOTrapAgent`, `MarketAgent`, `SynergyAgent`) interpreted the static data as new events and emitted bus signals to `PredictionAgent` and `AlertDispatchAgent`, resulting in an active alert dispatch loop.
+
+**Files Changed:**
+- `app/backend/agents/alert_dispatch_agent.py` [MODIFIED]: Added `is_market_hours()` guard in `handle_message()` before Telegram, Discord, or Socket.IO emissions.
+- `app/backend/agents/ema_agent.py` [MODIFIED]: Added `is_market_hours()` guard at start of `on_tick()`.
+- `app/backend/agents/fno_trap_agent.py` [MODIFIED]: Added `is_market_hours()` guard at start of `on_tick()`.
+- `app/backend/agents/market_agent.py` [MODIFIED]: Added `is_market_hours()` guard at start of `on_tick()`.
+- `app/backend/agents/synergy_agent.py` [MODIFIED]: Added `is_market_hours()` guard at start of `on_tick()`.
+- `app/backend/server.py` [MODIFIED]:
+  - Added `lazy_start_ema_crossover_scanner()` and `notify_ema_client()` to `/api/ema-crossovers` and `/api/ema_convergence_watchlist`.
+  - Removed orphaned/duplicate `api_ema_crossovers` function definition.
+
+**Agent Reuse:** Guarded existing agents (`AlertDispatchAgent`, `EMAAgent`, `FNOTrapAgent`, `MarketAgent`, `SynergyAgent`). No new agents created.
 Agent background threads ran their 200ms `on_tick` loops continuously without verifying market session state. Out of market hours, when static EOD/offline crossover cache was present in memory, signal agents (`EMAAgent`, `FNOTrapAgent`, `MarketAgent`, `SynergyAgent`) interpreted the static data as new events and emitted bus signals to `PredictionAgent` and `AlertDispatchAgent`, resulting in an active alert dispatch loop.
 
 **Files Changed:**
