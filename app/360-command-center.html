@@ -3884,8 +3884,8 @@
 
       html,
       body {
-        height: auto;
-        overflow: auto;
+        height: 100%;
+        overflow: hidden;
       }
 
       .tb {
@@ -3946,29 +3946,139 @@
       }
 
       .lay {
-        grid-template-columns: 1fr;
-        height: auto;
-        overflow: visible;
+        grid-template-columns: 1fr !important;
+        height: calc(100vh - 44px - 50px) !important;
+        height: calc(100dvh - 44px - 50px) !important;
+        overflow: hidden !important;
       }
 
       .col {
         border-right: none;
-        border-bottom: 1px solid var(--b);
-        min-height: 60vh;
+        border-bottom: none;
+        height: 100% !important;
+        min-height: 0 !important;
         display: none;
+        flex-direction: column !important;
+        overflow: hidden !important;
       }
 
       .col.mcol-active {
-        display: flex;
+        display: flex !important;
+      }
+
+      .board-main-wrap {
+        height: 100% !important;
+        min-height: 0 !important;
+        display: flex !important;
+        flex-direction: column !important;
+        overflow: hidden !important;
+        flex: 1 !important;
       }
 
       .cb {
-        overflow-x: auto;
+        flex: 1 !important;
+        height: 100% !important;
+        overflow-y: auto !important;
+        overflow-x: hidden !important;
+        -webkit-overflow-scrolling: touch;
+        padding-bottom: 24px;
+      }
+
+      /* ══ Mobile Master Board Fit (100% Width) ══ */
+      .tbl {
+        min-width: 100% !important;
+        width: 100% !important;
+        table-layout: auto !important;
+      }
+
+      .tbl th,
+      .tbl td {
+        padding: 6px 3px !important;
+        font-size: 8.5px !important;
+        white-space: nowrap;
+      }
+
+      .tbl th.rank, .tbl td.rank {
+        width: 18px !important;
+        padding-left: 3px !important;
+        padding-right: 2px !important;
+      }
+
+      .tbl th.sym, .tbl td.sym {
+        font-size: 9.5px !important;
+        font-weight: 800;
+      }
+
+      /* Hide low-priority desktop-only columns on mobile to fit screen */
+      .tbl th:nth-child(3), .tbl td:nth-child(3), /* CAP */
+      .tbl th:nth-child(6), .tbl td:nth-child(6), /* FUT% or DXCNT */
+      .tbl th:nth-child(7), .tbl td:nth-child(7), /* DXCNT or GAIN% */
+      .tbl th:nth-child(8), .tbl td:nth-child(8), /* GAP% */
+      .tbl th:nth-child(9), .tbl td:nth-child(9), /* INST */
+      .tbl th:nth-child(11), .tbl td:nth-child(11), /* RVOL */
+      .tbl th:nth-child(12), .tbl td:nth-child(12), /* FH VOL */
+      .tbl th:nth-child(13), .tbl td:nth-child(13), /* E9H */
+      .tbl th:nth-child(14), .tbl td:nth-child(14), /* TF */
+      .tbl th:nth-child(15), .tbl td:nth-child(15)  /* OI% */
+      {
+        display: none !important;
+      }
+
+      /* Subrows (chart & contracts) span 100% full mobile width */
+      tr.chart-subrow td,
+      tr.contracts-subrow td {
+        display: table-cell !important;
+        width: 100% !important;
+        padding: 0 !important;
+      }
+
+      /* Inline Chart on Mobile */
+      .inline-chart-box {
+        padding: 4px 2px 8px !important;
+        width: 100% !important;
+        box-sizing: border-box !important;
+      }
+
+      .inline-chart-topbar {
+        padding: 4px 6px !important;
+        gap: 4px !important;
+        flex-direction: column !important;
+        align-items: stretch !important;
+      }
+
+      .ichart-info {
+        display: flex !important;
+        align-items: center !important;
+        justify-content: space-between !important;
+        gap: 4px !important;
+      }
+
+      .ichart-levels {
+        display: flex !important;
+        gap: 3px !important;
+        overflow-x: auto !important;
+        white-space: nowrap !important;
+        padding-bottom: 2px !important;
         -webkit-overflow-scrolling: touch;
       }
 
-      .tbl {
-        min-width: 700px;
+      .ichart-actions {
+        display: flex !important;
+        align-items: center !important;
+        justify-content: space-between !important;
+        gap: 4px !important;
+        flex-wrap: nowrap !important;
+      }
+
+      .ichart-canvas-container {
+        height: 320px !important;
+        width: 100% !important;
+        box-sizing: border-box !important;
+      }
+
+      .ichart-canvas {
+        width: 100% !important;
+        height: 100% !important;
       }
 
       .fb {
@@ -3990,6 +4100,9 @@
       /* ══ Mobile Docked OI Drawer ══ */
       .board-split-wrap {
         position: relative !important;
+        height: 100% !important;
+        min-height: 0 !important;
+        flex: 1 !important;
       }
 
       .oi-dock-panel {
@@ -5835,7 +5948,7 @@
       const dpr = window.devicePixelRatio || 1;
       const rect = canvas.getBoundingClientRect();
 
-      const width = rect.width || canvas.parentElement?.clientWidth || 800;
+      const width = rect.width || canvas.parentElement?.clientWidth || (window.innerWidth < 600 ? Math.max(300, window.innerWidth - 12) : 800);
       const height = width < 600 ? 320 : 380;
 
       if (canvas.width !== width * dpr || canvas.height !== height * dpr) {
@@ -7546,11 +7659,17 @@
 
     /* LAYOUT HEIGHT */
     function fixHeight() {
-      if (window.innerWidth <= 767) return; /* mobile: natural scroll, no forced height */
       const hz = document.getElementById('hz-strip');
       const topH = 48 + (hz ? hz.offsetHeight : 46);
       const mainLay = document.getElementById('main-lay');
-      if (mainLay) mainLay.style.height = (window.innerHeight - topH) + 'px';
+      if (window.innerWidth <= 767) {
+        if (mainLay) mainLay.style.height = 'calc(100dvh - 94px)';
+      } else {
+        if (mainLay) mainLay.style.height = (window.innerHeight - topH) + 'px';
+      }
+      if (_activeChartStock) {
+        drawInlineCandleCanvas(_activeChartStock, null);
+      }
     }
 
     document.addEventListener('DOMContentLoaded', () => {

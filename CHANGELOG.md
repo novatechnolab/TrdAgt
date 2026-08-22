@@ -1,5 +1,18 @@
 # TradeSignal — Change Log
 
+## 2026-08-22 — 360 Command Center: Mobile Master Board 100% Screen Fit & Full Chart Display
+
+**Goal:** Make Unified Master Board table fit 100% within mobile viewport without horizontal scrolling, render full-width intraday candlestick charts without clipping, and eliminate dead space at the bottom on mobile screens.
+
+**Files changed:** `app/360-command-center.html` [MODIFY]
+
+**Summary:**
+- **100% Width Mobile Master Board**: Set `.tbl { min-width: 100%; width: 100%; }` and hid non-essential desktop columns (`CAP`, `DXCNT`, `GAP%`, `INST`, `FH VOL`, `E9H`, `TF`, `OI%`) on `< 768px`, allowing core metrics (`#`, `SYMBOL`, `SPOT%`, `LTP`, `FUT B/U`, `SCORE`) to fit seamlessly within mobile width without side-scrolling.
+- **Full-Width Mobile Chart**: Allowed chart subrow to span the full $100\%$ viewport width, dynamically calculating canvas DPI width for mobile viewports ($360\text{px}-414\text{px}$) with full candle wicks, EMAs, and right price scale completely visible.
+- **Eliminated Bottom Dead Space**: Set mobile layout height to `calc(100dvh - 94px)` with `#board-body` filling available height with smooth touch scrolling (`overflow-y: auto`), removing the empty dark background gap above the mobile navigation.
+
+**Agent Reuse Decision:** Frontend mobile UI/chart optimization in `360-command-center.html`.
+
 ## 2026-08-22 — 360 Command Center: Mobile View Optimization (Drawer OI Spurt & Header Streamlining)
 
 **Goal:** Optimize `360-command-center.html` for mobile screens (< 768px) to unlock 100% full-width chart visibility, prevent horizontal layout squeezing by the docked OI Spurt bar, and reclaim vertical header space.
