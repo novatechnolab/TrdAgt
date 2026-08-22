@@ -712,8 +712,6 @@
       gap: 7px;
       padding: 6px;
       font-family: var(--font, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, monospace);
-      contain: content;
-      transform: translateZ(0);
     }
 
     .oi-hm-search-container {
@@ -725,12 +723,16 @@
 
     .oi-hm-search-bar {
       display: flex;
-      gap: 5px;
+      gap: 6px;
       align-items: center;
       background: var(--card2);
       border: 1px solid var(--b);
-      border-radius: 6px;
-      padding: 4px 6px;
+      border-radius: 8px;
+      padding: 6px 10px;
+      min-height: 42px;
+      touch-action: manipulation;
+      user-select: text;
+      -webkit-user-select: text;
     }
 
     .oi-hm-input {
@@ -738,16 +740,21 @@
       background: transparent;
       border: none;
       outline: none;
-      font-size: 11px;
+      font-size: 13px;
       font-weight: 700;
       color: var(--t1);
       font-family: var(--mono);
       text-transform: uppercase;
+      min-height: 32px;
+      touch-action: manipulation;
+      user-select: text;
+      -webkit-user-select: text;
+      pointer-events: auto;
     }
 
     .oi-hm-sugg-box {
       position: absolute;
-      top: 36px;
+      top: 48px;
       left: 0;
       right: 0;
       background: var(--card);
@@ -7071,9 +7078,9 @@
           <!-- 1. Interactive Autocomplete Search & Dynamic Tabs Pan -->
           <div class="oi-hm-search-container">
             <div class="oi-hm-search-bar">
-              <input type="text" class="oi-hm-input" id="oi-hm-search-input" value="${sym}" autocomplete="off" placeholder="🔍 Search F&O symbol (e.g. BRITANNIA, TCS)..." onfocus="initOIHeatmapSymbols()" oninput="showOIHeatmapSugg(this.value)" onkeydown="handleOIHeatmapSearchKey(event)" />
-              <button class="ibtn" style="padding:2px 8px;font-size:10px;font-weight:800;background:rgba(56,189,248,0.2);color:#38bdf8;border:1px solid #38bdf8;border-radius:4px;" onclick="submitOIHeatmapSearch()">GO</button>
-              <button class="ibtn" style="padding:2px 6px;" title="Refresh" onclick="loadOIHeatmapData('${sym}', true)">↺</button>
+              <input type="search" class="oi-hm-input" id="oi-hm-search-input" value="${sym}" autocomplete="off" autocorrect="off" autocapitalize="characters" spellcheck="false" inputmode="search" placeholder="🔍 Search F&O symbol (e.g. BRITANNIA, TCS)..." onfocus="initOIHeatmapSymbols(); this.select();" onclick="initOIHeatmapSymbols(); this.select();" oninput="showOIHeatmapSugg(this.value)" onkeydown="handleOIHeatmapSearchKey(event)" />
+              <button class="ibtn" style="padding:4px 10px;font-size:11px;font-weight:800;background:rgba(56,189,248,0.2);color:#38bdf8;border:1px solid #38bdf8;border-radius:6px;min-height:30px;" onclick="submitOIHeatmapSearch()">GO</button>
+              <button class="ibtn" style="padding:4px 8px;font-size:12px;min-height:30px;" title="Refresh" onclick="loadOIHeatmapData('${sym}', true)">↺</button>
             </div>
             <div class="oi-hm-sugg-box" id="oi-hm-suggestions"></div>
             <div class="oi-hm-chips-row">
