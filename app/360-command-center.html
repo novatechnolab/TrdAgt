@@ -3888,9 +3888,33 @@
         overflow: auto;
       }
 
-      .mkt {
+      .tb {
+        padding: 4px 6px;
         gap: 6px;
-        flex-wrap: wrap;
+        flex-wrap: nowrap;
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+      }
+
+      .mkt {
+        gap: 4px;
+        flex-wrap: nowrap;
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+      }
+
+      .mi {
+        padding: 2px 6px;
+        font-size: 8px;
+        flex-shrink: 0;
+      }
+
+      #counts-pill {
+        display: none !important;
+      }
+
+      #conf-legend-bar {
+        display: none !important;
       }
 
       .pill {
@@ -3899,7 +3923,8 @@
       }
 
       .clk {
-        font-size: 10px;
+        font-size: 9px;
+        padding: 2px 5px;
       }
 
       .hz-strip {
@@ -3947,15 +3972,50 @@
       }
 
       .fb {
-        flex-wrap: wrap;
-        gap: 3px;
-        padding: 5px 6px;
+        flex-wrap: nowrap;
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+        gap: 4px;
+        padding: 4px 6px;
       }
 
       .fbtn {
-        font-size: 8px;
-        padding: 3px 7px;
-        min-height: 34px;
+        font-size: 8.5px;
+        padding: 3px 8px;
+        min-height: 28px;
+        white-space: nowrap;
+        flex-shrink: 0;
+      }
+
+      /* ══ Mobile Docked OI Drawer ══ */
+      .board-split-wrap {
+        position: relative !important;
+      }
+
+      .oi-dock-panel {
+        position: absolute !important;
+        top: 0;
+        left: 0;
+        bottom: 0;
+        z-index: 50 !important;
+        width: 240px !important;
+        min-width: 240px !important;
+        max-width: 85vw !important;
+        background: var(--card) !important;
+        box-shadow: 4px 0 20px rgba(0, 0, 0, .5) !important;
+        transform: translateX(-100%);
+        transition: transform .22s cubic-bezier(.4, 0, .2, 1) !important;
+        border-right: 1px solid var(--b) !important;
+      }
+
+      .oi-dock-panel.open-mobile {
+        transform: translateX(0) !important;
+        opacity: 1 !important;
+        pointer-events: auto !important;
+      }
+
+      .oi-dock-panel.collapsed {
+        transform: translateX(-100%) !important;
       }
 
       .tabs {
@@ -6594,13 +6654,19 @@
       const panel = document.getElementById('oi-dock-panel');
       const btn = document.getElementById('btn-toggle-oi-dock');
       if (!panel) return;
-      _dockedOISidebarVisible = !_dockedOISidebarVisible;
-      if (_dockedOISidebarVisible) {
-        panel.classList.remove('collapsed');
-        if (btn) btn.classList.add('on');
+      const isMobile = window.innerWidth < 768;
+      if (isMobile) {
+        const isOpen = panel.classList.toggle('open-mobile');
+        if (btn) btn.classList.toggle('on', isOpen);
       } else {
-        panel.classList.add('collapsed');
-        if (btn) btn.classList.remove('on');
+        _dockedOISidebarVisible = !_dockedOISidebarVisible;
+        if (_dockedOISidebarVisible) {
+          panel.classList.remove('collapsed');
+          if (btn) btn.classList.add('on');
+        } else {
+          panel.classList.add('collapsed');
+          if (btn) btn.classList.remove('on');
+        }
       }
     }
 
@@ -6647,6 +6713,12 @@
 
     function selectAndFlashStock(sym) {
       if (!sym) return;
+      if (window.innerWidth < 768) {
+        const panel = document.getElementById('oi-dock-panel');
+        const btn = document.getElementById('btn-toggle-oi-dock');
+        if (panel) panel.classList.remove('open-mobile');
+        if (btn) btn.classList.remove('on');
+      }
       if (_activeAlertTab === 'oi_heatmap') {
         selectOIHeatmapSymbol(sym);
       }
@@ -7486,7 +7558,11 @@
       startClock();
       renderBoard(); renderOIBoard(); renderDockedOISpurt(); renderAlerts();
       fixHeight(); window.addEventListener('resize', fixHeight);
-      if (window.innerWidth <= 767) showMobileCol(0);
+      if (window.innerWidth <= 767) {
+        showMobileCol(0);
+        const btn = document.getElementById('btn-toggle-oi-dock');
+        if (btn) btn.classList.remove('on');
+      }
       initSocketIO();
       startPolling();
     });

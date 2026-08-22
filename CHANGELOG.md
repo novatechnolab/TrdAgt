@@ -1,5 +1,19 @@
 # TradeSignal — Change Log
 
+## 2026-08-22 — 360 Command Center: Mobile View Optimization (Drawer OI Spurt & Header Streamlining)
+
+**Goal:** Optimize `360-command-center.html` for mobile screens (< 768px) to unlock 100% full-width chart visibility, prevent horizontal layout squeezing by the docked OI Spurt bar, and reclaim vertical header space.
+
+**Files changed:** `app/360-command-center.html` [MODIFY]
+
+**Summary:**
+- **Overlay Drawer OI Spurt on Mobile**: Converted `.oi-dock-panel` from fixed inline split to a slide-out overlay drawer on mobile screens (`transform: translateX(-100%)` with `.open-mobile` animation and auto-close on symbol tap), giving 100% full viewport width to the Master Board and inline charts.
+- **Compact Horizontal Header & Market Strip**: Replaced multi-row wrapping on `.tb` and `.mkt` with smooth single-line touch scrollbars (`overflow-x: auto`), hidden non-essential `#counts-pill` on mobile.
+- **Scrollable Filter Chips Strip**: Converted `.fb` filter buttons into a single-line horizontal swipe strip (`flex-wrap: nowrap; overflow-x: auto`).
+- **Hidden Confluence Legend on Mobile**: Hid `#conf-legend-bar` on screens < 768px, saving 28px vertical space while preserving numeric scores on stock rows.
+
+**Agent Reuse Decision:** Frontend mobile responsiveness upgrade in `360-command-center.html`.
+
 ## 2026-08-22 — 360 Command Center: Right Panel Equal Spacing & Clean Sizing Reformat
 
 **Goal:** Reformat Right Panel (Column 3) in `360-command-center.html` to distribute vertical space equally across all 3 sections (Live Breakouts, Squeeze Watchlist, EMA Coil Watchlist), eliminate horizontal scrollbar overflow in EMA Coils, and polish bottom footer metrics.
