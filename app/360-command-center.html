@@ -90,8 +90,6 @@
       color: var(--t1);
       min-height: 100vh;
       overflow: hidden;
-      touch-action: pan-x pan-y pinch-zoom;
-      -webkit-text-size-adjust: 100%;
       background-image: radial-gradient(ellipse 90% 45% at 50% -10%, rgba(56, 189, 248, .08) 0%, transparent 60%),
         radial-gradient(ellipse 50% 35% at 85% 85%, rgba(99, 102, 241, .06) 0%, transparent 50%);
       transition: background-color .2s, color .2s;
@@ -718,7 +716,7 @@
       position: relative;
       display: flex;
       flex-direction: column;
-      gap: 5px;
+      gap: 4px;
     }
 
     .oi-hm-search-bar {
@@ -727,25 +725,20 @@
       align-items: center;
       background: var(--card2);
       border: 1px solid var(--b);
-      border-radius: 8px;
-      padding: 6px 10px;
-    }
-
-    .oi-hm-search-bar:focus-within {
-      border-color: var(--acc);
-      box-shadow: 0 0 6px rgba(56, 189, 248, 0.3);
+      border-radius: 6px;
+      padding: 4px 8px;
     }
 
     .oi-hm-input {
       flex: 1;
-      width: 100%;
       background: transparent;
       border: none;
       outline: none;
-      font-size: 14px;
+      font-size: 11px;
       font-weight: 700;
       color: var(--t1);
-      font-family: inherit;
+      font-family: var(--mono);
+      text-transform: uppercase;
     }
 
     .oi-hm-sugg-box {
@@ -3990,7 +3983,6 @@
         overflow-y: auto !important;
         overflow-x: auto !important;
         -webkit-overflow-scrolling: touch;
-        touch-action: pan-x pan-y pinch-zoom;
         padding-bottom: 24px;
       }
 
@@ -6899,13 +6891,7 @@
     let _cachedOIHeatmapData = {};
     let _oiHeatmapTabs = [];
     let _oiHeatmapAutoRefreshTimer = null;
-    let _oiSymbolList = [
-      { sym: 'NIFTY', name: 'NIFTY 50', tag: 'INDEX' },
-      { sym: 'BANKNIFTY', name: 'NIFTY BANK', tag: 'INDEX' },
-      { sym: 'FINNIFTY', name: 'NIFTY FIN SERVICE', tag: 'INDEX' },
-      { sym: 'MIDCPNIFTY', name: 'NIFTY MID SELECT', tag: 'INDEX' },
-      { sym: 'SENSEX', name: 'BSE SENSEX', tag: 'INDEX' }
-    ];
+    let _oiSymbolList = [];
     let _suggActiveIdx = -1;
     let _oiSymbolsLoaded = false;
 
@@ -6972,7 +6958,6 @@
       _oiSymbolList = Array.from(map.values());
       _oiSymbolsLoaded = true;
 
-      // Also asynchronously enrich with full company names if /api/equity-list is reachable
       fetch('/api/equity-list').then(r => r.ok ? r.json() : null).then(data => {
         if (data && data.stocks && Array.isArray(data.stocks)) {
           data.stocks.forEach(s => {
@@ -7098,9 +7083,9 @@
           <!-- 1. Interactive Autocomplete Search & Dynamic Tabs Pan -->
           <div class="oi-hm-search-container">
             <div class="oi-hm-search-bar">
-              <input type="text" class="oi-hm-input" id="oi-hm-search-input" value="" autocomplete="off" autocapitalize="characters" spellcheck="false" placeholder="🔍 Search F&O symbol (e.g. RELIANCE, TCS, NIFTY)..." oninput="showOIHeatmapSugg(this.value)" onkeydown="handleOIHeatmapSearchKey(event)" />
-              <button class="ibtn" style="padding:4px 10px;font-size:11px;font-weight:800;background:rgba(56,189,248,0.2);color:#38bdf8;border:1px solid #38bdf8;border-radius:6px;min-height:30px;" onclick="submitOIHeatmapSearch()">GO</button>
-              ${sym ? `<button class="ibtn" style="padding:4px 8px;font-size:12px;min-height:30px;" title="Refresh" onclick="loadOIHeatmapData('${sym}', true)">↺</button>` : ''}
+              <input type="text" class="oi-hm-input" id="oi-hm-search-input" value="" autocomplete="off" placeholder="🔍 Search F&O symbol (e.g. BRITANNIA, TCS)..." oninput="showOIHeatmapSugg(this.value)" onkeydown="handleOIHeatmapSearchKey(event)" />
+              <button class="ibtn" style="padding:2px 8px;font-size:10px;font-weight:800;background:rgba(56,189,248,0.2);color:#38bdf8;border:1px solid #38bdf8;border-radius:4px;" onclick="submitOIHeatmapSearch()">GO</button>
+              ${sym ? `<button class="ibtn" style="padding:2px 6px;" title="Refresh" onclick="loadOIHeatmapData('${sym}', true)">↺</button>` : ''}
             </div>
             <div class="oi-hm-sugg-box" id="oi-hm-suggestions"></div>
             ${_oiHeatmapTabs.length ? `
@@ -9146,7 +9131,5 @@
     });
   </script>
 </body>
-
-</html>
 
 </html>

@@ -16,9 +16,7 @@
 - **CSS Layout Containment & GPU Acceleration:** Added `contain: content;` and `transform: translateZ(0);` across `.oi-hm-wrap` and `.oi-hm-card` to isolate layout recalculations from the rest of the 9,000-line DOM.
 - **Instrument Token Map Audit & Fix:** Audited all 43 hardcoded F&O tokens against live Zerodha Kite NSE instruments. Corrected 6 mismatched/outdated tokens (`POWERGRID: 3834113`, `BEL: 98049`, `BAJAJFINSV: 4268801`, `TITAN: 897537`, `JIOFIN: 4644609`, `TMPV: 884737`), restoring full candlestick & CPR chart rendering across all symbols.
 - **Full-Session (09:15 to 15:30) Chart Viewport Default:** Fixed default `visibleCount` in `getChartViewState` and `drawInlineCandleCanvas` from hardcoded 45 candles (~11:30–15:30) to dynamic full-session candle count (75 candles for 5m, 25 candles for 15m), ensuring the complete morning-to-closing bell market session (09:15 to 15:30) is displayed on initial chart load.
-- **Mobile Manual Column Sliding & Pinch-to-Zoom Support:** Restored all 16 columns on mobile with smooth horizontal momentum sliding (`overflow-x: auto; -webkit-overflow-scrolling: touch;`), froze `#` and `SYMBOL` columns with sticky positioning (`position: sticky; left: 0/22px; z-index: 4;`), ensured expanded chart subrows stay locked to full viewport width, and enabled multi-touch pinch-to-zoom up to 500% across the entire screen via viewport meta update and `touch-action: pan-x pan-y pinch-zoom;`.
-- **Zero-Default OI Heatmap Screen & Native Mobile Input Alignment:** Removed default `NIFTY` auto-load so OI Heatmap screen opens clean with search bar and empty-state prompt until an F&O stock is searched or clicked from the Master Board, removed conflicting container click handlers and uppercase CSS text transforms, and aligned styles with `.ps-search` / `.oi-dock-input` for 100% native mobile soft-keyboard invocation.
-- **Prefix-First Stock Search Ranking:** Populated `_oiSymbolList` directly from the 214+ F&O stocks in memory (`STOCKS`) and prioritized symbol prefix matches (`s.sym.startsWith(q)`) so searching letters like `T` instantly brings `TCS`, `TATAMOTORS`, `TITAN`, `TRENT`, etc. to the top of the autocomplete list.
+- **Reverted Experimental Overrides & Restored Clean Base State:** Removed all `touch-action` overrides from `html, body` and `.cb` containers that intercepted mobile input taps, reverted search bar CSS to clean original definitions, removed default `NIFTY` auto-selection on opening the tab, and populated `_oiSymbolList` directly with prefix-first matching across all 214+ F&O stocks.
 
 **Agent Reuse Decision:** Extended `oi_spurt_routes.py` and `360-command-center.html` directly with zero architectural debt.
 
@@ -1375,4 +1373,5 @@ Agent background threads ran their 200ms `on_tick` loops continuously without ve
   - Added `lazy_start_ema_crossover_scanner()` and `notify_ema_client()` to `/api/ema-crossovers` and `/api/ema_convergence_watchlist`.
   - Removed orphaned/duplicate `api_ema_crossovers` function definition.
 
+**Agent Reuse:** Guarded existing agents (`AlertDispatchAgent`, `EMAAgent`, `FNOTrapAgent`, `MarketAgent`, `SynergyAgent`). No new agents created.
 **Agent Reuse:** Guarded existing agents (`AlertDispatchAgent`, `EMAAgent`, `FNOTrapAgent`, `MarketAgent`, `SynergyAgent`). No new agents created.
