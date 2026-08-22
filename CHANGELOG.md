@@ -1,5 +1,55 @@
 # TradeSignal — Change Log
 
+## 2026-08-22 — 360 Command Center: Full-Featured OI Heatmap & Search System in Alert Feed
+
+**Goal:** Replicate the complete OI Spurt Scanner (`oi-spurt-scanner.html`) features and analytics directly into the Alert Feed (`🔥 OI Heatmap` tab) in `360-command-center.html`, including interactive autocomplete search, 5-stat header strip, Layer 1/2/3 analytics, CE/PE writing zones, and full OI chain heatmap.
+
+**Files changed:** `app/360-command-center.html` [MODIFY]
+
+**Summary:**
+- **Live Autocomplete Symbol Search (`#oi-hm-suggestions`)**: Instant floating suggestion dropdown populated dynamically from `/api/equity-list` + index set with ticker symbol, company name, F&O tags, and full keyboard navigation (`ArrowUp`, `ArrowDown`, `Enter`, `GO`).
+- **Header Details Strip (5-Stat Grid)**: LTP & % change, OI Change % (Curr/Prev), Max Pain level (with relative LTP indicator), Overall Options PCR with sentiment tag, and compact Pivot Levels grid (`R3, R2, R1, PVT, S1, S2, S3`) with `Prev Day ✓` badge.
+- **Directional Bias & Badges Strip**: Real-time Bullish/Bearish tag, PCR rating tag, and Expiry badge.
+- **Layer 1 — Directional Commitment**: Futures LTP, price change %, Buildup badge, Futures OI (Curr/Prev), and Futures OI Change %.
+- **Layer 2 — Sentiment Bias**: Options PCR, Sentiment description, visual gradient progress bar, Total PE/CE ratio, and Max Pain level.
+- **Layer 3 — Key Trading Barriers & ATM ±5 Engine**: Risk analysis alert banner, Immediate Resistance (ATM+5) strike + strength score + flow, Immediate Support (ATM-5) strike + strength score + flow, Global Walls (CE Wall, PE Wall), and Max Pain.
+- **Top Writing Zones**: Side-by-side CE Writing (Resistance Zones) and PE Writing (Support Zones) with Strike, OI volume bar, Strike PCR, and Buildup status.
+- **Full OI Chain Heatmap**: ATM ±5 strikes table with proportional Call OI red heat bars, Put OI green heat bars, dual-sided **ΔOI (OI Change & %)** columns, CE/PE LTPs, and strike badges (gold `ATM`, blue `PAIN`).
+- **Tab Bar Streamlining (`#atabs`)**: Removed redundant `⚡ OI Spurt` tab from the Alert Feed header since OI Spurt is permanently accessible via the docked left sidebar.
+- **Theme Standardization (Dark & Light Mode)**: Replaced hardcoded slate/black backgrounds in OI Heatmap and docked OI Spurt sidebar with system CSS variables (`var(--card)`, `var(--card2)`, `var(--th-bg)`, `var(--b)`, `var(--t1)`, `var(--t2)`), ensuring seamless color harmony in both Dark theme (deep blue/navy) and Light theme.
+- **Top 1, 2, 3 Spurt Item Visibility**: Fixed contrast and background styling on `.top-spurt` ranked cards in the docked OI Spurt sidebar so ticker symbols, rank numbers, and gain badges remain fully sharp and readable across both light and dark themes.
+- **Dynamic Multi-Tab Symbol Pan**: Added dynamic ticker tabs pan (`NIFTY`, `BANKNIFTY`, `FINNIFTY`, `MIDCPNIFTY`, etc.) with instant tab switching, auto-addition when searching or clicking new symbols across boards, inline `✕` close buttons with adjacent tab auto-focus, and sleek slim horizontal scrollbars.
+- **30-Second Auto-Refresh Timer**: Integrated background polling interval that automatically updates the active symbol's option chain and analytics every 30 seconds when the `🔥 OI Heatmap` tab is open, automatically pausing when switching to other alert feeds.
+
+**Agent Reuse Decision:** Frontend layout & engine upgrade reusing `/api/equity-list` and `/api/oi/symbol/<symbol>` endpoints from `oi_spurt_routes.py`.
+
+## 2026-08-22 — 360 Command Center: Alert Feed Expansion & Compact Live Breakouts Panel
+
+**Goal:** Reallocate 70px from Right Panel (Live Breakouts) to Column 2 (Alert Feed), expanding Alert Feed from 460px to 530px and compacting Right Panel cards, Confluence scoring, and Session stats to fit cleanly within 250px.
+
+**Files changed:** `app/360-command-center.html` [MODIFY]
+
+**Summary:**
+- **Layout Grid (`.lay`)**: Changed desktop layout grid from `1fr 460px 320px` to `1fr 530px 250px` (+70px wider Alert Feed, -70px Right Panel).
+- **Confluence Scoring**: Compacted static legend into a high-density 2-column micro-grid with inline grade thresholds.
+- **Session Stats**: Converted 2x2 stat cards to compact footprint with tight padding and clean typography for seamless 250px rendering.
+
+**Agent Reuse Decision:** Frontend CSS/DOM layout optimization; no backend agents modified.
+
+## 2026-08-22 — Unified Master Board: Docked Searchable OI Spurt Sidebar
+
+**Goal:** Integrate a dedicated, searchable, real-time OI Spurt sidebar docked directly to the left of the Unified Master Board so OI Spurt leaders and Unified Master Board stocks are always visible side-by-side with interactive sync.
+
+**Files changed:** `app/360-command-center.html` [MODIFY]
+
+**Summary:**
+- **Docked OI Spurt Sidebar (`#oi-dock-panel`)**: Positioned to the left of the Unified Master Board, featuring a live ticker count badge (`#oi-dock-cnt`), search filter box (`#oi-dock-search`), and real-time ranked items with % gain badges and top-3 gold highlights.
+- **Instant Search Filtering (`filterDockedOI`)**: Real-time ticker filtering across all tracked F&O OI spurt stocks.
+- **Cross-Board Interactive Sync (`selectAndFlashStock`)**: Clicking any symbol in the OI Spurt sidebar automatically resets filters if necessary, smoothly scrolls the table row into view, and highlights the stock row with glowing pulse feedback.
+- **Responsive & Collapsible (`toggleOIDock`)**: Added `[⚡ OI Spurt]` toggle button in the board header toolbar with clean animated transitions, allowing users to collapse or expand the panel on smaller viewports.
+
+**Agent Reuse Decision:** Frontend layout & UI enhancement reusing existing `/api/oi/spurt?min_pct=0` feed and `OI_SPURTS` state without backend modifications.
+
 ## 2026-08-21 — 360 Command Center: Layout Overhaul + Grouped Breakout Alerts
 
 **Goal:** Remove Hot Zone strip, shrink right panel by 30% giving width to master board, and group Breakouts tab alerts by symbol ordered by time.
