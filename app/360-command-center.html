@@ -6969,7 +6969,7 @@
           });
           _oiSymbolList = Array.from(map.values());
         }
-      }).catch(() => {});
+      }).catch(() => { });
     }
 
     function formatOICompact(val) {
@@ -7102,13 +7102,13 @@
           <!-- 2. Dynamic Content Shell -->
           <div id="oi-hm-content">
             ${!sym
-              ? `<div class="empty" style="padding:48px 16px;text-align:center;">
+          ? `<div class="empty" style="padding:48px 16px;text-align:center;">
                    <div class="ei" style="font-size:32px;margin-bottom:8px;">🔥</div>
                    <div class="et" style="font-size:13px;font-weight:700;color:var(--t1);margin-bottom:4px;">OI Heatmap</div>
                    <div class="es" style="font-size:11px;color:var(--t2);line-height:1.5;">Type a symbol above or click any stock in the Master Board to load its real-time option chain & OI Heatmap.</div>
                  </div>`
-              : (hasCached ? '' : `<div class="empty" style="padding:24px 8px;"><div class="es">Loading ${sym} OI Heatmap data…</div></div>`)
-            }
+          : (hasCached ? '' : `<div class="empty" style="padding:24px 8px;"><div class="es">Loading ${sym} OI Heatmap data…</div></div>`)
+        }
           </div>
         </div>
       `;
@@ -9088,9 +9088,9 @@
 
   <!-- MOBILE BOTTOM NAV -->
   <div id="mobile-col-nav" class="mobile-col-nav">
-    <button class="mcn-btn active" id="mcn-0" onclick="showMobileCol(0)">📊 Board</button>
-    <button class="mcn-btn" id="mcn-1" onclick="showMobileCol(1)">⚡ Alerts</button>
-    <button class="mcn-btn" id="mcn-2" onclick="showMobileCol(2)">📈 Panels</button>
+    <button class="mcn-btn active" id="mcn-0" onclick="showMobileCol(0, true)">📊 Board</button>
+    <button class="mcn-btn" id="mcn-1" onclick="showMobileCol(1, true)">⚡ Alerts</button>
+    <button class="mcn-btn" id="mcn-2" onclick="showMobileCol(2, true)">📈 Panels</button>
   </div>
 
   <script>
@@ -9098,7 +9098,7 @@
     let _activeMobileColIdx = 0;
     let _pendingBoardRender = false;
 
-    function showMobileCol(idx) {
+    function showMobileCol(idx, isManualSwitch = false) {
       if (window.innerWidth > 767) return;
       _activeMobileColIdx = idx;
       const cols = document.querySelectorAll('#main-lay > .col');
@@ -9112,21 +9112,27 @@
       if (idx === 0 && _pendingBoardRender) {
         _pendingBoardRender = false;
         requestAnimationFrame(() => { if (typeof renderBoard === 'function') renderBoard(); });
-      } else if (idx === 1 && typeof _activeAlertTab !== 'undefined' && _activeAlertTab === 'oi_heatmap') {
-        if (typeof renderOIHeatmapView === 'function') renderOIHeatmapView(_activeOIHeatmapSym || null);
+      } else if (isManualSwitch && idx === 1 && typeof _activeAlertTab !== 'undefined' && _activeAlertTab === 'oi_heatmap') {
+        const afeed = document.getElementById('afeed');
+        if (afeed && !afeed.querySelector('.oi-hm-wrap')) {
+          if (typeof renderOIHeatmapView === 'function') renderOIHeatmapView(_activeOIHeatmapSym || null);
+        }
       }
     }
-    /* On resize, restore all cols for tablet/desktop */
+
+    /* On resize (e.g. virtual keyboard open/close), update visibility classes without wiping DOM */
     window.addEventListener('resize', () => {
       if (window.innerWidth > 767) {
         document.querySelectorAll('#main-lay > .col').forEach(c => c.classList.add('mcol-active'));
       } else {
-        // Keep only the active one visible
-        const active = [0, 1, 2].find(i => {
-          const btn = document.getElementById('mcn-' + i);
-          return btn && btn.classList.contains('active');
+        const cols = document.querySelectorAll('#main-lay > .col');
+        cols.forEach((c, i) => {
+          c.classList.toggle('mcol-active', i === _activeMobileColIdx);
         });
-        if (active !== undefined) showMobileCol(active);
+        [0, 1, 2].forEach(i => {
+          const btn = document.getElementById('mcn-' + i);
+          if (btn) btn.classList.toggle('active', i === _activeMobileColIdx);
+        });
       }
     });
   </script>

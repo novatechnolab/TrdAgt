@@ -16,7 +16,7 @@
 - **CSS Layout Containment & GPU Acceleration:** Added `contain: content;` and `transform: translateZ(0);` across `.oi-hm-wrap` and `.oi-hm-card` to isolate layout recalculations from the rest of the 9,000-line DOM.
 - **Instrument Token Map Audit & Fix:** Audited all 43 hardcoded F&O tokens against live Zerodha Kite NSE instruments. Corrected 6 mismatched/outdated tokens (`POWERGRID: 3834113`, `BEL: 98049`, `BAJAJFINSV: 4268801`, `TITAN: 897537`, `JIOFIN: 4644609`, `TMPV: 884737`), restoring full candlestick & CPR chart rendering across all symbols.
 - **Full-Session (09:15 to 15:30) Chart Viewport Default:** Fixed default `visibleCount` in `getChartViewState` and `drawInlineCandleCanvas` from hardcoded 45 candles (~11:30–15:30) to dynamic full-session candle count (75 candles for 5m, 25 candles for 15m), ensuring the complete morning-to-closing bell market session (09:15 to 15:30) is displayed on initial chart load.
-- **Reverted Experimental Overrides & Restored Clean Base State:** Removed all `touch-action` overrides from `html, body` and `.cb` containers that intercepted mobile input taps, reverted search bar CSS to clean original definitions, removed default `NIFTY` auto-selection on opening the tab, and populated `_oiSymbolList` directly with prefix-first matching across all 214+ F&O stocks.
+- **Mobile Virtual Keyboard & Resize Re-Render Glitch Resolution:** Eliminated the DOM wipe in `showMobileCol` on `window.resize` events triggered by mobile soft-keyboard sliding up, keeping `#oi-hm-search-input` permanently mounted and focused on mobile touch devices.
 
 **Agent Reuse Decision:** Extended `oi_spurt_routes.py` and `360-command-center.html` directly with zero architectural debt.
 
